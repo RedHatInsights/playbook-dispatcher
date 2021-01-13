@@ -1,0 +1,30 @@
+
+---
+name: Validation
+
+on:
+  - pull_request
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: OpenAPI Lint Checks
+    - uses: nwestfall/openapi-action@v1.0.1
+      with:
+        file: schema/api.spec.yaml
+
+    - uses: stoplightio/spectral-action@v0.5.5
+      with:
+        file: schema/api.spec.yaml
+
+    # - name: Use Node.js
+      # uses: actions/setup-node@v1
+      # with:
+        # node-version: 12.x
+
+    # - run: npm i -g @stoplight/spectral
+    # - run: spectral lint schema/api.spec.yaml
