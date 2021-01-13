@@ -1,0 +1,115 @@
+---
+openapi: 3.0.3
+info:
+  title: Playbook Dispatcher
+  version: 0.0.1
+paths:
+
+  /internal/dispatch:
+    post:
+      operationId: api.internal.runs.create
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: object
+                properties:
+                  recipient:
+                    type: string
+                    format: uuid
+                  account:
+                    type: string
+                  url:
+                    type: string
+                    format: url
+                  labels:
+                    type: object
+                    additionalProperties:
+                      type: string
+                    default: {}
+                  timeout:
+                    type: integer
+                    description: Amount of seconds after which the run is considered failed due to timeout
+                    default: 3600
+                required:
+                - recipient
+                - account
+                - url
+      responses:
+        207:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    code:
+                      type: integer
+                      example: 201
+                      description: status code of the request
+                    run_id:
+                      type: string
+                      format: uuid
+                  required:
+                  - code
+
+
+  /api/pd/v1/runs:
+    get:
+      operationId: api.runs.get
+      parameters:
+      - in: query
+        name: filter
+        required: false
+        style: deepObject
+        explode: true
+        schema:
+          type: object # TODO: exact schema
+      # TODO sparse fieldsets param
+      # TODO sorting param
+
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    recipient:
+                      type: string
+                      format: uuid
+                    account:
+                      type: string
+                    url:
+                      type: string
+                      format: url
+                    labels:
+                      type: object
+                      additionalProperties:
+                        type: string
+                    timeout:
+                      type: integer
+                      description: Amount of seconds after which the run is considered failed due to timeout
+                      default: 3600
+                    status:
+                      type: string
+                      enum:
+                      - running
+                      - success
+                      - failure
+                      - timeout
+
+                  # TODO: sorting/filtering
+                  # TODO: timestamps
+                  # TODO: for each host
+                  #   logs, host info, status per play/task
+
+
+
