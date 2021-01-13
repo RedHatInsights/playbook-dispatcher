@@ -1,0 +1,15 @@
+
+---
+name: Validation
+
+on:
+- pull_request
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    container: node:12-slim
+
+    steps:
+    - uses: actions/checkout@v2
+    - run: npx @stoplight/spectral lint schema/api.spec.yaml

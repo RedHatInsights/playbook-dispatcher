@@ -38,7 +38,7 @@ paths:
                 - account
                 - url
       responses:
-        207:
+        '207':
           description: OK
           content:
             application/json:
@@ -73,7 +73,7 @@ paths:
       # TODO sorting param
 
       responses:
-        200:
+        '200':
           description: OK
           content:
             application/json:
