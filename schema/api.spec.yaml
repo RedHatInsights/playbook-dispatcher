@@ -14,29 +14,7 @@ paths:
             schema:
               type: array
               items:
-                type: object
-                properties:
-                  recipient:
-                    type: string
-                    format: uuid
-                  account:
-                    type: string
-                  url:
-                    type: string
-                    format: url
-                  labels:
-                    type: object
-                    additionalProperties:
-                      type: string
-                    default: {}
-                  timeout:
-                    type: integer
-                    description: Amount of seconds after which the run is considered failed due to timeout
-                    default: 3600
-                required:
-                - recipient
-                - account
-                - url
+                $ref: '#/components/schemas/RunInput'
       responses:
         '207':
           description: OK
@@ -62,13 +40,7 @@ paths:
     get:
       operationId: api.runs.get
       parameters:
-      - in: query
-        name: filter
-        required: false
-        style: deepObject
-        explode: true
-        schema:
-          type: object # TODO: exact schema
+      - $ref: '#/components/parameters/RunsFilter'
       # TODO sparse fieldsets param
       # TODO sorting param
 
@@ -78,38 +50,109 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    recipient:
-                      type: string
-                      format: uuid
-                    account:
-                      type: string
-                    url:
-                      type: string
-                      format: url
-                    labels:
-                      type: object
-                      additionalProperties:
-                        type: string
-                    timeout:
-                      type: integer
-                      description: Amount of seconds after which the run is considered failed due to timeout
-                      default: 3600
-                    status:
-                      type: string
-                      enum:
-                      - running
-                      - success
-                      - failure
-                      - timeout
+                $ref: '#/components/schemas/Runs'
 
                   # TODO: sorting/filtering
                   # TODO: timestamps
                   # TODO: for each host
                   #   logs, host info, status per play/task
 
+components:
+  schemas:
+    RunRecipient:
+      type: string
+      format: uuid
 
+    RunTimeout:
+      type: integer
+      description: Amount of seconds after which the run is considered failed due to timeout
+      default: 3600
 
+    Account:
+      type: string
+
+    Url:
+      type: string
+      format: url
+
+    Labels:
+      type: object
+      additionalProperties:
+        type: string
+        default: {}
+
+    RunStatus:
+      type: string
+      enum:
+        - running
+        - success
+        - failure
+        - timeout
+
+    Runs:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Run'
+      required:
+      - data
+
+    RunInput:
+      type: object
+      properties:
+        recipient:
+          $ref: '#/components/schemas/RunRecipient'
+        account:
+          $ref: '#/components/schemas/Account'
+        url:
+          $ref: '#/components/schemas/Url'
+        labels:
+          $ref: '#/components/schemas/Labels'
+        timeout:
+          $ref: '#/components/schemas/RunTimeout'
+      required:
+      - recipient
+      - account
+      - url
+
+    Run:
+      type: object
+      properties:
+        recipient:
+          $ref: '#/components/schemas/RunRecipient'
+        account:
+          $ref: '#/components/schemas/Account'
+        url:
+          $ref: '#/components/schemas/Url'
+        labels:
+          $ref: '#/components/schemas/Labels'
+        timeout:
+          $ref: '#/components/schemas/RunTimeout'
+        status:
+          $ref: '#/components/schemas/RunStatus'
+      required:
+      - recipient
+      - account
+      - url
+      - labels
+      - timeout
+      - status
+
+  parameters:
+    RunsFilter:
+      in: query
+      name: filter
+      required: false
+      style: deepObject
+      explode: true
+      schema:
+        type: object
+        properties:
+          labels:
+            type: object
+            additionalProperties:
+              type: string
+          status:
+            type: string
