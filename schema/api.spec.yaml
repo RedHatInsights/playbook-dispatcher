@@ -52,13 +52,16 @@ paths:
               schema:
                 $ref: '#/components/schemas/Runs'
 
-                  # TODO: sorting/filtering
-                  # TODO: timestamps
+                  # TODO: sorting
                   # TODO: for each host
                   #   logs, host info, status per play/task
 
 components:
   schemas:
+    RunId:
+      type: string
+      format: uuid
+
     RunRecipient:
       type: string
       format: uuid
@@ -120,10 +123,12 @@ components:
     Run:
       type: object
       properties:
-        recipient:
-          $ref: '#/components/schemas/RunRecipient'
+        id:
+          $ref: '#/components/schemas/RunId'
         account:
           $ref: '#/components/schemas/Account'
+        recipient:
+          $ref: '#/components/schemas/RunRecipient'
         url:
           $ref: '#/components/schemas/Url'
         labels:
@@ -133,8 +138,9 @@ components:
         status:
           $ref: '#/components/schemas/RunStatus'
       required:
-      - recipient
+      - id
       - account
+      - recipient
       - url
       - labels
       - timeout
