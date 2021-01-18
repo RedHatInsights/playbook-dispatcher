@@ -1,0 +1,23 @@
+{
+    "webPort": 9001,
+    "metricsPort": 9001,
+    "metricsPath": "/metrics",
+    "logging": {
+        "type": "cloudwatch",
+        "cloudwatch": {
+            "accessKeyId": "",
+            "secretAccessKey": "",
+            "region": "",
+            "logGroup": ""
+        }
+    },
+    "kafka": {
+        "brokers": [
+            {
+                "hostname": "kafka",
+                "port": 29092
+            }
+        ],
+        "topics": []
+    }
+}
