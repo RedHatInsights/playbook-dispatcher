@@ -13,3 +13,15 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - run: npx @stoplight/spectral lint schema/api.spec.yaml
+
+  golang:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+
+    - uses: actions/setup-go@v1
+      with:
+        go-version: 1.14
+
+    - run: go build .
+    - run: go vet .
