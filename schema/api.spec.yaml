@@ -15,28 +15,17 @@ paths:
               type: array
               items:
                 $ref: '#/components/schemas/RunInput'
+              minItems: 1
+              maxItems: 10 # TODO
       responses:
         '207':
           description: OK
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    code:
-                      type: integer
-                      example: 201
-                      description: status code of the request
-                    run_id:
-                      type: string
-                      format: uuid
-                  required:
-                  - code
+                $ref: '#/components/schemas/RunsCreated'
 
-
-  /api/pd/v1/runs:
+  /api/playbook-dispatcher/v1/runs:
     get:
       operationId: api.runs.get
       parameters:
@@ -145,6 +134,23 @@ components:
       - labels
       - timeout
       - status
+
+    RunCreated:
+      type: object
+      properties:
+        code:
+          type: integer
+          example: 201
+          description: status code of the request
+        id:
+          $ref: '#/components/schemas/RunId'
+      required:
+      - code
+
+    RunsCreated:
+      type: array
+      items:
+        $ref: '#/components/schemas/RunCreated'
 
   parameters:
     RunsFilter:

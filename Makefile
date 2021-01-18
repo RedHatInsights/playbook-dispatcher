@@ -3,3 +3,6 @@ generate:
 
 run:
 	ACG_CONFIG=$(shell pwd)/cdappconfig.json go run main.go
+
+test:
+	go test ./...
