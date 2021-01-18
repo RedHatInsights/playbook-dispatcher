@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"playbook-dispatcher/api"
 	"playbook-dispatcher/config"
 	"playbook-dispatcher/utils"
 	"syscall"
@@ -20,13 +21,14 @@ import (
 func main() {
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, syscall.SIGTERM, syscall.SIGINT)
+	errors := make(chan error, 1)
 
 	log := utils.GetLoggerOrDie()
 	cfg := config.Get()
 
 	metricsServer := echo.New()
 	metricsServer.HideBanner = true
-	metricsServer.Debug = true
+	metricsServer.Debug = false
 
 	// TODO
 	probeHandler := func(c echo.Context) error {
@@ -37,28 +39,35 @@ func main() {
 	metricsServer.GET("/ready", probeHandler)
 	metricsServer.GET(cfg.GetString("metrics.path"), echo.WrapHandler(promhttp.Handler()))
 
-	log.Infof("Listening on port %d", cfg.GetInt("metrics.port"))
+	stopApi := api.Start(cfg, log, errors)
+
+	log.Infof("Listening on service port %d", cfg.GetInt("metrics.port"))
 	go func() {
-		log.Fatal(metricsServer.Start(fmt.Sprintf("0.0.0.0:%d", cfg.GetInt("metrics.port"))))
+		err := metricsServer.Start(fmt.Sprintf("0.0.0.0:%d", cfg.GetInt("metrics.port")))
+		log.Fatal(err)
+		errors <- err
 	}()
 
 	log.Infow("Playbook dispatcher started", "version", cfg.GetString("openshift.build.commit"))
 
-	defer shutdown(metricsServer, log)
+	defer shutdown(metricsServer, log, stopApi)
 
-	<-signals
+	// stop on signal or error, whatever comes first
+	select {
+	case signal := <-signals:
+		log.Infow("Shutting down", "signal", signal)
+	case error := <-errors:
+		log.Infow("Shutting down", "error", error)
+	}
 }
 
-func shutdown(server *echo.Echo, log *zap.SugaredLogger) {
+func shutdown(server *echo.Echo, log *zap.SugaredLogger, stopApi func(context.Context)) {
 	defer log.Sync()
 	defer log.Info("Shutdown complete")
-
-	log.Info("Shutting down")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	if e := server.Shutdown(ctx); e != nil {
-		log.Fatal(e)
-	}
+	stopApi(ctx)
+	utils.StopServer(server, ctx, log)
 }

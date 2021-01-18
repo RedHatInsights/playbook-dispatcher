@@ -1,7 +1,10 @@
 package utils
 
 import (
-	"os"
+	"context"
+
+	"github.com/labstack/echo/v4"
+	"go.uber.org/zap"
 )
 
 func DieOnError(err error) {
@@ -10,11 +13,8 @@ func DieOnError(err error) {
 	}
 }
 
-func PeekSignalChannel(sigs chan os.Signal) os.Signal {
-	select {
-	case sig := <-sigs:
-		return sig
-	default:
-		return nil
+func StopServer(server *echo.Echo, ctx context.Context, log *zap.SugaredLogger) {
+	if e := server.Shutdown(ctx); e != nil {
+		log.Fatal(e)
 	}
 }
