@@ -12,7 +12,7 @@ objects:
     deployments:
     - name: api
       minReplicas: ${{MIN_REPLICAS}}
-      web: false
+      web: true
       podSpec:
         image: ${IMAGE}:${IMAGE_TAG}
         livenessProbe:
