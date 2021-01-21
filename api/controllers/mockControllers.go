@@ -1,4 +1,4 @@
-package api
+package controllers
 
 import (
 	"net/http"
@@ -7,17 +7,16 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-// TODO: this is a mock implementation
-type serverInterfaceImpl struct {
+type mockControllers struct {
 }
 
-func (this *serverInterfaceImpl) ApiRunsGet(ctx echo.Context, params ApiRunsGetParams) error {
+func (this *mockControllers) ApiRunsList(ctx echo.Context, params ApiRunsListParams) error {
 	return ctx.JSON(http.StatusOK, &Runs{
 		Data: []Run{},
 	})
 }
 
-func (this *serverInterfaceImpl) ApiInternalRunsCreate(ctx echo.Context) error {
+func (this *mockControllers) ApiInternalRunsCreate(ctx echo.Context) error {
 	var input []RunInput
 
 	err := utils.ReadRequestBody(ctx, &input)

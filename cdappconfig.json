@@ -19,5 +19,14 @@
             }
         ],
         "topics": []
+    },
+    "database": {
+        "hostname": "localhost",
+        "port": 5432,
+        "name": "insights",
+        "username": "insights",
+        "password": "insights",
+        "adminUsername": "insights",
+        "adminPassword": "insights"
     }
 }
