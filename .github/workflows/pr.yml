@@ -15,7 +15,21 @@ jobs:
     - run: npx @stoplight/spectral lint schema/api.spec.yaml
 
   golang:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
+    services:
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_DB: insights
+          POSTGRES_USER: insights
+          POSTGRES_PASSWORD: insights
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
     steps:
     - uses: actions/checkout@v2
 
@@ -25,4 +39,11 @@ jobs:
 
     - run: go build .
     - run: go vet .
-    - run: go test ./...
+
+    - name: download go-migrate
+      run: curl -L https://github.com/golang-migrate/migrate/releases/download/v4.14.1/migrate.linux-amd64.tar.gz | tar xvz
+
+    - run: CLOWDER_ENABLED=false make test
+
+    - name: test down migrations
+      run: make migrate-db-undo

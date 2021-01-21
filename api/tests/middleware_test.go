@@ -1,43 +1,17 @@
-package api
+package tests
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
-	"time"
+	"playbook-dispatcher/utils/test"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/spf13/viper"
-	"go.uber.org/zap"
 )
 
 var _ = Describe("Middleware", func() {
-	var (
-		stop   func(ctx context.Context)
-		client = http.Client{
-			Timeout: 1 * time.Second,
-		}
-	)
-
-	BeforeSuite(func() {
-		cfg := viper.New()
-		cfg.SetDefault("web.port", 9002)
-		cfg.SetDefault("http.max.body.size", "512KB")
-
-		log := zap.NewNop().Sugar()
-
-		stop = Start(cfg, log, make(chan error, 1))
-	})
-
-	AfterSuite(func() {
-		if stop != nil {
-			stop(context.TODO())
-		}
-	})
-
 	Describe("request id", func() {
 		const requestIdHeader = "x-rh-insights-request-id"
 
@@ -48,7 +22,7 @@ var _ = Describe("Middleware", func() {
 			Expect(err).ToNot(HaveOccurred())
 			req.Header.Add(requestIdHeader, requestId)
 
-			res, err := client.Do(req)
+			res, err := test.Client.Do(req)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(res.Header.Get(requestIdHeader)).To(Equal(requestId))
 		})
@@ -58,7 +32,7 @@ var _ = Describe("Middleware", func() {
 		It("openapi.json can be downloaded", func() {
 			req, err := http.NewRequest(http.MethodGet, "http://localhost:9002/api/playbook-dispatcher/v1/openapi.json", nil)
 			Expect(err).ToNot(HaveOccurred())
-			res, err := client.Do(req)
+			res, err := test.Client.Do(req)
 			Expect(err).ToNot(HaveOccurred())
 
 			Expect(res.StatusCode).To(Equal(http.StatusOK))
@@ -72,7 +46,7 @@ var _ = Describe("Middleware", func() {
 			req, err := http.NewRequest(http.MethodGet, "http://localhost:9002/api/playbook-dispatcher/v1/runs", nil)
 			req.Header.Add(identityHeader, "eyJpZGVudGl0eSI6eyJpbnRlcm5hbCI6eyJvcmdfaWQiOiI1MzE4MjkwIn0sImFjY291bnRfbnVtYmVyIjoiOTAxNTc4IiwidXNlciI6e30sInR5cGUiOiJVc2VyIn19Cg==")
 			Expect(err).ToNot(HaveOccurred())
-			res, err := client.Do(req)
+			res, err := test.Client.Do(req)
 			Expect(err).ToNot(HaveOccurred())
 
 			Expect(res.StatusCode).To(Equal(http.StatusOK))
@@ -81,7 +55,7 @@ var _ = Describe("Middleware", func() {
 		It("identity header enforced on public route (negative)", func() {
 			req, err := http.NewRequest(http.MethodGet, "http://localhost:9002/api/playbook-dispatcher/v1/runs", nil)
 			Expect(err).ToNot(HaveOccurred())
-			res, err := client.Do(req)
+			res, err := test.Client.Do(req)
 			Expect(err).ToNot(HaveOccurred())
 
 			Expect(res.StatusCode).To(Equal(http.StatusBadRequest))
@@ -97,7 +71,7 @@ var _ = Describe("Middleware", func() {
 			req, err := http.NewRequest(http.MethodPost, "http://localhost:9002/internal/dispatch", bytes.NewBuffer([]byte("[]")))
 			Expect(err).ToNot(HaveOccurred())
 			req.Header.Add("content-type", "application/json")
-			res, err := client.Do(req)
+			res, err := test.Client.Do(req)
 			Expect(err).ToNot(HaveOccurred())
 
 			Expect(res.StatusCode).To(Equal(http.StatusBadRequest))

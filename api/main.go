@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"playbook-dispatcher/api/controllers"
 	"playbook-dispatcher/utils"
 
 	"go.uber.org/zap"
@@ -26,8 +27,13 @@ func init() {
 	openapi3.DefineStringFormat("url", `^https?:\/\/.*$`)
 }
 
-func Start(cfg *viper.Viper, log *zap.SugaredLogger, errors chan error) func(ctx context.Context) {
-	spec, err := GetSwagger()
+func Start(cfg *viper.Viper, log *zap.SugaredLogger, errors chan error, ready, live *utils.ProbeHandler) func(ctx context.Context) {
+	db, sql := connectToDatabase(cfg)
+
+	ready.Register(sql.Ping)
+	live.Register(sql.Ping)
+
+	spec, err := controllers.GetSwagger()
 	utils.DieOnError(err)
 
 	server := echo.New()
@@ -44,26 +50,28 @@ func Start(cfg *viper.Viper, log *zap.SugaredLogger, errors chan error) func(ctx
 		return ctx.JSON(http.StatusOK, spec)
 	})
 
-	controllers := &serverInterfaceImpl{}
+	ctrl := controllers.CreateControllers(db, log)
 
 	internal := server.Group("/internal/*")
 	public := server.Group("/api/playbook-dispatcher/v1/*")
 
 	internal.Use(middleware.OapiRequestValidator(spec))
-	RegisterHandlers(internal, controllers)
+	controllers.RegisterHandlers(internal, ctrl)
 
 	public.Use(echo.WrapMiddleware(identity.EnforceIdentity))
 	public.Use(middleware.OapiRequestValidator(spec))
-	RegisterHandlers(public, controllers)
+	controllers.RegisterHandlers(public, ctrl)
 
 	go func() {
-		err := server.Start(fmt.Sprintf("0.0.0.0:%d", cfg.GetInt("web.port")))
-		log.Fatal(err)
-		errors <- err
+		errors <- server.Start(fmt.Sprintf("0.0.0.0:%d", cfg.GetInt("web.port")))
 	}()
 
 	return func(ctx context.Context) {
 		log.Info("Shutting down web server")
 		utils.StopServer(server, ctx, log)
+
+		if sqlConnection, err := db.DB(); err != nil {
+			sqlConnection.Close()
+		}
 	}
 }

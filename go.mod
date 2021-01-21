@@ -8,6 +8,7 @@ require (
 	github.com/deepmap/oapi-codegen v1.4.2
 	github.com/getkin/kin-openapi v0.35.0
 	github.com/globocom/echo-prometheus v0.1.2
+	github.com/golang-migrate/migrate/v4 v4.14.1 // indirect
 	github.com/google/uuid v1.1.5
 	github.com/labstack/echo v3.3.10+incompatible
 	github.com/labstack/echo/v4 v4.1.17
@@ -19,5 +20,6 @@ require (
 	github.com/redhatinsights/platform-go-middlewares v0.7.0
 	github.com/spf13/viper v1.7.1
 	go.uber.org/zap v1.10.0
+	gorm.io/driver/postgres v1.0.6
 	gorm.io/gorm v1.20.11
 )

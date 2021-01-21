@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"os"
 	"os/signal"
 	"playbook-dispatcher/api"
@@ -30,22 +29,18 @@ func main() {
 	metricsServer.HideBanner = true
 	metricsServer.Debug = false
 
-	// TODO
-	probeHandler := func(c echo.Context) error {
-		return c.NoContent(http.StatusOK)
-	}
+	readinessProbeHandler := &utils.ProbeHandler{Log: log}
+	livenessProbeHandler := &utils.ProbeHandler{Log: log}
 
-	metricsServer.GET("/live", probeHandler)
-	metricsServer.GET("/ready", probeHandler)
+	metricsServer.GET("/ready", readinessProbeHandler.Check)
+	metricsServer.GET("/live", livenessProbeHandler.Check)
 	metricsServer.GET(cfg.GetString("metrics.path"), echo.WrapHandler(promhttp.Handler()))
 
-	stopApi := api.Start(cfg, log, errors)
+	stopApi := api.Start(cfg, log, errors, readinessProbeHandler, livenessProbeHandler)
 
 	log.Infof("Listening on service port %d", cfg.GetInt("metrics.port"))
 	go func() {
-		err := metricsServer.Start(fmt.Sprintf("0.0.0.0:%d", cfg.GetInt("metrics.port")))
-		log.Fatal(err)
-		errors <- err
+		errors <- metricsServer.Start(fmt.Sprintf("0.0.0.0:%d", cfg.GetInt("metrics.port")))
 	}()
 
 	log.Infow("Playbook dispatcher started", "version", cfg.GetString("openshift.build.commit"))
@@ -57,7 +52,7 @@ func main() {
 	case signal := <-signals:
 		log.Infow("Shutting down", "signal", signal)
 	case error := <-errors:
-		log.Infow("Shutting down", "error", error)
+		log.Fatalw("Shutting down", "error", error)
 	}
 }
 

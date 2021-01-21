@@ -27,11 +27,12 @@ paths:
 
   /api/playbook-dispatcher/v1/runs:
     get:
-      operationId: api.runs.get
+      operationId: api.runs.list
       parameters:
       - $ref: '#/components/parameters/RunsFilter'
-      # TODO sparse fieldsets param
-      # TODO sorting param
+      - $ref: '#/components/parameters/RunsSortBy'
+      - $ref: '#/components/parameters/Limit'
+      - $ref: '#/components/parameters/Offset'
 
       responses:
         '200':
@@ -40,10 +41,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Runs'
-
-                  # TODO: sorting
-                  # TODO: for each host
-                  #   logs, host info, status per play/task
 
 components:
   schemas:
@@ -62,6 +59,8 @@ components:
 
     Account:
       type: string
+      minLength: 1
+      maxLength: 10
 
     Url:
       type: string
@@ -88,8 +87,11 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Run'
+        meta:
+          $ref: '#/components/schemas/Meta'
       required:
       - data
+      - meta
 
     RunInput:
       type: object
@@ -152,6 +154,17 @@ components:
       items:
         $ref: '#/components/schemas/RunCreated'
 
+    Meta:
+      type: object
+      additionalProperties: false
+      properties:
+        count:
+          type: integer
+          description: number of results returned
+          example: 50
+      required:
+      - count
+
   parameters:
     RunsFilter:
       in: query
@@ -168,3 +181,32 @@ components:
               type: string
           status:
             type: string
+    RunsSortBy:
+      in: query
+      name: sort_by
+      required: false
+      schema:
+        type: string
+        enum:
+          - created_at
+          - created_at:asc
+          - created_at:desc
+    Limit:
+      in: query
+      name: limit
+      description: Maximum number of results to return
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 200
+        default: 50
+    Offset:
+      in: query
+      name: offset
+      description: Indicates the starting position of the query relative to the complete set of items that match the query
+      required: false
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
