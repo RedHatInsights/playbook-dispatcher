@@ -1,0 +1,62 @@
+---
+$id: playbookRunResponseMessage
+$schema: http://json-schema.org/draft-07/schema#
+type: object
+properties:
+  account:
+    type: string
+  request_id:
+    type: string
+  b64_identity:
+    type: string
+  upload_timestamp:
+    type: string
+    format: date-time
+  events:
+    type: array
+    items:
+      type: object
+      properties:
+        event:
+          type: string
+          minLength: 3
+          maxLength: 50
+        uuid:
+          type: string
+          format: uuid
+        counter:
+          type: integer
+          minimum: 0
+        stdout:
+          type: string
+        start_line:
+          type: integer
+          minimum: 0
+        end_line:
+          type: integer
+          minimum: 0
+        event_data:
+          type: object
+          properties:
+            playbook:
+              type: string
+              minLength: 1
+            playbook_uuid:
+              type: string
+              format: uuid
+
+      required:
+        - event
+        - uuid
+        - counter
+        - stdout
+        - start_line
+        - end_line
+
+required:
+  - account
+  - request_id
+  - b64_identity
+  - upload_timestamp
+  - events
+

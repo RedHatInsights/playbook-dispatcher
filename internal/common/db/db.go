@@ -1,4 +1,4 @@
-package api
+package db
 
 import (
 	"database/sql"
@@ -10,7 +10,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func connectToDatabase(cfg *viper.Viper) (*gorm.DB, *sql.DB) {
+func Connect(cfg *viper.Viper) (*gorm.DB, *sql.DB) {
 	dsn := fmt.Sprintf(
 		"postgresql://%s:%s@%s:%d/%s?sslmode=disable",
 		cfg.GetString("db.username"),

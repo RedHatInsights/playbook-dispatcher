@@ -5,6 +5,10 @@ import (
 	"fmt"
 	"net/http"
 	"time"
+
+	dbModel "playbook-dispatcher/internal/common/model/db"
+
+	"github.com/google/uuid"
 )
 
 func IdentityHeaderMinimal(account string) string {
@@ -14,4 +18,19 @@ func IdentityHeaderMinimal(account string) string {
 
 var Client = http.Client{
 	Timeout: 1 * time.Second,
+}
+
+func NewRunWithStatus(account string, status string) *dbModel.Run {
+	return &dbModel.Run{
+		ID:            uuid.New(),
+		Account:       account,
+		Recipient:     uuid.New(),
+		CorrelationID: uuid.New(),
+		PlaybookURL:   "http://example.com",
+		Status:        status,
+	}
+}
+
+func NewRun(account string) *dbModel.Run {
+	return NewRunWithStatus(account, "running")
 }

@@ -3,9 +3,8 @@ package tests
 import (
 	"net/http"
 	dbModel "playbook-dispatcher/internal/common/model/db"
+	"playbook-dispatcher/internal/common/utils/test"
 	"time"
-
-	"github.com/google/uuid"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
@@ -21,27 +20,12 @@ func listRuns(params *ApiRunsListParams) (*Runs, *ApiRunsListResponse) {
 	return res.JSON200, res
 }
 
-func newRunWithStatus(status string) *dbModel.Run {
-	return &dbModel.Run{
-		ID:            uuid.New(),
-		Account:       accountNumber(),
-		Recipient:     uuid.New(),
-		CorrelationID: uuid.New(),
-		PlaybookURL:   "http://example.com",
-		Status:        status,
-	}
-}
-
-func newRun() *dbModel.Run {
-	return newRunWithStatus("running")
-}
-
 var _ = Describe("runsList", func() {
-	db := WithDatabase()
+	db := test.WithDatabase()
 
 	Describe("list runs", func() {
 		It("by default returns a list of existing runs", func() {
-			var data = newRunWithStatus("success")
+			var data = test.NewRunWithStatus(accountNumber(), "success")
 			data.Labels = dbModel.Labels{"foo": "bar"}
 			data.Timeout = 600
 			Expect(db().Create(&data).Error).ToNot(HaveOccurred())
@@ -63,8 +47,8 @@ var _ = Describe("runsList", func() {
 	Describe("sorting", func() {
 		BeforeEach(func() {
 			var runs = []dbModel.Run{
-				*newRunWithStatus("success"),
-				*newRunWithStatus("running"),
+				*test.NewRunWithStatus(accountNumber(), "success"),
+				*test.NewRunWithStatus(accountNumber(), "running"),
 			}
 
 			runs[0].CreatedAt = time.Date(2020, time.January, 21, 8, 45, 3, 0, time.UTC)
@@ -100,11 +84,11 @@ var _ = Describe("runsList", func() {
 	Describe("pagination", func() {
 		BeforeEach(func() {
 			var runs = []dbModel.Run{
-				*newRun(),
-				*newRun(),
-				*newRun(),
-				*newRun(),
-				*newRun(),
+				*test.NewRun(accountNumber()),
+				*test.NewRun(accountNumber()),
+				*test.NewRun(accountNumber()),
+				*test.NewRun(accountNumber()),
+				*test.NewRun(accountNumber()),
 			}
 
 			Expect(db().Create(&runs).Error).ToNot(HaveOccurred())

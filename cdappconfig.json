@@ -18,7 +18,12 @@
                 "port": 29092
             }
         ],
-        "topics": []
+        "topics": [
+            {
+                "requestedName": "platform.playbook-dispatcher.responses",
+                "name": "platform.playbook-dispatcher.responses"
+            }
+        ]
     },
     "database": {
         "hostname": "localhost",
