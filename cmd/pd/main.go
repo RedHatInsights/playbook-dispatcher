@@ -18,6 +18,12 @@ import (
 )
 
 func main() {
+	if err := run(); err != nil {
+		os.Exit(1)
+	}
+}
+
+func run() error {
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, syscall.SIGTERM, syscall.SIGINT)
 	errors := make(chan error, 1)
@@ -51,8 +57,10 @@ func main() {
 	select {
 	case signal := <-signals:
 		log.Infow("Shutting down", "signal", signal)
+		return nil
 	case error := <-errors:
 		log.Fatalw("Shutting down", "error", error)
+		return error
 	}
 }
 
