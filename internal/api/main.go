@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"playbook-dispatcher/api/controllers"
-	"playbook-dispatcher/utils"
+	"playbook-dispatcher/internal/api/controllers"
+	"playbook-dispatcher/internal/common/utils"
 
 	"go.uber.org/zap"
 

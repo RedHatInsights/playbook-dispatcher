@@ -1,8 +1,8 @@
 package controllers
 
-import "playbook-dispatcher/models"
+import dbModel "playbook-dispatcher/internal/common/model/db"
 
-func dbRuntoApiRun(r *models.Run) *Run {
+func dbRuntoApiRun(r *dbModel.Run) *Run {
 	return &Run{
 		Id:        RunId(r.ID.String()),
 		Account:   Account(r.Account),

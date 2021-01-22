@@ -3,7 +3,7 @@ package controllers
 import (
 	"fmt"
 	"net/http"
-	"playbook-dispatcher/models"
+	dbModel "playbook-dispatcher/internal/common/model/db"
 	"strings"
 
 	"github.com/labstack/echo/v4"
@@ -40,11 +40,11 @@ func getOrderBy(params ApiRunsListParams) string {
 }
 
 func (this *controllers) ApiRunsList(ctx echo.Context, params ApiRunsListParams) error {
-	var dbRuns []models.Run
+	var dbRuns []dbModel.Run
 
 	identity := identityMiddleware.Get(ctx.Request().Context())
 
-	queryBuilder := this.database.Where(&models.Run{
+	queryBuilder := this.database.Where(&dbModel.Run{
 		Account: identity.Identity.AccountNumber,
 	})
 

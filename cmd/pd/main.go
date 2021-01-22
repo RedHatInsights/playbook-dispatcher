@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
-	"playbook-dispatcher/api"
-	"playbook-dispatcher/config"
-	"playbook-dispatcher/utils"
+	"playbook-dispatcher/internal/api"
+	"playbook-dispatcher/internal/common/config"
+	"playbook-dispatcher/internal/common/utils"
 	"syscall"
 	"time"
 

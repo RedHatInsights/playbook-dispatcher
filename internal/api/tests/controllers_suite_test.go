@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"playbook-dispatcher/api"
-	"playbook-dispatcher/config"
-	"playbook-dispatcher/utils/test"
+	"playbook-dispatcher/internal/api"
+	"playbook-dispatcher/internal/common/config"
+	"playbook-dispatcher/internal/common/utils/test"
 	"testing"
 
 	. "github.com/onsi/ginkgo"

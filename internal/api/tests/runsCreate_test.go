@@ -4,7 +4,7 @@ import (
 	"context"
 	"io/ioutil"
 	"net/http"
-	"playbook-dispatcher/models"
+	"playbook-dispatcher/internal/common/models"
 	"strings"
 
 	"github.com/google/uuid"
