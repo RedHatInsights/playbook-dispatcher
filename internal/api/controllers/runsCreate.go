@@ -2,9 +2,9 @@ package controllers
 
 import (
 	"net/http"
-	"playbook-dispatcher/config"
-	"playbook-dispatcher/models"
-	"playbook-dispatcher/utils"
+	"playbook-dispatcher/internal/common/config"
+	dbModel "playbook-dispatcher/internal/common/model/db"
+	"playbook-dispatcher/internal/common/utils"
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
@@ -56,8 +56,8 @@ func (this *controllers) ApiInternalRunsCreate(ctx echo.Context) error {
 	return ctx.JSON(http.StatusMultiStatus, result)
 }
 
-func newRun(input *RunInput, correlationId uuid.UUID, status string) (*models.Run, error) {
-	run := &models.Run{
+func newRun(input *RunInput, correlationId uuid.UUID, status string) (*dbModel.Run, error) {
+	run := &dbModel.Run{
 		ID:            uuid.New(),
 		Account:       string(input.Account),
 		CorrelationID: correlationId,

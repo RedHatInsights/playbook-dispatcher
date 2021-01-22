@@ -3,7 +3,7 @@ package api
 import (
 	"database/sql"
 	"fmt"
-	"playbook-dispatcher/utils"
+	"playbook-dispatcher/internal/common/utils"
 
 	"github.com/spf13/viper"
 	"gorm.io/driver/postgres"

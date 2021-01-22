@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
-	"playbook-dispatcher/utils/test"
+	"playbook-dispatcher/internal/common/utils/test"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"

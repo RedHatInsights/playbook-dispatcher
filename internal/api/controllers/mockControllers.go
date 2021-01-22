@@ -2,7 +2,7 @@ package controllers
 
 import (
 	"net/http"
-	"playbook-dispatcher/utils"
+	"playbook-dispatcher/internal/common/utils"
 
 	"github.com/labstack/echo/v4"
 )

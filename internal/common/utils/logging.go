@@ -3,7 +3,7 @@ package utils
 import (
 	"io"
 	"os"
-	"playbook-dispatcher/config"
+	"playbook-dispatcher/internal/common/config"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"

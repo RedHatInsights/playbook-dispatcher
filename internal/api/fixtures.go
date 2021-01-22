@@ -2,7 +2,7 @@ package api
 
 import (
 	"context"
-	"playbook-dispatcher/utils"
+	"playbook-dispatcher/internal/common/utils"
 
 	. "github.com/onsi/ginkgo"
 

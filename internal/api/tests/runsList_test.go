@@ -2,7 +2,7 @@ package tests
 
 import (
 	"net/http"
-	"playbook-dispatcher/models"
+	"playbook-dispatcher/internal/common/models"
 	"time"
 
 	"github.com/google/uuid"
