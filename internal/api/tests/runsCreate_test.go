@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	dbModel "playbook-dispatcher/internal/common/model/db"
+	"playbook-dispatcher/internal/common/utils/test"
 	"strings"
 
 	"github.com/google/uuid"
@@ -25,7 +26,7 @@ func dispatch(payload *ApiInternalRunsCreateJSONRequestBody) (*RunsCreated, *Api
 
 var _ = Describe("runsCreate", func() {
 	Describe("create run happy path", func() {
-		db := WithDatabase()
+		db := test.WithDatabase()
 
 		It("creates a new playbook run", func() {
 			recipient := uuid.New()

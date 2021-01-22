@@ -1,0 +1,43 @@
+# This schema captures the shape of events produced by ansible runner
+# https://ansible-runner.readthedocs.io/en/stable/intro.html#runner-artifact-job-events-host-and-playbook-events
+# This schema does not aim to be complete - it only captures used by playbook-dispatcher
+---
+$id: ansibleRunnerJobEvent
+$schema: http://json-schema.org/draft-07/schema#
+type: object
+properties:
+  event:
+    type: string
+    minLength: 3
+    maxLength: 50
+  uuid:
+    type: string
+    format: uuid
+  counter:
+    type: integer
+    minimum: 0
+  stdout:
+    type: string
+  start_line:
+    type: integer
+    minimum: 0
+  end_line:
+    type: integer
+    minimum: 0
+  event_data:
+    type: object
+    properties:
+      playbook:
+        type: string
+        minLength: 1
+      playbook_uuid:
+        type: string
+        format: uuid
+
+required:
+  - event
+  - uuid
+  - counter
+  - stdout
+  - start_line
+  - end_line

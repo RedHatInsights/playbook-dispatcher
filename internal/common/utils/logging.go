@@ -42,6 +42,10 @@ func GetLoggerOrDie() *zap.SugaredLogger {
 	return sugar
 }
 
+func LogWithRequestId(log *zap.SugaredLogger, value string) *zap.SugaredLogger {
+	return log.With("request_id", value)
+}
+
 func createCloudwatch(cfg *viper.Viper, level zap.AtomicLevel) (zap.Option, error) {
 	hostname, err := os.Hostname()
 	if err != nil {

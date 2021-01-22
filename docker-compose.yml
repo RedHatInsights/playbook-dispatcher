@@ -1,5 +1,74 @@
-version: '3.1'
+# Copied from insights-ingress-go
+# This podman compose file stands up local dependencies for
+# Kafka, Zookeeper, Minio and insights-ingress-go.
+# Please consult its README.md for bucket creation steps
+version: "3"
 services:
+  dispatcher:
+    image: quay.io/cloudservices/playbook-dispatcher
+    build:
+      context: .
+    links:
+    - kafka
+    - db
+    ports:
+      - '8000:8000'
+      - '9001:9001'
+    environment:
+      CLOWDER_ENABLED: "false"
+      DB_HOST: "db"
+    restart: unless-stopped
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper
+    environment:
+      - ZOOKEEPER_CLIENT_PORT=32181
+      - ZOOKEEPER_SERVER_ID=1
+
+  kafka:
+    image: confluentinc/cp-kafka
+    ports:
+      - '29092:29092'
+    depends_on:
+      - zookeeper
+    environment:
+      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://kafka:29092
+      - KAFKA_BROKER_ID=1
+      - KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1
+      - KAFKA_ZOOKEEPER_CONNECT=zookeeper:32181
+      - KAFKA_AUTO_CREATE_TOPICS_ENABLE=true
+
+  minio:
+    image: minio/minio
+    command: server /data
+    volumes:
+      # These vars are defined in .env
+      # These are configurable
+      # Ensure the directories exist prior to running this file
+      - minio_conf:/root/.minio:Z
+      - minio_data:/data:Z
+    ports:
+      - '9000:9000'
+    environment:
+      - MINIO_ACCESS_KEY=$MINIO_ACCESS_KEY
+      - MINIO_SECRET_KEY=$MINIO_SECRET_KEY
+
+  ingress:
+    image: quay.io/cloudservices/insights-ingress:ea99e26
+    ports:
+      - '8080:3000'
+    environment:
+      - INGRESS_STAGEBUCKET=insights-upload-perma
+      - INGRESS_VALIDTOPICS=playbook
+      - OPENSHIFT_BUILD_COMMIT=somestring
+      - INGRESS_MAXSIZE=104857600
+      - INGRESS_MINIODEV=true
+      - INGRESS_MINIOACCESSKEY=$MINIO_ACCESS_KEY
+      - INGRESS_MINIOSECRETKEY=$MINIO_SECRET_KEY
+      - INGRESS_MINIOENDPOINT=minio:9000
+    depends_on:
+      - kafka
+
   db:
     image: postgres
     restart: always
@@ -9,3 +78,8 @@ services:
       POSTGRES_DB: insights
     ports:
       - "5432:5432"
+
+
+volumes:
+  minio_conf: {}
+  minio_data: {}
