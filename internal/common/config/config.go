@@ -22,6 +22,7 @@ func Get() *viper.Viper {
 
 	options.SetDefault("db.max.idle.connections", 10)
 	options.SetDefault("db.max.open.connections", 20)
+	options.SetDefault("migrations.dir", "./migrations")
 
 	options.SetDefault("kafka.group.id", "playbook-dispatcher")
 	options.SetDefault("kafka.auto.offset.reset", "latest")

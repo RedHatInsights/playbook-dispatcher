@@ -25,6 +25,31 @@ func init() {
 
 	runCommand.Flags().StringSliceP("module", "m", []string{moduleApi, moduleResponseConsumer}, "module(s) to run")
 	rootCmd.AddCommand(runCommand)
+
+	migrateCmd := &cobra.Command{
+		Use:   "migrate",
+		Short: "Run database migrations",
+	}
+
+	rootCmd.AddCommand(migrateCmd)
+
+	migrateCmd.AddCommand(&cobra.Command{
+		Use:   migrationActionUp,
+		Short: "Run database migrations",
+		RunE:  migrate,
+	})
+
+	migrateCmd.AddCommand(&cobra.Command{
+		Use:   migrationActionDown,
+		Short: "Undo last database migration",
+		RunE:  migrate,
+	})
+
+	migrateCmd.AddCommand(&cobra.Command{
+		Use:   migrationActionDownAll,
+		Short: "Undo all database migration",
+		RunE:  migrate,
+	})
 }
 
 func Execute() error {

@@ -12,7 +12,7 @@ import (
 
 func Connect(cfg *viper.Viper) (*gorm.DB, *sql.DB) {
 	dsn := fmt.Sprintf(
-		"postgresql://%s:%s@%s:%d/%s?sslmode=disable",
+		"postgresql://%s:%s@%s:%d/%s?sslmode=disable&search_path=public",
 		cfg.GetString("db.username"),
 		cfg.GetString("db.password"),
 		cfg.GetString("db.host"),
