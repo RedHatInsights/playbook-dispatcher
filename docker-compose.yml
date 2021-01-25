@@ -14,6 +14,10 @@ services:
     ports:
       - '8000:8000'
       - '9001:9001'
+    entrypoint:
+      - /bin/sh
+      - -c
+      - '/app migrate up && /app run'
     environment:
       CLOWDER_ENABLED: "false"
       DB_HOST: "db"

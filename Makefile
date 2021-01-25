@@ -17,10 +17,10 @@ build:
 	go build -o pd .
 
 migrate-db:
-	./migrate.linux-amd64 -source file://./migrations -database postgresql://insights:insights@${DB_HOST}:5432/insights?sslmode=disable up
+	ACG_CONFIG=$(shell pwd)/cdappconfig.json go run . migrate up
 
-migrate-db-undo:
-	./migrate.linux-amd64 -source file://./migrations -database postgresql://insights:insights@${DB_HOST}:5432/insights?sslmode=disable down 2
+migrate-db-undo-all:
+	ACG_CONFIG=$(shell pwd)/cdappconfig.json go run . migrate down-all
 
 run: migrate-db
 	ACG_CONFIG=$(shell pwd)/cdappconfig.json go run . run
