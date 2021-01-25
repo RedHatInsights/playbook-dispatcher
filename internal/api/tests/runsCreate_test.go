@@ -4,7 +4,7 @@ import (
 	"context"
 	"io/ioutil"
 	"net/http"
-	"playbook-dispatcher/internal/common/models"
+	dbModel "playbook-dispatcher/internal/common/model/db"
 	"strings"
 
 	"github.com/google/uuid"
@@ -45,7 +45,7 @@ var _ = Describe("runsCreate", func() {
 			_, err := uuid.Parse(string(*(*runs)[0].Id))
 			Expect(err).ToNot(HaveOccurred())
 
-			var run models.Run
+			var run dbModel.Run
 			result := db().Where("id = ?", string(*(*runs)[0].Id)).First(&run)
 			Expect(result.Error).ToNot(HaveOccurred())
 			Expect(run.Account).To(Equal(accountNumber()))

@@ -2,7 +2,7 @@ package tests
 
 import (
 	"net/http"
-	"playbook-dispatcher/internal/common/models"
+	dbModel "playbook-dispatcher/internal/common/model/db"
 	"time"
 
 	"github.com/google/uuid"
@@ -21,8 +21,8 @@ func listRuns(params *ApiRunsListParams) (*Runs, *ApiRunsListResponse) {
 	return res.JSON200, res
 }
 
-func newRunWithStatus(status string) *models.Run {
-	return &models.Run{
+func newRunWithStatus(status string) *dbModel.Run {
+	return &dbModel.Run{
 		ID:            uuid.New(),
 		Account:       accountNumber(),
 		Recipient:     uuid.New(),
@@ -32,7 +32,7 @@ func newRunWithStatus(status string) *models.Run {
 	}
 }
 
-func newRun() *models.Run {
+func newRun() *dbModel.Run {
 	return newRunWithStatus("running")
 }
 
@@ -42,7 +42,7 @@ var _ = Describe("runsList", func() {
 	Describe("list runs", func() {
 		It("by default returns a list of existing runs", func() {
 			var data = newRunWithStatus("success")
-			data.Labels = models.Labels{"foo": "bar"}
+			data.Labels = dbModel.Labels{"foo": "bar"}
 			data.Timeout = 600
 			Expect(db().Create(&data).Error).ToNot(HaveOccurred())
 
@@ -62,7 +62,7 @@ var _ = Describe("runsList", func() {
 
 	Describe("sorting", func() {
 		BeforeEach(func() {
-			var runs = []models.Run{
+			var runs = []dbModel.Run{
 				*newRunWithStatus("success"),
 				*newRunWithStatus("running"),
 			}
@@ -99,7 +99,7 @@ var _ = Describe("runsList", func() {
 
 	Describe("pagination", func() {
 		BeforeEach(func() {
-			var runs = []models.Run{
+			var runs = []dbModel.Run{
 				*newRun(),
 				*newRun(),
 				*newRun(),
