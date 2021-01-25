@@ -5,7 +5,7 @@ COPY . .
 
 USER 0
 
-RUN go build -v -o app cmd/pd/pd.go
+RUN go build -v -o app .
 
 FROM registry.access.redhat.com/ubi8-minimal
 
@@ -16,4 +16,5 @@ ENV SCHEMA_MESSAGE_RESPONSE=/schema/playbookRunResponse.message.yaml
 
 USER 1001
 
-CMD ["/app"]
+ENTRYPOINT [ "/app" ]
+CMD ["run"]

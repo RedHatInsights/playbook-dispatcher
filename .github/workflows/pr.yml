@@ -38,7 +38,7 @@ jobs:
         go-version: 1.14
 
     - run: make build
-    - run: go vet cmd/pd/pd.go
+    - run: go vet .
 
     - name: download go-migrate
       run: curl -L https://github.com/golang-migrate/migrate/releases/download/v4.14.1/migrate.linux-amd64.tar.gz | tar xvz
