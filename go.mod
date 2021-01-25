@@ -22,6 +22,7 @@ require (
 	github.com/qri-io/jsonschema v0.2.0
 	github.com/redhatinsights/app-common-go v1.0.0
 	github.com/redhatinsights/platform-go-middlewares v0.7.0
+	github.com/spf13/cobra v0.0.3
 	github.com/spf13/viper v1.7.1
 	go.uber.org/zap v1.10.0
 	gorm.io/driver/postgres v1.0.6

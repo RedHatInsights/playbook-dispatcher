@@ -14,7 +14,7 @@ generate-messages:
 generate: generate-api generate-messages
 
 build:
-	go build cmd/pd/pd.go
+	go build -o pd .
 
 migrate-db:
 	./migrate.linux-amd64 -source file://./migrations -database postgresql://insights:insights@${DB_HOST}:5432/insights?sslmode=disable up
@@ -23,7 +23,7 @@ migrate-db-undo:
 	./migrate.linux-amd64 -source file://./migrations -database postgresql://insights:insights@${DB_HOST}:5432/insights?sslmode=disable down 2
 
 run: migrate-db
-	ACG_CONFIG=$(shell pwd)/cdappconfig.json go run cmd/pd/pd.go
+	ACG_CONFIG=$(shell pwd)/cdappconfig.json go run . run
 
 test: migrate-db
 	ACG_CONFIG=$(shell pwd)/cdappconfig.json go test -p 1 -v ./...

@@ -1,4 +1,4 @@
-package main
+package cmd
 
 import (
 	"context"
@@ -16,15 +16,13 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/spf13/cobra"
 )
 
-func main() {
-	if err := run(); err != nil {
-		os.Exit(1)
-	}
-}
+func run(cmd *cobra.Command, args []string) error {
+	modules, err := cmd.Flags().GetStringSlice("module")
+	utils.DieOnError(err)
 
-func run() error {
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, syscall.SIGTERM, syscall.SIGINT)
 	errors := make(chan error, 1)
@@ -43,9 +41,20 @@ func run() error {
 	metricsServer.GET("/live", livenessProbeHandler.Check)
 	metricsServer.GET(cfg.GetString("metrics.path"), echo.WrapHandler(promhttp.Handler()))
 
-	stopApi := api.Start(cfg, log, errors, readinessProbeHandler, livenessProbeHandler)
+	stopActions := []func(ctx context.Context){}
 
-	stopResponseConsumer := responseConsumer.Start(cfg, log, errors, readinessProbeHandler, livenessProbeHandler)
+	for _, module := range modules {
+		switch module {
+		case moduleApi:
+			log.Infof("Starting module %s", module)
+			stopActions = append(stopActions, api.Start(cfg, log, errors, readinessProbeHandler, livenessProbeHandler))
+		case moduleResponseConsumer:
+			log.Infof("Starting module %s", module)
+			stopActions = append(stopActions, responseConsumer.Start(cfg, log, errors, readinessProbeHandler, livenessProbeHandler))
+		default:
+			return fmt.Errorf("Unknown module %s", module)
+		}
+	}
 
 	log.Infof("Listening on service port %d", cfg.GetInt("metrics.port"))
 	go func() {
@@ -54,7 +63,7 @@ func run() error {
 
 	log.Infow("Playbook dispatcher started", "version", cfg.GetString("openshift.build.commit"))
 
-	defer shutdown(metricsServer, log, stopApi, stopResponseConsumer)
+	defer shutdown(metricsServer, log, stopActions...)
 
 	// stop on signal or error, whatever comes first
 	select {
