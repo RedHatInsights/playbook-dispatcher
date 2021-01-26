@@ -22,6 +22,14 @@
             {
                 "requestedName": "platform.playbook-dispatcher.responses",
                 "name": "platform.playbook-dispatcher.responses"
+            },
+            {
+                "requestedName": "platform.upload.playbook",
+                "name": "platform.upload.playbook"
+            },
+            {
+                "requestedName": "platform.upload.validation",
+                "name": "platform.upload.validation"
             }
         ]
     },

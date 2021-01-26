@@ -2,6 +2,7 @@ package kafka
 
 import (
 	"context"
+	"encoding/json"
 	"sync"
 	"time"
 
@@ -11,6 +12,8 @@ import (
 	"github.com/qri-io/jsonschema"
 	"github.com/spf13/viper"
 )
+
+var defaultTopic = "__consumer_offsets"
 
 // https://github.com/edenhill/librdkafka/blob/master/CONFIGURATION.md
 
@@ -62,15 +65,19 @@ func NewConsumerEventLoop(
 				continue
 			}
 
-			errors, parserError := schema.ValidateBytes(context.Background(), msg.Value)
+			if schema != nil {
+				errors, parserError := schema.ValidateBytes(context.Background(), msg.Value)
 
-			if len(errors) > 0 {
-				log.Warn(errors[0])
-			} else if parserError != nil {
-				log.Warn(parserError)
-			} else {
-				handler(msg)
+				if len(errors) > 0 {
+					log.Warn(errors[0])
+					continue
+				} else if parserError != nil {
+					log.Warn(parserError)
+					continue
+				}
 			}
+
+			handler(msg)
 		}
 
 		wg.Done()
@@ -82,4 +89,32 @@ func NewConsumerEventLoop(
 	}
 
 	return
+}
+
+func Produce(producer *kafka.Producer, topic string, value interface{}) error {
+	marshalledValue, err := json.Marshal(value)
+	if err != nil {
+		return err
+	}
+
+	msg := &kafka.Message{
+		TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
+		Value:          marshalledValue,
+	}
+
+	return producer.Produce(msg, nil)
+}
+
+type pingable interface {
+	GetMetadata(topic *string, allTopics bool, timeoutMs int) (*kafka.Metadata, error)
+}
+
+func Ping(timeout int, instances ...pingable) error {
+	for _, instance := range instances {
+		if _, err := instance.GetMetadata(&defaultTopic, false, timeout); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

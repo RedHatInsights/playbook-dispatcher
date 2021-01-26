@@ -15,28 +15,30 @@ import (
 )
 
 func Start(cfg *viper.Viper, log *zap.SugaredLogger, errors chan error, ready, live *utils.ProbeHandler) func(ctx context.Context) {
-	var schema = &jsonschema.Schema{}
-
+	var schema jsonschema.Schema
 	file, err := ioutil.ReadFile(cfg.GetString("schema.message.response"))
 	utils.DieOnError(err)
-	err = yaml.Unmarshal(file, schema)
+	err = yaml.Unmarshal(file, &schema)
 	utils.DieOnError(err)
 
 	db, sql := db.Connect(cfg)
 	ready.Register(sql.Ping)
 	live.Register(sql.Ping)
 
+	kafkaTimeout := cfg.GetInt("kafka.timeout")
 	consumer, err := kafka.NewConsumer(cfg, cfg.GetString("topic.responses"))
 	utils.DieOnError(err)
 
-	// TODO kafka probe support
+	ready.Register(func() error {
+		return kafka.Ping(kafkaTimeout, consumer)
+	})
 
 	handler := &handler{
 		db:  db,
 		log: log,
 	}
 
-	startLoop, stopLoop := kafka.NewConsumerEventLoop(consumer, schema, handler.onMessage, log)
+	startLoop, stopLoop := kafka.NewConsumerEventLoop(consumer, &schema, handler.onMessage, log)
 
 	go startLoop()
 
