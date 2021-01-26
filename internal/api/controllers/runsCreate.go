@@ -17,7 +17,7 @@ func (this *controllers) ApiInternalRunsCreate(ctx echo.Context) error {
 
 	err := utils.ReadRequestBody(ctx, &input)
 	if err != nil {
-		this.log.Error(err)
+		this.log.Warn(err)
 		return ctx.NoContent(http.StatusBadRequest)
 	}
 

@@ -24,6 +24,7 @@ func Get() *viper.Viper {
 	options.SetDefault("db.max.open.connections", 20)
 	options.SetDefault("migrations.dir", "./migrations")
 
+	options.SetDefault("kafka.timeout", 5000)
 	options.SetDefault("kafka.group.id", "playbook-dispatcher")
 	options.SetDefault("kafka.auto.offset.reset", "latest")
 	options.SetDefault("kafka.auto.commit.interval.ms", 5000)
@@ -32,6 +33,11 @@ func Get() *viper.Viper {
 	options.SetDefault("kafka.retry.backoff.ms", 100)
 
 	options.SetDefault("schema.message.response", "./schema/playbookRunResponse.message.yaml")
+	options.SetDefault("schema.runner.event", "./schema/ansibleRunnerJobEvent.yaml")
+
+	options.SetDefault("storage.timeout", 10)
+	options.SetDefault("storage.retries", 3)
+	options.SetDefault("artifact.max.size", 1024*1024)
 
 	if os.Getenv("CLOWDER_ENABLED") != "false" {
 		options.SetDefault("web.port", clowder.LoadedConfig.WebPort)
@@ -40,6 +46,8 @@ func Get() *viper.Viper {
 
 		options.SetDefault("kafka.bootstrap.servers", strings.Join(clowder.KafkaServers, ","))
 		options.SetDefault("topic.responses", clowder.KafkaTopics["platform.playbook-dispatcher.responses"].Name)
+		options.SetDefault("topic.validation.request", clowder.KafkaTopics["platform.upload.playbook"].Name)
+		options.SetDefault("topic.validation.response", clowder.KafkaTopics["platform.upload.validation"].Name)
 
 		options.SetDefault("log.cw.accessKeyId", clowder.LoadedConfig.Logging.Cloudwatch.AccessKeyId)
 		options.SetDefault("log.cw.secretAccessKey", clowder.LoadedConfig.Logging.Cloudwatch.SecretAccessKey)
@@ -58,6 +66,8 @@ func Get() *viper.Viper {
 
 		options.SetDefault("kafka.bootstrap.servers", "kafka:29092")
 		options.SetDefault("topic.responses", "platform.playbook-dispatcher.responses")
+		options.SetDefault("topic.validation.request", "platform.upload.playbook")
+		options.SetDefault("topic.validation.response", "platform.upload.validation")
 
 		options.SetDefault("db.host", "localhost")
 		options.SetDefault("db.port", 5432)

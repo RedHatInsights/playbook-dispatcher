@@ -9,6 +9,7 @@ import (
 	"playbook-dispatcher/internal/common/config"
 	"playbook-dispatcher/internal/common/utils"
 	responseConsumer "playbook-dispatcher/internal/response-consumer"
+	"playbook-dispatcher/internal/validator"
 	"syscall"
 	"time"
 
@@ -44,13 +45,15 @@ func run(cmd *cobra.Command, args []string) error {
 	stopActions := []func(ctx context.Context){}
 
 	for _, module := range modules {
+		log.Infof("Starting module %s", module)
+
 		switch module {
 		case moduleApi:
-			log.Infof("Starting module %s", module)
 			stopActions = append(stopActions, api.Start(cfg, log, errors, readinessProbeHandler, livenessProbeHandler))
 		case moduleResponseConsumer:
-			log.Infof("Starting module %s", module)
 			stopActions = append(stopActions, responseConsumer.Start(cfg, log, errors, readinessProbeHandler, livenessProbeHandler))
+		case moduleValidator:
+			stopActions = append(stopActions, validator.Start(cfg, log, errors, readinessProbeHandler, livenessProbeHandler))
 		default:
 			return fmt.Errorf("Unknown module %s", module)
 		}

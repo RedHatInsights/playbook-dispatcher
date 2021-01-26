@@ -14,6 +14,7 @@ var (
 const (
 	moduleApi              = "api"
 	moduleResponseConsumer = "response-consumer"
+	moduleValidator        = "validator"
 )
 
 func init() {
@@ -23,7 +24,7 @@ func init() {
 		RunE:  run,
 	}
 
-	runCommand.Flags().StringSliceP("module", "m", []string{moduleApi, moduleResponseConsumer}, "module(s) to run")
+	runCommand.Flags().StringSliceP("module", "m", []string{moduleApi, moduleResponseConsumer, moduleValidator}, "module(s) to run")
 	rootCmd.AddCommand(runCommand)
 
 	migrateCmd := &cobra.Command{

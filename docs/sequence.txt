@@ -1,0 +1,62 @@
+title Playbook Dispatcher
+
+participantgroup #skyblue **cloud.redhat.com**
+participant "A Platform\nService" as SVC
+participant "Playbook Dispatcher\nAPI" as PDA
+participant "Playbook Dispatcher\nConsumer" as PDC
+participant "Playbook Artifact\nValidator" as PDV
+participant "Cloud Connector" as CC2
+participant Ingress
+participant S3
+end
+
+participantgroup #lightyellow **On premise**
+participant "Connector Client" as CC
+participant "Ansible Runner" as AR
+end
+
+SVC->PDA:Run playbook https://xyz on\nhost e93e34cb-1a25-406e-83f8-e62cdd1216b2\nusing e93e34cb-1a25-406e-83f8-e62cdd1216b2
+
+PDA->PDA:Create a database record\nfor playbook run of https://xyz\non e93e34cb-1a25-406e-83f8-e62cdd1216b2
+
+PDA->CC2:playbook work request\nhttps://xyz
+
+CC2->(2)CC:playbook work request\nhttps://xyz
+
+SVC<-CC:Fetch https://xyz
+SVC-->CC:Playbook content
+
+CC->AR: Run playbook
+activate AR
+space 5
+deactivate AR
+CC<--AR: Runner events
+
+CC->Ingress: Upload archive with Runner events
+
+Ingress->S3: Put archive in S3
+Ingress->(2)PDV:Upload announced on\nplatform.upload.playbook topic
+
+activate PDV
+
+PDV->S3: Fetch uploaded archive
+PDV<--S3: Uploaded data
+
+alt uploaded archive invalid
+Ingress(2)<-PDV:Publish "validation failure" message\nto platform.upload.validation topic
+else uploaded archive valid
+Ingress(2)<-PDV:Publish "validation success" message\nto platform.upload.validation topic
+PDV->(2)PDC: Publish processed Runner events\nto platform.playbook-dispatcher.responses topic
+deactivate PDV
+end
+
+
+activate PDC
+PDC->PDC:Process Runner events to infer \nrun status, log output, etc.\nPersist the result in the database.
+deactivate PDC
+
+opt Synchronous API
+SVC->PDA: Check status of https://xyz\non e93e34cb-1a25-406e-83f8-e62cdd1216b2
+
+SVC<--PDA: Status of https://xyz\non e93e34cb-1a25-406e-83f8-e62cdd1216b2
+end
