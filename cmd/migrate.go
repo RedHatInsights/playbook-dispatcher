@@ -22,7 +22,7 @@ func migrate(cmd *cobra.Command, args []string) error {
 	log := utils.GetLoggerOrDie()
 	cfg := config.Get()
 
-	_, sql := db.Connect(cfg)
+	_, sql := db.Connect(cfg, log)
 	driver, err := postgres.WithInstance(sql, &postgres.Config{})
 	utils.DieOnError(err)
 

@@ -29,7 +29,7 @@ func init() {
 }
 
 func Start(cfg *viper.Viper, log *zap.SugaredLogger, errors chan error, ready, live *utils.ProbeHandler) func(ctx context.Context) {
-	db, sql := db.Connect(cfg)
+	db, sql := db.Connect(cfg, log)
 
 	ready.Register(sql.Ping)
 	live.Register(sql.Ping)
