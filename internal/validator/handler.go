@@ -26,7 +26,7 @@ var (
 		Timeout: time.Duration(cfg.GetInt64("storage.timeout") * int64(time.Second)),
 	}
 	ingressResponseTopic    = cfg.GetString("topic.validation.response")
-	dispatcherResponseTopic = cfg.GetString("topic.responses")
+	dispatcherResponseTopic = cfg.GetString("topic.updates")
 )
 
 const (

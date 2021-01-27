@@ -20,8 +20,8 @@
         ],
         "topics": [
             {
-                "requestedName": "platform.playbook-dispatcher.responses",
-                "name": "platform.playbook-dispatcher.responses"
+                "requestedName": "platform.playbook-dispatcher.runner-updates",
+                "name": "platform.playbook-dispatcher.runner-updates"
             },
             {
                 "requestedName": "platform.upload.playbook",

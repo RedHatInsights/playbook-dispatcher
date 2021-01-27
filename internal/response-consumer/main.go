@@ -26,7 +26,7 @@ func Start(cfg *viper.Viper, log *zap.SugaredLogger, errors chan error, ready, l
 	live.Register(sql.Ping)
 
 	kafkaTimeout := cfg.GetInt("kafka.timeout")
-	consumer, err := kafka.NewConsumer(cfg, cfg.GetString("topic.responses"))
+	consumer, err := kafka.NewConsumer(cfg, cfg.GetString("topic.updates"))
 	utils.DieOnError(err)
 
 	ready.Register(func() error {
