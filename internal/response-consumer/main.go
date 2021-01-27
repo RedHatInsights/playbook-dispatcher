@@ -21,7 +21,7 @@ func Start(cfg *viper.Viper, log *zap.SugaredLogger, errors chan error, ready, l
 	err = yaml.Unmarshal(file, &schema)
 	utils.DieOnError(err)
 
-	db, sql := db.Connect(cfg)
+	db, sql := db.Connect(cfg, log)
 	ready.Register(sql.Ping)
 	live.Register(sql.Ping)
 
