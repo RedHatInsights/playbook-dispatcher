@@ -45,7 +45,7 @@ func Start(cfg *viper.Viper, log *zap.SugaredLogger) *Probes {
 	// https://www.robustperception.io/existential-issues-with-metrics
 	errorTotal.WithLabelValues(errorUnmarshall)
 	errorTotal.WithLabelValues(errorS3)
-	producerError.WithLabelValues(cfg.GetString("topic.responses"))
+	producerError.WithLabelValues(cfg.GetString("topic.updates"))
 	producerError.WithLabelValues(cfg.GetString("topic.validation.response"))
 
 	return New(log)

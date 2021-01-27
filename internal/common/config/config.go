@@ -45,7 +45,7 @@ func Get() *viper.Viper {
 		options.SetDefault("metrics.path", clowder.LoadedConfig.MetricsPath)
 
 		options.SetDefault("kafka.bootstrap.servers", strings.Join(clowder.KafkaServers, ","))
-		options.SetDefault("topic.responses", clowder.KafkaTopics["platform.playbook-dispatcher.responses"].Name)
+		options.SetDefault("topic.updates", clowder.KafkaTopics["platform.playbook-dispatcher.runner-updates"].Name)
 		options.SetDefault("topic.validation.request", clowder.KafkaTopics["platform.upload.playbook"].Name)
 		options.SetDefault("topic.validation.response", clowder.KafkaTopics["platform.upload.validation"].Name)
 
@@ -65,7 +65,7 @@ func Get() *viper.Viper {
 		options.SetDefault("metrics.path", "/metrics")
 
 		options.SetDefault("kafka.bootstrap.servers", "kafka:29092")
-		options.SetDefault("topic.responses", "platform.playbook-dispatcher.responses")
+		options.SetDefault("topic.updates", "platform.playbook-dispatcher.runner-updates")
 		options.SetDefault("topic.validation.request", "platform.upload.playbook")
 		options.SetDefault("topic.validation.response", "platform.upload.validation")
 
