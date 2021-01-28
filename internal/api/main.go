@@ -5,12 +5,13 @@ import (
 	"fmt"
 	"net/http"
 	"playbook-dispatcher/internal/api/controllers"
+	"playbook-dispatcher/internal/api/middleware"
 	"playbook-dispatcher/internal/common/db"
 	"playbook-dispatcher/internal/common/utils"
 
 	"go.uber.org/zap"
 
-	"github.com/deepmap/oapi-codegen/pkg/middleware"
+	oapiMiddleware "github.com/deepmap/oapi-codegen/pkg/middleware"
 	"github.com/getkin/kin-openapi/openapi3"
 	echoPrometheus "github.com/globocom/echo-prometheus"
 	"github.com/labstack/echo/v4"
@@ -56,11 +57,12 @@ func Start(cfg *viper.Viper, log *zap.SugaredLogger, errors chan error, ready, l
 	internal := server.Group("/internal/*")
 	public := server.Group("/api/playbook-dispatcher/v1/*")
 
-	internal.Use(middleware.OapiRequestValidator(spec))
+	internal.Use(oapiMiddleware.OapiRequestValidator(spec))
 	controllers.RegisterHandlers(internal, ctrl)
 
 	public.Use(echo.WrapMiddleware(identity.EnforceIdentity))
-	public.Use(middleware.OapiRequestValidator(spec))
+	public.Use(echo.WrapMiddleware(middleware.EnforceIdentityType))
+	public.Use(oapiMiddleware.OapiRequestValidator(spec))
 	controllers.RegisterHandlers(public, ctrl)
 
 	go func() {
