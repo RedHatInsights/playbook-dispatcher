@@ -11,13 +11,15 @@ import (
 	identityMiddleware "github.com/redhatinsights/platform-go-middlewares/identity"
 )
 
+const defaultLimit = 50
+
 // these functions should not be needed - the generated code should fill in default values from the schema
 func getLimit(params ApiRunsListParams) int {
 	if params.Limit != nil {
 		return (int(*params.Limit))
 	}
 
-	return 50
+	return defaultLimit
 }
 
 func getOffset(params ApiRunsListParams) int {
@@ -53,10 +55,10 @@ func (this *controllers) ApiRunsList(ctx echo.Context, params ApiRunsListParams)
 		if params.Filter.Status != nil {
 			status := *params.Filter.Status
 			switch status {
-			case "timeout": // TODO
+			case dbModel.RunStatusTimeout:
 				queryBuilder.Where("runs.created_at + runs.timeout * interval '1 second' <= NOW()")
-				status = "running" // TODO
-			case "running": // TODO
+				status = dbModel.RunStatusRunning
+			case dbModel.RunStatusRunning:
 				queryBuilder.Where("runs.created_at + runs.timeout * interval '1 second' > NOW()")
 			}
 

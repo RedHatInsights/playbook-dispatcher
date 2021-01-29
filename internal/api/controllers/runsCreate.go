@@ -26,7 +26,7 @@ func (this *controllers) ApiInternalRunsCreate(ctx echo.Context) error {
 	for _, runInput := range input {
 		// TODO: here we'll be making a call to cloud connector which gives us the correlation id
 		correlationId := uuid.New()
-		entity, err := newRun(&runInput, correlationId, "running") // TODO: constant
+		entity, err := newRun(&runInput, correlationId, dbModel.RunStatusRunning)
 		if err != nil {
 			result = append(result, &RunCreated{
 				Code: http.StatusInternalServerError,

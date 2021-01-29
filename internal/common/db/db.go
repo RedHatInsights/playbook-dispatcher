@@ -10,6 +10,7 @@ import (
 	"github.com/spf13/viper"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 func Connect(cfg *viper.Viper, log *zap.SugaredLogger) (*gorm.DB, *sql.DB) {
@@ -30,7 +31,7 @@ func Connect(cfg *viper.Viper, log *zap.SugaredLogger) (*gorm.DB, *sql.DB) {
 	log.Infow("Connecting to database", "host", cfg.GetString("db.host"), "sslmode", cfg.GetString("db.sslmode"))
 
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
-		//Logger: logger.Default.LogMode(logger.Info),
+		Logger: logger.Default.LogMode(logger.Info),
 	})
 
 	utils.DieOnError(err)

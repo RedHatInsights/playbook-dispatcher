@@ -57,10 +57,10 @@ func inferStatus(events *[]message.PlaybookRunResponseMessageYamlEventsElem) str
 
 	switch {
 	case finished && failed:
-		return "failure" // TODO constants
+		return db.RunStatusFailure
 	case finished && !failed:
-		return "success"
+		return db.RunStatusSuccess
 	default:
-		return "running"
+		return db.RunStatusRunning
 	}
 }
