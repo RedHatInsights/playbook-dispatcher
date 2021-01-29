@@ -175,12 +175,35 @@ components:
       schema:
         type: object
         properties:
+          status:
+            # TODO: reuse
+            #$ref: '#/components/schemas/RunStatus'
+            type: string
+            # this property should not be nullable however it is set so as a workaround for
+            # https://github.com/getkin/kin-openapi/issues/293
+            nullable: true
+            enum:
+              - running
+              - success
+              - failure
+              - timeout
+          recipient:
+            # TODO: reuse
+            #$ref: '#/components/schemas/RunRecipient'
+            type: string
+            # this property should not be nullable however it is set so as a workaround for
+            # https://github.com/getkin/kin-openapi/issues/293
+            nullable: true
+            format: uuid
+          # See ./internal/api/middleware/labelFilters.go
           labels:
             type: object
+            # this property should not be nullable however it is set so as a workaround for
+            # https://github.com/getkin/kin-openapi/issues/293
+            nullable: true
             additionalProperties:
               type: string
-          status:
-            type: string
+        required: []
     RunsSortBy:
       in: query
       name: sort_by

@@ -8,7 +8,7 @@ require (
 	github.com/aws/aws-sdk-go v1.36.28
 	github.com/confluentinc/confluent-kafka-go v1.5.2
 	github.com/deepmap/oapi-codegen v1.4.2
-	github.com/getkin/kin-openapi v0.35.0
+	github.com/getkin/kin-openapi v0.36.0
 	github.com/ghodss/yaml v1.0.0
 	github.com/globocom/echo-prometheus v0.1.2
 	github.com/golang-migrate/migrate v3.5.4+incompatible

@@ -105,8 +105,9 @@ type Offset int
 
 // RunsFilter defines model for RunsFilter.
 type RunsFilter struct {
-	Labels *Labels `json:"labels,omitempty"`
-	Status *string `json:"status,omitempty"`
+	Labels    *Labels `json:"labels"`
+	Recipient *string `json:"recipient"`
+	Status    *string `json:"status"`
 }
 
 // RunsSortBy defines model for RunsSortBy.
