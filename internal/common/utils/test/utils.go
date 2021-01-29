@@ -28,6 +28,7 @@ func NewRunWithStatus(account string, status string) *dbModel.Run {
 		CorrelationID: uuid.New(),
 		PlaybookURL:   "http://example.com",
 		Status:        status,
+		Timeout:       3600,
 	}
 }
 

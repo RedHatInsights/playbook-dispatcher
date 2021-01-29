@@ -3,6 +3,7 @@ package controllers
 import (
 	"fmt"
 	"net/http"
+	"playbook-dispatcher/internal/api/middleware"
 	dbModel "playbook-dispatcher/internal/common/model/db"
 	"strings"
 
@@ -47,6 +48,31 @@ func (this *controllers) ApiRunsList(ctx echo.Context, params ApiRunsListParams)
 	queryBuilder := this.database.Where(&dbModel.Run{
 		Account: identity.Identity.AccountNumber,
 	})
+
+	if params.Filter != nil {
+		if params.Filter.Status != nil {
+			status := *params.Filter.Status
+			switch status {
+			case "timeout": // TODO
+				queryBuilder.Where("runs.created_at + runs.timeout * interval '1 second' <= NOW()")
+				status = "running" // TODO
+			case "running": // TODO
+				queryBuilder.Where("runs.created_at + runs.timeout * interval '1 second' > NOW()")
+			}
+
+			queryBuilder.Where("runs.status = ?", status)
+		}
+
+		if params.Filter.Recipient != nil {
+			queryBuilder.Where("runs.recipient = ?", *params.Filter.Recipient)
+		}
+	}
+
+	if labelFilters := middleware.GetLabelFilters(ctx); len(labelFilters) > 0 {
+		for key, value := range labelFilters {
+			queryBuilder.Where("runs.labels ->> ? = ?", key, value)
+		}
+	}
 
 	queryBuilder.Order(getOrderBy(params))
 	queryBuilder.Order("id") // secondary criteria to guarantee stable sorting

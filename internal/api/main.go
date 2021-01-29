@@ -62,6 +62,7 @@ func Start(cfg *viper.Viper, log *zap.SugaredLogger, errors chan error, ready, l
 
 	public.Use(echo.WrapMiddleware(identity.EnforceIdentity))
 	public.Use(echo.WrapMiddleware(middleware.EnforceIdentityType))
+	public.Use(middleware.LabelFiltersHack)
 	public.Use(oapiMiddleware.OapiRequestValidator(spec))
 	controllers.RegisterHandlers(public, ctrl)
 
