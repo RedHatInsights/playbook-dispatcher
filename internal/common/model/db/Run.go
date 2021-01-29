@@ -8,6 +8,13 @@ import (
 	"github.com/google/uuid"
 )
 
+const (
+	RunStatusRunning = "running"
+	RunStatusSuccess = "success"
+	RunStatusFailure = "failure"
+	RunStatusTimeout = "timeout"
+)
+
 type Run struct {
 	ID      uuid.UUID `gorm:"type:uuid"`
 	Account string
