@@ -21,7 +21,7 @@ type Run struct {
 
 	Recipient     uuid.UUID `gorm:"type:uuid"`
 	CorrelationID uuid.UUID `gorm:"type:uuid"`
-	PlaybookURL   string
+	URL           string
 
 	Status string
 	Labels Labels

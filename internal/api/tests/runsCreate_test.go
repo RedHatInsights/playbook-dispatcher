@@ -51,7 +51,7 @@ var _ = Describe("runsCreate", func() {
 			Expect(result.Error).ToNot(HaveOccurred())
 			Expect(run.Account).To(Equal(accountNumber()))
 			Expect(run.Recipient).To(Equal(recipient))
-			Expect(run.PlaybookURL).To(Equal(url))
+			Expect(run.URL).To(Equal(url))
 			Expect(run.Status).To(Equal("running"))
 			Expect(run.Labels).To(BeEmpty())
 			Expect(run.Timeout).To(Equal(3600))

@@ -6,12 +6,16 @@ package controllers
 import (
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/pkg/errors"
 )
 
 // Account defines model for Account.
 type Account string
+
+// CreatedAt defines model for CreatedAt.
+type CreatedAt time.Time
 
 // Labels defines model for Labels.
 type Labels struct {
@@ -27,15 +31,21 @@ type Meta struct {
 
 // Run defines model for Run.
 type Run struct {
-	Account   Account      `json:"account"`
-	Id        RunId        `json:"id"`
-	Labels    Labels       `json:"labels"`
-	Recipient RunRecipient `json:"recipient"`
-	Status    RunStatus    `json:"status"`
+	Account *Account `json:"account,omitempty"`
+
+	// A timestamp when the entry was created
+	CreatedAt *CreatedAt    `json:"created_at,omitempty"`
+	Id        *RunId        `json:"id,omitempty"`
+	Labels    *Labels       `json:"labels,omitempty"`
+	Recipient *RunRecipient `json:"recipient,omitempty"`
+	Status    *RunStatus    `json:"status,omitempty"`
 
 	// Amount of seconds after which the run is considered failed due to timeout
-	Timeout RunTimeout `json:"timeout"`
-	Url     Url        `json:"url"`
+	Timeout *RunTimeout `json:"timeout,omitempty"`
+
+	// A timestamp when the entry was last updated
+	UpdatedAt *UpdatedAt `json:"updated_at,omitempty"`
+	Url       *Url       `json:"url,omitempty"`
 }
 
 // RunCreated defines model for RunCreated.
@@ -86,6 +96,9 @@ type Runs struct {
 // RunsCreated defines model for RunsCreated.
 type RunsCreated []RunCreated
 
+// UpdatedAt defines model for UpdatedAt.
+type UpdatedAt time.Time
+
 // Url defines model for Url.
 type Url string
 
@@ -94,6 +107,11 @@ type Limit int
 
 // Offset defines model for Offset.
 type Offset int
+
+// RunsFields defines model for RunsFields.
+type RunsFields struct {
+	Data *string `json:"data,omitempty"`
+}
 
 // RunsFilter defines model for RunsFilter.
 type RunsFilter struct {
@@ -115,6 +133,7 @@ const (
 // ApiRunsListParams defines parameters for ApiRunsList.
 type ApiRunsListParams struct {
 	Filter *RunsFilter `json:"filter,omitempty"`
+	Fields *RunsFields `json:"fields,omitempty"`
 	SortBy *RunsSortBy `json:"sort_by,omitempty"`
 
 	// Maximum number of results to return
