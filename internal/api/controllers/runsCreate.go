@@ -61,7 +61,7 @@ func newRun(input *RunInput, correlationId uuid.UUID, status string) (*dbModel.R
 		ID:            uuid.New(),
 		Account:       string(input.Account),
 		CorrelationID: correlationId,
-		PlaybookURL:   string(input.Url),
+		URL:           string(input.Url),
 		Status:        status,
 	}
 

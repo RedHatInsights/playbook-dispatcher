@@ -1,7 +1,9 @@
 package tests
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	dbModel "playbook-dispatcher/internal/common/model/db"
 	"playbook-dispatcher/internal/common/utils/test"
@@ -15,6 +17,14 @@ import (
 )
 
 func listRuns(params ...string) (*Runs, *ApiRunsListResponse) {
+	raw := listRunsRaw(params...)
+	res, err := ParseApiRunsListResponse(raw)
+	Expect(err).ToNot(HaveOccurred())
+
+	return res.JSON200, res
+}
+
+func listRunsRaw(params ...string) *http.Response {
 	url := "http://localhost:9002/api/playbook-dispatcher/v1/runs"
 
 	if len(params) > 0 {
@@ -27,10 +37,7 @@ func listRuns(params ...string) (*Runs, *ApiRunsListResponse) {
 	req.Header.Set("x-rh-identity", test.IdentityHeaderMinimal(accountNumber()))
 	resp, err := test.Client.Do(req)
 	Expect(err).ToNot(HaveOccurred())
-	res, err := ParseApiRunsListResponse(resp)
-	Expect(err).ToNot(HaveOccurred())
-
-	return res.JSON200, res
+	return resp
 }
 
 var _ = Describe("runsList", func() {
@@ -47,13 +54,12 @@ var _ = Describe("runsList", func() {
 			Expect(res.StatusCode()).To(Equal(http.StatusOK))
 			Expect(runs.Data).To(HaveLen(1))
 			run := runs.Data[0]
-			Expect(string(run.Id)).To(Equal(data.ID.String()))
-			Expect(string(run.Account)).To(Equal(data.Account))
+			Expect(string(*run.Id)).To(Equal(data.ID.String()))
 			Expect(run.Labels.AdditionalProperties["foo"]).To(Equal(data.Labels["foo"]))
-			Expect(string(run.Recipient)).To(Equal(data.Recipient.String()))
-			Expect(string(run.Status)).To(Equal(data.Status))
-			Expect(int(run.Timeout)).To(Equal(data.Timeout))
-			Expect(string(run.Url)).To(Equal(data.PlaybookURL))
+			Expect(string(*run.Recipient)).To(Equal(data.Recipient.String()))
+			Expect(string(*run.Status)).To(Equal(data.Status))
+			Expect(int(*run.Timeout)).To(Equal(data.Timeout))
+			Expect(string(*run.Url)).To(Equal(data.URL))
 		})
 	})
 
@@ -77,7 +83,7 @@ var _ = Describe("runsList", func() {
 				Expect(runs.Data).To(HaveLen(2))
 
 				for i, status := range expected {
-					Expect(runs.Data[i].Status).To(Equal(status))
+					Expect(*runs.Data[i].Status).To(Equal(status))
 				}
 			},
 
@@ -168,7 +174,7 @@ var _ = Describe("runsList", func() {
 					runs, res := listRuns(fmt.Sprintf("filter[status]=%s", status))
 					Expect(res.StatusCode()).To(Equal(http.StatusOK))
 					Expect(runs.Meta.Count).To(Equal(1))
-					Expect(string(runs.Data[0].Id)).To(Equal(data[index].ID.String()))
+					Expect(string(*runs.Data[0].Id)).To(Equal(data[index].ID.String()))
 				},
 
 				Entry("success", "success", 0),
@@ -199,7 +205,7 @@ var _ = Describe("runsList", func() {
 				runs, res := listRuns(fmt.Sprintf("filter[recipient]=%s", data[1].Recipient))
 				Expect(res.StatusCode()).To(Equal(http.StatusOK))
 				Expect(runs.Meta.Count).To(Equal(1))
-				Expect(string(runs.Data[0].Recipient)).To(Equal(data[1].Recipient.String()))
+				Expect(string(*runs.Data[0].Recipient)).To(Equal(data[1].Recipient.String()))
 			})
 
 			It("returns empty result on non-match", func() {
@@ -241,15 +247,15 @@ var _ = Describe("runsList", func() {
 				Expect(res.StatusCode()).To(Equal(http.StatusOK))
 				Expect(runs.Meta.Count).To(Equal(2))
 				expectedIds := []string{data[1].ID.String(), data[2].ID.String()}
-				Expect(expectedIds).To(ContainElement(string(runs.Data[0].Id)))
-				Expect(expectedIds).To(ContainElement(string(runs.Data[1].Id)))
+				Expect(expectedIds).To(ContainElement(string(*runs.Data[0].Id)))
+				Expect(expectedIds).To(ContainElement(string(*runs.Data[1].Id)))
 			})
 
 			It("finds all runs matching a combination of two labels", func() {
 				runs, res := listRuns("filter[labels][service]=remediations", "filter[labels][foo]=bar")
 				Expect(res.StatusCode()).To(Equal(http.StatusOK))
 				Expect(runs.Meta.Count).To(Equal(1))
-				Expect(string(runs.Data[0].Id)).To(Equal(data[1].ID.String()))
+				Expect(string(*runs.Data[0].Id)).To(Equal(data[1].ID.String()))
 			})
 
 			It("does not find anything if labels do not match", func() {
@@ -259,4 +265,30 @@ var _ = Describe("runsList", func() {
 			})
 		})
 	})
+
+	DescribeTable("sparse fieldsets",
+		func(fields ...string) {
+			Expect(db().Create(test.NewRun(accountNumber())).Error).ToNot(HaveOccurred())
+
+			res := listRunsRaw(fmt.Sprintf("fields[data]=%s", strings.Join(fields, ",")))
+			Expect(res.StatusCode).To(Equal(http.StatusOK))
+
+			bodyBytes, err := ioutil.ReadAll(res.Body)
+			Expect(err).ToNot(HaveOccurred())
+			defer res.Body.Close()
+
+			representation := make(map[string]interface{})
+			json.Unmarshal(bodyBytes, &representation)
+
+			runs := representation["data"].([]interface{})
+			Expect(runs[0]).To(HaveLen(len(fields)))
+			for _, field := range fields {
+				Expect(runs[0]).To(HaveKey(field))
+			}
+		},
+
+		Entry("single field", "id"),
+		Entry("defaults defined explicitly", "id", "recipient", "url", "labels", "timeout", "status"),
+		Entry("all fields", "id", "recipient", "url", "labels", "timeout", "status", "created_at", "updated_at"),
+	)
 })

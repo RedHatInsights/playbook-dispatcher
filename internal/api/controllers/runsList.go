@@ -42,14 +42,37 @@ func getOrderBy(params ApiRunsListParams) string {
 	}
 }
 
+func parseFields(input *RunsFields) ([]string, error) {
+	if input == nil || input.Data == nil {
+		return defaultFields, nil
+	}
+
+	result := []string{}
+
+	for _, field := range strings.Split(*input.Data, ",") {
+		if _, ok := fields[field]; ok {
+			result = append(result, field)
+		} else {
+			return nil, fmt.Errorf("unknown field: %s", field)
+		}
+	}
+
+	return result, nil
+}
+
 func (this *controllers) ApiRunsList(ctx echo.Context, params ApiRunsListParams) error {
 	var dbRuns []dbModel.Run
 
 	identity := identityMiddleware.Get(ctx.Request().Context())
 
-	queryBuilder := this.database.Where(&dbModel.Run{
-		Account: identity.Identity.AccountNumber,
-	})
+	queryBuilder := this.database.Where("account = ?", identity.Identity.AccountNumber)
+
+	fields, err := parseFields(params.Fields)
+	if err != nil {
+		panic(err) // TODO
+	}
+
+	queryBuilder.Select(fields)
 
 	if params.Filter != nil {
 		if params.Filter.Status != nil {
@@ -92,7 +115,7 @@ func (this *controllers) ApiRunsList(ctx echo.Context, params ApiRunsListParams)
 	response := make([]Run, len(dbRuns))
 
 	for i, v := range dbRuns {
-		response[i] = *dbRuntoApiRun(&v)
+		response[i] = *dbRuntoApiRun(&v, fields)
 	}
 
 	return ctx.JSON(http.StatusOK, &Runs{

@@ -30,6 +30,7 @@ paths:
       operationId: api.runs.list
       parameters:
       - $ref: '#/components/parameters/RunsFilter'
+      - $ref: '#/components/parameters/RunsFields'
       - $ref: '#/components/parameters/RunsSortBy'
       - $ref: '#/components/parameters/Limit'
       - $ref: '#/components/parameters/Offset'
@@ -80,6 +81,16 @@ components:
         - failure
         - timeout
 
+    CreatedAt:
+      description: A timestamp when the entry was created
+      type: string
+      format: date-time
+
+    UpdatedAt:
+      description: A timestamp when the entry was last updated
+      type: string
+      format: date-time
+
     Runs:
       type: object
       properties:
@@ -128,14 +139,12 @@ components:
           $ref: '#/components/schemas/RunTimeout'
         status:
           $ref: '#/components/schemas/RunStatus'
-      required:
-      - id
-      - account
-      - recipient
-      - url
-      - labels
-      - timeout
-      - status
+        created_at:
+          $ref: '#/components/schemas/CreatedAt'
+        updated_at:
+          $ref: '#/components/schemas/UpdatedAt'
+      required: []
+
 
     RunCreated:
       type: object
@@ -203,6 +212,18 @@ components:
             nullable: true
             additionalProperties:
               type: string
+        required: []
+    RunsFields:
+      in: query
+      name: fields
+      required: false
+      style: deepObject
+      explode: true
+      schema:
+        type: object
+        properties:
+          data:
+            type: string
         required: []
     RunsSortBy:
       in: query

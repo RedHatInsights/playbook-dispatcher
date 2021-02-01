@@ -1,17 +1,75 @@
 package controllers
 
-import dbModel "playbook-dispatcher/internal/common/model/db"
+import (
+	dbModel "playbook-dispatcher/internal/common/model/db"
+	"playbook-dispatcher/internal/common/utils"
 
-func dbRuntoApiRun(r *dbModel.Run) *Run {
-	return &Run{
-		Id:        RunId(r.ID.String()),
-		Account:   Account(r.Account),
-		Recipient: RunRecipient(r.Recipient.String()),
-		Url:       Url(r.PlaybookURL),
-		Timeout:   RunTimeout(r.Timeout),
-		Status:    RunStatus(r.Status),
-		Labels: Labels{
-			AdditionalProperties: r.Labels,
-		},
+	"github.com/google/uuid"
+)
+
+const (
+	fieldId        = "id"
+	fieldAccount   = "account"
+	fieldRecipient = "recipient"
+	fieldUrl       = "url"
+	fieldLabels    = "labels"
+	fieldTimeout   = "timeout"
+	fieldStatus    = "status"
+	fieldCreatedAt = "created_at"
+	fieldUpdatedAt = "updated_at"
+)
+
+var fields = utils.IndexStrings(fieldId, fieldAccount, fieldRecipient, fieldUrl, fieldLabels, fieldTimeout, fieldStatus, fieldCreatedAt, fieldUpdatedAt)
+
+var defaultFields = []string{
+	fieldId,
+	fieldRecipient,
+	fieldUrl,
+	fieldLabels,
+	fieldTimeout,
+	fieldStatus,
+}
+
+func dbRuntoApiRun(r *dbModel.Run, fields []string) *Run {
+	run := Run{}
+
+	for _, field := range fields {
+		switch field {
+		case fieldId:
+			run.Id = (*RunId)(convertUuid(r.ID))
+		case fieldAccount:
+			value := Account(r.Account)
+			run.Account = &value
+		case fieldRecipient:
+			run.Recipient = (*RunRecipient)(convertUuid(r.Recipient))
+		case fieldUrl:
+			value := Url(r.URL)
+			run.Url = &value
+		case fieldLabels:
+			run.Labels = (&Labels{
+				AdditionalProperties: r.Labels,
+			})
+		case fieldTimeout:
+			value := RunTimeout(r.Timeout)
+			run.Timeout = &value
+		case fieldStatus:
+			value := RunStatus(r.Status)
+			run.Status = &value
+		case fieldCreatedAt:
+			val := CreatedAt(r.CreatedAt)
+			run.CreatedAt = &val
+		case fieldUpdatedAt:
+			val := UpdatedAt(r.UpdatedAt)
+			run.UpdatedAt = &val
+		default:
+			panic("unknown field " + field)
+		}
 	}
+
+	return &run
+}
+
+func convertUuid(value uuid.UUID) *string {
+	result := value.String()
+	return &result
 }

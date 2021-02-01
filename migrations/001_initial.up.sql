@@ -6,7 +6,7 @@ CREATE TABLE runs (
 
     recipient uuid NOT NULL,
     correlation_id uuid NOT NULL,
-    playbook_url varchar NOT NULL,
+    url varchar NOT NULL,
 
     labels jsonb NOT NULL default '{}',
 
