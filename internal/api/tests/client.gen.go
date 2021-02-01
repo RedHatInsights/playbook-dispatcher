@@ -25,6 +25,11 @@ type Account string
 // CreatedAt defines model for CreatedAt.
 type CreatedAt time.Time
 
+// Error defines model for Error.
+type Error struct {
+	Message string `json:"message"`
+}
+
 // Labels defines model for Labels.
 type Labels struct {
 	AdditionalProperties map[string]string `json:"-"`
@@ -118,7 +123,7 @@ type Offset int
 
 // RunsFields defines model for RunsFields.
 type RunsFields struct {
-	Data *string `json:"data,omitempty"`
+	Data *[]string `json:"data,omitempty"`
 }
 
 // RunsFilter defines model for RunsFilter.
@@ -587,6 +592,7 @@ type ApiRunsListResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *Runs
+	JSON400      *Error
 }
 
 // Status returns HTTPResponse.Status
@@ -673,6 +679,13 @@ func ParseApiRunsListResponse(rsp *http.Response) (*ApiRunsListResponse, error) 
 			return nil, err
 		}
 		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
 
 	}
 

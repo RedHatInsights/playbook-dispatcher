@@ -266,29 +266,40 @@ var _ = Describe("runsList", func() {
 		})
 	})
 
-	DescribeTable("sparse fieldsets",
-		func(fields ...string) {
-			Expect(db().Create(test.NewRun(accountNumber())).Error).ToNot(HaveOccurred())
+	Describe("sparse fieldsets", func() {
+		DescribeTable("happy path",
+			func(fields ...string) {
+				Expect(db().Create(test.NewRun(accountNumber())).Error).ToNot(HaveOccurred())
 
-			res := listRunsRaw(fmt.Sprintf("fields[data]=%s", strings.Join(fields, ",")))
-			Expect(res.StatusCode).To(Equal(http.StatusOK))
+				res := listRunsRaw(fmt.Sprintf("fields[data]=%s", strings.Join(fields, ",")))
+				Expect(res.StatusCode).To(Equal(http.StatusOK))
 
-			bodyBytes, err := ioutil.ReadAll(res.Body)
+				bodyBytes, err := ioutil.ReadAll(res.Body)
+				Expect(err).ToNot(HaveOccurred())
+				defer res.Body.Close()
+
+				representation := make(map[string]interface{})
+				json.Unmarshal(bodyBytes, &representation)
+
+				runs := representation["data"].([]interface{})
+				Expect(runs[0]).To(HaveLen(len(fields)))
+				for _, field := range fields {
+					Expect(runs[0]).To(HaveKey(field))
+				}
+			},
+
+			Entry("single field", "id"),
+			Entry("defaults defined explicitly", "id", "recipient", "url", "labels", "timeout", "status"),
+			Entry("all fields", "id", "recipient", "url", "labels", "timeout", "status", "created_at", "updated_at"),
+		)
+
+		It("400s on invalid value", func() {
+			raw := listRunsRaw("fields[data]=id,salad")
+			Expect(raw.StatusCode).To(Equal(http.StatusBadRequest))
+			res, err := ParseApiRunsListResponse(raw)
 			Expect(err).ToNot(HaveOccurred())
-			defer res.Body.Close()
+			Expect(res.JSON400.Message).To(Equal("unknown field: salad"))
+		})
+	})
 
-			representation := make(map[string]interface{})
-			json.Unmarshal(bodyBytes, &representation)
-
-			runs := representation["data"].([]interface{})
-			Expect(runs[0]).To(HaveLen(len(fields)))
-			for _, field := range fields {
-				Expect(runs[0]).To(HaveKey(field))
-			}
-		},
-
-		Entry("single field", "id"),
-		Entry("defaults defined explicitly", "id", "recipient", "url", "labels", "timeout", "status"),
-		Entry("all fields", "id", "recipient", "url", "labels", "timeout", "status", "created_at", "updated_at"),
-	)
 })
