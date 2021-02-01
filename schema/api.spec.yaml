@@ -42,6 +42,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Runs'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
 components:
   schemas:
@@ -174,6 +180,14 @@ components:
       required:
       - count
 
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+      required:
+      - message
+
   parameters:
     RunsFilter:
       in: query
@@ -223,7 +237,19 @@ components:
         type: object
         properties:
           data:
-            type: string
+            type: array
+            items:
+              type: string
+              enum:
+                - id
+                - account
+                - recipient
+                - url
+                - labels
+                - timeout
+                - status
+                - created_at
+                - updated_at
         required: []
     RunsSortBy:
       in: query

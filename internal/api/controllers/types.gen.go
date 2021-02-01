@@ -17,6 +17,11 @@ type Account string
 // CreatedAt defines model for CreatedAt.
 type CreatedAt time.Time
 
+// Error defines model for Error.
+type Error struct {
+	Message string `json:"message"`
+}
+
 // Labels defines model for Labels.
 type Labels struct {
 	AdditionalProperties map[string]string `json:"-"`
@@ -110,7 +115,7 @@ type Offset int
 
 // RunsFields defines model for RunsFields.
 type RunsFields struct {
-	Data *string `json:"data,omitempty"`
+	Data *[]string `json:"data,omitempty"`
 }
 
 // RunsFilter defines model for RunsFilter.

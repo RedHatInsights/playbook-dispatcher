@@ -42,14 +42,16 @@ func getOrderBy(params ApiRunsListParams) string {
 	}
 }
 
-func parseFields(input *RunsFields) ([]string, error) {
-	if input == nil || input.Data == nil {
+func parseFields(input map[string]string) ([]string, error) {
+	selectedFields, ok := input["data"]
+
+	if !ok {
 		return defaultFields, nil
 	}
 
 	result := []string{}
 
-	for _, field := range strings.Split(*input.Data, ",") {
+	for _, field := range strings.Split(selectedFields, ",") {
 		if _, ok := fields[field]; ok {
 			result = append(result, field)
 		} else {
@@ -67,9 +69,9 @@ func (this *controllers) ApiRunsList(ctx echo.Context, params ApiRunsListParams)
 
 	queryBuilder := this.database.Where("account = ?", identity.Identity.AccountNumber)
 
-	fields, err := parseFields(params.Fields)
+	fields, err := parseFields(middleware.GetDeepObject(ctx, "fields"))
 	if err != nil {
-		panic(err) // TODO
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
 	queryBuilder.Select(fields)
@@ -93,7 +95,7 @@ func (this *controllers) ApiRunsList(ctx echo.Context, params ApiRunsListParams)
 		}
 	}
 
-	if labelFilters := middleware.GetLabelFilters(ctx); len(labelFilters) > 0 {
+	if labelFilters := middleware.GetDeepObject(ctx, "filter", "labels"); len(labelFilters) > 0 {
 		for key, value := range labelFilters {
 			queryBuilder.Where("runs.labels ->> ? = ?", key, value)
 		}
