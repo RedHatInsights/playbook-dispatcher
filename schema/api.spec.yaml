@@ -2,11 +2,16 @@
 openapi: 3.0.3
 info:
   title: Playbook Dispatcher
+  description: Playbook Dispatcher is a service for running Ansible Playbooks on hosts connected via Cloud Connector.
   version: 0.0.1
-paths:
+  contact:
+    email: jozef@redhat.com
 
+paths:
   /internal/dispatch:
     post:
+      summary: Dispatch Playbooks
+      description: Dispatches Playbooks using Cloud Connector and stores corresponding run records.
       operationId: api.internal.runs.create
       requestBody:
         content:
@@ -16,7 +21,7 @@ paths:
               items:
                 $ref: '#/components/schemas/RunInput'
               minItems: 1
-              maxItems: 10 # TODO
+              maxItems: 50
       responses:
         '207':
           description: OK
@@ -27,6 +32,11 @@ paths:
 
   /api/playbook-dispatcher/v1/runs:
     get:
+      summary: List Playbook runs
+      description: >
+        Returns a list of Playbook runs for the given account.
+        The list can be filtered using the `filter` parameter.
+        The fields returned in the representation can be controller using `fields` parameter.
       operationId: api.runs.list
       parameters:
       - $ref: '#/components/parameters/RunsFilter'
@@ -52,34 +62,40 @@ paths:
 components:
   schemas:
     RunId:
+      description: Unique identifier of a Playbook run
       type: string
       format: uuid
 
     RunRecipient:
+      description: Identifier of the host to which a given Playbook is addressed
       type: string
       format: uuid
 
     RunTimeout:
-      type: integer
       description: Amount of seconds after which the run is considered failed due to timeout
+      type: integer
       default: 3600
 
     Account:
+      description: Identifier of the tenant
       type: string
       minLength: 1
       maxLength: 10
 
     Url:
+      description: URL hosting the Playbook
       type: string
       format: url
 
     Labels:
+      description: Additional metadata about the Playbook run. Can be used for filtering purposes.
       type: object
       additionalProperties:
         type: string
         default: {}
 
     RunStatus:
+      description: Current status of a Playbook run
       type: string
       enum:
         - running
@@ -149,7 +165,6 @@ components:
           $ref: '#/components/schemas/CreatedAt'
         updated_at:
           $ref: '#/components/schemas/UpdatedAt'
-      required: []
 
 
     RunCreated:
@@ -172,6 +187,7 @@ components:
     Meta:
       type: object
       additionalProperties: false
+      description: Information about returned entities
       properties:
         count:
           type: integer
@@ -190,6 +206,7 @@ components:
 
   parameters:
     RunsFilter:
+      description: Allows for filtering based on various criteria
       in: query
       name: filter
       required: false
@@ -199,11 +216,10 @@ components:
         type: object
         properties:
           status:
-            # TODO: reuse
-            #$ref: '#/components/schemas/RunStatus'
             type: string
             # this property should not be nullable however it is set so as a workaround for
             # https://github.com/getkin/kin-openapi/issues/293
+            # ideally we would reuse '#/components/schemas/RunStatus' here
             nullable: true
             enum:
               - running
@@ -211,11 +227,10 @@ components:
               - failure
               - timeout
           recipient:
-            # TODO: reuse
-            #$ref: '#/components/schemas/RunRecipient'
             type: string
             # this property should not be nullable however it is set so as a workaround for
             # https://github.com/getkin/kin-openapi/issues/293
+            # ideally we would reuse '#/components/schemas/RunRecipient' here
             nullable: true
             format: uuid
           # See ./internal/api/middleware/labelFilters.go
@@ -226,8 +241,10 @@ components:
             nullable: true
             additionalProperties:
               type: string
-        required: []
+
     RunsFields:
+      description: >
+        Defines fields to be returned in the response.
       in: query
       name: fields
       required: false
@@ -250,8 +267,17 @@ components:
                 - status
                 - created_at
                 - updated_at
-        required: []
+            default:
+              - id
+              - account
+              - recipient
+              - url
+              - labels
+              - timeout
+              - status
+
     RunsSortBy:
+      description: Sort order
       in: query
       name: sort_by
       required: false
@@ -261,16 +287,18 @@ components:
           - created_at
           - created_at:asc
           - created_at:desc
+
     Limit:
+      description: Maximum number of results to return
       in: query
       name: limit
-      description: Maximum number of results to return
       required: false
       schema:
         type: integer
         minimum: 1
         maximum: 200
         default: 50
+
     Offset:
       in: query
       name: offset

@@ -44,29 +44,43 @@ type Meta struct {
 
 // Run defines model for Run.
 type Run struct {
+
+	// Identifier of the tenant
 	Account *Account `json:"account,omitempty"`
 
 	// A timestamp when the entry was created
-	CreatedAt *CreatedAt    `json:"created_at,omitempty"`
-	Id        *RunId        `json:"id,omitempty"`
-	Labels    *Labels       `json:"labels,omitempty"`
+	CreatedAt *CreatedAt `json:"created_at,omitempty"`
+
+	// Unique identifier of a Playbook run
+	Id *RunId `json:"id,omitempty"`
+
+	// Additional metadata about the Playbook run. Can be used for filtering purposes.
+	Labels *Labels `json:"labels,omitempty"`
+
+	// Identifier of the host to which a given Playbook is addressed
 	Recipient *RunRecipient `json:"recipient,omitempty"`
-	Status    *RunStatus    `json:"status,omitempty"`
+
+	// Current status of a Playbook run
+	Status *RunStatus `json:"status,omitempty"`
 
 	// Amount of seconds after which the run is considered failed due to timeout
 	Timeout *RunTimeout `json:"timeout,omitempty"`
 
 	// A timestamp when the entry was last updated
 	UpdatedAt *UpdatedAt `json:"updated_at,omitempty"`
-	Url       *Url       `json:"url,omitempty"`
+
+	// URL hosting the Playbook
+	Url *Url `json:"url,omitempty"`
 }
 
 // RunCreated defines model for RunCreated.
 type RunCreated struct {
 
 	// status code of the request
-	Code int    `json:"code"`
-	Id   *RunId `json:"id,omitempty"`
+	Code int `json:"code"`
+
+	// Unique identifier of a Playbook run
+	Id *RunId `json:"id,omitempty"`
 }
 
 // RunId defines model for RunId.
@@ -74,13 +88,21 @@ type RunId string
 
 // RunInput defines model for RunInput.
 type RunInput struct {
-	Account   Account      `json:"account"`
-	Labels    *Labels      `json:"labels,omitempty"`
+
+	// Identifier of the tenant
+	Account Account `json:"account"`
+
+	// Additional metadata about the Playbook run. Can be used for filtering purposes.
+	Labels *Labels `json:"labels,omitempty"`
+
+	// Identifier of the host to which a given Playbook is addressed
 	Recipient RunRecipient `json:"recipient"`
 
 	// Amount of seconds after which the run is considered failed due to timeout
 	Timeout *RunTimeout `json:"timeout,omitempty"`
-	Url     Url         `json:"url"`
+
+	// URL hosting the Playbook
+	Url Url `json:"url"`
 }
 
 // RunRecipient defines model for RunRecipient.
@@ -103,7 +125,9 @@ type RunTimeout int
 // Runs defines model for Runs.
 type Runs struct {
 	Data []Run `json:"data"`
-	Meta Meta  `json:"meta"`
+
+	// Information about returned entities
+	Meta Meta `json:"meta"`
 }
 
 // RunsCreated defines model for RunsCreated.
@@ -145,8 +169,14 @@ const (
 
 // ApiRunsListParams defines parameters for ApiRunsList.
 type ApiRunsListParams struct {
+
+	// Allows for filtering based on various criteria
 	Filter *RunsFilter `json:"filter,omitempty"`
+
+	// Defines fields to be returned in the response.
 	Fields *RunsFields `json:"fields,omitempty"`
+
+	// Sort order
 	SortBy *RunsSortBy `json:"sort_by,omitempty"`
 
 	// Maximum number of results to return
