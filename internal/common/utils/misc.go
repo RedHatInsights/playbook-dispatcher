@@ -28,3 +28,13 @@ func IndexStrings(values ...string) map[string]string {
 
 	return result
 }
+
+func MapStrings(values []string, fn func(string) string) []string {
+	result := make([]string, len(values))
+
+	for i, value := range values {
+		result[i] = fn(value)
+	}
+
+	return result
+}

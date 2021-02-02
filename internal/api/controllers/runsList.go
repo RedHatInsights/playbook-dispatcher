@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"playbook-dispatcher/internal/api/middleware"
 	dbModel "playbook-dispatcher/internal/common/model/db"
+	"playbook-dispatcher/internal/common/utils"
 	"strings"
 
 	"github.com/labstack/echo/v4"
@@ -62,6 +63,15 @@ func parseFields(input map[string]string) ([]string, error) {
 	return result, nil
 }
 
+func mapFieldsToSql(field string) string {
+	// set status to "timeout" on read if the run has expired
+	if field == fieldStatus {
+		return `CASE WHEN runs.status='running' AND runs.created_at + runs.timeout * interval '1 second' <= NOW() THEN 'timeout' ELSE runs.status END as status`
+	}
+
+	return field
+}
+
 func (this *controllers) ApiRunsList(ctx echo.Context, params ApiRunsListParams) error {
 	var dbRuns []dbModel.Run
 
@@ -74,7 +84,7 @@ func (this *controllers) ApiRunsList(ctx echo.Context, params ApiRunsListParams)
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
-	queryBuilder.Select(fields)
+	queryBuilder.Select(utils.MapStrings(fields, mapFieldsToSql))
 
 	if params.Filter != nil {
 		if params.Filter.Status != nil {
