@@ -61,13 +61,35 @@ var _ = Describe("runsList", func() {
 			Expect(int(*run.Timeout)).To(Equal(data.Timeout))
 			Expect(string(*run.Url)).To(Equal(data.URL))
 		})
+
+		It("properly infers run status", func() {
+			var data = []dbModel.Run{
+				*test.NewRunWithStatus(accountNumber(), "running"),
+				*test.NewRunWithStatus(accountNumber(), "success"),
+				*test.NewRunWithStatus(accountNumber(), "failure"),
+				*test.NewRunWithStatus(accountNumber(), "running"),
+			}
+
+			data[1].CreatedAt = time.Date(2020, time.January, 2, 12, 45, 3, 0, time.UTC)
+			data[2].CreatedAt = time.Date(2020, time.January, 2, 11, 45, 3, 0, time.UTC)
+			data[3].CreatedAt = time.Date(2020, time.January, 2, 10, 45, 3, 0, time.UTC)
+
+			Expect(db().Create(&data).Error).ToNot(HaveOccurred())
+
+			runs, res := listRuns()
+			Expect(res.StatusCode()).To(Equal(http.StatusOK))
+			Expect(string(*runs.Data[0].Status)).To(Equal("running"))
+			Expect(string(*runs.Data[1].Status)).To(Equal("success"))
+			Expect(string(*runs.Data[2].Status)).To(Equal("failure"))
+			Expect(string(*runs.Data[3].Status)).To(Equal("timeout"))
+		})
 	})
 
 	Describe("sorting", func() {
 		BeforeEach(func() {
 			var runs = []dbModel.Run{
 				*test.NewRunWithStatus(accountNumber(), "success"),
-				*test.NewRunWithStatus(accountNumber(), "running"),
+				*test.NewRunWithStatus(accountNumber(), "failure"),
 			}
 
 			runs[0].CreatedAt = time.Date(2020, time.January, 21, 8, 45, 3, 0, time.UTC)
@@ -87,10 +109,10 @@ var _ = Describe("runsList", func() {
 				}
 			},
 
-			Entry("by default orders by created_at desc", nil, RunStatus_running, RunStatus_success),
-			Entry("sorts by created_at", RunsSortBy_created_at, RunStatus_running, RunStatus_success),
-			Entry("sorts by created_at:desc", RunsSortBy_created_at_desc, RunStatus_running, RunStatus_success),
-			Entry("sorts by created_at:asc", RunsSortBy_created_at_asc, RunStatus_success, RunStatus_running),
+			Entry("by default orders by created_at desc", nil, RunStatus_failure, RunStatus_success),
+			Entry("sorts by created_at", RunsSortBy_created_at, RunStatus_failure, RunStatus_success),
+			Entry("sorts by created_at:desc", RunsSortBy_created_at_desc, RunStatus_failure, RunStatus_success),
+			Entry("sorts by created_at:asc", RunsSortBy_created_at_asc, RunStatus_success, RunStatus_failure),
 		)
 
 		It("400s on invalid value", func() {
