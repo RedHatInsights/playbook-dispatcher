@@ -14,6 +14,7 @@ COPY schema /schema
 COPY migrations /migrations
 
 ENV SCHEMA_MESSAGE_RESPONSE=/schema/playbookRunResponse.message.yaml
+ENV SCHEMA_RUNNER_EVENT=/schema/ansibleRunnerJobEvent.yaml
 ENV MIGRATIONS_DIR=/migrations
 
 USER 1001

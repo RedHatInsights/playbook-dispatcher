@@ -9,12 +9,32 @@ objects:
     name: playbook-dispatcher
   spec:
     envName: ${ENV_NAME}
+
+    database:
+      name: playbook-dispatcher-db
+      version: 12
+
+    kafkaTopics:
+    - replicas: 3
+      partitions: 16
+      topicName: platform.playbook-dispatcher.runner-updates
+    - replicas: 3
+      partitions: 16
+      topicName: platform.upload.playbook
+    - replicas: 3
+      partitions: 16
+      topicName: platform.upload.validation
+
     deployments:
     - name: api
-      minReplicas: ${{MIN_REPLICAS}}
+      minReplicas: ${{REPLICAS_API}}
       web: true
       podSpec:
         image: ${IMAGE}:${IMAGE_TAG}
+        command:
+        - run
+        - -m
+        - api
         livenessProbe:
           failureThreshold: 3
           httpGet:
@@ -40,6 +60,101 @@ objects:
             value: ${LOG_LEVEL}
           - name: CLOWDER_ENABLED
             value: "true"
+          - name: DB_SSLMODE
+            value: ${DB_SSLMODE}
+        resources:
+          limits:
+            cpu: ${CPU_LIMIT}
+            memory: ${MEMORY_LIMIT}
+          requests:
+            cpu: 250m
+            memory: 256Mi
+
+    - name: response-consumer
+      minReplicas: ${{REPLICAS_RESPONSE_CONSUMER}}
+      web: false
+      podSpec:
+        image: ${IMAGE}:${IMAGE_TAG}
+        command:
+        - run
+        - -m
+        - response-consumer
+        initContainers:
+        - command:
+          - migrate
+          - up
+          inheritEnv: true
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /live
+            port: 9000
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 5
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /ready
+            port: 9000
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 5
+        env:
+          - name: LOG_LEVEL
+            value: ${LOG_LEVEL}
+          - name: CLOWDER_ENABLED
+            value: "true"
+          - name: DB_SSLMODE
+            value: ${DB_SSLMODE}
+        resources:
+          limits:
+            cpu: ${CPU_LIMIT}
+            memory: ${MEMORY_LIMIT}
+          requests:
+            cpu: 250m
+            memory: 256Mi
+
+    - name: validator
+      minReplicas: ${{REPLICAS_VALIDATOR}}
+      web: false
+      podSpec:
+        image: ${IMAGE}:${IMAGE_TAG}
+        command:
+        - run
+        - -m
+        - validator
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /live
+            port: 9000
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 5
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /ready
+            port: 9000
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 5
+        env:
+          - name: LOG_LEVEL
+            value: ${LOG_LEVEL}
+          - name: CLOWDER_ENABLED
+            value: "true"
+          - name: DB_SSLMODE
+            value: ${DB_SSLMODE}
         resources:
           limits:
             cpu: ${CPU_LIMIT}
@@ -50,23 +165,27 @@ objects:
 
 
 parameters:
-- name: LOG_LEVEL
-  value: INFO
-- description: Cpu limit of service
-  name: CPU_LIMIT
-  value: 500m
-- description: memory limit of service
-  name: MEMORY_LIMIT
-  value: 512Mi
-- description: min replicas
-  name: MIN_REPLICAS
-  value: "2"
-- description: Image tag
-  name: IMAGE_TAG
+- name: IMAGE_TAG
   required: true
-- description: Image
-  name: IMAGE
+- name: IMAGE
   value: quay.io/cloudservices/playbook-dispatcher
 - description : ClowdEnvironment name
   name: ENV_NAME
   required: true
+
+- name: LOG_LEVEL
+  value: INFO
+- name: CPU_LIMIT
+  value: 500m
+- name: MEMORY_LIMIT
+  value: 512Mi
+
+- name: REPLICAS_API
+  value: "2"
+- name: REPLICAS_RESPONSE_CONSUMER
+  value: "2"
+- name: REPLICAS_VALIDATOR
+  value: "2"
+
+- name: DB_SSLMODE
+  value: required
