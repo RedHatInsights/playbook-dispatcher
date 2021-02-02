@@ -29,7 +29,7 @@ func init() {
 	openapi3.DefineStringFormat("url", `^https?:\/\/.*$`)
 }
 
-func Start(cfg *viper.Viper, log *zap.SugaredLogger, errors chan error, ready, live *utils.ProbeHandler) func(ctx context.Context) {
+func Start(cfg *viper.Viper, log *zap.SugaredLogger, errors chan<- error, ready, live *utils.ProbeHandler) func(ctx context.Context) {
 	db, sql := db.Connect(cfg, log)
 
 	ready.Register(sql.Ping)

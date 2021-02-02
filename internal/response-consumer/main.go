@@ -14,7 +14,7 @@ import (
 	"github.com/qri-io/jsonschema"
 )
 
-func Start(cfg *viper.Viper, log *zap.SugaredLogger, errors chan error, ready, live *utils.ProbeHandler) func(ctx context.Context) {
+func Start(cfg *viper.Viper, log *zap.SugaredLogger, errors chan<- error, ready, live *utils.ProbeHandler) func(ctx context.Context) {
 	var schema jsonschema.Schema
 	file, err := ioutil.ReadFile(cfg.GetString("schema.message.response"))
 	utils.DieOnError(err)
