@@ -18,7 +18,10 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
+
+type startModuleFn = func(cfg *viper.Viper, log *zap.SugaredLogger, errors chan<- error, ready, live *utils.ProbeHandler) func(ctx context.Context)
 
 func run(cmd *cobra.Command, args []string) error {
 	modules, err := cmd.Flags().GetStringSlice("module")
@@ -47,16 +50,20 @@ func run(cmd *cobra.Command, args []string) error {
 	for _, module := range modules {
 		log.Infof("Starting module %s", module)
 
+		var startModule startModuleFn
+
 		switch module {
 		case moduleApi:
-			stopActions = append(stopActions, api.Start(cfg, log, errors, readinessProbeHandler, livenessProbeHandler))
+			startModule = api.Start
 		case moduleResponseConsumer:
-			stopActions = append(stopActions, responseConsumer.Start(cfg, log, errors, readinessProbeHandler, livenessProbeHandler))
+			startModule = responseConsumer.Start
 		case moduleValidator:
-			stopActions = append(stopActions, validator.Start(cfg, log, errors, readinessProbeHandler, livenessProbeHandler))
+			startModule = validator.Start
 		default:
 			return fmt.Errorf("Unknown module %s", module)
 		}
+
+		stopActions = append(stopActions, startModule(cfg, log, errors, readinessProbeHandler, livenessProbeHandler))
 	}
 
 	log.Infof("Listening on service port %d", cfg.GetInt("metrics.port"))
