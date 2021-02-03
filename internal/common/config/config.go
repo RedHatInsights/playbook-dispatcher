@@ -61,6 +61,8 @@ func Get() *viper.Viper {
 		options.SetDefault("db.name", clowder.LoadedConfig.Database.Name)
 		options.SetDefault("db.username", clowder.LoadedConfig.Database.Username)
 		options.SetDefault("db.password", clowder.LoadedConfig.Database.Password)
+
+		// not implemented right now due to https://issues.redhat.com/browse/RHCLOUD-12128
 		//options.SetDefault("db.ca", clowder.LoadedConfig.Database.RdsCa)
 	} else {
 		options.SetDefault("web.port", 8000)
