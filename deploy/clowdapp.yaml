@@ -188,4 +188,4 @@ parameters:
   value: "2"
 
 - name: DB_SSLMODE
-  value: required
+  value: require
