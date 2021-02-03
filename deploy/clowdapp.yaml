@@ -31,7 +31,7 @@ objects:
       web: true
       podSpec:
         image: ${IMAGE}:${IMAGE_TAG}
-        command:
+        args:
         - run
         - -m
         - api
@@ -124,7 +124,7 @@ objects:
       web: false
       podSpec:
         image: ${IMAGE}:${IMAGE_TAG}
-        command:
+        args:
         - run
         - -m
         - validator
