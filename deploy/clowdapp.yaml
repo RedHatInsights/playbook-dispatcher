@@ -75,12 +75,12 @@ objects:
       web: false
       podSpec:
         image: ${IMAGE}:${IMAGE_TAG}
-        command:
+        args:
         - run
         - -m
         - response-consumer
         initContainers:
-        - command:
+        - args:
           - migrate
           - up
           inheritEnv: true
