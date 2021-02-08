@@ -1,7 +1,11 @@
+CLOUD_CONNECTOR_SCHEMA ?= https://raw.githubusercontent.com/RedHatInsights/cloud-connector/master/internal/controller/api/api.spec.json
+
 init:
 	go install github.com/deepmap/oapi-codegen/cmd/oapi-codegen
 	go get github.com/atombender/go-jsonschema/...@master
 	go install github.com/atombender/go-jsonschema/cmd/gojsonschema
+	pip install json2yaml
+	go install github.com/kulshekhar/fungen
 
 generate-api:
 	~/go/bin/oapi-codegen -generate server,spec -package controllers -o internal/api/controllers/spec.gen.go schema/api.spec.yaml
@@ -11,7 +15,16 @@ generate-api:
 generate-messages:
 	~/go/bin/gojsonschema --yaml-extension yaml -p message schema/playbookRunResponse.message.yaml > ./internal/common/model/message/types.gen.go
 
-generate: generate-api generate-messages
+generate-cloud-connector:
+	curl -s ${CLOUD_CONNECTOR_SCHEMA} -o cloud-connector.json
+	json2yaml cloud-connector.json cloud-connector.yaml
+	~/go/bin/oapi-codegen -generate client,types -package connectors -exclude-tags connection -o internal/api/connectors/cloudConnector.gen.go cloud-connector.yaml
+	rm cloud-connector.json cloud-connector.yaml
+
+generate-utils:
+	go generate ./...
+
+generate: generate-api generate-messages generate-cloud-connector generate-utils
 
 build:
 	go build -o pd .

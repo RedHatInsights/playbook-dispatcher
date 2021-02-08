@@ -12,8 +12,9 @@ import (
 
 var cfg = config.Get()
 
+//go:generate fungen -types RunInput,*RunCreated -methods PMap -package controllers -filename utils.gen.go
 func (this *controllers) ApiInternalRunsCreate(ctx echo.Context) error {
-	var input []RunInput
+	var input RunInputList
 
 	err := utils.ReadRequestBody(ctx, &input)
 	if err != nil {
@@ -21,37 +22,48 @@ func (this *controllers) ApiInternalRunsCreate(ctx echo.Context) error {
 		return ctx.NoContent(http.StatusBadRequest)
 	}
 
-	result := []*RunCreated{}
-
-	for _, runInput := range input {
-		// TODO: here we'll be making a call to cloud connector which gives us the correlation id
-		correlationId := uuid.New()
-		entity, err := newRun(&runInput, correlationId, dbModel.RunStatusRunning)
+	// send all requests to cloud connector concurrently
+	result := input.PMapRunCreated(func(runInput RunInput) *RunCreated {
+		recipient, err := uuid.Parse(string(runInput.Recipient))
 		if err != nil {
-			result = append(result, &RunCreated{
-				Code: http.StatusInternalServerError,
-				// TODO report error
-			})
+			this.log.Error(err) // TODO: probes
+			return runCreateError(http.StatusBadRequest)
+		}
 
-			continue
+		messageId, err := this.cloudConnectorClient.SendCloudConnectorRequest(
+			ctx.Request().Context(),
+			string(runInput.Account),
+			recipient,
+		)
+
+		if err != nil {
+			this.log.Error(err)
+			return runCreateError(http.StatusInternalServerError)
+		}
+
+		messageIdUuid, err := uuid.Parse(*messageId)
+		if err != nil {
+			this.log.Error(err)
+			return runCreateError(http.StatusInternalServerError)
+		}
+
+		entity, err := newRun(&runInput, messageIdUuid, dbModel.RunStatusRunning)
+		if err != nil {
+			this.log.Error(err)
+			return runCreateError(http.StatusInternalServerError)
 		}
 
 		if dbResult := this.database.Create(entity); dbResult.Error != nil {
 			this.log.Error(dbResult.Error)
-			result = append(result, &RunCreated{
-				Code: http.StatusInternalServerError,
-				// TODO report error
-			})
-
-			continue
+			return runCreateError(http.StatusInternalServerError)
 		}
 
 		runId := RunId(entity.ID.String())
-		result = append(result, &RunCreated{
+		return &RunCreated{
 			Code: http.StatusCreated,
 			Id:   &runId,
-		})
-	}
+		}
+	})
 
 	return ctx.JSON(http.StatusMultiStatus, result)
 }
@@ -82,4 +94,11 @@ func newRun(input *RunInput, correlationId uuid.UUID, status string) (*dbModel.R
 	}
 
 	return run, nil
+}
+
+func runCreateError(code int) *RunCreated {
+	return &RunCreated{
+		Code: code,
+		// TODO report error
+	}
 }

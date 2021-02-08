@@ -39,6 +39,11 @@ func Get() *viper.Viper {
 	options.SetDefault("storage.retries", 3)
 	options.SetDefault("artifact.max.size", 1024*1024)
 
+	options.SetDefault("cloud.connector.impl", "mock")
+	options.SetDefault("cloud.connector.host", "http://cloud-connector:8081")
+	options.SetDefault("cloud.connector.timeout", 10)
+	options.SetDefault("return.url", "https://cloud.redhat.com/api/v1/ingres/upload")
+
 	options.SetDefault("db.sslmode", "disable")
 
 	if os.Getenv("CLOWDER_ENABLED") != "false" {

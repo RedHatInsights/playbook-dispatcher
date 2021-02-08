@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"playbook-dispatcher/internal/api/connectors"
 	"playbook-dispatcher/internal/api/controllers"
 	"playbook-dispatcher/internal/api/middleware"
 	"playbook-dispatcher/internal/common/db"
@@ -53,7 +54,16 @@ func Start(cfg *viper.Viper, log *zap.SugaredLogger, errors chan<- error, ready,
 		return ctx.JSON(http.StatusOK, spec)
 	})
 
-	ctrl := controllers.CreateControllers(db, log)
+	var cloudConnectorClient connectors.CloudConnectorClient
+
+	if cfg.GetString("cloud.connector.impl") == "impl" {
+		cloudConnectorClient = connectors.NewConnectorClient(cfg, log)
+	} else {
+		cloudConnectorClient = connectors.NewConnectorClientMock()
+		log.Warn("Using mock CloudConnectorClient")
+	}
+
+	ctrl := controllers.CreateControllers(db, log, cloudConnectorClient)
 
 	internal := server.Group("/internal/*")
 	public := server.Group("/api/playbook-dispatcher/v1/*")
