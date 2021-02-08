@@ -62,6 +62,10 @@ objects:
             value: "true"
           - name: DB_SSLMODE
             value: ${DB_SSLMODE}
+          - name: CLOUD_CONNECTOR_IMPL
+            value: ${CLOUD_CONNECTOR_IMPL}
+          - name: CLOUD_CONNECTOR_HOST
+            value: ${CLOUD_CONNECTOR_HOST}
         resources:
           limits:
             cpu: ${CPU_LIMIT}
@@ -189,3 +193,8 @@ parameters:
 
 - name: DB_SSLMODE
   value: require
+
+- name: CLOUD_CONNECTOR_IMPL
+  value: mock
+- name: CLOUD_CONNECTOR_HOST
+  value: mock

@@ -14,6 +14,7 @@ require (
 	github.com/golang-migrate/migrate v3.5.4+incompatible
 	github.com/golang-migrate/migrate/v4 v4.14.1
 	github.com/google/uuid v1.1.5
+	github.com/kulshekhar/fungen v0.0.0-20180224173454-7ed9e430524b // indirect
 	github.com/labstack/echo v3.3.10+incompatible
 	github.com/labstack/echo/v4 v4.1.17
 	github.com/onsi/ginkgo v1.14.2
