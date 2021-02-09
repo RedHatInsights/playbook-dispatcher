@@ -40,6 +40,7 @@
         "username": "insights",
         "password": "insights",
         "adminUsername": "insights",
-        "adminPassword": "insights"
+        "adminPassword": "insights",
+        "rdsCa": "ca"
     }
 }

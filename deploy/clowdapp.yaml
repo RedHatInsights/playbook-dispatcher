@@ -192,7 +192,7 @@ parameters:
   value: "2"
 
 - name: DB_SSLMODE
-  value: require
+  value: verify-full
 
 - name: CLOUD_CONNECTOR_IMPL
   value: mock
