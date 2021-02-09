@@ -110,4 +110,40 @@ var _ = Describe("handler", func() {
 			Expect(run.Status).To(Equal("failure"))
 		})
 	})
+
+	Describe("correlation", func() {
+		It("updates the correct run", func() {
+			data := []*dbModel.Run{
+				test.NewRun(accountNumber()),
+				test.NewRun(accountNumber()),
+			}
+
+			Expect(db().Create(&data).Error).ToNot(HaveOccurred())
+
+			events := createEvents(
+				EventExecutorOnStart,
+				"playbook_on_start",
+				"playbook_on_play_start",
+				"playbook_on_task_start",
+				"runner_on_start",
+				"runner_on_ok",
+				"playbook_on_stats",
+			)
+
+			run1CorrelationId := data[1].CorrelationID.String()
+
+			(*events)[0].EventData = &messageModel.PlaybookRunResponseMessageYamlEventsElemEventData{
+				CrcCorrelationId: &run1CorrelationId,
+			}
+
+			msg := newResponseMessage(events)
+			instance.onMessage(msg)
+
+			run0 := fetchRun(data[0].ID)
+			Expect(run0.Status).To(Equal("running"))
+
+			run1 := fetchRun(data[1].ID)
+			Expect(run1.Status).To(Equal("success"))
+		})
+	})
 })

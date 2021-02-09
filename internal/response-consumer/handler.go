@@ -8,7 +8,14 @@ import (
 	"go.uber.org/zap"
 
 	k "github.com/confluentinc/confluent-kafka-go/kafka"
+	"github.com/google/uuid"
 	"gorm.io/gorm"
+)
+
+const (
+	EventPlaybookOnStats = "playbook_on_stats"
+	EventRunnerOnFailed  = "runner_on_failed"
+	EventExecutorOnStart = "executor_on_start"
 )
 
 type handler struct {
@@ -29,10 +36,17 @@ func (this *handler) onMessage(msg *k.Message) {
 
 	status := inferStatus(&value.Events)
 
-	result := this.db.Model(db.Run{}).
+	queryBuilder := this.db.Model(db.Run{}).
 		Select("status").
-		Where("account = ?", value.Account). // TODO: correlation id
-		Updates(db.Run{Status: status})
+		Where("account = ?", value.Account)
+
+	if correlationId, err := inferCorrelationId(&value.Events); err != nil {
+		log.Error("Failed to parse correlation id", "error", err)
+	} else if correlationId != nil {
+		queryBuilder.Where("correlation_id = ?", *correlationId)
+	}
+
+	result := queryBuilder.Updates(db.Run{Status: status})
 
 	if result.Error != nil {
 		log.Error(result.Error)
@@ -46,11 +60,11 @@ func inferStatus(events *[]message.PlaybookRunResponseMessageYamlEventsElem) str
 	failed := false
 
 	for _, event := range *events {
-		if event.Event == "playbook_on_stats" {
+		if event.Event == EventPlaybookOnStats {
 			finished = true
 		}
 
-		if event.Event == "runner_on_failed" {
+		if event.Event == EventRunnerOnFailed {
 			failed = true
 		}
 	}
@@ -63,4 +77,15 @@ func inferStatus(events *[]message.PlaybookRunResponseMessageYamlEventsElem) str
 	default:
 		return db.RunStatusRunning
 	}
+}
+
+func inferCorrelationId(events *[]message.PlaybookRunResponseMessageYamlEventsElem) (result *uuid.UUID, err error) {
+	for _, event := range *events {
+		if event.Event == EventExecutorOnStart && event.EventData != nil && event.EventData.CrcCorrelationId != nil {
+			correlationId, err := uuid.Parse(*event.EventData.CrcCorrelationId)
+			return &correlationId, err
+		}
+	}
+
+	return nil, nil
 }

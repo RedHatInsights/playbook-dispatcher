@@ -30,24 +30,23 @@ func (this *controllers) ApiInternalRunsCreate(ctx echo.Context) error {
 			return runCreateError(http.StatusBadRequest)
 		}
 
+		correlationId := uuid.New()
+
 		messageId, err := this.cloudConnectorClient.SendCloudConnectorRequest(
 			ctx.Request().Context(),
 			string(runInput.Account),
 			recipient,
+			correlationId,
 		)
 
 		if err != nil {
 			this.log.Error(err)
 			return runCreateError(http.StatusInternalServerError)
+		} else {
+			this.log.Debug("Sent request to cloud connector", "messageId", messageId, "correlationId", correlationId)
 		}
 
-		messageIdUuid, err := uuid.Parse(*messageId)
-		if err != nil {
-			this.log.Error(err)
-			return runCreateError(http.StatusInternalServerError)
-		}
-
-		entity, err := newRun(&runInput, messageIdUuid, dbModel.RunStatusRunning)
+		entity, err := newRun(&runInput, correlationId, dbModel.RunStatusRunning)
 		if err != nil {
 			this.log.Error(err)
 			return runCreateError(http.StatusInternalServerError)

@@ -25,6 +25,7 @@ Job events should be stored in the [newline-delimited JSON](https://jsonlines.or
 Each line in the file matches one job event.
 
 ```jsonl
+{"event": "executor_on_start", "uuid": "4533e4d7-5034-4baf-b578-821305c96da4", "counter": -1, "stdout": "", "start_line": 0, "end_line": 0, "event_data": {"dispatcher_correlation_id": "c37278ac-f41c-424a-8461-7f41b4b87c8e"}}
 {"event": "playbook_on_start", "uuid": "cb93301e-5ff8-4f75-ade6-57d0ec2fc662", "counter": 0, "stdout": "", "start_line": 0, "end_line": 0}
 {"event": "playbook_on_stats", "uuid": "998a4bd2-2d6b-4c31-905c-2d5ad7a7f8ab", "counter": 1, "stdout": "", "start_line": 0, "end_line": 0}
 ```
@@ -33,6 +34,35 @@ The structure of each event is validated using a JSON Schema defined in [ansible
 Note that additional attributes (not defined by the schema) are allowed.
 
 The expected content type of the uploaded file is `application/vnd.redhat.playbook.v1+jsonl` for a plain file or `application/vnd.redhat.playbook.v1+tgz` if the content is compressed (not implemented yet).
+
+### Non-standard event types
+
+Besides Ansible Runner event types (`playbook_*` and `runner_*`) the services recognizes two additional event types.
+
+Firstly, `executor_on_start` event type is produced before Ansible Runner is invoked.
+
+```json
+{"event": "executor_on_start", "uuid": "4533e4d7-5034-4baf-b578-821305c96da4", "counter": -1, "stdout": "", "start_line": 0, "end_line": 0, "event_data": {
+    "crc_correlation_id": "c37278ac-f41c-424a-8461-7f41b4b87c8e"
+}}
+```
+
+The event carries the correlation id in the `event_data` dictionary.
+This identifier is necessary to tie the uploaded file to a Playbook run.
+
+Secondly, `executor_on_failed` event type may be produced should it not be possible to start a Playbook run for some reason.
+This may happen e.g. if the Playbook signature is not valid, Ansible Runner binary is not available/executable, etc.
+
+```json
+{"event": "executor_on_failed", "uuid": "14f07467-0020-4ab7-a075-d7d8c96d6fdc", "counter": -1, "stdout": "", "start_line": 0, "end_line": 0, "event_data": {
+    "crc_correlation_id": "c37278ac-f41c-424a-8461-7f41b4b87c8e",
+    "crc_error_code": "SIGNATURE_INVALID",
+    "crc_error_details": "Signature \"783701f7599830824fa73488f80eb79894f6f14203264b6a3ac3f0a14012c25f\" is not valid for Play \"run insights to obtain latest diagnosis info\"",
+}}
+```
+
+Again, the correlation id is defined.
+In addition, an error code and detailed information should be provided.
 
 ## Development
 
