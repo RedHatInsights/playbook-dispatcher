@@ -33,6 +33,9 @@ properties:
       playbook_uuid:
         type: string
         format: uuid
+      crc_correlation_id:
+        type: string
+        format: uuid
 
 required:
   - event

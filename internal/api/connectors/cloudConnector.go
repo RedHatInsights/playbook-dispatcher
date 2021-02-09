@@ -15,7 +15,7 @@ import (
 var cloudConnectorDirective = "playbook"
 
 type CloudConnectorClient interface {
-	SendCloudConnectorRequest(ctx context.Context, account string, recipient uuid.UUID) (*string, error)
+	SendCloudConnectorRequest(ctx context.Context, account string, recipient uuid.UUID, correlationId uuid.UUID) (*string, error)
 }
 
 type cloudConnectorClientImpl struct {
@@ -51,10 +51,19 @@ func NewConnectorClient(cfg *viper.Viper, log *zap.SugaredLogger) CloudConnector
 	return NewConnectorClientWithHttpRequestDoer(cfg, log, &httpClient)
 }
 
-func (this *cloudConnectorClientImpl) SendCloudConnectorRequest(ctx context.Context, account string, recipient uuid.UUID) (*string, error) {
+func (this *cloudConnectorClientImpl) SendCloudConnectorRequest(
+	ctx context.Context,
+	account string,
+	recipient uuid.UUID,
+	correlationId uuid.UUID,
+) (*string, error) {
 	recipientString := recipient.String()
 	metadata := map[string]interface{}{
 		"return_url": this.returnUrl,
+	}
+
+	payload := map[string]interface{}{
+		"crc_correlation_id": correlationId.String(),
 	}
 
 	// TODO: probe
@@ -62,6 +71,7 @@ func (this *cloudConnectorClientImpl) SendCloudConnectorRequest(ctx context.Cont
 		"account", account,
 		"directive", cloudConnectorDirective,
 		"metadata", metadata,
+		"payload", payload,
 		"recipient", recipientString,
 	)
 
@@ -69,7 +79,7 @@ func (this *cloudConnectorClientImpl) SendCloudConnectorRequest(ctx context.Cont
 		Account:   &account,
 		Directive: &cloudConnectorDirective,
 		Metadata:  &metadata,
-		// TODO: payload? content url?
+		Payload:   &payload,
 		Recipient: &recipientString,
 	})
 

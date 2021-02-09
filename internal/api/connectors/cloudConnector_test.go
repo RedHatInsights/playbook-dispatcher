@@ -43,7 +43,7 @@ var _ = Describe("Cloud Connector", func() {
 		doer := withMockResponse(200, `{"id": "871e31aa-7d41-43e3-8ef7-05706a0ee34a"}`)
 
 		client := NewConnectorClientWithHttpRequestDoer(config.Get(), zap.NewNop().Sugar(), &doer)
-		result, err := client.SendCloudConnectorRequest(context.Background(), "1234", uuid.New())
+		result, err := client.SendCloudConnectorRequest(context.Background(), "1234", uuid.New(), uuid.New())
 		Expect(err).ToNot(HaveOccurred())
 		Expect(*result).To(Equal("871e31aa-7d41-43e3-8ef7-05706a0ee34a"))
 	})
@@ -53,7 +53,7 @@ var _ = Describe("Cloud Connector", func() {
 
 		client := NewConnectorClientWithHttpRequestDoer(config.Get(), zap.NewNop().Sugar(), &doer)
 		recipient := uuid.New()
-		result, err := client.SendCloudConnectorRequest(context.Background(), "1234", recipient)
+		result, err := client.SendCloudConnectorRequest(context.Background(), "1234", recipient, uuid.New())
 		Expect(err).ToNot(HaveOccurred())
 		Expect(*result).To(Equal("871e31aa-7d41-43e3-8ef7-05706a0ee34a"))
 
