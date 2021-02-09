@@ -463,6 +463,8 @@ github.com/qri-io/jsonschema v0.2.0 h1:is8lirh3HYwTkC0e+4jL/vWEHwzPLojnl4FWkUoeE
 github.com/qri-io/jsonschema v0.2.0/go.mod h1:g7DPkiOsK1xv6T/Ao5scXRkd+yTFygcANPBaaqW+VrI=
 github.com/redhatinsights/app-common-go v1.0.0 h1:8TM4GQuSItRZLdxu9ExR9XXQhbp7BHptklxdLrpmS6U=
 github.com/redhatinsights/app-common-go v1.0.0/go.mod h1:SqgG5JkX/RNlk2d+sXamIFxhOIvWLgCBr8uK6q70ESk=
+github.com/redhatinsights/app-common-go v1.2.0 h1:Z4TxbamehwIHdgK0GI7VDDv0q9mhaHlutiZeGtE+an4=
+github.com/redhatinsights/app-common-go v1.2.0/go.mod h1:SqgG5JkX/RNlk2d+sXamIFxhOIvWLgCBr8uK6q70ESk=
 github.com/redhatinsights/platform-go-middlewares v0.7.0 h1:1prVr6XxYHSKThfblJr3kaLecD/6s4xaQ9zZ+BKhHJM=
 github.com/redhatinsights/platform-go-middlewares v0.7.0/go.mod h1:g//UN9p5sxgIoZfRyyiRy+rAw1/GMqkZ4hWUFcEC71A=
 github.com/redhatinsights/platform-go-middlewares v0.7.1-0.20201009171810-b73c54b47a2d h1:uxm5aXj3SYrAu3beL0+8VLYHA7RPhvoX47NQgBxVPCA=

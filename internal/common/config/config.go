@@ -9,6 +9,20 @@ import (
 	clowder "github.com/redhatinsights/app-common-go/pkg/api/v1"
 )
 
+var rdsCaPath *string
+
+func init() {
+	if clowder.LoadedConfig.Database.RdsCa == nil {
+		return
+	}
+
+	if rdsCaPathValue, err := clowder.LoadedConfig.RdsCa(); err != nil {
+		panic(err)
+	} else {
+		rdsCaPath = &rdsCaPathValue
+	}
+}
+
 func Get() *viper.Viper {
 	options := viper.New()
 
@@ -67,8 +81,9 @@ func Get() *viper.Viper {
 		options.SetDefault("db.username", clowder.LoadedConfig.Database.Username)
 		options.SetDefault("db.password", clowder.LoadedConfig.Database.Password)
 
-		// not implemented right now due to https://issues.redhat.com/browse/RHCLOUD-12128
-		//options.SetDefault("db.ca", clowder.LoadedConfig.Database.RdsCa)
+		if rdsCaPath != nil {
+			options.SetDefault("db.ca", *rdsCaPath)
+		}
 	} else {
 		options.SetDefault("web.port", 8000)
 		options.SetDefault("metrics.port", 9001)
