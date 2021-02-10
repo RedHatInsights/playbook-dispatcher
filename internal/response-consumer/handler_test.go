@@ -76,16 +76,22 @@ var _ = Describe("handler", func() {
 			var data = test.NewRun(accountNumber())
 			Expect(db().Create(&data).Error).ToNot(HaveOccurred())
 
-			msg := newResponseMessage(createEvents(
+			events := createEvents(
+				EventExecutorOnStart,
 				"playbook_on_start",
 				"playbook_on_play_start",
 				"playbook_on_task_start",
 				"runner_on_start",
 				"runner_on_ok",
 				"playbook_on_stats",
-			))
+			)
 
-			instance.onMessage(msg)
+			correlationId := data.CorrelationID.String()
+			(*events)[0].EventData = &messageModel.PlaybookRunResponseMessageYamlEventsElemEventData{
+				CrcCorrelationId: &correlationId,
+			}
+
+			instance.onMessage(newResponseMessage(events))
 
 			run := fetchRun(data.ID)
 			Expect(run.Status).To(Equal("success"))
@@ -95,16 +101,22 @@ var _ = Describe("handler", func() {
 			var data = test.NewRun(accountNumber())
 			Expect(db().Create(&data).Error).ToNot(HaveOccurred())
 
-			msg := newResponseMessage(createEvents(
+			events := createEvents(
+				EventExecutorOnStart,
 				"playbook_on_start",
 				"playbook_on_play_start",
 				"playbook_on_task_start",
 				"runner_on_start",
 				"runner_on_failed",
 				"playbook_on_stats",
-			))
+			)
 
-			instance.onMessage(msg)
+			correlationId := data.CorrelationID.String()
+			(*events)[0].EventData = &messageModel.PlaybookRunResponseMessageYamlEventsElemEventData{
+				CrcCorrelationId: &correlationId,
+			}
+
+			instance.onMessage(newResponseMessage(events))
 
 			run := fetchRun(data.ID)
 			Expect(run.Status).To(Equal("failure"))

@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"context"
 	"io"
 	"os"
 	"playbook-dispatcher/internal/common/config"
@@ -13,6 +14,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
+	"github.com/labstack/echo/v4"
 	"github.com/spf13/viper"
 )
 
@@ -97,4 +99,26 @@ type writerWrapper struct {
 // this method is required by zapcore
 func (w writerWrapper) Sync() error {
 	return w.Flush()
+}
+
+type loggerKeyType int
+
+const loggerKey loggerKeyType = iota
+
+func SetLog(ctx context.Context, log *zap.SugaredLogger) context.Context {
+	return context.WithValue(ctx, loggerKey, log)
+}
+
+func GetLogFromContext(ctx context.Context) *zap.SugaredLogger {
+	return ctx.Value(loggerKey).(*zap.SugaredLogger)
+}
+
+func GetLogFromEcho(ctx echo.Context) *zap.SugaredLogger {
+	return GetLogFromContext(ctx.Request().Context())
+}
+
+func WithRequestId(parent context.Context, requestId string) (ctx context.Context, log *zap.SugaredLogger) {
+	log = LogWithRequestId(GetLogFromContext(parent), requestId)
+	ctx = SetLog(parent, log)
+	return
 }
