@@ -2,7 +2,6 @@ package instrumentation
 
 import (
 	"context"
-	messageModel "playbook-dispatcher/internal/common/model/message"
 	"playbook-dispatcher/internal/common/utils"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -64,11 +63,6 @@ func UnmarshallingError(ctx context.Context, err error) {
 func FetchArchiveError(ctx context.Context, err error) {
 	errorTotal.WithLabelValues(errorS3).Inc()
 	utils.GetLogFromContext(ctx).Errorw("Failed to fetch uploaded archive", "error", err)
-}
-
-func FileTooLarge(ctx context.Context, request *messageModel.IngressValidationRequest) {
-	validationFailureTotal.Inc()
-	utils.GetLogFromContext(ctx).Infow("Rejecting payload due to file size", "size", request.Size)
 }
 
 func ProducerError(ctx context.Context, err error, topic string) {

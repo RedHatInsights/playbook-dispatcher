@@ -15,7 +15,6 @@ properties:
     format: uuid
   counter:
     type: integer
-    minimum: 0
   stdout:
     type: string
   start_line:

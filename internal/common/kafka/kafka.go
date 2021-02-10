@@ -3,6 +3,7 @@ package kafka
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"sync"
 	"time"
 
@@ -91,7 +92,7 @@ func NewConsumerEventLoop(
 	return
 }
 
-func Produce(producer *kafka.Producer, topic string, value interface{}) error {
+func Produce(producer *kafka.Producer, topic string, value interface{}, key *string, headers ...kafka.Header) error {
 	marshalledValue, err := json.Marshal(value)
 	if err != nil {
 		return err
@@ -100,6 +101,14 @@ func Produce(producer *kafka.Producer, topic string, value interface{}) error {
 	msg := &kafka.Message{
 		TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
 		Value:          marshalledValue,
+	}
+
+	if key != nil {
+		msg.Key = []byte(*key)
+	}
+
+	if len(headers) > 0 {
+		msg.Headers = headers
 	}
 
 	return producer.Produce(msg, nil)
@@ -117,4 +126,31 @@ func Ping(timeout int, instances ...pingable) error {
 	}
 
 	return nil
+}
+
+func Headers(keysAndValues ...string) []kafka.Header {
+	if len(keysAndValues)%2 != 0 {
+		panic(fmt.Sprintf("Odd number of parameters: %s", keysAndValues))
+	}
+
+	result := make([]kafka.Header, len(keysAndValues))
+
+	for i := 0; i < len(keysAndValues)/2; i++ {
+		result[i] = kafka.Header{
+			Key:   keysAndValues[i*2],
+			Value: []byte(keysAndValues[(i*2)+1]),
+		}
+	}
+
+	return result
+}
+
+func GetHeader(msg *kafka.Message, key string) (string, error) {
+	for _, value := range msg.Headers {
+		if value.Key == key {
+			return string(value.Value), nil
+		}
+	}
+
+	return "", fmt.Errorf("Header not found: %s", key)
 }

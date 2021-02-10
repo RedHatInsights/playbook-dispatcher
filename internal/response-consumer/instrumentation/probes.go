@@ -36,7 +36,7 @@ var (
 const (
 	labelDbUpdate       = "db_update"
 	labelJsonUnmarshall = "json_unmarshall"
-	labelCorrelationId  = "uuid_parse_correlation_id"
+	labelHeaderMissing  = "header_missing"
 )
 
 func PlaybookRunUpdated(ctx context.Context, account string, status string, correlationId uuid.UUID) {
@@ -54,20 +54,20 @@ func PlaybookRunUpdateError(ctx context.Context, err error, account string, stat
 	errorTotal.WithLabelValues(labelDbUpdate).Inc()
 }
 
-func UnmarshallIncomingMessageError(log *zap.SugaredLogger, err error) {
-	log.Errorw("Error unmarshalling incoming message", "error", err)
+func UnmarshallIncomingMessageError(ctx context.Context, err error) {
+	utils.GetLogFromContext(ctx).Errorw("Error unmarshalling incoming message", "error", err)
 	validationFailureTotal.WithLabelValues(labelJsonUnmarshall).Inc()
 }
 
-func InvalidCorrelationId(ctx context.Context, err error) {
-	utils.GetLogFromContext(ctx).Warnw("Error parsing correlation id", "error", err)
-	validationFailureTotal.WithLabelValues(labelCorrelationId).Inc()
+func CannotReadHeaders(log *zap.SugaredLogger, err error) {
+	log.Errorw("Error parsing correlation id", "error", err)
+	errorTotal.WithLabelValues(labelHeaderMissing).Inc()
 }
 
 func Start() {
 	// initialize label values
 	// https://www.robustperception.io/existential-issues-with-metrics
 	errorTotal.WithLabelValues(labelDbUpdate)
+	errorTotal.WithLabelValues(labelHeaderMissing)
 	validationFailureTotal.WithLabelValues(labelJsonUnmarshall)
-	validationFailureTotal.WithLabelValues(labelCorrelationId)
 }

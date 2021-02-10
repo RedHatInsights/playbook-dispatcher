@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"playbook-dispatcher/internal/common/config"
+	"playbook-dispatcher/internal/common/constants"
 	kafkaUtils "playbook-dispatcher/internal/common/kafka"
 	messageModel "playbook-dispatcher/internal/common/model/message"
 	"playbook-dispatcher/internal/common/utils"
@@ -51,47 +52,50 @@ func (this *handler) onMessage(msg *kafka.Message) {
 		return
 	}
 
-	// TODO: pass bounded logger
-	ingressResponse, dispatcherResponse := this.handleRequest(ctx, request)
-
-	this.produceMessage(ctx, ingressResponseTopic, ingressResponse)
-	this.produceMessage(ctx, dispatcherResponseTopic, dispatcherResponse)
+	this.handleRequest(ctx, request)
 }
 
-func (this *handler) handleRequest(ctx context.Context, request *messageModel.IngressValidationRequest) (*messageModel.IngressValidationResponse, *messageModel.PlaybookRunResponseMessageYaml) {
-	ctx, _ = utils.WithRequestId(ctx, request.RequestID)
+func (this *handler) handleRequest(
+	ctx context.Context,
+	request *messageModel.IngressValidationRequest,
+) {
+	ctx, log := utils.WithRequestId(ctx, request.RequestID)
+	log.Debugw("Processing request", "account", request.Account)
 
-	if request.Size > cfg.GetInt64("artifact.max.size") {
-		instrumentation.FileTooLarge(ctx, request)
+	ingressResponse := &messageModel.IngressValidationResponse{
+		IngressValidationRequest: *request,
+	}
 
-		return messageModel.NewResponse(request, "failure"), nil
+	if err := this.validateRequest(request); err != nil {
+		this.validationFailed(ctx, err, ingressResponse)
 	}
 
 	res, err := utils.DoGetWithRetry(client, request.URL, cfg.GetInt("storage.retries"))
 	if err != nil {
 		instrumentation.FetchArchiveError(ctx, err)
-		return nil, nil
+		return
 	}
 
 	data, _ := ioutil.ReadAll(res.Body)
 	res.Body.Close()
 
-	utils.GetLogFromContext(ctx).Debugw("Processing request", "account", request.Account, "reqId", request.RequestID)
-
-	response := &messageModel.IngressValidationResponse{
-		IngressValidationRequest: *request,
-	}
-
 	events, err := this.validateContent(data)
 	if err != nil {
-		response.Validation = validationFailure
-		instrumentation.ValidationFailed(ctx, err)
-		return response, nil
+		this.validationFailed(ctx, err, ingressResponse)
+		return
 	}
 
-	response.Validation = validationSuccess
-	instrumentation.ValidationSuccess(ctx)
+	correlationId, err := messageModel.GetCorrelationId(events)
+	if err != nil {
+		this.validationFailed(ctx, err, ingressResponse)
+		return
+	}
 
+	ingressResponse.Validation = validationSuccess
+	instrumentation.ValidationSuccess(ctx)
+	this.produceMessage(ctx, ingressResponseTopic, ingressResponse, nil)
+
+	headers := kafkaUtils.Headers(constants.HeaderRequestId, request.RequestID, constants.HeaderCorrelationId, correlationId.String())
 	dispatcherResponse := &messageModel.PlaybookRunResponseMessageYaml{
 		Account:         request.Account,
 		B64Identity:     request.B64Identity,
@@ -100,7 +104,15 @@ func (this *handler) handleRequest(ctx context.Context, request *messageModel.In
 		Events:          events,
 	}
 
-	return response, dispatcherResponse
+	this.produceMessage(ctx, dispatcherResponseTopic, dispatcherResponse, nil, headers...)
+}
+
+func (this *handler) validateRequest(request *messageModel.IngressValidationRequest) (err error) {
+	if request.Size > cfg.GetInt64("artifact.max.size") {
+		return fmt.Errorf("Rejecting payload due to file size: %d", request.Size)
+	}
+
+	return
 }
 
 func (this *handler) validateContent(data []byte) (events []messageModel.PlaybookRunResponseMessageYamlEventsElem, err error) {
@@ -135,11 +147,17 @@ func (this *handler) validateContent(data []byte) (events []messageModel.Playboo
 	return events, nil
 }
 
-func (this *handler) produceMessage(ctx context.Context, topic string, value interface{}) {
+func (this *handler) validationFailed(ctx context.Context, err error, response *messageModel.IngressValidationResponse) {
+	response.Validation = validationFailure
+	instrumentation.ValidationFailed(ctx, err)
+	this.produceMessage(ctx, ingressResponseTopic, response, nil)
+}
+
+func (this *handler) produceMessage(ctx context.Context, topic string, value interface{}, key *string, headers ...kafka.Header) {
 	if value != nil {
-		if err := kafkaUtils.Produce(this.producer, topic, value); err != nil {
-			instrumentation.ProducerError(ctx, err, topic) // TODO: request id
-			this.errors <- err                             // TODO: is "shutdown-on-error" a good strategy?
+		if err := kafkaUtils.Produce(this.producer, topic, value, key, headers...); err != nil {
+			instrumentation.ProducerError(ctx, err, topic)
+			this.errors <- err // TODO: is "shutdown-on-error" a good strategy?
 		}
 	}
 }
