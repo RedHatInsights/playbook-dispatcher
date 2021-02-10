@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"net/http"
+	"playbook-dispatcher/internal/api/instrumentation"
 	"playbook-dispatcher/internal/common/config"
 	dbModel "playbook-dispatcher/internal/common/model/db"
 	"playbook-dispatcher/internal/common/utils"
@@ -18,7 +19,7 @@ func (this *controllers) ApiInternalRunsCreate(ctx echo.Context) error {
 
 	err := utils.ReadRequestBody(ctx, &input)
 	if err != nil {
-		utils.GetLogFromEcho(ctx).Warn(err)
+		utils.GetLogFromEcho(ctx).Error(err)
 		return ctx.NoContent(http.StatusBadRequest)
 	}
 
@@ -26,7 +27,7 @@ func (this *controllers) ApiInternalRunsCreate(ctx echo.Context) error {
 	result := input.PMapRunCreated(func(runInput RunInput) *RunCreated {
 		recipient, err := uuid.Parse(string(runInput.Recipient))
 		if err != nil {
-			utils.GetLogFromEcho(ctx).Error(err) // TODO: probes
+			instrumentation.InvalidRecipientId(ctx, string(runInput.Recipient), err)
 			return runCreateError(http.StatusBadRequest)
 		}
 
@@ -40,26 +41,22 @@ func (this *controllers) ApiInternalRunsCreate(ctx echo.Context) error {
 		)
 
 		if err != nil {
-			utils.GetLogFromEcho(ctx).Error(err)
+			instrumentation.CloudConnectorRequestError(ctx, err, recipient)
 			return runCreateError(http.StatusInternalServerError)
 		} else {
-			utils.GetLogFromEcho(ctx).Debug("Sent request to cloud connector", "messageId", messageId, "correlationId", correlationId)
+			instrumentation.CloudConnectorOK(ctx, recipient)
 		}
 
 		messageIdUuid, err := uuid.Parse(*messageId)
 		if err != nil {
-			utils.GetLogFromEcho(ctx).Error(err)
+			instrumentation.InvalidMessageId(ctx, *messageId, err)
 			return runCreateError(http.StatusInternalServerError)
 		}
 
-		entity, err := newRun(&runInput, messageIdUuid, dbModel.RunStatusRunning)
-		if err != nil {
-			utils.GetLogFromEcho(ctx).Error(err)
-			return runCreateError(http.StatusInternalServerError)
-		}
+		entity := newRun(&runInput, messageIdUuid, dbModel.RunStatusRunning, recipient)
 
-		if dbResult := this.database.Create(entity); dbResult.Error != nil {
-			utils.GetLogFromEcho(ctx).Error(dbResult.Error)
+		if dbResult := this.database.Create(&entity); dbResult.Error != nil {
+			instrumentation.PlaybookRunCreateError(ctx, dbResult.Error, &entity)
 			return runCreateError(http.StatusInternalServerError)
 		}
 
@@ -73,13 +70,14 @@ func (this *controllers) ApiInternalRunsCreate(ctx echo.Context) error {
 	return ctx.JSON(http.StatusMultiStatus, result)
 }
 
-func newRun(input *RunInput, correlationId uuid.UUID, status string) (*dbModel.Run, error) {
-	run := &dbModel.Run{
+func newRun(input *RunInput, correlationId uuid.UUID, status string, recipient uuid.UUID) dbModel.Run {
+	run := dbModel.Run{
 		ID:            uuid.New(),
 		Account:       string(input.Account),
 		CorrelationID: correlationId,
 		URL:           string(input.Url),
 		Status:        status,
+		Recipient:     recipient,
 	}
 
 	if input.Labels != nil {
@@ -92,13 +90,7 @@ func newRun(input *RunInput, correlationId uuid.UUID, status string) (*dbModel.R
 		run.Timeout = cfg.GetInt("default.run.timeout")
 	}
 
-	if recipient, err := uuid.Parse(string(input.Recipient)); err == nil {
-		run.Recipient = recipient
-	} else {
-		return nil, err
-	}
-
-	return run, nil
+	return run
 }
 
 func runCreateError(code int) *RunCreated {
