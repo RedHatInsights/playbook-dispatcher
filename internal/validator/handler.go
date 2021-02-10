@@ -38,43 +38,45 @@ type handler struct {
 	log      *zap.SugaredLogger
 	producer *kafka.Producer
 	schema   *jsonschema.Schema
-	probes   *instrumentation.Probes
 	errors   chan error
 }
 
 func (this *handler) onMessage(msg *kafka.Message) {
+	ctx := utils.SetLog(context.Background(), this.log)
 	request := &messageModel.IngressValidationRequest{}
 	err := json.Unmarshal(msg.Value, request)
 
 	if err != nil {
-		this.probes.UnmarshallingError(err)
+		instrumentation.UnmarshallingError(ctx, err)
 		return
 	}
 
 	// TODO: pass bounded logger
-	ingressResponse, dispatcherResponse := this.handleRequest(request)
+	ingressResponse, dispatcherResponse := this.handleRequest(ctx, request)
 
-	this.produceMessage(ingressResponseTopic, ingressResponse)
-	this.produceMessage(dispatcherResponseTopic, dispatcherResponse)
+	this.produceMessage(ctx, ingressResponseTopic, ingressResponse)
+	this.produceMessage(ctx, dispatcherResponseTopic, dispatcherResponse)
 }
 
-func (this *handler) handleRequest(request *messageModel.IngressValidationRequest) (*messageModel.IngressValidationResponse, *messageModel.PlaybookRunResponseMessageYaml) {
+func (this *handler) handleRequest(ctx context.Context, request *messageModel.IngressValidationRequest) (*messageModel.IngressValidationResponse, *messageModel.PlaybookRunResponseMessageYaml) {
+	ctx, _ = utils.WithRequestId(ctx, request.RequestID)
+
 	if request.Size > cfg.GetInt64("artifact.max.size") {
-		this.probes.FileTooLarge(request)
+		instrumentation.FileTooLarge(ctx, request)
 
 		return messageModel.NewResponse(request, "failure"), nil
 	}
 
 	res, err := utils.DoGetWithRetry(client, request.URL, cfg.GetInt("storage.retries"))
 	if err != nil {
-		this.probes.FetchArchiveError(request, err)
+		instrumentation.FetchArchiveError(ctx, err)
 		return nil, nil
 	}
 
 	data, _ := ioutil.ReadAll(res.Body)
 	res.Body.Close()
 
-	this.log.Debugw("Processing request", "account", request.Account, "reqId", request.RequestID)
+	utils.GetLogFromContext(ctx).Debugw("Processing request", "account", request.Account, "reqId", request.RequestID)
 
 	response := &messageModel.IngressValidationResponse{
 		IngressValidationRequest: *request,
@@ -83,12 +85,12 @@ func (this *handler) handleRequest(request *messageModel.IngressValidationReques
 	events, err := this.validateContent(data)
 	if err != nil {
 		response.Validation = validationFailure
-		this.probes.ValidationFailed(request, err)
+		instrumentation.ValidationFailed(ctx, err)
 		return response, nil
 	}
 
 	response.Validation = validationSuccess
-	this.probes.ValidationSuccess(request)
+	instrumentation.ValidationSuccess(ctx)
 
 	dispatcherResponse := &messageModel.PlaybookRunResponseMessageYaml{
 		Account:         request.Account,
@@ -133,11 +135,11 @@ func (this *handler) validateContent(data []byte) (events []messageModel.Playboo
 	return events, nil
 }
 
-func (this *handler) produceMessage(topic string, value interface{}) {
+func (this *handler) produceMessage(ctx context.Context, topic string, value interface{}) {
 	if value != nil {
 		if err := kafkaUtils.Produce(this.producer, topic, value); err != nil {
-			this.probes.ProducerError(err, topic)
-			this.errors <- err // TODO: is "shutdown-on-error" a good strategy?
+			instrumentation.ProducerError(ctx, err, topic) // TODO: request id
+			this.errors <- err                             // TODO: is "shutdown-on-error" a good strategy?
 		}
 	}
 }
