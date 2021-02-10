@@ -2,7 +2,8 @@ package responseConsumer
 
 import (
 	"context"
-	"fmt"
+	"playbook-dispatcher/internal/common/constants"
+	kafkaUtils "playbook-dispatcher/internal/common/kafka"
 	"playbook-dispatcher/internal/common/model/db"
 	"playbook-dispatcher/internal/common/model/message"
 	"playbook-dispatcher/internal/common/utils"
@@ -12,13 +13,13 @@ import (
 
 	k "github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/google/uuid"
+
 	"gorm.io/gorm"
 )
 
 const (
 	EventPlaybookOnStats = "playbook_on_stats"
 	EventRunnerOnFailed  = "runner_on_failed"
-	EventExecutorOnStart = "executor_on_start"
 )
 
 type handler struct {
@@ -27,31 +28,30 @@ type handler struct {
 }
 
 func (this *handler) onMessage(msg *k.Message) {
-	value := &message.PlaybookRunResponseMessageYaml{}
-
-	if err := value.UnmarshalJSON(msg.Value); err != nil {
-		instrumentation.UnmarshallIncomingMessageError(this.log, err)
+	requestId, correlationId, err := getHeaders(msg)
+	if err != nil {
+		// TODO: get ctx as onMessage param
+		instrumentation.CannotReadHeaders(this.log, err)
 		return
 	}
 
-	// TODO: get ctx as onMessage param
-	ctx, log := utils.WithRequestId(utils.SetLog(context.Background(), this.log), value.RequestId)
+	ctx, log := utils.WithRequestId(utils.SetLog(context.Background(), this.log.With("correlation_id", correlationId)), requestId)
+
+	value := &message.PlaybookRunResponseMessageYaml{}
+
+	if err := value.UnmarshalJSON(msg.Value); err != nil {
+		instrumentation.UnmarshallIncomingMessageError(ctx, err)
+		return
+	}
+
 	log.Debugw("Processing message", "account", value.Account, "upload_timestamp", value.UploadTimestamp)
 
 	status := inferStatus(&value.Events)
 
 	queryBuilder := this.db.Model(db.Run{}).
 		Select("status").
-		Where("account = ?", value.Account)
-
-	// TODO: validator should be infering this and setting it as a message key
-	correlationId, err := inferCorrelationId(&value.Events)
-	if err != nil {
-		instrumentation.InvalidCorrelationId(ctx, err)
-		return
-	} else {
-		queryBuilder.Where("correlation_id = ?", correlationId)
-	}
+		Where("account = ?", value.Account).
+		Where("correlation_id = ?", correlationId)
 
 	result := queryBuilder.Updates(db.Run{Status: status})
 
@@ -88,14 +88,19 @@ func inferStatus(events *[]message.PlaybookRunResponseMessageYamlEventsElem) str
 	}
 }
 
-func inferCorrelationId(events *[]message.PlaybookRunResponseMessageYamlEventsElem) (result uuid.UUID, err error) {
-	for _, event := range *events {
-		if event.Event == EventExecutorOnStart && event.EventData != nil && event.EventData.CrcCorrelationId != nil {
-			result, err = uuid.Parse(*event.EventData.CrcCorrelationId)
-			return
-		}
+func getHeaders(msg *k.Message) (requestId string, correlationId uuid.UUID, err error) {
+	if requestId, err = kafkaUtils.GetHeader(msg, constants.HeaderRequestId); err != nil {
+		return
 	}
 
-	err = fmt.Errorf("Correlation id not found")
+	var correlationIdRaw string
+	if correlationIdRaw, err = kafkaUtils.GetHeader(msg, constants.HeaderCorrelationId); err != nil {
+		return
+	}
+
+	if correlationId, err = uuid.Parse(correlationIdRaw); err != nil {
+		return
+	}
+
 	return
 }

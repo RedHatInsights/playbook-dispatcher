@@ -2,6 +2,8 @@ package responseConsumer
 
 import (
 	"encoding/json"
+	"playbook-dispatcher/internal/common/constants"
+	kafkaUtils "playbook-dispatcher/internal/common/kafka"
 	dbModel "playbook-dispatcher/internal/common/model/db"
 	messageModel "playbook-dispatcher/internal/common/model/message"
 	"playbook-dispatcher/internal/common/utils/test"
@@ -15,7 +17,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func newResponseMessage(events *[]messageModel.PlaybookRunResponseMessageYamlEventsElem) *k.Message {
+func newResponseMessage(events *[]messageModel.PlaybookRunResponseMessageYamlEventsElem, correlationId uuid.UUID) *k.Message {
 	data := messageModel.PlaybookRunResponseMessageYaml{
 		Account:   accountNumber(),
 		RequestId: uuid.New().String(),
@@ -25,7 +27,10 @@ func newResponseMessage(events *[]messageModel.PlaybookRunResponseMessageYamlEve
 	value, err := json.Marshal(data)
 	Expect(err).ToNot(HaveOccurred())
 
-	return &k.Message{Value: value}
+	return &k.Message{
+		Value:   value,
+		Headers: kafkaUtils.Headers(constants.HeaderCorrelationId, correlationId.String(), constants.HeaderRequestId, "test"),
+	}
 }
 
 func createEvents(events ...string) *[]messageModel.PlaybookRunResponseMessageYamlEventsElem {
@@ -65,7 +70,7 @@ var _ = Describe("handler", func() {
 			var data = test.NewRun(accountNumber())
 			Expect(db().Create(&data).Error).ToNot(HaveOccurred())
 
-			msg := newResponseMessage(&[]messageModel.PlaybookRunResponseMessageYamlEventsElem{})
+			msg := newResponseMessage(&[]messageModel.PlaybookRunResponseMessageYamlEventsElem{}, uuid.New())
 			instance.onMessage(msg)
 
 			run := fetchRun(data.ID)
@@ -77,7 +82,7 @@ var _ = Describe("handler", func() {
 			Expect(db().Create(&data).Error).ToNot(HaveOccurred())
 
 			events := createEvents(
-				EventExecutorOnStart,
+				messageModel.EventExecutorOnStart,
 				"playbook_on_start",
 				"playbook_on_play_start",
 				"playbook_on_task_start",
@@ -86,12 +91,7 @@ var _ = Describe("handler", func() {
 				"playbook_on_stats",
 			)
 
-			correlationId := data.CorrelationID.String()
-			(*events)[0].EventData = &messageModel.PlaybookRunResponseMessageYamlEventsElemEventData{
-				CrcCorrelationId: &correlationId,
-			}
-
-			instance.onMessage(newResponseMessage(events))
+			instance.onMessage(newResponseMessage(events, data.CorrelationID))
 
 			run := fetchRun(data.ID)
 			Expect(run.Status).To(Equal("success"))
@@ -102,7 +102,7 @@ var _ = Describe("handler", func() {
 			Expect(db().Create(&data).Error).ToNot(HaveOccurred())
 
 			events := createEvents(
-				EventExecutorOnStart,
+				messageModel.EventExecutorOnStart,
 				"playbook_on_start",
 				"playbook_on_play_start",
 				"playbook_on_task_start",
@@ -111,12 +111,7 @@ var _ = Describe("handler", func() {
 				"playbook_on_stats",
 			)
 
-			correlationId := data.CorrelationID.String()
-			(*events)[0].EventData = &messageModel.PlaybookRunResponseMessageYamlEventsElemEventData{
-				CrcCorrelationId: &correlationId,
-			}
-
-			instance.onMessage(newResponseMessage(events))
+			instance.onMessage(newResponseMessage(events, data.CorrelationID))
 
 			run := fetchRun(data.ID)
 			Expect(run.Status).To(Equal("failure"))
@@ -133,7 +128,7 @@ var _ = Describe("handler", func() {
 			Expect(db().Create(&data).Error).ToNot(HaveOccurred())
 
 			events := createEvents(
-				EventExecutorOnStart,
+				messageModel.EventExecutorOnStart,
 				"playbook_on_start",
 				"playbook_on_play_start",
 				"playbook_on_task_start",
@@ -142,13 +137,7 @@ var _ = Describe("handler", func() {
 				"playbook_on_stats",
 			)
 
-			run1CorrelationId := data[1].CorrelationID.String()
-
-			(*events)[0].EventData = &messageModel.PlaybookRunResponseMessageYamlEventsElemEventData{
-				CrcCorrelationId: &run1CorrelationId,
-			}
-
-			msg := newResponseMessage(events)
+			msg := newResponseMessage(events, data[1].CorrelationID)
 			instance.onMessage(msg)
 
 			run0 := fetchRun(data[0].ID)

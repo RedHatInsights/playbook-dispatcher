@@ -1,10 +1,8 @@
 package validator
 
 import (
-	"context"
 	"io/ioutil"
 	messageModel "playbook-dispatcher/internal/common/model/message"
-	"playbook-dispatcher/internal/common/utils"
 
 	"github.com/ghodss/yaml"
 	. "github.com/onsi/ginkgo"
@@ -38,10 +36,8 @@ var _ = Describe("Handler", func() {
 				Size: 128 * 1024 * 1024,
 			}
 
-			ctx := utils.SetLog(context.Background(), zap.NewNop().Sugar())
-			validationResponse, dispatcherResponse := instance.handleRequest(ctx, req)
-			Expect(validationResponse.Validation).To(Equal("failure"))
-			Expect(dispatcherResponse).To(BeNil())
+			err := instance.validateRequest(req)
+			Expect(err).To(HaveOccurred())
 		})
 	})
 
