@@ -1,12 +1,13 @@
 package instrumentation
 
 import (
+	"context"
 	messageModel "playbook-dispatcher/internal/common/model/message"
+	"playbook-dispatcher/internal/common/utils"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/spf13/viper"
-	"go.uber.org/zap"
 )
 
 const (
@@ -16,73 +17,61 @@ const (
 
 var (
 	validationSuccessTotal = promauto.NewCounter(prometheus.CounterOpts{
-		Name: "validation_success_total",
+		Name: "validator_success_total",
 		Help: "The total number of successfully validated payloads",
 	})
 
 	validationFailureTotal = promauto.NewCounter(prometheus.CounterOpts{
-		Name: "validation_failure_total",
+		Name: "validator_failure_total",
 		Help: "The total number of payloads that did not pass validation",
 	})
 
 	errorTotal = promauto.NewCounterVec(prometheus.CounterOpts{
-		Name: "validation_error_total",
+		Name: "validator_error_total",
 		Help: "The total number of errors during payloads processing",
 	}, []string{"phase"})
 
 	producerError = promauto.NewCounterVec(prometheus.CounterOpts{
-		Name: "kafka_producer_error_total",
+		Name: "validator_kafka_producer_error_total",
 		Help: "The total number of kafka producer errors",
 	}, []string{"topic"})
 )
 
-type Probes struct {
-	log *zap.SugaredLogger
-}
-
-func Start(cfg *viper.Viper, log *zap.SugaredLogger) *Probes {
+func Start(cfg *viper.Viper) {
 	// initialize label values
 	// https://www.robustperception.io/existential-issues-with-metrics
 	errorTotal.WithLabelValues(errorUnmarshall)
 	errorTotal.WithLabelValues(errorS3)
 	producerError.WithLabelValues(cfg.GetString("topic.updates"))
 	producerError.WithLabelValues(cfg.GetString("topic.validation.response"))
-
-	return New(log)
 }
 
-func New(log *zap.SugaredLogger) *Probes {
-	return &Probes{
-		log: log,
-	}
-}
-
-func (this *Probes) ValidationSuccess(request *messageModel.IngressValidationRequest) {
+func ValidationSuccess(ctx context.Context) {
 	validationSuccessTotal.Inc()
-	this.log.Debugw("Payload valid", "reqId", request.RequestID)
+	utils.GetLogFromContext(ctx).Debugw("Payload valid")
 }
 
-func (this *Probes) ValidationFailed(request *messageModel.IngressValidationRequest, cause error) {
+func ValidationFailed(ctx context.Context, cause error) {
 	validationFailureTotal.Inc()
-	this.log.Infow("Rejecting payload due to validation failure", "cause", cause, "reqId", request.RequestID)
+	utils.GetLogFromContext(ctx).Infow("Rejecting payload due to validation failure", "cause", cause)
 }
 
-func (this *Probes) UnmarshallingError(err error) {
+func UnmarshallingError(ctx context.Context, err error) {
 	errorTotal.WithLabelValues(errorUnmarshall).Inc()
-	this.log.Errorw("Message unmarshalling failed", "error", err) // TODO some correlation info
+	utils.GetLogFromContext(ctx).Errorw("Message unmarshalling failed", "error", err) // TODO some correlation info
 }
 
-func (this *Probes) FetchArchiveError(request *messageModel.IngressValidationRequest, err error) {
+func FetchArchiveError(ctx context.Context, err error) {
 	errorTotal.WithLabelValues(errorS3).Inc()
-	this.log.Errorw("Failed to fetch uploaded archive", "error", err, "reqId", request.RequestID)
+	utils.GetLogFromContext(ctx).Errorw("Failed to fetch uploaded archive", "error", err)
 }
 
-func (this *Probes) FileTooLarge(request *messageModel.IngressValidationRequest) {
+func FileTooLarge(ctx context.Context, request *messageModel.IngressValidationRequest) {
 	validationFailureTotal.Inc()
-	this.log.Infow("Rejecting payload due to file size", "size", request.Size, "reqId", request.RequestID)
+	utils.GetLogFromContext(ctx).Infow("Rejecting payload due to file size", "size", request.Size)
 }
 
-func (this *Probes) ProducerError(err error, topic string) {
+func ProducerError(ctx context.Context, err error, topic string) {
 	producerError.WithLabelValues(topic).Inc()
-	this.log.Errorw("Kafka producer error", "error", err, "topic", topic)
+	utils.GetLogFromContext(ctx).Errorw("Kafka producer error", "error", err, "topic", topic)
 }

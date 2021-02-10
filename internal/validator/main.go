@@ -27,13 +27,12 @@ func Start(cfg *viper.Viper, log *zap.SugaredLogger, errors chan<- error, ready,
 	producer, err := kafka.NewProducer(cfg)
 	utils.DieOnError(err)
 
-	probes := instrumentation.Start(cfg, log)
+	instrumentation.Start(cfg)
 
 	handler := &handler{
 		log:      log,
 		producer: producer,
 		schema:   &schema,
-		probes:   probes,
 	}
 
 	ready.Register(func() error {
