@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"playbook-dispatcher/internal/api/connectors"
 	"playbook-dispatcher/internal/api/controllers"
+	"playbook-dispatcher/internal/api/instrumentation"
 	"playbook-dispatcher/internal/api/middleware"
 	"playbook-dispatcher/internal/common/db"
 	"playbook-dispatcher/internal/common/utils"
@@ -31,6 +32,7 @@ func init() {
 }
 
 func Start(cfg *viper.Viper, log *zap.SugaredLogger, errors chan<- error, ready, live *utils.ProbeHandler) func(ctx context.Context) {
+	instrumentation.Start()
 	db, sql := db.Connect(cfg, log)
 
 	ready.Register(sql.Ping)

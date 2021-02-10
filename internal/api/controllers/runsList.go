@@ -3,6 +3,7 @@ package controllers
 import (
 	"fmt"
 	"net/http"
+	"playbook-dispatcher/internal/api/instrumentation"
 	"playbook-dispatcher/internal/api/middleware"
 	dbModel "playbook-dispatcher/internal/common/model/db"
 	"playbook-dispatcher/internal/common/utils"
@@ -120,7 +121,7 @@ func (this *controllers) ApiRunsList(ctx echo.Context, params ApiRunsListParams)
 	dbResult := queryBuilder.Find(&dbRuns)
 
 	if dbResult.Error != nil {
-		utils.GetLogFromEcho(ctx).Error(dbResult.Error)
+		instrumentation.PlaybookRunReadError(ctx, err)
 		return ctx.NoContent(http.StatusInternalServerError)
 	}
 
