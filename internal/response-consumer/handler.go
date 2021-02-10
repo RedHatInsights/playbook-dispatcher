@@ -1,9 +1,12 @@
 package responseConsumer
 
 import (
+	"context"
+	"fmt"
 	"playbook-dispatcher/internal/common/model/db"
 	"playbook-dispatcher/internal/common/model/message"
 	"playbook-dispatcher/internal/common/utils"
+	"playbook-dispatcher/internal/response-consumer/instrumentation"
 
 	"go.uber.org/zap"
 
@@ -27,12 +30,13 @@ func (this *handler) onMessage(msg *k.Message) {
 	value := &message.PlaybookRunResponseMessageYaml{}
 
 	if err := value.UnmarshalJSON(msg.Value); err != nil {
-		this.log.Error(err)
+		instrumentation.UnmarshallIncomingMessageError(this.log, err)
 		return
 	}
 
-	log := utils.LogWithRequestId(this.log, value.RequestId)
-	log.Infow("Processing message", "account", value.Account, "upload_timestamp", value.UploadTimestamp)
+	// TODO: get ctx as onMessage param
+	ctx, log := utils.WithRequestId(utils.SetLog(context.Background(), this.log), value.RequestId)
+	log.Debugw("Processing message", "account", value.Account, "upload_timestamp", value.UploadTimestamp)
 
 	status := inferStatus(&value.Events)
 
@@ -40,18 +44,23 @@ func (this *handler) onMessage(msg *k.Message) {
 		Select("status").
 		Where("account = ?", value.Account)
 
-	if correlationId, err := inferCorrelationId(&value.Events); err != nil {
-		log.Error("Failed to parse correlation id", "error", err)
-	} else if correlationId != nil {
-		queryBuilder.Where("correlation_id = ?", *correlationId)
+	// TODO: validator should be infering this and setting it as a message key
+	correlationId, err := inferCorrelationId(&value.Events)
+	if err != nil {
+		instrumentation.InvalidCorrelationId(ctx, err)
+		return
+	} else {
+		queryBuilder.Where("correlation_id = ?", correlationId)
 	}
 
 	result := queryBuilder.Updates(db.Run{Status: status})
 
 	if result.Error != nil {
-		log.Error(result.Error)
+		instrumentation.PlaybookRunUpdateError(ctx, result.Error, value.Account, status, correlationId)
+	} else if result.RowsAffected > 0 {
+		instrumentation.PlaybookRunUpdated(ctx, value.Account, status, correlationId)
 	} else {
-		log.Infow("Updated run", "account", value.Account, "status", status, "count", result.RowsAffected)
+		instrumentation.PlaybookRunUpdateMiss(ctx, value.Account, status, correlationId)
 	}
 }
 
@@ -79,13 +88,14 @@ func inferStatus(events *[]message.PlaybookRunResponseMessageYamlEventsElem) str
 	}
 }
 
-func inferCorrelationId(events *[]message.PlaybookRunResponseMessageYamlEventsElem) (result *uuid.UUID, err error) {
+func inferCorrelationId(events *[]message.PlaybookRunResponseMessageYamlEventsElem) (result uuid.UUID, err error) {
 	for _, event := range *events {
 		if event.Event == EventExecutorOnStart && event.EventData != nil && event.EventData.CrcCorrelationId != nil {
-			correlationId, err := uuid.Parse(*event.EventData.CrcCorrelationId)
-			return &correlationId, err
+			result, err = uuid.Parse(*event.EventData.CrcCorrelationId)
+			return
 		}
 	}
 
-	return nil, nil
+	err = fmt.Errorf("Correlation id not found")
+	return
 }

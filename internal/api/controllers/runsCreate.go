@@ -18,7 +18,7 @@ func (this *controllers) ApiInternalRunsCreate(ctx echo.Context) error {
 
 	err := utils.ReadRequestBody(ctx, &input)
 	if err != nil {
-		this.log.Warn(err)
+		utils.GetLogFromEcho(ctx).Warn(err)
 		return ctx.NoContent(http.StatusBadRequest)
 	}
 
@@ -26,7 +26,7 @@ func (this *controllers) ApiInternalRunsCreate(ctx echo.Context) error {
 	result := input.PMapRunCreated(func(runInput RunInput) *RunCreated {
 		recipient, err := uuid.Parse(string(runInput.Recipient))
 		if err != nil {
-			this.log.Error(err) // TODO: probes
+			utils.GetLogFromEcho(ctx).Error(err) // TODO: probes
 			return runCreateError(http.StatusBadRequest)
 		}
 
@@ -40,20 +40,26 @@ func (this *controllers) ApiInternalRunsCreate(ctx echo.Context) error {
 		)
 
 		if err != nil {
-			this.log.Error(err)
+			utils.GetLogFromEcho(ctx).Error(err)
 			return runCreateError(http.StatusInternalServerError)
 		} else {
-			this.log.Debug("Sent request to cloud connector", "messageId", messageId, "correlationId", correlationId)
+			utils.GetLogFromEcho(ctx).Debug("Sent request to cloud connector", "messageId", messageId, "correlationId", correlationId)
 		}
 
-		entity, err := newRun(&runInput, correlationId, dbModel.RunStatusRunning)
+		messageIdUuid, err := uuid.Parse(*messageId)
 		if err != nil {
-			this.log.Error(err)
+			utils.GetLogFromEcho(ctx).Error(err)
+			return runCreateError(http.StatusInternalServerError)
+		}
+
+		entity, err := newRun(&runInput, messageIdUuid, dbModel.RunStatusRunning)
+		if err != nil {
+			utils.GetLogFromEcho(ctx).Error(err)
 			return runCreateError(http.StatusInternalServerError)
 		}
 
 		if dbResult := this.database.Create(entity); dbResult.Error != nil {
-			this.log.Error(dbResult.Error)
+			utils.GetLogFromEcho(ctx).Error(dbResult.Error)
 			return runCreateError(http.StatusInternalServerError)
 		}
 

@@ -47,6 +47,7 @@ func Start(cfg *viper.Viper, log *zap.SugaredLogger, errors chan<- error, ready,
 		echoPrometheus.MetricsMiddleware(),
 		echoMiddleware.BodyLimit(cfg.GetString("http.max.body.size")),
 		echo.WrapMiddleware(request_id.ConfiguredRequestID(requestIdHeader)),
+		middleware.ContextLogger,
 		echoMiddleware.Recover(),
 	)
 

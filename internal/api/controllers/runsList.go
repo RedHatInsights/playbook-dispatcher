@@ -120,7 +120,7 @@ func (this *controllers) ApiRunsList(ctx echo.Context, params ApiRunsListParams)
 	dbResult := queryBuilder.Find(&dbRuns)
 
 	if dbResult.Error != nil {
-		this.log.Error(dbResult.Error)
+		utils.GetLogFromEcho(ctx).Error(dbResult.Error)
 		return ctx.NoContent(http.StatusInternalServerError)
 	}
 

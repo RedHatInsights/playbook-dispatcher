@@ -8,6 +8,8 @@ import (
 
 	"go.uber.org/zap"
 
+	"playbook-dispatcher/internal/common/utils"
+
 	"github.com/google/uuid"
 	"github.com/spf13/viper"
 )
@@ -67,7 +69,7 @@ func (this *cloudConnectorClientImpl) SendCloudConnectorRequest(
 	}
 
 	// TODO: probe
-	this.log.Debugw("Sending Cloud Connector message",
+	utils.GetLogFromContext(ctx).Debugw("Sending Cloud Connector message",
 		"account", account,
 		"directive", cloudConnectorDirective,
 		"metadata", metadata,
