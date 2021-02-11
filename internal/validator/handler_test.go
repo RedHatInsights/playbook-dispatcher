@@ -3,13 +3,13 @@ package validator
 import (
 	"io/ioutil"
 	messageModel "playbook-dispatcher/internal/common/model/message"
+	"playbook-dispatcher/internal/common/utils/test"
 
 	"github.com/ghodss/yaml"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
 	"github.com/qri-io/jsonschema"
-	"go.uber.org/zap"
 )
 
 var instance handler
@@ -22,9 +22,7 @@ var _ = Describe("Handler", func() {
 		err = yaml.Unmarshal(file, &schema)
 		Expect(err).ToNot(HaveOccurred())
 
-		log := zap.NewNop().Sugar()
 		instance = handler{
-			log:      log,
 			producer: nil,
 			schema:   &schema,
 		}
@@ -45,7 +43,7 @@ var _ = Describe("Handler", func() {
 
 		DescribeTable("Rejects invalid files",
 			func(file string) {
-				_, err := instance.validateContent([]byte(file))
+				_, err := instance.validateContent(test.TestContext(), []byte(file))
 				Expect(err).To(HaveOccurred())
 			},
 			Entry("empty file", ""),
@@ -57,7 +55,7 @@ var _ = Describe("Handler", func() {
 
 		DescribeTable("Accepts valid files",
 			func(file string) {
-				events, err := instance.validateContent([]byte(file))
+				events, err := instance.validateContent(test.TestContext(), []byte(file))
 				Expect(err).ToNot(HaveOccurred())
 				Expect(events).ToNot(BeEmpty())
 			},
@@ -80,7 +78,7 @@ var _ = Describe("Handler", func() {
 			{"uuid": "c8347ac2-61d3-4a36-9cbb-c51e14984eee", "counter": 6, "stdout": "\r\nPLAY RECAP *********************************************************************\r\n\u001b[0;32mlocalhost\u001b[0m                  : \u001b[0;32mok=1   \u001b[0m changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   \r\n", "start_line": 5, "end_line": 9, "runner_ident": "test05", "event": "playbook_on_stats", "pid": 1149259, "created": "2021-01-22T14:42:00.009228", "parent_uuid": "d4ae95cf-71fd-4386-8dbf-2bce933ce713", "event_data": {"playbook": "minimal.yml", "playbook_uuid": "d4ae95cf-71fd-4386-8dbf-2bce933ce713", "changed": {}, "dark": {}, "failures": {}, "ignored": {}, "ok": {"localhost": 1}, "processed": {"localhost": 1}, "rescued": {}, "skipped": {}, "artifact_data": {}, "uuid": "c8347ac2-61d3-4a36-9cbb-c51e14984eee"}}
 			`
 
-			events, err := instance.validateContent([]byte(data))
+			events, err := instance.validateContent(test.TestContext(), []byte(data))
 			Expect(err).ToNot(HaveOccurred())
 			Expect(events).To(HaveLen(6))
 		})

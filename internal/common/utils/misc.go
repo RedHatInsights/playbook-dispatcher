@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/labstack/echo/v4"
-	"go.uber.org/zap"
 )
 
 func DieOnError(err error) {
@@ -13,9 +12,9 @@ func DieOnError(err error) {
 	}
 }
 
-func StopServer(server *echo.Echo, ctx context.Context, log *zap.SugaredLogger) {
+func StopServer(ctx context.Context, server *echo.Echo) {
 	if e := server.Shutdown(ctx); e != nil {
-		log.Fatal(e)
+		GetLogFromContext(ctx).Fatal(e)
 	}
 }
 

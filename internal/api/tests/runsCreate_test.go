@@ -1,7 +1,6 @@
 package tests
 
 import (
-	"context"
 	"io/ioutil"
 	"net/http"
 	dbModel "playbook-dispatcher/internal/common/model/db"
@@ -15,7 +14,7 @@ import (
 )
 
 func dispatch(payload *ApiInternalRunsCreateJSONRequestBody) (*RunsCreated, *ApiInternalRunsCreateResponse) {
-	resp, err := client.ApiInternalRunsCreate(context.Background(), *payload)
+	resp, err := client.ApiInternalRunsCreate(test.TestContext(), *payload)
 	Expect(err).ToNot(HaveOccurred())
 	res, err := ParseApiInternalRunsCreateResponse(resp)
 	Expect(err).ToNot(HaveOccurred())
@@ -60,7 +59,7 @@ var _ = Describe("runsCreate", func() {
 
 	DescribeTable("validation",
 		func(payload, expected string) {
-			resp, err := client.ApiInternalRunsCreateWithBody(context.Background(), "application/json", strings.NewReader(payload))
+			resp, err := client.ApiInternalRunsCreateWithBody(test.TestContext(), "application/json", strings.NewReader(payload))
 			Expect(err).ToNot(HaveOccurred())
 			Expect(resp.StatusCode).To(Equal(http.StatusBadRequest))
 			body, err := ioutil.ReadAll(resp.Body)

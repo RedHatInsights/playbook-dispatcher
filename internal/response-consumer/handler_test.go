@@ -8,8 +8,6 @@ import (
 	messageModel "playbook-dispatcher/internal/common/model/message"
 	"playbook-dispatcher/internal/common/utils/test"
 
-	"go.uber.org/zap"
-
 	k "github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/google/uuid"
 
@@ -53,8 +51,7 @@ var _ = Describe("handler", func() {
 
 	BeforeEach(func() {
 		instance = handler{
-			db:  db(),
-			log: zap.NewNop().Sugar(),
+			db: db(),
 		}
 	})
 
@@ -71,7 +68,7 @@ var _ = Describe("handler", func() {
 			Expect(db().Create(&data).Error).ToNot(HaveOccurred())
 
 			msg := newResponseMessage(&[]messageModel.PlaybookRunResponseMessageYamlEventsElem{}, uuid.New())
-			instance.onMessage(msg)
+			instance.onMessage(test.TestContext(), msg)
 
 			run := fetchRun(data.ID)
 			Expect(run.Status).To(Equal("running"))
@@ -91,7 +88,7 @@ var _ = Describe("handler", func() {
 				"playbook_on_stats",
 			)
 
-			instance.onMessage(newResponseMessage(events, data.CorrelationID))
+			instance.onMessage(test.TestContext(), newResponseMessage(events, data.CorrelationID))
 
 			run := fetchRun(data.ID)
 			Expect(run.Status).To(Equal("success"))
@@ -111,7 +108,7 @@ var _ = Describe("handler", func() {
 				"playbook_on_stats",
 			)
 
-			instance.onMessage(newResponseMessage(events, data.CorrelationID))
+			instance.onMessage(test.TestContext(), newResponseMessage(events, data.CorrelationID))
 
 			run := fetchRun(data.ID)
 			Expect(run.Status).To(Equal("failure"))
@@ -138,7 +135,7 @@ var _ = Describe("handler", func() {
 			)
 
 			msg := newResponseMessage(events, data[1].CorrelationID)
-			instance.onMessage(msg)
+			instance.onMessage(test.TestContext(), msg)
 
 			run0 := fetchRun(data[0].ID)
 			Expect(run0.Status).To(Equal("running"))

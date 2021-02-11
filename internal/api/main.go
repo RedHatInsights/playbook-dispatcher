@@ -10,14 +10,14 @@ import (
 	"playbook-dispatcher/internal/api/middleware"
 	"playbook-dispatcher/internal/common/db"
 	"playbook-dispatcher/internal/common/utils"
-
-	"go.uber.org/zap"
+	"sync"
 
 	oapiMiddleware "github.com/deepmap/oapi-codegen/pkg/middleware"
 	"github.com/getkin/kin-openapi/openapi3"
 	echoPrometheus "github.com/globocom/echo-prometheus"
 	"github.com/labstack/echo/v4"
 	echoMiddleware "github.com/labstack/echo/v4/middleware"
+	"github.com/labstack/gommon/log"
 	"github.com/redhatinsights/platform-go-middlewares/identity"
 	"github.com/redhatinsights/platform-go-middlewares/request_id"
 	"github.com/spf13/viper"
@@ -31,9 +31,15 @@ func init() {
 	openapi3.DefineStringFormat("url", `^https?:\/\/.*$`)
 }
 
-func Start(cfg *viper.Viper, log *zap.SugaredLogger, errors chan<- error, ready, live *utils.ProbeHandler) func(ctx context.Context) {
+func Start(
+	ctx context.Context,
+	cfg *viper.Viper,
+	errors chan<- error,
+	ready, live *utils.ProbeHandler,
+	wg *sync.WaitGroup,
+) {
 	instrumentation.Start()
-	db, sql := db.Connect(cfg, log)
+	db, sql := db.Connect(ctx, cfg)
 
 	ready.Register(sql.Ping)
 	live.Register(sql.Ping)
@@ -60,13 +66,13 @@ func Start(cfg *viper.Viper, log *zap.SugaredLogger, errors chan<- error, ready,
 	var cloudConnectorClient connectors.CloudConnectorClient
 
 	if cfg.GetString("cloud.connector.impl") == "impl" {
-		cloudConnectorClient = connectors.NewConnectorClient(cfg, log)
+		cloudConnectorClient = connectors.NewConnectorClient(cfg)
 	} else {
 		cloudConnectorClient = connectors.NewConnectorClientMock()
 		log.Warn("Using mock CloudConnectorClient")
 	}
 
-	ctrl := controllers.CreateControllers(db, log, cloudConnectorClient)
+	ctrl := controllers.CreateControllers(db, cloudConnectorClient)
 
 	internal := server.Group("/internal/*")
 	public := server.Group("/api/playbook-dispatcher/v1/*")
@@ -81,16 +87,20 @@ func Start(cfg *viper.Viper, log *zap.SugaredLogger, errors chan<- error, ready,
 	public.Use(oapiMiddleware.OapiRequestValidator(spec))
 	controllers.RegisterHandlers(public, ctrl)
 
+	wg.Add(1)
 	go func() {
 		errors <- server.Start(fmt.Sprintf("0.0.0.0:%d", cfg.GetInt("web.port")))
 	}()
 
-	return func(ctx context.Context) {
-		log.Info("Shutting down web server")
-		utils.StopServer(server, ctx, log)
+	go func() {
+		defer wg.Done()
+		defer log.Debug("API stopped")
+		<-ctx.Done()
 
+		log.Info("Shutting down API")
+		utils.StopServer(ctx, server)
 		if sqlConnection, err := db.DB(); err != nil {
 			sqlConnection.Close()
 		}
-	}
+	}()
 }

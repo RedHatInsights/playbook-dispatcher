@@ -42,5 +42,5 @@ var (
 const accountContextKey = iota
 
 func ContextWithIdentity(account string) context.Context {
-	return context.WithValue(context.Background(), accountContextKey, account)
+	return context.WithValue(test.TestContext(), accountContextKey, account)
 }

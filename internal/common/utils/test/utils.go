@@ -1,14 +1,17 @@
 package test
 
 import (
+	"context"
 	"encoding/base64"
 	"fmt"
 	"net/http"
+	"playbook-dispatcher/internal/common/utils"
 	"time"
 
 	dbModel "playbook-dispatcher/internal/common/model/db"
 
 	"github.com/google/uuid"
+	"go.uber.org/zap"
 )
 
 func IdentityHeaderMinimal(account string) string {
@@ -34,4 +37,8 @@ func NewRunWithStatus(account string, status string) *dbModel.Run {
 
 func NewRun(account string) *dbModel.Run {
 	return NewRunWithStatus(account, "running")
+}
+
+func TestContext() context.Context {
+	return utils.SetLog(context.Background(), zap.NewNop().Sugar())
 }

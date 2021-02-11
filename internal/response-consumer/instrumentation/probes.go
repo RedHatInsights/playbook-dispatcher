@@ -4,8 +4,6 @@ import (
 	"context"
 	"playbook-dispatcher/internal/common/utils"
 
-	"go.uber.org/zap"
-
 	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -59,8 +57,8 @@ func UnmarshallIncomingMessageError(ctx context.Context, err error) {
 	validationFailureTotal.WithLabelValues(labelJsonUnmarshall).Inc()
 }
 
-func CannotReadHeaders(log *zap.SugaredLogger, err error) {
-	log.Errorw("Error parsing correlation id", "error", err)
+func CannotReadHeaders(ctx context.Context, err error) {
+	utils.GetLogFromContext(ctx).Errorw("Error parsing correlation id", "error", err)
 	errorTotal.WithLabelValues(labelHeaderMissing).Inc()
 }
 

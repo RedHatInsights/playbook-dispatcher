@@ -4,10 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"sync"
+	"playbook-dispatcher/internal/common/utils"
 	"time"
-
-	"go.uber.org/zap"
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/qri-io/jsonschema"
@@ -44,52 +42,45 @@ func NewConsumer(config *viper.Viper, topic string) (*kafka.Consumer, error) {
 }
 
 func NewConsumerEventLoop(
+	ctx context.Context,
 	consumer *kafka.Consumer,
 	schema *jsonschema.Schema,
-	handler func(*kafka.Message),
-	log *zap.SugaredLogger,
-) (start, stop func()) {
+	handler func(context.Context, *kafka.Message),
+) (start func()) {
 
-	stopped := false
-	wg := sync.WaitGroup{}
-	wg.Add(1)
+	return func() {
+		for {
+			msg, err := consumer.ReadMessage(1 * time.Second) // TODO: configurable
 
-	start = func() {
-		for !stopped {
-			msg, err := consumer.ReadMessage(1 * time.Second)
+			select {
+			case <-ctx.Done():
+				return
+			default:
+			}
 
 			if err != nil {
 				if err.(kafka.Error).Code() != kafka.ErrTimedOut {
-					log.Error(err)
+					utils.GetLogFromContext(ctx).Errorw("Error reading message from kafka", "err", err)
 				}
 
 				continue
 			}
 
 			if schema != nil {
-				errors, parserError := schema.ValidateBytes(context.Background(), msg.Value)
+				errors, parserError := schema.ValidateBytes(ctx, msg.Value)
 
 				if len(errors) > 0 {
-					log.Warn(errors[0])
+					utils.GetLogFromContext(ctx).Warnw("Incoming message does not match schema", "err", errors[0])
 					continue
 				} else if parserError != nil {
-					log.Warn(parserError)
+					utils.GetLogFromContext(ctx).Warnw("Incoming message cannot be parsed", "err", parserError)
 					continue
 				}
 			}
 
-			handler(msg)
+			handler(ctx, msg)
 		}
-
-		wg.Done()
 	}
-
-	stop = func() {
-		stopped = true
-		wg.Wait()
-	}
-
-	return
 }
 
 func Produce(producer *kafka.Producer, topic string, value interface{}, key *string, headers ...kafka.Header) error {

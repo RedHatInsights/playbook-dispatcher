@@ -6,14 +6,20 @@ import (
 	"playbook-dispatcher/internal/common/kafka"
 	"playbook-dispatcher/internal/common/utils"
 	"playbook-dispatcher/internal/validator/instrumentation"
+	"sync"
 
 	"github.com/ghodss/yaml"
 	"github.com/qri-io/jsonschema"
 	"github.com/spf13/viper"
-	"go.uber.org/zap"
 )
 
-func Start(cfg *viper.Viper, log *zap.SugaredLogger, errors chan<- error, ready, live *utils.ProbeHandler) func(ctx context.Context) {
+func Start(
+	ctx context.Context,
+	cfg *viper.Viper,
+	errors chan<- error,
+	ready, live *utils.ProbeHandler,
+	wg *sync.WaitGroup,
+) {
 	var schema jsonschema.Schema
 	file, err := ioutil.ReadFile(cfg.GetString("schema.runner.event"))
 	utils.DieOnError(err)
@@ -30,7 +36,6 @@ func Start(cfg *viper.Viper, log *zap.SugaredLogger, errors chan<- error, ready,
 	instrumentation.Start(cfg)
 
 	handler := &handler{
-		log:      log,
 		producer: producer,
 		schema:   &schema,
 	}
@@ -39,14 +44,15 @@ func Start(cfg *viper.Viper, log *zap.SugaredLogger, errors chan<- error, ready,
 		return kafka.Ping(kafkaTimeout, consumer, producer)
 	})
 
-	startLoop, stopLoop := kafka.NewConsumerEventLoop(consumer, nil, handler.onMessage, log)
+	start := kafka.NewConsumerEventLoop(ctx, consumer, nil, handler.onMessage)
 
-	go startLoop()
-
-	return func(ctx context.Context) {
-		stopLoop()
-		consumer.Close()
-		producer.Flush(kafkaTimeout)
-		producer.Close()
-	}
+	go func() {
+		defer wg.Done()
+		defer utils.GetLogFromContext(ctx).Debug("Validator stopped")
+		defer producer.Close()
+		defer producer.Flush(kafkaTimeout)
+		defer consumer.Close()
+		wg.Add(1)
+		start()
+	}()
 }
