@@ -46,7 +46,9 @@ func parseDeepObject(ctx echo.Context, queryParams url.Values, regex *regexp.Reg
 				// - https://github.com/deepmap/oapi-codegen/issues/282
 				// - https://github.com/getkin/kin-openapi/issues/293
 				// - https://github.com/getkin/kin-openapi/issues/294
-				requestUrl.RawQuery = strings.Replace(requestUrl.RawQuery, toRemove, "", 1)
+				unescapedRaw, _ := url.QueryUnescape(requestUrl.RawQuery)
+				replaced := strings.Replace(unescapedRaw, toRemove, "", 1)
+				requestUrl.RawQuery = url.QueryEscape(replaced)
 				queryParams.Del(key)
 			}
 		}
