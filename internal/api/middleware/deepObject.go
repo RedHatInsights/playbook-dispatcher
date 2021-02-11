@@ -23,15 +23,15 @@ func Hack(param string, fields ...string) echo.MiddlewareFunc {
 	}
 }
 
-func parseDeepObject(ctx echo.Context, queryParams url.Values, regex *regexp.Regexp, prefix string) map[string]string {
-	result := make(map[string]string)
+func parseDeepObject(ctx echo.Context, queryParams url.Values, regex *regexp.Regexp, prefix string) map[string][]string {
+	result := make(map[string][]string)
 
 	for key, values := range queryParams {
 		matches := regex.FindStringSubmatch(key)
 
 		if len(matches) > 0 {
 			for _, value := range values {
-				result[matches[1]] = value
+				result[matches[1]] = append(result[matches[1]], value)
 
 				requestUrl := ctx.Request().URL
 				toRemove := fmt.Sprintf("%s[%s]=%s", prefix, url.PathEscape(matches[1]), value)
@@ -71,8 +71,8 @@ func buildKey(prefix string) string {
 	return "deepObjectHack|" + prefix
 }
 
-func GetDeepObject(ctx echo.Context, param string, fields ...string) map[string]string {
-	if result, ok := ctx.Get(buildKey(buildPrefix(param, fields...))).(map[string]string); !ok {
+func GetDeepObject(ctx echo.Context, param string, fields ...string) map[string][]string {
+	if result, ok := ctx.Get(buildKey(buildPrefix(param, fields...))).(map[string][]string); !ok {
 		panic("failed to get deep object data")
 	} else {
 		return result

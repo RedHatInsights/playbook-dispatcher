@@ -27,7 +27,7 @@ func listRuns(keysAndValues ...interface{}) (*Runs, *ApiRunsListResponse) {
 
 func listRunsRaw(keysAndValues ...interface{}) *http.Response {
 	if len(keysAndValues)%2 != 0 {
-		panic("Odd number of parameters")
+		panic(fmt.Sprintf("Odd number of parameters: %s", keysAndValues))
 	}
 
 	requestUrl := "http://localhost:9002/api/playbook-dispatcher/v1/runs"
@@ -301,10 +301,22 @@ var _ = Describe("runsList", func() {
 
 	Describe("sparse fieldsets", func() {
 		DescribeTable("happy path",
-			func(fields ...string) {
+			func(short bool, fields ...string) {
 				Expect(db().Create(test.NewRun(accountNumber())).Error).ToNot(HaveOccurred())
 
-				res := listRunsRaw("fields[data]", strings.Join(fields, ","))
+				params := []interface{}{}
+
+				if short {
+					params = append(params, "fields[data]")
+					params = append(params, strings.Join(fields, ","))
+				} else {
+					for _, value := range fields {
+						params = append(params, "fields[data]")
+						params = append(params, value)
+					}
+				}
+
+				res := listRunsRaw(params...)
 				Expect(res.StatusCode).To(Equal(http.StatusOK))
 
 				bodyBytes, err := ioutil.ReadAll(res.Body)
@@ -321,9 +333,12 @@ var _ = Describe("runsList", func() {
 				}
 			},
 
-			Entry("single field", "id"),
-			Entry("defaults defined explicitly", "id", "recipient", "url", "labels", "timeout", "status"),
-			Entry("all fields", "id", "recipient", "url", "labels", "timeout", "status", "created_at", "updated_at"),
+			Entry("single field", false, "id"),
+			Entry("defaults defined explicitly", false, "id", "recipient", "url", "labels", "timeout", "status"),
+			Entry("all fields", false, "id", "recipient", "url", "labels", "timeout", "status", "created_at", "updated_at"),
+			Entry("single field (short syntax)", true, "id"),
+			Entry("defaults defined explicitly (short syntax)", true, "id", "recipient", "url", "labels", "timeout", "status"),
+			Entry("all fields (short syntax)", true, "id", "recipient", "url", "labels", "timeout", "status", "created_at", "updated_at"),
 		)
 
 		It("400s on invalid value", func() {
