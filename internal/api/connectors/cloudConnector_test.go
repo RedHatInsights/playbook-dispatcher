@@ -2,12 +2,16 @@ package connectors
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
 	"playbook-dispatcher/internal/common/config"
+	"playbook-dispatcher/internal/common/constants"
 	"playbook-dispatcher/internal/common/utils"
 	"playbook-dispatcher/internal/common/utils/test"
+
+	"github.com/redhatinsights/platform-go-middlewares/request_id"
 
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo"
@@ -71,5 +75,18 @@ var _ = Describe("Cloud Connector", func() {
 		Expect(parsedRequest["recipient"]).To(Equal(recipient.String()))
 	})
 
-	// TODO: forwarded headers
+	It("forwards identity header", func() {
+		requestId := "e6b06142-9589-4213-9a5e-1e2f513c448b"
+		doer := withMockResponse(200, `{"id": "871e31aa-7d41-43e3-8ef7-05706a0ee34a"}`)
+		ctx := context.WithValue(test.TestContext(), request_id.RequestIDKey, requestId)
+
+		client := NewConnectorClientWithHttpRequestDoer(config.Get(), &doer)
+		recipient := uuid.New()
+		result, err := client.SendCloudConnectorRequest(ctx, "1234", recipient, uuid.New())
+		Expect(err).ToNot(HaveOccurred())
+		Expect(*result).To(Equal("871e31aa-7d41-43e3-8ef7-05706a0ee34a"))
+
+		idHeader := doer.request.Header.Get(constants.HeaderRequestId)
+		Expect(idHeader).To(Equal(requestId))
+	})
 })

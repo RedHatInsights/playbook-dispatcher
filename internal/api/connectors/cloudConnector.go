@@ -4,9 +4,12 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"playbook-dispatcher/internal/common/constants"
 	"time"
 
 	"playbook-dispatcher/internal/common/utils"
+
+	"github.com/redhatinsights/platform-go-middlewares/request_id"
 
 	"github.com/google/uuid"
 	"github.com/spf13/viper"
@@ -29,7 +32,7 @@ func NewConnectorClientWithHttpRequestDoer(cfg *viper.Viper, doer HttpRequestDoe
 			Server: cfg.GetString("cloud.connector.host"),
 			Client: doer,
 			RequestEditor: func(ctx context.Context, req *http.Request) error {
-				// TODO: forward request id
+				req.Header.Set(constants.HeaderRequestId, request_id.GetReqID(ctx))
 				return nil
 			},
 		},
