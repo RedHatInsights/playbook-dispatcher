@@ -6,8 +6,6 @@ import (
 	"net/http"
 	"time"
 
-	"go.uber.org/zap"
-
 	"playbook-dispatcher/internal/common/utils"
 
 	"github.com/google/uuid"
@@ -21,12 +19,11 @@ type CloudConnectorClient interface {
 }
 
 type cloudConnectorClientImpl struct {
-	log       *zap.SugaredLogger
 	returnUrl string
 	client    ClientWithResponsesInterface
 }
 
-func NewConnectorClientWithHttpRequestDoer(cfg *viper.Viper, log *zap.SugaredLogger, doer HttpRequestDoer) CloudConnectorClient {
+func NewConnectorClientWithHttpRequestDoer(cfg *viper.Viper, doer HttpRequestDoer) CloudConnectorClient {
 	client := &ClientWithResponses{
 		ClientInterface: &Client{
 			Server: cfg.GetString("cloud.connector.host"),
@@ -39,18 +36,17 @@ func NewConnectorClientWithHttpRequestDoer(cfg *viper.Viper, log *zap.SugaredLog
 	}
 
 	return &cloudConnectorClientImpl{
-		log:       log,
 		returnUrl: cfg.GetString("return.url"),
 		client:    client,
 	}
 }
 
-func NewConnectorClient(cfg *viper.Viper, log *zap.SugaredLogger) CloudConnectorClient {
+func NewConnectorClient(cfg *viper.Viper) CloudConnectorClient {
 	httpClient := http.Client{
 		Timeout: time.Duration(cfg.GetInt64("cloud.connector.timeout") * int64(time.Second)),
 	}
 
-	return NewConnectorClientWithHttpRequestDoer(cfg, log, &httpClient)
+	return NewConnectorClientWithHttpRequestDoer(cfg, &httpClient)
 }
 
 func (this *cloudConnectorClientImpl) SendCloudConnectorRequest(

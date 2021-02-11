@@ -110,15 +110,25 @@ func SetLog(ctx context.Context, log *zap.SugaredLogger) context.Context {
 }
 
 func GetLogFromContext(ctx context.Context) *zap.SugaredLogger {
-	return ctx.Value(loggerKey).(*zap.SugaredLogger)
+	if log, ok := ctx.Value(loggerKey).(*zap.SugaredLogger); !ok {
+		panic("Logger missing in context")
+	} else {
+		return log
+	}
 }
 
 func GetLogFromEcho(ctx echo.Context) *zap.SugaredLogger {
 	return GetLogFromContext(ctx.Request().Context())
 }
 
-func WithRequestId(parent context.Context, requestId string) (ctx context.Context, log *zap.SugaredLogger) {
-	log = LogWithRequestId(GetLogFromContext(parent), requestId)
-	ctx = SetLog(parent, log)
-	return
+func WithRequestId(parent context.Context, requestId string) context.Context {
+	return withKeyValue(parent, "request_id", requestId)
+}
+
+func WithCorrelationId(parent context.Context, requestId string) context.Context {
+	return withKeyValue(parent, "request_id", requestId)
+}
+
+func withKeyValue(parent context.Context, key, value string) context.Context {
+	return SetLog(parent, GetLogFromContext(parent).With(key, value))
 }

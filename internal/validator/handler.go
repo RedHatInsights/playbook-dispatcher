@@ -15,8 +15,6 @@ import (
 	"strings"
 	"time"
 
-	"go.uber.org/zap"
-
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/qri-io/jsonschema"
 )
@@ -36,14 +34,12 @@ const (
 )
 
 type handler struct {
-	log      *zap.SugaredLogger
 	producer *kafka.Producer
 	schema   *jsonschema.Schema
 	errors   chan error
 }
 
-func (this *handler) onMessage(msg *kafka.Message) {
-	ctx := utils.SetLog(context.Background(), this.log)
+func (this *handler) onMessage(ctx context.Context, msg *kafka.Message) {
 	request := &messageModel.IngressValidationRequest{}
 	err := json.Unmarshal(msg.Value, request)
 
@@ -59,8 +55,8 @@ func (this *handler) handleRequest(
 	ctx context.Context,
 	request *messageModel.IngressValidationRequest,
 ) {
-	ctx, log := utils.WithRequestId(ctx, request.RequestID)
-	log.Debugw("Processing request", "account", request.Account)
+	ctx = utils.WithRequestId(ctx, request.RequestID)
+	utils.GetLogFromContext(ctx).Debugw("Processing request", "account", request.Account)
 
 	ingressResponse := &messageModel.IngressValidationResponse{
 		IngressValidationRequest: *request,
@@ -79,7 +75,7 @@ func (this *handler) handleRequest(
 	data, _ := ioutil.ReadAll(res.Body)
 	res.Body.Close()
 
-	events, err := this.validateContent(data)
+	events, err := this.validateContent(ctx, data)
 	if err != nil {
 		this.validationFailed(ctx, err, ingressResponse)
 		return
@@ -115,7 +111,7 @@ func (this *handler) validateRequest(request *messageModel.IngressValidationRequ
 	return
 }
 
-func (this *handler) validateContent(data []byte) (events []messageModel.PlaybookRunResponseMessageYamlEventsElem, err error) {
+func (this *handler) validateContent(ctx context.Context, data []byte) (events []messageModel.PlaybookRunResponseMessageYamlEventsElem, err error) {
 	lines := strings.Split(string(data), "\n")
 
 	for _, line := range lines {
@@ -123,7 +119,7 @@ func (this *handler) validateContent(data []byte) (events []messageModel.Playboo
 			continue
 		}
 
-		errors, parserError := this.schema.ValidateBytes(context.TODO(), []byte(line))
+		errors, parserError := this.schema.ValidateBytes(ctx, []byte(line))
 		if parserError != nil {
 			return nil, parserError
 		} else if len(errors) > 0 {

@@ -3,14 +3,11 @@ package utils
 import (
 	"net/http"
 
-	"go.uber.org/zap"
-
 	"github.com/labstack/echo/v4"
 )
 
 type ProbeHandler struct {
 	fns []func() error
-	Log *zap.SugaredLogger
 }
 
 func (this *ProbeHandler) Register(callback func() error) {
@@ -20,7 +17,7 @@ func (this *ProbeHandler) Register(callback func() error) {
 func (this *ProbeHandler) Check(ctx echo.Context) error {
 	for _, fn := range this.fns {
 		if err := fn(); err != nil {
-			this.Log.Error(err)
+			GetLogFromEcho(ctx).Error(err)
 			return ctx.String(http.StatusInternalServerError, err.Error())
 		}
 	}

@@ -10,6 +10,7 @@ import (
 	"playbook-dispatcher/internal/common/utils"
 	responseConsumer "playbook-dispatcher/internal/response-consumer"
 	"playbook-dispatcher/internal/validator"
+	"sync"
 	"syscall"
 	"time"
 
@@ -21,7 +22,13 @@ import (
 	"github.com/spf13/viper"
 )
 
-type startModuleFn = func(cfg *viper.Viper, log *zap.SugaredLogger, errors chan<- error, ready, live *utils.ProbeHandler) func(ctx context.Context)
+type startModuleFn = func(
+	ctx context.Context,
+	cfg *viper.Viper,
+	errors chan<- error,
+	ready, live *utils.ProbeHandler,
+	wg *sync.WaitGroup,
+)
 
 func run(cmd *cobra.Command, args []string) error {
 	modules, err := cmd.Flags().GetStringSlice("module")
@@ -38,14 +45,18 @@ func run(cmd *cobra.Command, args []string) error {
 	metricsServer.HideBanner = true
 	metricsServer.Debug = false
 
-	readinessProbeHandler := &utils.ProbeHandler{Log: log}
-	livenessProbeHandler := &utils.ProbeHandler{Log: log}
+	readinessProbeHandler := &utils.ProbeHandler{}
+	livenessProbeHandler := &utils.ProbeHandler{}
 
 	metricsServer.GET("/ready", readinessProbeHandler.Check)
 	metricsServer.GET("/live", livenessProbeHandler.Check)
 	metricsServer.GET(cfg.GetString("metrics.path"), echo.WrapHandler(promhttp.Handler()))
 
-	stopActions := []func(ctx context.Context){}
+	wg := sync.WaitGroup{}
+
+	ctx, stop := context.WithCancel(utils.SetLog(context.Background(), log))
+	defer shutdown(metricsServer, log, &wg)
+	defer stop()
 
 	for _, module := range modules {
 		log.Infof("Starting module %s", module)
@@ -63,7 +74,7 @@ func run(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("Unknown module %s", module)
 		}
 
-		stopActions = append(stopActions, startModule(cfg, log, errors, readinessProbeHandler, livenessProbeHandler))
+		startModule(ctx, cfg, errors, readinessProbeHandler, livenessProbeHandler, &wg)
 	}
 
 	log.Infof("Listening on service port %d", cfg.GetInt("metrics.port"))
@@ -72,8 +83,6 @@ func run(cmd *cobra.Command, args []string) error {
 	}()
 
 	log.Infow("Playbook dispatcher started", "version", cfg.GetString("openshift.build.commit"))
-
-	defer shutdown(metricsServer, log, stopActions...)
 
 	// stop on signal or error, whatever comes first
 	select {
@@ -86,16 +95,14 @@ func run(cmd *cobra.Command, args []string) error {
 	}
 }
 
-func shutdown(server *echo.Echo, log *zap.SugaredLogger, toStop ...func(context.Context)) {
+func shutdown(server *echo.Echo, log *zap.SugaredLogger, wg *sync.WaitGroup) {
 	defer log.Sync()
 	defer log.Info("Shutdown complete")
+
+	wg.Wait()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	for _, stop := range toStop {
-		stop(ctx)
-	}
-
-	utils.StopServer(server, ctx, log)
+	utils.StopServer(ctx, server)
 }

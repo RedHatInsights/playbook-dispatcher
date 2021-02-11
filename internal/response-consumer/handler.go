@@ -9,8 +9,6 @@ import (
 	"playbook-dispatcher/internal/common/utils"
 	"playbook-dispatcher/internal/response-consumer/instrumentation"
 
-	"go.uber.org/zap"
-
 	k "github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/google/uuid"
 
@@ -23,19 +21,17 @@ const (
 )
 
 type handler struct {
-	db  *gorm.DB
-	log *zap.SugaredLogger
+	db *gorm.DB
 }
 
-func (this *handler) onMessage(msg *k.Message) {
+func (this *handler) onMessage(ctx context.Context, msg *k.Message) {
 	requestId, correlationId, err := getHeaders(msg)
 	if err != nil {
-		// TODO: get ctx as onMessage param
-		instrumentation.CannotReadHeaders(this.log, err)
+		instrumentation.CannotReadHeaders(ctx, err)
 		return
 	}
 
-	ctx, log := utils.WithRequestId(utils.SetLog(context.Background(), this.log.With("correlation_id", correlationId)), requestId)
+	ctx = utils.WithCorrelationId(utils.WithRequestId(ctx, requestId), correlationId.String())
 
 	value := &message.PlaybookRunResponseMessageYaml{}
 
@@ -44,7 +40,7 @@ func (this *handler) onMessage(msg *k.Message) {
 		return
 	}
 
-	log.Debugw("Processing message", "account", value.Account, "upload_timestamp", value.UploadTimestamp)
+	utils.GetLogFromContext(ctx).Debugw("Processing message", "account", value.Account, "upload_timestamp", value.UploadTimestamp)
 
 	status := inferStatus(&value.Events)
 
