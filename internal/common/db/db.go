@@ -5,6 +5,9 @@ import (
 	"database/sql"
 	"fmt"
 	"playbook-dispatcher/internal/common/utils"
+	"time"
+
+	"go.uber.org/zap"
 
 	"github.com/spf13/viper"
 	"gorm.io/driver/postgres"
@@ -27,10 +30,13 @@ func Connect(ctx context.Context, cfg *viper.Viper) (*gorm.DB, *sql.DB) {
 		dsn += fmt.Sprintf(" sslrootcert=%s", cfg.GetString("db.ca"))
 	}
 
-	utils.GetLogFromContext(ctx).Infow("Connecting to database", "host", cfg.GetString("db.host"), "sslmode", cfg.GetString("db.sslmode"))
+	log := utils.GetLogFromContext(ctx)
+	log.Infow("Connecting to database", "host", cfg.GetString("db.host"), "sslmode", cfg.GetString("db.sslmode"))
 
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Info),
+		Logger: &zapAdapter{
+			log: log.Named("gorm"),
+		},
 	})
 
 	utils.DieOnError(err)
@@ -42,4 +48,30 @@ func Connect(ctx context.Context, cfg *viper.Viper) (*gorm.DB, *sql.DB) {
 	sql.SetMaxOpenConns(cfg.GetInt("db.max.open.connections"))
 
 	return db, sql
+}
+
+type zapAdapter struct {
+	log *zap.SugaredLogger
+}
+
+func (this *zapAdapter) Info(ctx context.Context, msg string, values ...interface{}) {
+	this.log.Infow(msg, values...)
+}
+
+func (this *zapAdapter) Warn(ctx context.Context, msg string, values ...interface{}) {
+	this.log.Warnw(msg, values...)
+}
+
+func (this *zapAdapter) Error(ctx context.Context, msg string, values ...interface{}) {
+	this.log.Errorw(msg, values...)
+}
+
+func (this *zapAdapter) LogMode(level logger.LogLevel) logger.Interface {
+	return this
+}
+
+func (this *zapAdapter) Trace(ctx context.Context, begin time.Time, fc func() (string, int64), err error) {
+	elapsed := time.Since(begin)
+	sql, rows := fc()
+	this.log.Debugw("executed query", "sql", sql, "rows", rows, "elapsed", elapsed.Milliseconds())
 }
