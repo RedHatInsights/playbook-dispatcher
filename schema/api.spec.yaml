@@ -75,6 +75,8 @@ components:
       description: Amount of seconds after which the run is considered failed due to timeout
       type: integer
       default: 3600
+      minimum: 0
+      maximum: 604800
 
     Account:
       description: Identifier of the tenant

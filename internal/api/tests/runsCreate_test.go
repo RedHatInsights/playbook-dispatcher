@@ -78,6 +78,16 @@ var _ = Describe("runsCreate", func() {
 			`[{"recipient": "3831fec2-1875-432a-bb58-08e71908f0e6", "url": "http://example.com", "account": "2718281828459045235360287471352"}]`,
 			"Maximum string length is 10",
 		),
+		Entry(
+			"timeout minimum",
+			`[{"recipient": "3831fec2-1875-432a-bb58-08e71908f0e6", "url": "http://example.com", "account": "540155", "timeout": -1}]`,
+			"Number must be at least 0",
+		),
+		Entry(
+			"timeout maximum",
+			`[{"recipient": "3831fec2-1875-432a-bb58-08e71908f0e6", "url": "http://example.com", "account": "540155", "timeout": 1000000}]`,
+			"Number must be most 604800",
+		),
 	)
 
 })
