@@ -17,6 +17,7 @@ require (
 	github.com/kulshekhar/fungen v0.0.0-20180224173454-7ed9e430524b // indirect
 	github.com/labstack/echo v3.3.10+incompatible
 	github.com/labstack/echo/v4 v4.1.17
+	github.com/labstack/gommon v0.3.0
 	github.com/onsi/ginkgo v1.14.2
 	github.com/onsi/gomega v1.10.4
 	github.com/pkg/errors v0.9.1

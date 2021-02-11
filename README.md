@@ -43,7 +43,7 @@ Firstly, `executor_on_start` event type is produced before Ansible Runner is inv
 
 ```json
 {"event": "executor_on_start", "uuid": "4533e4d7-5034-4baf-b578-821305c96da4", "counter": -1, "stdout": "", "start_line": 0, "end_line": 0, "event_data": {
-    "crc_correlation_id": "c37278ac-f41c-424a-8461-7f41b4b87c8e"
+    "crc_dispatcher_correlation_id": "c37278ac-f41c-424a-8461-7f41b4b87c8e"
 }}
 ```
 
@@ -55,14 +55,34 @@ This may happen e.g. if the Playbook signature is not valid, Ansible Runner bina
 
 ```json
 {"event": "executor_on_failed", "uuid": "14f07467-0020-4ab7-a075-d7d8c96d6fdc", "counter": -1, "stdout": "", "start_line": 0, "end_line": 0, "event_data": {
-    "crc_correlation_id": "c37278ac-f41c-424a-8461-7f41b4b87c8e",
-    "crc_error_code": "SIGNATURE_INVALID",
-    "crc_error_details": "Signature \"783701f7599830824fa73488f80eb79894f6f14203264b6a3ac3f0a14012c25f\" is not valid for Play \"run insights to obtain latest diagnosis info\"",
+    "crc_dispatcher_correlation_id": "c37278ac-f41c-424a-8461-7f41b4b87c8e",
+    "crc_dispatcher_error_code": "SIGNATURE_INVALID",
+    "crc_dispatcher_error_details": "Signature \"783701f7599830824fa73488f80eb79894f6f14203264b6a3ac3f0a14012c25f\" is not valid for Play \"run insights to obtain latest diagnosis info\"",
 }}
 ```
 
 Again, the correlation id is defined.
 In addition, an error code and detailed information should be provided.
+
+## Cloud Connector integration
+
+Playbook Dispatcher uses [Cloud Connector](https://github.com/RedHatInsights/cloud-connector) to invoke Playbooks on connected hosts.
+For each Playbook run request it sents the following message to Cloud Connector:
+
+```json
+{
+    "account":"540155",
+    "directive":"playbook",
+    "recipient":"869fe355-4b69-43f6-82ff-d151dddee472", // id of the cloud connector client
+    "metadata":{
+        "crc_dispatcher_correlation_id":"e957564e-b823-4047-9ad7-0277dc61c88f", // see Non-standard event types for more details
+        "response_interval":"600", // how often the recipient should send back responses
+        "return_url":"https://cloud.redhat.com/api/v1/ingres/upload" // URL to post responses to
+    },
+    // playbook to execute
+    "payload": "https://cloud.redhat.com/api/v1/remediations/1234/playbook?hosts=8f876606-5289-47f7-bb65-3966f0ba3ae1"
+}
+```
 
 ## Development
 

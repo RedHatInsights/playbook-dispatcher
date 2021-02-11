@@ -13,7 +13,13 @@ func NewConnectorClientMock() CloudConnectorClient {
 	return &cloudConnectorClientMock{}
 }
 
-func (this *cloudConnectorClientMock) SendCloudConnectorRequest(ctx context.Context, account string, recipient uuid.UUID, correlationId uuid.UUID) (*string, error) {
+func (this *cloudConnectorClientMock) SendCloudConnectorRequest(
+	ctx context.Context,
+	account string,
+	recipient uuid.UUID,
+	correlationId uuid.UUID,
+	url string,
+) (*string, error) {
 	id := uuid.UUID{}.String()
 	return &id, nil
 }

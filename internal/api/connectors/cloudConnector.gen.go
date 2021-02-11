@@ -13,15 +13,22 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+
+	"github.com/pkg/errors"
 )
 
 // MessageRequest defines model for MessageRequest.
 type MessageRequest struct {
-	Account   *string                 `json:"account,omitempty"`
-	Directive *string                 `json:"directive,omitempty"`
-	Metadata  *map[string]interface{} `json:"metadata,omitempty"`
-	Payload   *map[string]interface{} `json:"payload,omitempty"`
-	Recipient *string                 `json:"recipient,omitempty"`
+	Account   *string                  `json:"account,omitempty"`
+	Directive *string                  `json:"directive,omitempty"`
+	Metadata  *MessageRequest_Metadata `json:"metadata,omitempty"`
+	Payload   *string                  `json:"payload,omitempty"`
+	Recipient *string                  `json:"recipient,omitempty"`
+}
+
+// MessageRequest_Metadata defines model for MessageRequest.Metadata.
+type MessageRequest_Metadata struct {
+	AdditionalProperties map[string]string `json:"-"`
 }
 
 // MessageResponse defines model for MessageResponse.
@@ -34,6 +41,59 @@ type PostMessageJSONBody MessageRequest
 
 // PostMessageRequestBody defines body for PostMessage for application/json ContentType.
 type PostMessageJSONRequestBody PostMessageJSONBody
+
+// Getter for additional properties for MessageRequest_Metadata. Returns the specified
+// element and whether it was found
+func (a MessageRequest_Metadata) Get(fieldName string) (value string, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for MessageRequest_Metadata
+func (a *MessageRequest_Metadata) Set(fieldName string, value string) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]string)
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for MessageRequest_Metadata to handle AdditionalProperties
+func (a *MessageRequest_Metadata) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]string)
+		for fieldName, fieldBuf := range object {
+			var fieldVal string
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return errors.Wrap(err, fmt.Sprintf("error unmarshaling field %s", fieldName))
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for MessageRequest_Metadata to handle AdditionalProperties
+func (a MessageRequest_Metadata) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, errors.Wrap(err, fmt.Sprintf("error marshaling '%s'", fieldName))
+		}
+	}
+	return json.Marshal(object)
+}
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error

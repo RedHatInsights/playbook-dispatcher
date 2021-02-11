@@ -29,8 +29,9 @@ type PlaybookRunResponseMessageYamlEventsElem struct {
 }
 
 type PlaybookRunResponseMessageYamlEventsElemEventData struct {
-	// CrcCorrelationId corresponds to the JSON schema field "crc_correlation_id".
-	CrcCorrelationId *string `json:"crc_correlation_id,omitempty"`
+	// CrcDispatcherCorrelationId corresponds to the JSON schema field
+	// "crc_dispatcher_correlation_id".
+	CrcDispatcherCorrelationId *string `json:"crc_dispatcher_correlation_id,omitempty"`
 
 	// Playbook corresponds to the JSON schema field "playbook".
 	Playbook *string `json:"playbook,omitempty"`

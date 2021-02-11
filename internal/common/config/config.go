@@ -61,6 +61,7 @@ func Get() *viper.Viper {
 	options.SetDefault("cloud.connector.host", "http://cloud-connector:8081")
 	options.SetDefault("cloud.connector.timeout", 10)
 	options.SetDefault("return.url", "https://cloud.redhat.com/api/v1/ingres/upload")
+	options.SetDefault("response.interval", "600")
 
 	options.SetDefault("db.sslmode", "disable")
 
