@@ -11,8 +11,12 @@ import (
 
 var rdsCaPath *string
 
+func clowderEnabled() bool {
+	return strings.ToLower(os.Getenv("CLOWDER_ENABLED")) != "false"
+}
+
 func init() {
-	if clowder.LoadedConfig.Database.RdsCa == nil {
+	if !clowderEnabled() || clowder.LoadedConfig.Database.RdsCa == nil {
 		return
 	}
 
@@ -60,7 +64,7 @@ func Get() *viper.Viper {
 
 	options.SetDefault("db.sslmode", "disable")
 
-	if os.Getenv("CLOWDER_ENABLED") != "false" {
+	if clowderEnabled() {
 		options.SetDefault("web.port", clowder.LoadedConfig.WebPort)
 		options.SetDefault("metrics.port", clowder.LoadedConfig.MetricsPort)
 		options.SetDefault("metrics.path", clowder.LoadedConfig.MetricsPath)
