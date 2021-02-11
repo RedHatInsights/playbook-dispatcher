@@ -28,7 +28,7 @@ func Start(
 
 	kafkaTimeout := cfg.GetInt("kafka.timeout")
 	consumedTopic := cfg.GetString("topic.validation.request")
-	consumer, err := kafka.NewConsumer(cfg, consumedTopic)
+	consumer, err := kafka.NewConsumer(ctx, cfg, consumedTopic)
 	utils.DieOnError(err)
 	producer, err := kafka.NewProducer(cfg)
 	utils.DieOnError(err)
@@ -44,7 +44,7 @@ func Start(
 		return kafka.Ping(kafkaTimeout, consumer, producer)
 	})
 
-	start := kafka.NewConsumerEventLoop(ctx, consumer, nil, handler.onMessage)
+	start := kafka.NewConsumerEventLoop(ctx, consumer, nil, handler.onMessage, errors)
 
 	go func() {
 		defer wg.Done()

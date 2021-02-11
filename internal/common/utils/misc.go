@@ -2,6 +2,9 @@ package utils
 
 import (
 	"context"
+	"fmt"
+	"sync"
+	"time"
 
 	"github.com/labstack/echo/v4"
 )
@@ -36,4 +39,20 @@ func MapStrings(values []string, fn func(string) string) []string {
 	}
 
 	return result
+}
+
+func WgWaitFor(wg *sync.WaitGroup, timeout time.Duration) error {
+	channel := make(chan struct{})
+
+	go func() {
+		wg.Wait()
+		close(channel)
+	}()
+
+	select {
+	case <-channel:
+		return nil
+	case <-time.After(timeout):
+		return fmt.Errorf("Time out waiting for WaitGroup")
+	}
 }

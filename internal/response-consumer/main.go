@@ -35,7 +35,7 @@ func Start(
 	live.Register(sql.Ping)
 
 	kafkaTimeout := cfg.GetInt("kafka.timeout")
-	consumer, err := kafka.NewConsumer(cfg, cfg.GetString("topic.updates"))
+	consumer, err := kafka.NewConsumer(ctx, cfg, cfg.GetString("topic.updates"))
 	utils.DieOnError(err)
 
 	ready.Register(func() error {
@@ -46,7 +46,7 @@ func Start(
 		db: db,
 	}
 
-	start := kafka.NewConsumerEventLoop(ctx, consumer, &schema, handler.onMessage)
+	start := kafka.NewConsumerEventLoop(ctx, consumer, &schema, handler.onMessage, errors)
 
 	go func() {
 		defer wg.Done()

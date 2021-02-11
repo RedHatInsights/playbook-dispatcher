@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"os"
+
 	"github.com/spf13/cobra"
 )
 
@@ -21,7 +23,11 @@ func init() {
 	runCommand := &cobra.Command{
 		Use:   "run",
 		Short: "Run playbook-dispatcher",
-		RunE:  run,
+		Run: func(cmd *cobra.Command, args []string) {
+			if err := run(cmd, args); err != nil {
+				os.Exit(1)
+			}
+		},
 	}
 
 	runCommand.Flags().StringSliceP("module", "m", []string{moduleApi, moduleResponseConsumer, moduleValidator}, "module(s) to run")
