@@ -27,11 +27,12 @@ func NewProducer(config *viper.Viper) (*kafka.Producer, error) {
 
 func NewConsumer(ctx context.Context, config *viper.Viper, topic string) (*kafka.Consumer, error) {
 	consumer, err := kafka.NewConsumer(&kafka.ConfigMap{
-		"bootstrap.servers":       config.GetString("kafka.bootstrap.servers"),
-		"group.id":                config.GetString("kafka.group.id"),
-		"auto.offset.reset":       config.GetString("kafka.auto.offset.reset"),
-		"auto.commit.interval.ms": config.GetInt("kafka.auto.commit.interval.ms"),
-		"go.logs.channel.enable":  true,
+		"bootstrap.servers":        config.GetString("kafka.bootstrap.servers"),
+		"group.id":                 config.GetString("kafka.group.id"),
+		"auto.offset.reset":        config.GetString("kafka.auto.offset.reset"),
+		"auto.commit.interval.ms":  config.GetInt("kafka.auto.commit.interval.ms"),
+		"go.logs.channel.enable":   true,
+		"allow.auto.create.topics": true,
 	})
 
 	if err != nil {
