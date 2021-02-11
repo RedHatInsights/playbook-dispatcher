@@ -89,7 +89,7 @@ func (this *handler) handleRequest(
 
 	ingressResponse.Validation = validationSuccess
 	instrumentation.ValidationSuccess(ctx)
-	this.produceMessage(ctx, ingressResponseTopic, ingressResponse, nil)
+	this.produceMessage(ctx, ingressResponseTopic, ingressResponse, request.Account)
 
 	headers := kafkaUtils.Headers(constants.HeaderRequestId, request.RequestID, constants.HeaderCorrelationId, correlationId.String())
 	dispatcherResponse := &messageModel.PlaybookRunResponseMessageYaml{
@@ -100,7 +100,7 @@ func (this *handler) handleRequest(
 		Events:          events,
 	}
 
-	this.produceMessage(ctx, dispatcherResponseTopic, dispatcherResponse, nil, headers...)
+	this.produceMessage(ctx, dispatcherResponseTopic, dispatcherResponse, correlationId.String(), headers...)
 }
 
 func (this *handler) validateRequest(request *messageModel.IngressValidationRequest) (err error) {
@@ -146,10 +146,10 @@ func (this *handler) validateContent(ctx context.Context, data []byte) (events [
 func (this *handler) validationFailed(ctx context.Context, err error, response *messageModel.IngressValidationResponse) {
 	response.Validation = validationFailure
 	instrumentation.ValidationFailed(ctx, err)
-	this.produceMessage(ctx, ingressResponseTopic, response, nil)
+	this.produceMessage(ctx, ingressResponseTopic, response, response.Account)
 }
 
-func (this *handler) produceMessage(ctx context.Context, topic string, value interface{}, key *string, headers ...kafka.Header) {
+func (this *handler) produceMessage(ctx context.Context, topic string, value interface{}, key string, headers ...kafka.Header) {
 	if value != nil {
 		if err := kafkaUtils.Produce(this.producer, topic, value, key, headers...); err != nil {
 			instrumentation.ProducerError(ctx, err, topic)
