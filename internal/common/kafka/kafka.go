@@ -25,12 +25,13 @@ func NewProducer(config *viper.Viper) (*kafka.Producer, error) {
 	})
 }
 
-func NewConsumer(config *viper.Viper, topic string) (*kafka.Consumer, error) {
+func NewConsumer(ctx context.Context, config *viper.Viper, topic string) (*kafka.Consumer, error) {
 	consumer, err := kafka.NewConsumer(&kafka.ConfigMap{
 		"bootstrap.servers":       config.GetString("kafka.bootstrap.servers"),
 		"group.id":                config.GetString("kafka.group.id"),
 		"auto.offset.reset":       config.GetString("kafka.auto.offset.reset"),
 		"auto.commit.interval.ms": config.GetInt("kafka.auto.commit.interval.ms"),
+		"go.logs.channel.enable":  true,
 	})
 
 	if err != nil {
@@ -38,6 +39,22 @@ func NewConsumer(config *viper.Viper, topic string) (*kafka.Consumer, error) {
 	}
 
 	consumer.SubscribeTopics([]string{topic}, nil)
+
+	go func() {
+		log := utils.GetLogFromContext(ctx).Named("kafka")
+
+		for {
+			select {
+			case entry, ok := <-consumer.Logs():
+				if !ok {
+					return
+				}
+
+				log.Debug(entry)
+			}
+		}
+	}()
+
 	return consumer, nil
 }
 
@@ -46,6 +63,7 @@ func NewConsumerEventLoop(
 	consumer *kafka.Consumer,
 	schema *jsonschema.Schema,
 	handler func(context.Context, *kafka.Message),
+	errors chan<- error,
 ) (start func()) {
 
 	return func() {
@@ -61,6 +79,7 @@ func NewConsumerEventLoop(
 			if err != nil {
 				if err.(kafka.Error).Code() != kafka.ErrTimedOut {
 					utils.GetLogFromContext(ctx).Errorw("Error reading message from kafka", "err", err)
+					errors <- err
 				}
 
 				continue

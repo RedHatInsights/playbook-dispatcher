@@ -22,6 +22,8 @@ import (
 	"github.com/spf13/viper"
 )
 
+const shutdownTimeout = 3 * time.Second
+
 type startModuleFn = func(
 	ctx context.Context,
 	cfg *viper.Viper,
@@ -90,7 +92,7 @@ func run(cmd *cobra.Command, args []string) error {
 		log.Infow("Shutting down", "signal", signal)
 		return nil
 	case error := <-errors:
-		log.Fatalw("Shutting down", "error", error)
+		log.Errorw("Shutting down", "error", error)
 		return error
 	}
 }
@@ -99,9 +101,11 @@ func shutdown(server *echo.Echo, log *zap.SugaredLogger, wg *sync.WaitGroup) {
 	defer log.Sync()
 	defer log.Info("Shutdown complete")
 
-	wg.Wait()
+	if err := utils.WgWaitFor(wg, shutdownTimeout); err != nil {
+		log.Warn(err)
+	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
 	defer cancel()
 
 	utils.StopServer(ctx, server)
