@@ -103,7 +103,7 @@ func NewConsumerEventLoop(
 	}
 }
 
-func Produce(producer *kafka.Producer, topic string, value interface{}, key *string, headers ...kafka.Header) error {
+func Produce(producer *kafka.Producer, topic string, value interface{}, key string, headers ...kafka.Header) error {
 	marshalledValue, err := json.Marshal(value)
 	if err != nil {
 		return err
@@ -112,10 +112,7 @@ func Produce(producer *kafka.Producer, topic string, value interface{}, key *str
 	msg := &kafka.Message{
 		TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
 		Value:          marshalledValue,
-	}
-
-	if key != nil {
-		msg.Key = []byte(*key)
+		Key:            []byte(key),
 	}
 
 	if len(headers) > 0 {
