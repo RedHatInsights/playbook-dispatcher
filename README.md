@@ -69,7 +69,7 @@ In addition, an error code and detailed information should be provided.
 Playbook Dispatcher uses [Cloud Connector](https://github.com/RedHatInsights/cloud-connector) to invoke Playbooks on connected hosts.
 For each Playbook run request it sents the following message to Cloud Connector:
 
-```json
+```javascript
 {
     "account":"540155",
     "directive":"playbook",
