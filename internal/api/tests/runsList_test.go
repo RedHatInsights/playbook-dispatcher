@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	dbModel "playbook-dispatcher/internal/common/model/db"
 	"playbook-dispatcher/internal/common/utils/test"
 	"strings"
@@ -16,23 +17,33 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func listRuns(params ...string) (*Runs, *ApiRunsListResponse) {
-	raw := listRunsRaw(params...)
+func listRuns(keysAndValues ...interface{}) (*Runs, *ApiRunsListResponse) {
+	raw := listRunsRaw(keysAndValues...)
 	res, err := ParseApiRunsListResponse(raw)
 	Expect(err).ToNot(HaveOccurred())
 
 	return res.JSON200, res
 }
 
-func listRunsRaw(params ...string) *http.Response {
-	url := "http://localhost:9002/api/playbook-dispatcher/v1/runs"
-
-	if len(params) > 0 {
-		query := strings.Join(params, "&")
-		url += fmt.Sprintf("?%s", query)
+func listRunsRaw(keysAndValues ...interface{}) *http.Response {
+	if len(keysAndValues)%2 != 0 {
+		panic("Odd number of parameters")
 	}
 
-	req, err := http.NewRequest("GET", url, nil)
+	requestUrl := "http://localhost:9002/api/playbook-dispatcher/v1/runs"
+
+	params := make([]string, len(keysAndValues)/2)
+	for i := 0; i < len(keysAndValues)/2; i++ {
+		params[i] = fmt.Sprintf("%s=%s",
+			url.QueryEscape(fmt.Sprintf("%s", keysAndValues[i*2])),
+			url.QueryEscape(fmt.Sprintf("%v", keysAndValues[(i*2)+1])),
+		)
+	}
+
+	query := strings.Join(params, "&")
+	requestUrl += fmt.Sprintf("?%s", query)
+
+	req, err := http.NewRequest("GET", requestUrl, nil)
 	Expect(err).ToNot(HaveOccurred())
 	req.Header.Set("x-rh-identity", test.IdentityHeaderMinimal(accountNumber()))
 	resp, err := test.Client.Do(req)
@@ -100,7 +111,7 @@ var _ = Describe("runsList", func() {
 
 		DescribeTable("sorting happy path",
 			func(sortBy RunsSortBy, expected ...RunStatus) {
-				runs, res := listRuns(fmt.Sprintf("sort_by=%s", sortBy))
+				runs, res := listRuns("sort_by", sortBy)
 				Expect(res.StatusCode()).To(Equal(http.StatusOK))
 				Expect(runs.Data).To(HaveLen(2))
 
@@ -116,7 +127,7 @@ var _ = Describe("runsList", func() {
 		)
 
 		It("400s on invalid value", func() {
-			_, res := listRuns("sort_by=salad:asc")
+			_, res := listRuns("sort_by", "salad:asc")
 			Expect(res.StatusCode()).To(Equal(http.StatusBadRequest))
 		})
 	})
@@ -137,8 +148,8 @@ var _ = Describe("runsList", func() {
 		DescribeTable("pagination happy path",
 			func(limit, offset, expected int) {
 				runs, res := listRuns(
-					fmt.Sprintf("limit=%d", limit),
-					fmt.Sprintf("offset=%d", offset),
+					"limit", limit,
+					"offset", offset,
 				)
 				Expect(res.StatusCode()).To(Equal(http.StatusOK))
 				Expect(runs.Meta.Count).To(Equal(expected))
@@ -156,8 +167,8 @@ var _ = Describe("runsList", func() {
 		DescribeTable("pagination invalid values",
 			func(limit, offset int) {
 				_, res := listRuns(
-					fmt.Sprintf("limit=%d", limit),
-					fmt.Sprintf("offset=%d", offset),
+					"limit", limit,
+					"offset", offset,
 				)
 				Expect(res.StatusCode()).To(Equal(http.StatusBadRequest))
 			},
@@ -193,7 +204,7 @@ var _ = Describe("runsList", func() {
 
 			DescribeTable("filtering by various status values",
 				func(status string, index int) {
-					runs, res := listRuns(fmt.Sprintf("filter[status]=%s", status))
+					runs, res := listRuns("filter[status]", status)
 					Expect(res.StatusCode()).To(Equal(http.StatusOK))
 					Expect(runs.Meta.Count).To(Equal(1))
 					Expect(string(*runs.Data[0].Id)).To(Equal(data[index].ID.String()))
@@ -224,20 +235,20 @@ var _ = Describe("runsList", func() {
 			})
 
 			It("finds a run based on recipient id", func() {
-				runs, res := listRuns(fmt.Sprintf("filter[recipient]=%s", data[1].Recipient))
+				runs, res := listRuns("filter[recipient]", data[1].Recipient)
 				Expect(res.StatusCode()).To(Equal(http.StatusOK))
 				Expect(runs.Meta.Count).To(Equal(1))
 				Expect(string(*runs.Data[0].Recipient)).To(Equal(data[1].Recipient.String()))
 			})
 
 			It("returns empty result on non-match", func() {
-				runs, res := listRuns("filter[recipient]=b76ceabc-d404-4a43-a09c-7650e661e807")
+				runs, res := listRuns("filter[recipient]", "b76ceabc-d404-4a43-a09c-7650e661e807")
 				Expect(res.StatusCode()).To(Equal(http.StatusOK))
 				Expect(runs.Meta.Count).To(Equal(0))
 			})
 
 			It("respects account isolation", func() {
-				runs, res := listRuns("filter[recipient]=64aeb237-d46d-494e-98e3-b48fc5c78bf1")
+				runs, res := listRuns("filter[recipient]", "64aeb237-d46d-494e-98e3-b48fc5c78bf1")
 				Expect(res.StatusCode()).To(Equal(http.StatusOK))
 				Expect(runs.Meta.Count).To(Equal(0))
 			})
@@ -265,7 +276,7 @@ var _ = Describe("runsList", func() {
 			})
 
 			It("finds all runs matching given label", func() {
-				runs, res := listRuns("filter[labels][service]=remediations")
+				runs, res := listRuns("filter[labels][service]", "remediations")
 				Expect(res.StatusCode()).To(Equal(http.StatusOK))
 				Expect(runs.Meta.Count).To(Equal(2))
 				expectedIds := []string{data[1].ID.String(), data[2].ID.String()}
@@ -274,14 +285,14 @@ var _ = Describe("runsList", func() {
 			})
 
 			It("finds all runs matching a combination of two labels", func() {
-				runs, res := listRuns("filter[labels][service]=remediations", "filter[labels][foo]=bar")
+				runs, res := listRuns("filter[labels][service]", "remediations", "filter[labels][foo]", "bar")
 				Expect(res.StatusCode()).To(Equal(http.StatusOK))
 				Expect(runs.Meta.Count).To(Equal(1))
 				Expect(string(*runs.Data[0].Id)).To(Equal(data[1].ID.String()))
 			})
 
 			It("does not find anything if labels do not match", func() {
-				runs, res := listRuns("filter[labels][abc]=def")
+				runs, res := listRuns("filter[labels][abc]", "def")
 				Expect(res.StatusCode()).To(Equal(http.StatusOK))
 				Expect(runs.Meta.Count).To(Equal(0))
 			})
@@ -293,7 +304,7 @@ var _ = Describe("runsList", func() {
 			func(fields ...string) {
 				Expect(db().Create(test.NewRun(accountNumber())).Error).ToNot(HaveOccurred())
 
-				res := listRunsRaw(fmt.Sprintf("fields[data]=%s", strings.Join(fields, ",")))
+				res := listRunsRaw("fields[data]", strings.Join(fields, ","))
 				Expect(res.StatusCode).To(Equal(http.StatusOK))
 
 				bodyBytes, err := ioutil.ReadAll(res.Body)
@@ -316,7 +327,7 @@ var _ = Describe("runsList", func() {
 		)
 
 		It("400s on invalid value", func() {
-			raw := listRunsRaw("fields[data]=id,salad")
+			raw := listRunsRaw("fields[data]", "id,salad")
 			Expect(raw.StatusCode).To(Equal(http.StatusBadRequest))
 			res, err := ParseApiRunsListResponse(raw)
 			Expect(err).ToNot(HaveOccurred())
