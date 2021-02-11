@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"playbook-dispatcher/internal/common/utils"
+	"strconv"
 
 	"github.com/redhatinsights/platform-go-middlewares/request_id"
 
@@ -18,12 +19,19 @@ import (
 var cloudConnectorDirective = "playbook"
 
 type CloudConnectorClient interface {
-	SendCloudConnectorRequest(ctx context.Context, account string, recipient uuid.UUID, correlationId uuid.UUID) (*string, error)
+	SendCloudConnectorRequest(
+		ctx context.Context,
+		account string,
+		recipient uuid.UUID,
+		correlationId uuid.UUID,
+		url string,
+	) (*string, error)
 }
 
 type cloudConnectorClientImpl struct {
-	returnUrl string
-	client    ClientWithResponsesInterface
+	returnUrl        string
+	responseInterval int
+	client           ClientWithResponsesInterface
 }
 
 func NewConnectorClientWithHttpRequestDoer(cfg *viper.Viper, doer HttpRequestDoer) CloudConnectorClient {
@@ -39,8 +47,9 @@ func NewConnectorClientWithHttpRequestDoer(cfg *viper.Viper, doer HttpRequestDoe
 	}
 
 	return &cloudConnectorClientImpl{
-		returnUrl: cfg.GetString("return.url"),
-		client:    client,
+		returnUrl:        cfg.GetString("return.url"),
+		responseInterval: cfg.GetInt("response.interval"),
+		client:           client,
 	}
 }
 
@@ -57,30 +66,30 @@ func (this *cloudConnectorClientImpl) SendCloudConnectorRequest(
 	account string,
 	recipient uuid.UUID,
 	correlationId uuid.UUID,
+	url string,
 ) (*string, error) {
 	recipientString := recipient.String()
-	metadata := map[string]interface{}{
-		"return_url": this.returnUrl,
+	metadata := map[string]string{
+		"return_url":                    this.returnUrl,
+		"response_interval":             strconv.Itoa(this.responseInterval),
+		"crc_dispatcher_correlation_id": correlationId.String(),
 	}
 
-	payload := map[string]interface{}{
-		"crc_correlation_id": correlationId.String(),
-	}
-
-	// TODO: probe
 	utils.GetLogFromContext(ctx).Debugw("Sending Cloud Connector message",
 		"account", account,
 		"directive", cloudConnectorDirective,
 		"metadata", metadata,
-		"payload", payload,
+		"payload", url,
 		"recipient", recipientString,
 	)
 
 	res, err := this.client.PostMessageWithResponse(ctx, PostMessageJSONRequestBody{
 		Account:   &account,
 		Directive: &cloudConnectorDirective,
-		Metadata:  &metadata,
-		Payload:   &payload,
+		Metadata: &MessageRequest_Metadata{
+			AdditionalProperties: metadata,
+		},
+		Payload:   &url,
 		Recipient: &recipientString,
 	})
 

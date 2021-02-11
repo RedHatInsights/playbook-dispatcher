@@ -43,7 +43,7 @@ properties:
             playbook_uuid:
               type: string
               format: uuid
-            crc_correlation_id:
+            crc_dispatcher_correlation_id:
               type: string
               format: uuid
 

@@ -38,6 +38,7 @@ func (this *controllers) ApiInternalRunsCreate(ctx echo.Context) error {
 			string(runInput.Account),
 			recipient,
 			correlationId,
+			string(runInput.Url),
 		)
 
 		if err != nil {
