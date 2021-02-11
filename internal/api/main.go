@@ -56,6 +56,7 @@ func Start(
 		echoMiddleware.BodyLimit(cfg.GetString("http.max.body.size")),
 		echo.WrapMiddleware(request_id.ConfiguredRequestID(requestIdHeader)),
 		middleware.ContextLogger,
+		middleware.RequestLogger,
 		echoMiddleware.Recover(),
 	)
 
