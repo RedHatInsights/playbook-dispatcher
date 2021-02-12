@@ -20,6 +20,6 @@ func (this *cloudConnectorClientMock) SendCloudConnectorRequest(
 	correlationId uuid.UUID,
 	url string,
 ) (*string, error) {
-	id := uuid.UUID{}.String()
+	id := uuid.New().String()
 	return &id, nil
 }

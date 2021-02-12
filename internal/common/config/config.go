@@ -33,6 +33,7 @@ func Get() *viper.Viper {
 	options.SetDefault("openshift.build.commit", "unknown")
 
 	options.SetDefault("log.level", "debug")
+	options.SetDefault("demo.mode", false)
 
 	options.SetDefault("http.max.body.size", "512KB")
 
