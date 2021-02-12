@@ -33,6 +33,10 @@ func (this *controllers) ApiInternalRunsCreate(ctx echo.Context) error {
 
 		correlationId := uuid.New()
 
+		if cfg.GetBool("demo.mode") {
+			correlationId = uuid.UUID{}
+		}
+
 		messageId, err := this.cloudConnectorClient.SendCloudConnectorRequest(
 			ctx.Request().Context(),
 			string(runInput.Account),
@@ -45,16 +49,10 @@ func (this *controllers) ApiInternalRunsCreate(ctx echo.Context) error {
 			instrumentation.CloudConnectorRequestError(ctx, err, recipient)
 			return runCreateError(http.StatusInternalServerError)
 		} else {
-			instrumentation.CloudConnectorOK(ctx, recipient)
+			instrumentation.CloudConnectorOK(ctx, recipient, messageId)
 		}
 
-		messageIdUuid, err := uuid.Parse(*messageId)
-		if err != nil {
-			instrumentation.InvalidMessageId(ctx, *messageId, err)
-			return runCreateError(http.StatusInternalServerError)
-		}
-
-		entity := newRun(&runInput, messageIdUuid, dbModel.RunStatusRunning, recipient)
+		entity := newRun(&runInput, correlationId, dbModel.RunStatusRunning, recipient)
 
 		if dbResult := this.database.Create(&entity); dbResult.Error != nil {
 			instrumentation.PlaybookRunCreateError(ctx, dbResult.Error, &entity)

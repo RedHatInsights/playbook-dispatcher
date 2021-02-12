@@ -48,18 +48,13 @@ func InvalidRecipientId(ctx echo.Context, value string, err error) {
 	validationFailureTotal.WithLabelValues(labelParseUuid, labelCorrelationId).Inc()
 }
 
-func InvalidMessageId(ctx echo.Context, value string, err error) {
-	utils.GetLogFromEcho(ctx).Errorw("Error parsing message id", "error", err, "value", value)
-	validationFailureTotal.WithLabelValues(labelParseUuid, labelMessageId).Inc()
-}
-
 func CloudConnectorRequestError(ctx echo.Context, err error, recipient uuid.UUID) {
 	utils.GetLogFromEcho(ctx).Errorw("Error sending message to cloud connector", "error", err, "recipient", recipient)
 	connectorErrorTotal.Inc()
 }
 
-func CloudConnectorOK(ctx echo.Context, recipient uuid.UUID) {
-	utils.GetLogFromEcho(ctx).Debugw("Received response from cloud connector", "recipient", recipient)
+func CloudConnectorOK(ctx echo.Context, recipient uuid.UUID, messageId *string) {
+	utils.GetLogFromEcho(ctx).Debugw("Received response from cloud connector", "recipient", recipient, "message_id", *messageId)
 	connectorSentTotal.Inc()
 }
 
