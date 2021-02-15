@@ -1,6 +1,8 @@
 package validator
 
 import (
+	"bytes"
+	"encoding/base64"
 	"io/ioutil"
 	messageModel "playbook-dispatcher/internal/common/model/message"
 	"playbook-dispatcher/internal/common/utils/test"
@@ -79,6 +81,36 @@ var _ = Describe("Handler", func() {
 			`
 
 			events, err := instance.validateContent(test.TestContext(), []byte(data))
+			Expect(err).ToNot(HaveOccurred())
+			Expect(events).To(HaveLen(6))
+		})
+	})
+
+	Describe("compression", func() {
+		It("parses compressed Runner events", func() {
+			data := `H4sICMI0KmAAA2Zvby5qc29ubADtV8tu2zAQvPcrDB2D0iApUg8XOQRFT+0haHMpkkCgSMoRLJGG
+HgECw/9ekpYUq06ayEmLoIjgg3e5S652ZlbSxmvbXHiLmScIkzHlGQhRJgDxowBEIs0ATrmMfZ/L
+EPnex5nHdasaWZkUZKy6EbptbL7nLFY1SZEraTzQOKQS+2bVKiWrJBdSuZxG1g2kNlPedq51we5S
+rVeJVonbzq6uXYkIkRjT2NZQSdZIVzaGGAGIAMYXiCwIWtB4HuIooHjYNhGsYSZ2M2xuE8tc5SUr
+5ndl4Y7oz53aj0nx2+2HzZBBozhAIo5AAIkALA04YGEUA3h/ReOO41HHr6ordf7t7Ofscp2r5fXs
+5BWup1DE01G0/4+H0ocoCF0iqyyWU+H5Bwywie6mDQq9nUwF2SWtWWOAVjav0JwVN7p2TVOslKMT
+HombdOhULrIxF/0DLl6c/fj6V7mIx1wk07nYsHr1Ai5S83uAi8/F+L/gom3h/gmupVNp5JIYb3Kt
+DvZi1bLuHyjOYSq5+a1HC/qQLPI64VqJ3G7LCrOSsaKW03TBxrpIBWcBpRCINMSAkNRkQIkBQxkW
+HNPMl3SsC/LnpyI5isNdyEueiX6AcHwcedk7eV+fvK6kxwb4s2g3ImooGUQI+qaplACCcARY5EeA
+YmH8viSUijFR6XiAtxCi9BJ+8nGpV4vZ5VDXdb9UPkVmOpXMhj6TmIwXEM4hDEL0zuQ3zuRKlrqR
+CRPCcs1DOJwb6OZot1bvOm/Ps+fqbn6rW7NFV83GK7VoC9kXsvE6xHbh261JSJiq89TEKJ0Uerk3
+8fkNU0vHIefZDrAXWq+NV7VFsae3Z6lnpDce+SRkHAPTaB8Q5gcg5mkKOEXSMDkiUsqx3oKHX96/
+f/l8dv4q70snds99HQ+ADAqeHVyL2Vj5p8g47+O7Pp5CG9sqo0zjMR3fOTKWF/1ivcrX694wCPO2
+N/Kl0lVn2BIPxggdj5H4qC/Fpj5qlsQYR2/78+KeyhtLY8GqVf/f9r/t1GTtrtO96erY7OnSdMb6
+15Xmsq53gYfLHXj9Lh2wvWlwyzMzM4ab3u7p6FmqMDr6BVcdZ0B3EAAA`
+
+			decoded := make([]byte, 1024)
+			len, err := base64.StdEncoding.Decode(decoded, []byte(data))
+			Expect(err).ToNot(HaveOccurred())
+
+			content, err := instance.readFile(bytes.NewReader(decoded[0:len]))
+			Expect(err).ToNot(HaveOccurred())
+			events, err := instance.validateContent(test.TestContext(), content)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(events).To(HaveLen(6))
 		})
