@@ -1,9 +1,12 @@
 package validator
 
 import (
+	"bufio"
+	"compress/gzip"
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"playbook-dispatcher/internal/common/config"
@@ -72,8 +75,12 @@ func (this *handler) handleRequest(
 		return
 	}
 
-	data, _ := ioutil.ReadAll(res.Body)
-	res.Body.Close()
+	defer res.Body.Close()
+	data, err := this.readFile(res.Body)
+	if err != nil {
+		this.validationFailed(ctx, err, ingressResponse)
+		return
+	}
 
 	events, err := this.validateContent(ctx, data)
 	if err != nil {
@@ -156,4 +163,22 @@ func (this *handler) produceMessage(ctx context.Context, topic string, value int
 			this.errors <- err // TODO: is "shutdown-on-error" a good strategy?
 		}
 	}
+}
+
+func (this *handler) readFile(reader io.Reader) (result []byte, err error) {
+	var isGzip bool
+	reader = bufio.NewReaderSize(reader, 2)
+
+	if isGzip, err = utils.IsGzip(reader); err != nil {
+		return
+	} else if isGzip {
+		if gzipReader, err := gzip.NewReader(reader); err != nil {
+			return nil, err
+		} else {
+			defer gzipReader.Close()
+			reader = gzipReader
+		}
+	}
+
+	return ioutil.ReadAll(reader)
 }

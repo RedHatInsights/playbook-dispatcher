@@ -33,7 +33,7 @@ Each line in the file matches one job event.
 The structure of each event is validated using a JSON Schema defined in [ansibleRunnerJobEvent.yaml](./schema/ansibleRunnerJobEvent.yaml).
 Note that additional attributes (not defined by the schema) are allowed.
 
-The expected content type of the uploaded file is `application/vnd.redhat.playbook.v1+jsonl` for a plain file or `application/vnd.redhat.playbook.v1+tgz` if the content is compressed (not implemented yet).
+The expected content type of the uploaded file is `application/vnd.redhat.playbook.v1+jsonl` for a plain file or `application/vnd.redhat.playbook.v1+gzip` if the content is compressed (not implemented yet).
 
 ### Non-standard event types
 
