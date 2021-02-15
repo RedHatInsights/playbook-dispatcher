@@ -43,6 +43,10 @@ properties:
             playbook_uuid:
               type: string
               format: uuid
+            host:
+              type: string
+
+            # crc-specific data
             crc_dispatcher_correlation_id:
               type: string
               format: uuid
