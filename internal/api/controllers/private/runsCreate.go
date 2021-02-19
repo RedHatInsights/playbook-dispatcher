@@ -1,7 +1,8 @@
-package controllers
+package private
 
 import (
 	"net/http"
+	"playbook-dispatcher/internal/api/controllers/public"
 	"playbook-dispatcher/internal/api/instrumentation"
 	"playbook-dispatcher/internal/common/config"
 	dbModel "playbook-dispatcher/internal/common/model/db"
@@ -13,7 +14,7 @@ import (
 
 var cfg = config.Get()
 
-//go:generate fungen -types RunInput,*RunCreated -methods PMap -package controllers -filename utils.gen.go
+//go:generate fungen -types RunInput,*RunCreated -methods PMap -package private -filename utils.gen.go
 func (this *controllers) ApiInternalRunsCreate(ctx echo.Context) error {
 	var input RunInputList
 
@@ -59,7 +60,7 @@ func (this *controllers) ApiInternalRunsCreate(ctx echo.Context) error {
 			return runCreateError(http.StatusInternalServerError)
 		}
 
-		runId := RunId(entity.ID.String())
+		runId := public.RunId(entity.ID.String())
 		return &RunCreated{
 			Code: http.StatusCreated,
 			Id:   &runId,

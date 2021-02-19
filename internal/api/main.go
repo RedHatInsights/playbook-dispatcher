@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"net/http"
 	"playbook-dispatcher/internal/api/connectors"
-	"playbook-dispatcher/internal/api/controllers"
+	"playbook-dispatcher/internal/api/controllers/private"
+	"playbook-dispatcher/internal/api/controllers/public"
 	"playbook-dispatcher/internal/api/instrumentation"
 	"playbook-dispatcher/internal/api/middleware"
 	"playbook-dispatcher/internal/common/db"
@@ -44,7 +45,10 @@ func Start(
 	ready.Register(sql.Ping)
 	live.Register(sql.Ping)
 
-	spec, err := controllers.GetSwagger()
+	publicSpec, err := public.GetSwagger()
+	utils.DieOnError(err)
+
+	privateSpec, err := private.GetSwaggerWithExternalRefs()
 	utils.DieOnError(err)
 
 	server := echo.New()
@@ -61,7 +65,7 @@ func Start(
 	)
 
 	server.GET(specFile, func(ctx echo.Context) error {
-		return ctx.JSON(http.StatusOK, spec)
+		return ctx.JSON(http.StatusOK, publicSpec)
 	})
 
 	var cloudConnectorClient connectors.CloudConnectorClient
@@ -73,26 +77,23 @@ func Start(
 		log.Warn("Using mock CloudConnectorClient")
 	}
 
-	wrapper := controllers.ServerInterfaceWrapper{
-		Handler: controllers.CreateControllers(db, cloudConnectorClient),
-	}
-
+	privateController := private.CreateController(db, cloudConnectorClient)
 	internal := server.Group("/internal")
+	internal.Use(oapiMiddleware.OapiRequestValidator(privateSpec))
+	internal.POST("/dispatch", privateController.ApiInternalRunsCreate)
+
+	publicController := public.CreateController(db, cloudConnectorClient)
 	public := server.Group("/api/playbook-dispatcher")
-
-	internal.Use(oapiMiddleware.OapiRequestValidator(spec))
-	internal.POST("/dispatch", wrapper.ApiInternalRunsCreate)
-
 	public.Use(echo.WrapMiddleware(identity.EnforceIdentity))
 	public.Use(echo.WrapMiddleware(middleware.EnforceIdentityType))
 	public.Use(middleware.Hack("filter", "labels"))
 	public.Use(middleware.Hack("filter", "run"))
 	public.Use(middleware.Hack("filter", "run", "labels"))
 	public.Use(middleware.Hack("fields"))
-	public.Use(oapiMiddleware.OapiRequestValidator(spec))
+	public.Use(oapiMiddleware.OapiRequestValidator(publicSpec))
 
-	public.GET("/v1/run_hosts", wrapper.ApiRunHostsList)
-	public.GET("/v1/runs", wrapper.ApiRunsList)
+	public.GET("/v1/run_hosts", publicController.ApiRunHostsList)
+	public.GET("/v1/runs", publicController.ApiRunsList)
 
 	wg.Add(1)
 	go func() {

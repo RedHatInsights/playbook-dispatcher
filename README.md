@@ -8,7 +8,7 @@ Playbook Dispatcher takes care of:
 - tracking the progress of a Playbook run
 
 This project is WIP.
-In the meantime see [API schema](./schemas/api.spec.yaml) for proposed API.
+In the meantime see [API schema](./schemas/public.openapi.yaml) for proposed API.
 
 Playbook Dispatcher consists of 3 parts:
 

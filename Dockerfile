@@ -13,9 +13,10 @@ COPY --from=builder /go/src/app/app .
 COPY schema /schema
 COPY migrations /migrations
 
-ENV SCHEMA_MESSAGE_RESPONSE=/schema/playbookRunResponse.message.yaml
-ENV SCHEMA_RUNNER_EVENT=/schema/ansibleRunnerJobEvent.yaml
-ENV MIGRATIONS_DIR=/migrations
+ENV SCHEMA_MESSAGE_RESPONSE=/schema/playbookRunResponse.message.yaml \
+    SCHEMA_RUNNER_EVENT=/schema/ansibleRunnerJobEvent.yaml \
+    SCHEMA_API_PRIVATE=/schema/private.openapi.yaml \
+    MIGRATIONS_DIR=/migrations
 
 USER 1001
 

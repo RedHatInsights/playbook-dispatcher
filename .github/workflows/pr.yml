@@ -12,7 +12,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - run: npx @stoplight/spectral lint schema/api.spec.yaml
+    - run: npx @stoplight/spectral lint schema/public.openapi.yaml
+    - run: npx @stoplight/spectral lint schema/private.openapi.yaml
 
   golang:
     runs-on: ubuntu-20.04

@@ -1,8 +1,9 @@
-package tests
+package private
 
 import (
 	"io/ioutil"
 	"net/http"
+	"playbook-dispatcher/internal/api/controllers/public"
 	dbModel "playbook-dispatcher/internal/common/model/db"
 	"playbook-dispatcher/internal/common/utils/test"
 	"strings"
@@ -32,9 +33,9 @@ var _ = Describe("runsCreate", func() {
 			url := "http://example.com"
 			payload := ApiInternalRunsCreateJSONRequestBody{
 				RunInput{
-					Recipient: RunRecipient(recipient.String()),
-					Account:   Account(accountNumber()),
-					Url:       Url(url),
+					Recipient: public.RunRecipient(recipient.String()),
+					Account:   public.Account(accountNumber()),
+					Url:       public.Url(url),
 				},
 			}
 
