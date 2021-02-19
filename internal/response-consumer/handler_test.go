@@ -117,7 +117,7 @@ var _ = Describe("handler", func() {
 
 	Describe("correlation", func() {
 		It("updates the correct run", func() {
-			data := []*dbModel.Run{
+			data := []dbModel.Run{
 				test.NewRun(accountNumber()),
 				test.NewRun(accountNumber()),
 			}

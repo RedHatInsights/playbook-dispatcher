@@ -25,6 +25,7 @@ type Run struct {
 
 	Status string
 	Labels Labels
+	Events []byte
 
 	CreatedAt time.Time
 	UpdatedAt time.Time

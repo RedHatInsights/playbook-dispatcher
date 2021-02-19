@@ -7,3 +7,11 @@ func MapKeys(value map[string]interface{}) (result []string) {
 
 	return
 }
+
+func Min(x, y int) int {
+	if x < y {
+		return x
+	}
+
+	return y
+}

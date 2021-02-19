@@ -8,9 +8,6 @@ import (
 	"playbook-dispatcher/internal/common/utils"
 	"time"
 
-	dbModel "playbook-dispatcher/internal/common/model/db"
-
-	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
 
@@ -21,22 +18,6 @@ func IdentityHeaderMinimal(account string) string {
 
 var Client = http.Client{
 	Timeout: 1 * time.Second,
-}
-
-func NewRunWithStatus(account string, status string) *dbModel.Run {
-	return &dbModel.Run{
-		ID:            uuid.New(),
-		Account:       account,
-		Recipient:     uuid.New(),
-		CorrelationID: uuid.New(),
-		URL:           "http://example.com",
-		Status:        status,
-		Timeout:       3600,
-	}
-}
-
-func NewRun(account string) *dbModel.Run {
-	return NewRunWithStatus(account, "running")
 }
 
 func TestContext() context.Context {
