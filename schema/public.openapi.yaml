@@ -8,28 +8,6 @@ info:
     email: jozef@redhat.com
 
 paths:
-  /internal/dispatch:
-    post:
-      summary: Dispatch Playbooks
-      description: Dispatches Playbooks using Cloud Connector and stores corresponding run records.
-      operationId: api.internal.runs.create
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                $ref: '#/components/schemas/RunInput'
-              minItems: 1
-              maxItems: 50
-      responses:
-        '207':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RunsCreated'
-
   /api/playbook-dispatcher/v1/runs:
     get:
       summary: List Playbook runs
@@ -145,24 +123,6 @@ components:
       - data
       - meta
 
-    RunInput:
-      type: object
-      properties:
-        recipient:
-          $ref: '#/components/schemas/RunRecipient'
-        account:
-          $ref: '#/components/schemas/Account'
-        url:
-          $ref: '#/components/schemas/Url'
-        labels:
-          $ref: '#/components/schemas/Labels'
-        timeout:
-          $ref: '#/components/schemas/RunTimeout'
-      required:
-      - recipient
-      - account
-      - url
-
     Run:
       type: object
       properties:
@@ -184,24 +144,6 @@ components:
           $ref: '#/components/schemas/CreatedAt'
         updated_at:
           $ref: '#/components/schemas/UpdatedAt'
-
-
-    RunCreated:
-      type: object
-      properties:
-        code:
-          type: integer
-          example: 201
-          description: status code of the request
-        id:
-          $ref: '#/components/schemas/RunId'
-      required:
-      - code
-
-    RunsCreated:
-      type: array
-      items:
-        $ref: '#/components/schemas/RunCreated'
 
     RunHosts:
       type: object

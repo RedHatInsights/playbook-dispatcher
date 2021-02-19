@@ -1,0 +1,68 @@
+---
+openapi: 3.0.3
+info:
+  title: Playbook Dispatcher Internal API
+  description: Playbook Dispatcher is a service for running Ansible Playbooks on hosts connected via Cloud Connector.
+  version: 0.0.1
+  contact:
+    email: jozef@redhat.com
+
+paths:
+  /internal/dispatch:
+    post:
+      summary: Dispatch Playbooks
+      description: Dispatches Playbooks using Cloud Connector and stores corresponding run records.
+      operationId: api.internal.runs.create
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/RunInput'
+              minItems: 1
+              maxItems: 50
+      responses:
+        '207':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RunsCreated'
+
+components:
+  schemas:
+    RunInput:
+      type: object
+      properties:
+        recipient:
+          $ref: './public.openapi.yaml#/components/schemas/RunRecipient'
+        account:
+          $ref: './public.openapi.yaml#/components/schemas/Account'
+        url:
+          $ref: './public.openapi.yaml#/components/schemas/Url'
+        labels:
+          $ref: './public.openapi.yaml#/components/schemas/Labels'
+        timeout:
+          $ref: './public.openapi.yaml#/components/schemas/RunTimeout'
+      required:
+      - recipient
+      - account
+      - url
+
+    RunCreated:
+      type: object
+      properties:
+        code:
+          type: integer
+          example: 201
+          description: status code of the request
+        id:
+          $ref: './public.openapi.yaml#/components/schemas/RunId'
+      required:
+      - code
+
+    RunsCreated:
+      type: array
+      items:
+        $ref: '#/components/schemas/RunCreated'

@@ -65,16 +65,6 @@ type Run struct {
 	Url *Url `json:"url,omitempty"`
 }
 
-// RunCreated defines model for RunCreated.
-type RunCreated struct {
-
-	// status code of the request
-	Code int `json:"code"`
-
-	// Unique identifier of a Playbook run
-	Id *RunId `json:"id,omitempty"`
-}
-
 // RunHost defines model for RunHost.
 type RunHost struct {
 
@@ -99,25 +89,6 @@ type RunHosts struct {
 
 // RunId defines model for RunId.
 type RunId string
-
-// RunInput defines model for RunInput.
-type RunInput struct {
-
-	// Identifier of the tenant
-	Account Account `json:"account"`
-
-	// Additional metadata about the Playbook run. Can be used for filtering purposes.
-	Labels *Labels `json:"labels,omitempty"`
-
-	// Identifier of the host to which a given Playbook is addressed
-	Recipient RunRecipient `json:"recipient"`
-
-	// Amount of seconds after which the run is considered failed due to timeout
-	Timeout *RunTimeout `json:"timeout,omitempty"`
-
-	// URL hosting the Playbook
-	Url Url `json:"url"`
-}
 
 // RunLabelsNullable defines model for RunLabelsNullable.
 type RunLabelsNullable struct {
@@ -148,9 +119,6 @@ type Runs struct {
 	// Information about returned entities
 	Meta Meta `json:"meta"`
 }
-
-// RunsCreated defines model for RunsCreated.
-type RunsCreated []RunCreated
 
 // StatusNullable defines model for StatusNullable.
 type StatusNullable string
@@ -248,12 +216,6 @@ type ApiRunsListParams struct {
 	// Indicates the starting position of the query relative to the complete set of items that match the query
 	Offset *Offset `json:"offset,omitempty"`
 }
-
-// ApiInternalRunsCreateJSONBody defines parameters for ApiInternalRunsCreate.
-type ApiInternalRunsCreateJSONBody []RunInput
-
-// ApiInternalRunsCreateRequestBody defines body for ApiInternalRunsCreate for application/json ContentType.
-type ApiInternalRunsCreateJSONRequestBody ApiInternalRunsCreateJSONBody
 
 // Getter for additional properties for Labels. Returns the specified
 // element and whether it was found

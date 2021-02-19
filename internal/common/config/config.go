@@ -53,6 +53,7 @@ func Get() *viper.Viper {
 
 	options.SetDefault("schema.message.response", "./schema/playbookRunResponse.message.yaml")
 	options.SetDefault("schema.runner.event", "./schema/ansibleRunnerJobEvent.yaml")
+	options.SetDefault("schema.api.private", "./schema/private.openapi.yaml")
 
 	options.SetDefault("storage.timeout", 10)
 	options.SetDefault("storage.retries", 3)
