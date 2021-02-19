@@ -75,6 +75,28 @@ type RunCreated struct {
 	Id *RunId `json:"id,omitempty"`
 }
 
+// RunHost defines model for RunHost.
+type RunHost struct {
+
+	// Name used to identify a host within Ansible inventory
+	Host *string `json:"host,omitempty"`
+	Run  *Run    `json:"run,omitempty"`
+
+	// Current status of a Playbook run
+	Status *RunStatus `json:"status,omitempty"`
+
+	// Output produced by running Ansible Playbook on the given host
+	Stdout *string `json:"stdout,omitempty"`
+}
+
+// RunHosts defines model for RunHosts.
+type RunHosts struct {
+	Data []RunHost `json:"data"`
+
+	// Information about returned entities
+	Meta Meta `json:"meta"`
+}
+
 // RunId defines model for RunId.
 type RunId string
 
@@ -95,6 +117,11 @@ type RunInput struct {
 
 	// URL hosting the Playbook
 	Url Url `json:"url"`
+}
+
+// RunLabelsNullable defines model for RunLabelsNullable.
+type RunLabelsNullable struct {
+	AdditionalProperties map[string]string `json:"-"`
 }
 
 // RunRecipient defines model for RunRecipient.
@@ -125,6 +152,17 @@ type Runs struct {
 // RunsCreated defines model for RunsCreated.
 type RunsCreated []RunCreated
 
+// StatusNullable defines model for StatusNullable.
+type StatusNullable string
+
+// List of StatusNullable
+const (
+	StatusNullable_failure StatusNullable = "failure"
+	StatusNullable_running StatusNullable = "running"
+	StatusNullable_success StatusNullable = "success"
+	StatusNullable_timeout StatusNullable = "timeout"
+)
+
 // UpdatedAt defines model for UpdatedAt.
 type UpdatedAt time.Time
 
@@ -137,6 +175,20 @@ type Limit int
 // Offset defines model for Offset.
 type Offset int
 
+// RunHostFields defines model for RunHostFields.
+type RunHostFields struct {
+	Data *[]string `json:"data,omitempty"`
+}
+
+// RunHostFilter defines model for RunHostFilter.
+type RunHostFilter struct {
+	Run *struct {
+		Id     *string            `json:"id"`
+		Labels *RunLabelsNullable `json:"labels"`
+	} `json:"run"`
+	Status *StatusNullable `json:"status"`
+}
+
 // RunsFields defines model for RunsFields.
 type RunsFields struct {
 	Data *[]string `json:"data,omitempty"`
@@ -144,9 +196,9 @@ type RunsFields struct {
 
 // RunsFilter defines model for RunsFilter.
 type RunsFilter struct {
-	Labels    *Labels `json:"labels"`
-	Recipient *string `json:"recipient"`
-	Status    *string `json:"status"`
+	Labels    *RunLabelsNullable `json:"labels"`
+	Recipient *string            `json:"recipient"`
+	Status    *StatusNullable    `json:"status"`
 }
 
 // RunsSortBy defines model for RunsSortBy.
@@ -158,6 +210,25 @@ const (
 	RunsSortBy_created_at_asc  RunsSortBy = "created_at:asc"
 	RunsSortBy_created_at_desc RunsSortBy = "created_at:desc"
 )
+
+// BadRequest defines model for BadRequest.
+type BadRequest Error
+
+// ApiRunHostsListParams defines parameters for ApiRunHostsList.
+type ApiRunHostsListParams struct {
+
+	// Allows for filtering based on various criteria
+	Filter *RunHostFilter `json:"filter,omitempty"`
+
+	// Defines fields to be returned in the response.
+	Fields *RunHostFields `json:"fields,omitempty"`
+
+	// Maximum number of results to return
+	Limit *Limit `json:"limit,omitempty"`
+
+	// Indicates the starting position of the query relative to the complete set of items that match the query
+	Offset *Offset `json:"offset,omitempty"`
+}
 
 // ApiRunsListParams defines parameters for ApiRunsList.
 type ApiRunsListParams struct {
@@ -178,69 +249,11 @@ type ApiRunsListParams struct {
 	Offset *Offset `json:"offset,omitempty"`
 }
 
-// ApiRunsListParams_Filter_Labels defines parameters for ApiRunsList.
-type ApiRunsListParams_Filter_Labels struct {
-	AdditionalProperties map[string]string `json:"-"`
-}
-
 // ApiInternalRunsCreateJSONBody defines parameters for ApiInternalRunsCreate.
 type ApiInternalRunsCreateJSONBody []RunInput
 
 // ApiInternalRunsCreateRequestBody defines body for ApiInternalRunsCreate for application/json ContentType.
 type ApiInternalRunsCreateJSONRequestBody ApiInternalRunsCreateJSONBody
-
-// Getter for additional properties for ApiRunsListParams_Filter_Labels. Returns the specified
-// element and whether it was found
-func (a ApiRunsListParams_Filter_Labels) Get(fieldName string) (value string, found bool) {
-	if a.AdditionalProperties != nil {
-		value, found = a.AdditionalProperties[fieldName]
-	}
-	return
-}
-
-// Setter for additional properties for ApiRunsListParams_Filter_Labels
-func (a *ApiRunsListParams_Filter_Labels) Set(fieldName string, value string) {
-	if a.AdditionalProperties == nil {
-		a.AdditionalProperties = make(map[string]string)
-	}
-	a.AdditionalProperties[fieldName] = value
-}
-
-// Override default JSON handling for ApiRunsListParams_Filter_Labels to handle AdditionalProperties
-func (a *ApiRunsListParams_Filter_Labels) UnmarshalJSON(b []byte) error {
-	object := make(map[string]json.RawMessage)
-	err := json.Unmarshal(b, &object)
-	if err != nil {
-		return err
-	}
-
-	if len(object) != 0 {
-		a.AdditionalProperties = make(map[string]string)
-		for fieldName, fieldBuf := range object {
-			var fieldVal string
-			err := json.Unmarshal(fieldBuf, &fieldVal)
-			if err != nil {
-				return errors.Wrap(err, fmt.Sprintf("error unmarshaling field %s", fieldName))
-			}
-			a.AdditionalProperties[fieldName] = fieldVal
-		}
-	}
-	return nil
-}
-
-// Override default JSON handling for ApiRunsListParams_Filter_Labels to handle AdditionalProperties
-func (a ApiRunsListParams_Filter_Labels) MarshalJSON() ([]byte, error) {
-	var err error
-	object := make(map[string]json.RawMessage)
-
-	for fieldName, field := range a.AdditionalProperties {
-		object[fieldName], err = json.Marshal(field)
-		if err != nil {
-			return nil, errors.Wrap(err, fmt.Sprintf("error marshaling '%s'", fieldName))
-		}
-	}
-	return json.Marshal(object)
-}
 
 // Getter for additional properties for Labels. Returns the specified
 // element and whether it was found
@@ -283,6 +296,59 @@ func (a *Labels) UnmarshalJSON(b []byte) error {
 
 // Override default JSON handling for Labels to handle AdditionalProperties
 func (a Labels) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, errors.Wrap(err, fmt.Sprintf("error marshaling '%s'", fieldName))
+		}
+	}
+	return json.Marshal(object)
+}
+
+// Getter for additional properties for RunLabelsNullable. Returns the specified
+// element and whether it was found
+func (a RunLabelsNullable) Get(fieldName string) (value string, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for RunLabelsNullable
+func (a *RunLabelsNullable) Set(fieldName string, value string) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]string)
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for RunLabelsNullable to handle AdditionalProperties
+func (a *RunLabelsNullable) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]string)
+		for fieldName, fieldBuf := range object {
+			var fieldVal string
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return errors.Wrap(err, fmt.Sprintf("error unmarshaling field %s", fieldName))
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for RunLabelsNullable to handle AdditionalProperties
+func (a RunLabelsNullable) MarshalJSON() ([]byte, error) {
 	var err error
 	object := make(map[string]json.RawMessage)
 

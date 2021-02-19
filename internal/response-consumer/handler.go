@@ -45,11 +45,16 @@ func (this *handler) onMessage(ctx context.Context, msg *k.Message) {
 	status := inferStatus(&value.Events)
 
 	queryBuilder := this.db.Model(db.Run{}).
-		Select("status").
+		Select("status", "events").
 		Where("account = ?", value.Account).
 		Where("correlation_id = ?", correlationId)
 
-	result := queryBuilder.Updates(db.Run{Status: status})
+	eventsSerialized := utils.MustMarshal(value.Events)
+
+	result := queryBuilder.Updates(db.Run{
+		Status: status,
+		Events: eventsSerialized,
+	})
 
 	if result.Error != nil {
 		instrumentation.PlaybookRunUpdateError(ctx, result.Error, value.Account, status, correlationId)

@@ -53,11 +53,28 @@ paths:
               schema:
                 $ref: '#/components/schemas/Runs'
         '400':
-          description: Bad Request
+          $ref: '#/components/responses/BadRequest'
+
+  /api/playbook-dispatcher/v1/run_hosts:
+    get:
+      summary: List hosts involved in Playbook runs
+      operationId: api.run.hosts.list
+      parameters:
+      - $ref: '#/components/parameters/RunHostFilter'
+      - $ref: '#/components/parameters/RunHostFields'
+      - $ref: '#/components/parameters/Limit'
+      - $ref: '#/components/parameters/Offset'
+
+      responses:
+        '200':
+          description: OK
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/RunHosts'
+
+        '400':
+          $ref: '#/components/responses/BadRequest'
 
 components:
   schemas:
@@ -186,6 +203,34 @@ components:
       items:
         $ref: '#/components/schemas/RunCreated'
 
+    RunHosts:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/RunHost'
+        meta:
+          $ref: '#/components/schemas/Meta'
+      required:
+      - data
+      - meta
+
+    RunHost:
+      type: object
+      properties:
+        host:
+          description: Name used to identify a host within Ansible inventory
+          type: string
+        stdout:
+          description: Output produced by running Ansible Playbook on the given host
+          type: string
+        status:
+          $ref: '#/components/schemas/RunStatus'
+        run:
+          $ref: '#/components/schemas/Run'
+
+
     Meta:
       type: object
       additionalProperties: false
@@ -206,6 +251,26 @@ components:
       required:
       - message
 
+    RunLabelsNullable:
+      type: object
+      # this property should not be nullable however it is set so as a workaround for
+      # https://github.com/getkin/kin-openapi/issues/293
+      nullable: true
+      additionalProperties:
+        type: string
+
+    StatusNullable:
+      type: string
+      # this property should not be nullable however it is set so as a workaround for
+      # https://github.com/getkin/kin-openapi/issues/293
+      # ideally we would reuse '#/components/schemas/RunStatus' here
+      nullable: true
+      enum:
+        - running
+        - success
+        - failure
+        - timeout
+
   parameters:
     RunsFilter:
       description: Allows for filtering based on various criteria
@@ -218,16 +283,7 @@ components:
         type: object
         properties:
           status:
-            type: string
-            # this property should not be nullable however it is set so as a workaround for
-            # https://github.com/getkin/kin-openapi/issues/293
-            # ideally we would reuse '#/components/schemas/RunStatus' here
-            nullable: true
-            enum:
-              - running
-              - success
-              - failure
-              - timeout
+            $ref: '#/components/schemas/StatusNullable'
           recipient:
             type: string
             # this property should not be nullable however it is set so as a workaround for
@@ -237,12 +293,34 @@ components:
             format: uuid
           # See ./internal/api/middleware/labelFilters.go
           labels:
+            $ref: '#/components/schemas/RunLabelsNullable'
+
+    RunHostFilter:
+      description: Allows for filtering based on various criteria
+      in: query
+      name: filter
+      required: false
+      style: deepObject
+      explode: true
+      schema:
+        type: object
+        properties:
+          status:
+            $ref: '#/components/schemas/StatusNullable'
+          run:
             type: object
-            # this property should not be nullable however it is set so as a workaround for
-            # https://github.com/getkin/kin-openapi/issues/293
             nullable: true
-            additionalProperties:
-              type: string
+            properties:
+              id:
+                type: string
+                # this property should not be nullable however it is set so as a workaround for
+                # https://github.com/getkin/kin-openapi/issues/293
+                # ideally we would reuse '#/components/schemas/RunRecipient' here
+                nullable: true
+                format: uuid
+              # See ./internal/api/middleware/labelFilters.go
+              labels:
+                $ref: '#/components/schemas/RunLabelsNullable'
 
     RunsFields:
       description: >
@@ -278,6 +356,31 @@ components:
               - timeout
               - status
 
+    RunHostFields:
+      description: >
+        Defines fields to be returned in the response.
+      in: query
+      name: fields
+      required: false
+      style: deepObject
+      explode: true
+      schema:
+        type: object
+        properties:
+          data:
+            type: array
+            items:
+              type: string
+              enum:
+                - host
+                - run
+                - status
+                - stdout
+            default:
+              - host
+              - status
+              - run
+
     RunsSortBy:
       description: Sort order
       in: query
@@ -310,3 +413,12 @@ components:
         type: integer
         minimum: 0
         default: 0
+
+
+  responses:
+    BadRequest:
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'

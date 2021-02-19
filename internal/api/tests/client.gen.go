@@ -83,6 +83,28 @@ type RunCreated struct {
 	Id *RunId `json:"id,omitempty"`
 }
 
+// RunHost defines model for RunHost.
+type RunHost struct {
+
+	// Name used to identify a host within Ansible inventory
+	Host *string `json:"host,omitempty"`
+	Run  *Run    `json:"run,omitempty"`
+
+	// Current status of a Playbook run
+	Status *RunStatus `json:"status,omitempty"`
+
+	// Output produced by running Ansible Playbook on the given host
+	Stdout *string `json:"stdout,omitempty"`
+}
+
+// RunHosts defines model for RunHosts.
+type RunHosts struct {
+	Data []RunHost `json:"data"`
+
+	// Information about returned entities
+	Meta Meta `json:"meta"`
+}
+
 // RunId defines model for RunId.
 type RunId string
 
@@ -103,6 +125,11 @@ type RunInput struct {
 
 	// URL hosting the Playbook
 	Url Url `json:"url"`
+}
+
+// RunLabelsNullable defines model for RunLabelsNullable.
+type RunLabelsNullable struct {
+	AdditionalProperties map[string]string `json:"-"`
 }
 
 // RunRecipient defines model for RunRecipient.
@@ -133,6 +160,17 @@ type Runs struct {
 // RunsCreated defines model for RunsCreated.
 type RunsCreated []RunCreated
 
+// StatusNullable defines model for StatusNullable.
+type StatusNullable string
+
+// List of StatusNullable
+const (
+	StatusNullable_failure StatusNullable = "failure"
+	StatusNullable_running StatusNullable = "running"
+	StatusNullable_success StatusNullable = "success"
+	StatusNullable_timeout StatusNullable = "timeout"
+)
+
 // UpdatedAt defines model for UpdatedAt.
 type UpdatedAt time.Time
 
@@ -145,6 +183,20 @@ type Limit int
 // Offset defines model for Offset.
 type Offset int
 
+// RunHostFields defines model for RunHostFields.
+type RunHostFields struct {
+	Data *[]string `json:"data,omitempty"`
+}
+
+// RunHostFilter defines model for RunHostFilter.
+type RunHostFilter struct {
+	Run *struct {
+		Id     *string            `json:"id"`
+		Labels *RunLabelsNullable `json:"labels"`
+	} `json:"run"`
+	Status *StatusNullable `json:"status"`
+}
+
 // RunsFields defines model for RunsFields.
 type RunsFields struct {
 	Data *[]string `json:"data,omitempty"`
@@ -152,9 +204,9 @@ type RunsFields struct {
 
 // RunsFilter defines model for RunsFilter.
 type RunsFilter struct {
-	Labels    *Labels `json:"labels"`
-	Recipient *string `json:"recipient"`
-	Status    *string `json:"status"`
+	Labels    *RunLabelsNullable `json:"labels"`
+	Recipient *string            `json:"recipient"`
+	Status    *StatusNullable    `json:"status"`
 }
 
 // RunsSortBy defines model for RunsSortBy.
@@ -166,6 +218,25 @@ const (
 	RunsSortBy_created_at_asc  RunsSortBy = "created_at:asc"
 	RunsSortBy_created_at_desc RunsSortBy = "created_at:desc"
 )
+
+// BadRequest defines model for BadRequest.
+type BadRequest Error
+
+// ApiRunHostsListParams defines parameters for ApiRunHostsList.
+type ApiRunHostsListParams struct {
+
+	// Allows for filtering based on various criteria
+	Filter *RunHostFilter `json:"filter,omitempty"`
+
+	// Defines fields to be returned in the response.
+	Fields *RunHostFields `json:"fields,omitempty"`
+
+	// Maximum number of results to return
+	Limit *Limit `json:"limit,omitempty"`
+
+	// Indicates the starting position of the query relative to the complete set of items that match the query
+	Offset *Offset `json:"offset,omitempty"`
+}
 
 // ApiRunsListParams defines parameters for ApiRunsList.
 type ApiRunsListParams struct {
@@ -186,69 +257,11 @@ type ApiRunsListParams struct {
 	Offset *Offset `json:"offset,omitempty"`
 }
 
-// ApiRunsListParams_Filter_Labels defines parameters for ApiRunsList.
-type ApiRunsListParams_Filter_Labels struct {
-	AdditionalProperties map[string]string `json:"-"`
-}
-
 // ApiInternalRunsCreateJSONBody defines parameters for ApiInternalRunsCreate.
 type ApiInternalRunsCreateJSONBody []RunInput
 
 // ApiInternalRunsCreateRequestBody defines body for ApiInternalRunsCreate for application/json ContentType.
 type ApiInternalRunsCreateJSONRequestBody ApiInternalRunsCreateJSONBody
-
-// Getter for additional properties for ApiRunsListParams_Filter_Labels. Returns the specified
-// element and whether it was found
-func (a ApiRunsListParams_Filter_Labels) Get(fieldName string) (value string, found bool) {
-	if a.AdditionalProperties != nil {
-		value, found = a.AdditionalProperties[fieldName]
-	}
-	return
-}
-
-// Setter for additional properties for ApiRunsListParams_Filter_Labels
-func (a *ApiRunsListParams_Filter_Labels) Set(fieldName string, value string) {
-	if a.AdditionalProperties == nil {
-		a.AdditionalProperties = make(map[string]string)
-	}
-	a.AdditionalProperties[fieldName] = value
-}
-
-// Override default JSON handling for ApiRunsListParams_Filter_Labels to handle AdditionalProperties
-func (a *ApiRunsListParams_Filter_Labels) UnmarshalJSON(b []byte) error {
-	object := make(map[string]json.RawMessage)
-	err := json.Unmarshal(b, &object)
-	if err != nil {
-		return err
-	}
-
-	if len(object) != 0 {
-		a.AdditionalProperties = make(map[string]string)
-		for fieldName, fieldBuf := range object {
-			var fieldVal string
-			err := json.Unmarshal(fieldBuf, &fieldVal)
-			if err != nil {
-				return errors.Wrap(err, fmt.Sprintf("error unmarshaling field %s", fieldName))
-			}
-			a.AdditionalProperties[fieldName] = fieldVal
-		}
-	}
-	return nil
-}
-
-// Override default JSON handling for ApiRunsListParams_Filter_Labels to handle AdditionalProperties
-func (a ApiRunsListParams_Filter_Labels) MarshalJSON() ([]byte, error) {
-	var err error
-	object := make(map[string]json.RawMessage)
-
-	for fieldName, field := range a.AdditionalProperties {
-		object[fieldName], err = json.Marshal(field)
-		if err != nil {
-			return nil, errors.Wrap(err, fmt.Sprintf("error marshaling '%s'", fieldName))
-		}
-	}
-	return json.Marshal(object)
-}
 
 // Getter for additional properties for Labels. Returns the specified
 // element and whether it was found
@@ -291,6 +304,59 @@ func (a *Labels) UnmarshalJSON(b []byte) error {
 
 // Override default JSON handling for Labels to handle AdditionalProperties
 func (a Labels) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, errors.Wrap(err, fmt.Sprintf("error marshaling '%s'", fieldName))
+		}
+	}
+	return json.Marshal(object)
+}
+
+// Getter for additional properties for RunLabelsNullable. Returns the specified
+// element and whether it was found
+func (a RunLabelsNullable) Get(fieldName string) (value string, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for RunLabelsNullable
+func (a *RunLabelsNullable) Set(fieldName string, value string) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]string)
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for RunLabelsNullable to handle AdditionalProperties
+func (a *RunLabelsNullable) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]string)
+		for fieldName, fieldBuf := range object {
+			var fieldVal string
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return errors.Wrap(err, fmt.Sprintf("error unmarshaling field %s", fieldName))
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for RunLabelsNullable to handle AdditionalProperties
+func (a RunLabelsNullable) MarshalJSON() ([]byte, error) {
 	var err error
 	object := make(map[string]json.RawMessage)
 
@@ -376,6 +442,9 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
+	// ApiRunHostsList request
+	ApiRunHostsList(ctx context.Context, params *ApiRunHostsListParams) (*http.Response, error)
+
 	// ApiRunsList request
 	ApiRunsList(ctx context.Context, params *ApiRunsListParams) (*http.Response, error)
 
@@ -383,6 +452,21 @@ type ClientInterface interface {
 	ApiInternalRunsCreateWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error)
 
 	ApiInternalRunsCreate(ctx context.Context, body ApiInternalRunsCreateJSONRequestBody) (*http.Response, error)
+}
+
+func (c *Client) ApiRunHostsList(ctx context.Context, params *ApiRunHostsListParams) (*http.Response, error) {
+	req, err := NewApiRunHostsListRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if c.RequestEditor != nil {
+		err = c.RequestEditor(ctx, req)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return c.Client.Do(req)
 }
 
 func (c *Client) ApiRunsList(ctx context.Context, params *ApiRunsListParams) (*http.Response, error) {
@@ -428,6 +512,101 @@ func (c *Client) ApiInternalRunsCreate(ctx context.Context, body ApiInternalRuns
 		}
 	}
 	return c.Client.Do(req)
+}
+
+// NewApiRunHostsListRequest generates requests for ApiRunHostsList
+func NewApiRunHostsListRequest(server string, params *ApiRunHostsListParams) (*http.Request, error) {
+	var err error
+
+	queryUrl, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	basePath := fmt.Sprintf("/api/playbook-dispatcher/v1/run_hosts")
+	if basePath[0] == '/' {
+		basePath = basePath[1:]
+	}
+
+	queryUrl, err = queryUrl.Parse(basePath)
+	if err != nil {
+		return nil, err
+	}
+
+	queryValues := queryUrl.Query()
+
+	if params.Filter != nil {
+
+		if queryFrag, err := runtime.StyleParam("deepObject", true, "filter", *params.Filter); err != nil {
+			return nil, err
+		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+			return nil, err
+		} else {
+			for k, v := range parsed {
+				for _, v2 := range v {
+					queryValues.Add(k, v2)
+				}
+			}
+		}
+
+	}
+
+	if params.Fields != nil {
+
+		if queryFrag, err := runtime.StyleParam("deepObject", true, "fields", *params.Fields); err != nil {
+			return nil, err
+		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+			return nil, err
+		} else {
+			for k, v := range parsed {
+				for _, v2 := range v {
+					queryValues.Add(k, v2)
+				}
+			}
+		}
+
+	}
+
+	if params.Limit != nil {
+
+		if queryFrag, err := runtime.StyleParam("form", true, "limit", *params.Limit); err != nil {
+			return nil, err
+		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+			return nil, err
+		} else {
+			for k, v := range parsed {
+				for _, v2 := range v {
+					queryValues.Add(k, v2)
+				}
+			}
+		}
+
+	}
+
+	if params.Offset != nil {
+
+		if queryFrag, err := runtime.StyleParam("form", true, "offset", *params.Offset); err != nil {
+			return nil, err
+		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+			return nil, err
+		} else {
+			for k, v := range parsed {
+				for _, v2 := range v {
+					queryValues.Add(k, v2)
+				}
+			}
+		}
+
+	}
+
+	queryUrl.RawQuery = queryValues.Encode()
+
+	req, err := http.NewRequest("GET", queryUrl.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
 }
 
 // NewApiRunsListRequest generates requests for ApiRunsList
@@ -609,6 +788,9 @@ func WithBaseURL(baseURL string) ClientOption {
 
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
+	// ApiRunHostsList request
+	ApiRunHostsListWithResponse(ctx context.Context, params *ApiRunHostsListParams) (*ApiRunHostsListResponse, error)
+
 	// ApiRunsList request
 	ApiRunsListWithResponse(ctx context.Context, params *ApiRunsListParams) (*ApiRunsListResponse, error)
 
@@ -616,6 +798,29 @@ type ClientWithResponsesInterface interface {
 	ApiInternalRunsCreateWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*ApiInternalRunsCreateResponse, error)
 
 	ApiInternalRunsCreateWithResponse(ctx context.Context, body ApiInternalRunsCreateJSONRequestBody) (*ApiInternalRunsCreateResponse, error)
+}
+
+type ApiRunHostsListResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *RunHosts
+	JSON400      *Error
+}
+
+// Status returns HTTPResponse.Status
+func (r ApiRunHostsListResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ApiRunHostsListResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
 }
 
 type ApiRunsListResponse struct {
@@ -663,6 +868,15 @@ func (r ApiInternalRunsCreateResponse) StatusCode() int {
 	return 0
 }
 
+// ApiRunHostsListWithResponse request returning *ApiRunHostsListResponse
+func (c *ClientWithResponses) ApiRunHostsListWithResponse(ctx context.Context, params *ApiRunHostsListParams) (*ApiRunHostsListResponse, error) {
+	rsp, err := c.ApiRunHostsList(ctx, params)
+	if err != nil {
+		return nil, err
+	}
+	return ParseApiRunHostsListResponse(rsp)
+}
+
 // ApiRunsListWithResponse request returning *ApiRunsListResponse
 func (c *ClientWithResponses) ApiRunsListWithResponse(ctx context.Context, params *ApiRunsListParams) (*ApiRunsListResponse, error) {
 	rsp, err := c.ApiRunsList(ctx, params)
@@ -687,6 +901,39 @@ func (c *ClientWithResponses) ApiInternalRunsCreateWithResponse(ctx context.Cont
 		return nil, err
 	}
 	return ParseApiInternalRunsCreateResponse(rsp)
+}
+
+// ParseApiRunHostsListResponse parses an HTTP response from a ApiRunHostsListWithResponse call
+func ParseApiRunHostsListResponse(rsp *http.Response) (*ApiRunHostsListResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ApiRunHostsListResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest RunHosts
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	}
+
+	return response, nil
 }
 
 // ParseApiRunsListResponse parses an HTTP response from a ApiRunsListWithResponse call

@@ -1,14 +1,9 @@
 package tests
 
 import (
-	"encoding/json"
-	"fmt"
-	"io/ioutil"
 	"net/http"
-	"net/url"
 	dbModel "playbook-dispatcher/internal/common/model/db"
 	"playbook-dispatcher/internal/common/utils/test"
-	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -17,38 +12,16 @@ import (
 	. "github.com/onsi/gomega"
 )
 
+func listRunsRaw(keysAndValues ...interface{}) *http.Response {
+	return doGet("http://localhost:9002/api/playbook-dispatcher/v1/runs", keysAndValues...)
+}
+
 func listRuns(keysAndValues ...interface{}) (*Runs, *ApiRunsListResponse) {
 	raw := listRunsRaw(keysAndValues...)
 	res, err := ParseApiRunsListResponse(raw)
 	Expect(err).ToNot(HaveOccurred())
 
 	return res.JSON200, res
-}
-
-func listRunsRaw(keysAndValues ...interface{}) *http.Response {
-	if len(keysAndValues)%2 != 0 {
-		panic(fmt.Sprintf("Odd number of parameters: %s", keysAndValues))
-	}
-
-	requestUrl := "http://localhost:9002/api/playbook-dispatcher/v1/runs"
-
-	params := make([]string, len(keysAndValues)/2)
-	for i := 0; i < len(keysAndValues)/2; i++ {
-		params[i] = fmt.Sprintf("%s=%s",
-			url.QueryEscape(fmt.Sprintf("%s", keysAndValues[i*2])),
-			url.QueryEscape(fmt.Sprintf("%v", keysAndValues[(i*2)+1])),
-		)
-	}
-
-	query := strings.Join(params, "&")
-	requestUrl += fmt.Sprintf("?%s", query)
-
-	req, err := http.NewRequest("GET", requestUrl, nil)
-	Expect(err).ToNot(HaveOccurred())
-	req.Header.Set("x-rh-identity", test.IdentityHeaderMinimal(accountNumber()))
-	resp, err := test.Client.Do(req)
-	Expect(err).ToNot(HaveOccurred())
-	return resp
 }
 
 var _ = Describe("runsList", func() {
@@ -75,10 +48,10 @@ var _ = Describe("runsList", func() {
 
 		It("properly infers run status", func() {
 			var data = []dbModel.Run{
-				*test.NewRunWithStatus(accountNumber(), "running"),
-				*test.NewRunWithStatus(accountNumber(), "success"),
-				*test.NewRunWithStatus(accountNumber(), "failure"),
-				*test.NewRunWithStatus(accountNumber(), "running"),
+				test.NewRunWithStatus(accountNumber(), "running"),
+				test.NewRunWithStatus(accountNumber(), "success"),
+				test.NewRunWithStatus(accountNumber(), "failure"),
+				test.NewRunWithStatus(accountNumber(), "running"),
 			}
 
 			data[1].CreatedAt = time.Date(2020, time.January, 2, 12, 45, 3, 0, time.UTC)
@@ -99,8 +72,8 @@ var _ = Describe("runsList", func() {
 	Describe("sorting", func() {
 		BeforeEach(func() {
 			var runs = []dbModel.Run{
-				*test.NewRunWithStatus(accountNumber(), "success"),
-				*test.NewRunWithStatus(accountNumber(), "failure"),
+				test.NewRunWithStatus(accountNumber(), "success"),
+				test.NewRunWithStatus(accountNumber(), "failure"),
 			}
 
 			runs[0].CreatedAt = time.Date(2020, time.January, 21, 8, 45, 3, 0, time.UTC)
@@ -135,11 +108,11 @@ var _ = Describe("runsList", func() {
 	Describe("pagination", func() {
 		BeforeEach(func() {
 			var runs = []dbModel.Run{
-				*test.NewRun(accountNumber()),
-				*test.NewRun(accountNumber()),
-				*test.NewRun(accountNumber()),
-				*test.NewRun(accountNumber()),
-				*test.NewRun(accountNumber()),
+				test.NewRun(accountNumber()),
+				test.NewRun(accountNumber()),
+				test.NewRun(accountNumber()),
+				test.NewRun(accountNumber()),
+				test.NewRun(accountNumber()),
 			}
 
 			Expect(db().Create(&runs).Error).ToNot(HaveOccurred())
@@ -191,10 +164,10 @@ var _ = Describe("runsList", func() {
 
 			BeforeEach(func() {
 				data = []dbModel.Run{
-					*test.NewRunWithStatus(accountNumber(), "success"),
-					*test.NewRunWithStatus(accountNumber(), "failure"),
-					*test.NewRunWithStatus(accountNumber(), "running"),
-					*test.NewRunWithStatus(accountNumber(), "running"),
+					test.NewRunWithStatus(accountNumber(), "success"),
+					test.NewRunWithStatus(accountNumber(), "failure"),
+					test.NewRunWithStatus(accountNumber(), "running"),
+					test.NewRunWithStatus(accountNumber(), "running"),
 				}
 
 				data[3].CreatedAt = time.Now().Add(-6 * time.Hour)
@@ -222,10 +195,10 @@ var _ = Describe("runsList", func() {
 
 			BeforeEach(func() {
 				data = []dbModel.Run{
-					*test.NewRun(accountNumber()),
-					*test.NewRun(accountNumber()),
-					*test.NewRun(accountNumber()),
-					*test.NewRun(accountNumber()),
+					test.NewRun(accountNumber()),
+					test.NewRun(accountNumber()),
+					test.NewRun(accountNumber()),
+					test.NewRun(accountNumber()),
 				}
 
 				data[3].Recipient = uuid.MustParse("64aeb237-d46d-494e-98e3-b48fc5c78bf1")
@@ -259,9 +232,9 @@ var _ = Describe("runsList", func() {
 
 			BeforeEach(func() {
 				data = []dbModel.Run{
-					*test.NewRun(accountNumber()),
-					*test.NewRun(accountNumber()),
-					*test.NewRun(accountNumber()),
+					test.NewRun(accountNumber()),
+					test.NewRun(accountNumber()),
+					test.NewRun(accountNumber()),
 				}
 
 				data[1].Labels = map[string]string{
@@ -300,45 +273,15 @@ var _ = Describe("runsList", func() {
 	})
 
 	Describe("sparse fieldsets", func() {
-		DescribeTable("happy path",
-			func(short bool, fields ...string) {
-				Expect(db().Create(test.NewRun(accountNumber())).Error).ToNot(HaveOccurred())
+		BeforeEach(func() {
+			run := test.NewRun(accountNumber())
+			Expect(db().Create(&run).Error).ToNot(HaveOccurred())
+		})
 
-				params := []interface{}{}
-
-				if short {
-					params = append(params, "fields[data]")
-					params = append(params, strings.Join(fields, ","))
-				} else {
-					for _, value := range fields {
-						params = append(params, "fields[data]")
-						params = append(params, value)
-					}
-				}
-
-				res := listRunsRaw(params...)
-				Expect(res.StatusCode).To(Equal(http.StatusOK))
-
-				bodyBytes, err := ioutil.ReadAll(res.Body)
-				Expect(err).ToNot(HaveOccurred())
-				defer res.Body.Close()
-
-				representation := make(map[string]interface{})
-				json.Unmarshal(bodyBytes, &representation)
-
-				runs := representation["data"].([]interface{})
-				Expect(runs[0]).To(HaveLen(len(fields)))
-				for _, field := range fields {
-					Expect(runs[0]).To(HaveKey(field))
-				}
-			},
-
-			Entry("single field", false, "id"),
-			Entry("defaults defined explicitly", false, "id", "recipient", "url", "labels", "timeout", "status"),
-			Entry("all fields", false, "id", "recipient", "url", "labels", "timeout", "status", "created_at", "updated_at"),
-			Entry("single field (short syntax)", true, "id"),
-			Entry("defaults defined explicitly (short syntax)", true, "id", "recipient", "url", "labels", "timeout", "status"),
-			Entry("all fields (short syntax)", true, "id", "recipient", "url", "labels", "timeout", "status", "created_at", "updated_at"),
+		DescribeTable("happy path", fieldTester(listRunsRaw),
+			Entry("single field", "id"),
+			Entry("defaults defined explicitly", "id", "recipient", "url", "labels", "timeout", "status"),
+			Entry("all fields", "id", "recipient", "url", "labels", "timeout", "status", "created_at", "updated_at"),
 		)
 
 		It("400s on invalid value", func() {
@@ -349,5 +292,4 @@ var _ = Describe("runsList", func() {
 			Expect(res.JSON400.Message).To(Equal("unknown field: salad"))
 		})
 	})
-
 })

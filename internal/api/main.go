@@ -73,20 +73,26 @@ func Start(
 		log.Warn("Using mock CloudConnectorClient")
 	}
 
-	ctrl := controllers.CreateControllers(db, cloudConnectorClient)
+	wrapper := controllers.ServerInterfaceWrapper{
+		Handler: controllers.CreateControllers(db, cloudConnectorClient),
+	}
 
-	internal := server.Group("/internal/*")
-	public := server.Group("/api/playbook-dispatcher/v1/*")
+	internal := server.Group("/internal")
+	public := server.Group("/api/playbook-dispatcher")
 
 	internal.Use(oapiMiddleware.OapiRequestValidator(spec))
-	controllers.RegisterHandlers(internal, ctrl)
+	internal.POST("/dispatch", wrapper.ApiInternalRunsCreate)
 
 	public.Use(echo.WrapMiddleware(identity.EnforceIdentity))
 	public.Use(echo.WrapMiddleware(middleware.EnforceIdentityType))
 	public.Use(middleware.Hack("filter", "labels"))
+	public.Use(middleware.Hack("filter", "run"))
+	public.Use(middleware.Hack("filter", "run", "labels"))
 	public.Use(middleware.Hack("fields"))
 	public.Use(oapiMiddleware.OapiRequestValidator(spec))
-	controllers.RegisterHandlers(public, ctrl)
+
+	public.GET("/v1/run_hosts", wrapper.ApiRunHostsList)
+	public.GET("/v1/runs", wrapper.ApiRunsList)
 
 	wg.Add(1)
 	go func() {

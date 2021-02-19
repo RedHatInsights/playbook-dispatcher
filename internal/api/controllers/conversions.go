@@ -17,16 +17,28 @@ const (
 	fieldStatus    = "status"
 	fieldCreatedAt = "created_at"
 	fieldUpdatedAt = "updated_at"
+	fieldRun       = "run"
+	fieldHost      = "host"
+	fieldStdout    = "stdout"
 )
 
-var fields = utils.IndexStrings(fieldId, fieldAccount, fieldRecipient, fieldUrl, fieldLabels, fieldTimeout, fieldStatus, fieldCreatedAt, fieldUpdatedAt)
+var (
+	runFields     = utils.IndexStrings(fieldId, fieldAccount, fieldRecipient, fieldUrl, fieldLabels, fieldTimeout, fieldStatus, fieldCreatedAt, fieldUpdatedAt)
+	runHostFields = utils.IndexStrings(fieldHost, fieldRun, fieldStatus, fieldStdout)
+)
 
-var defaultFields = []string{
+var defaultRunFields = []string{
 	fieldId,
 	fieldRecipient,
 	fieldUrl,
 	fieldLabels,
 	fieldTimeout,
+	fieldStatus,
+}
+
+var defaultRunHostFields = []string{
+	fieldHost,
+	fieldRun,
 	fieldStatus,
 }
 

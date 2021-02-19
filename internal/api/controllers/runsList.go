@@ -13,25 +13,6 @@ import (
 	identityMiddleware "github.com/redhatinsights/platform-go-middlewares/identity"
 )
 
-const defaultLimit = 50
-
-// these functions should not be needed - the generated code should fill in default values from the schema
-func getLimit(params ApiRunsListParams) int {
-	if params.Limit != nil {
-		return (int(*params.Limit))
-	}
-
-	return defaultLimit
-}
-
-func getOffset(params ApiRunsListParams) int {
-	if params.Offset != nil {
-		return int(*params.Offset)
-	}
-
-	return 0
-}
-
 func getOrderBy(params ApiRunsListParams) string {
 	if params.SortBy == nil || len(*params.SortBy) == 0 {
 		return "created_at desc"
@@ -42,28 +23,6 @@ func getOrderBy(params ApiRunsListParams) string {
 	} else {
 		return fmt.Sprintf("%s %s", parts[0], parts[1])
 	}
-}
-
-func parseFields(input map[string][]string) ([]string, error) {
-	selectedFields, ok := input["data"]
-
-	if !ok {
-		return defaultFields, nil
-	}
-
-	result := []string{}
-
-	for _, value := range selectedFields {
-		for _, field := range strings.Split(value, ",") {
-			if _, ok := fields[field]; ok {
-				result = append(result, field)
-			} else {
-				return nil, fmt.Errorf("unknown field: %s", field)
-			}
-		}
-	}
-
-	return result, nil
 }
 
 func mapFieldsToSql(field string) string {
@@ -82,7 +41,7 @@ func (this *controllers) ApiRunsList(ctx echo.Context, params ApiRunsListParams)
 
 	queryBuilder := this.database.Where("account = ?", identity.Identity.AccountNumber)
 
-	fields, err := parseFields(middleware.GetDeepObject(ctx, "fields"))
+	fields, err := parseFields(middleware.GetDeepObject(ctx, "fields"), "data", runFields, defaultRunFields)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
@@ -119,13 +78,13 @@ func (this *controllers) ApiRunsList(ctx echo.Context, params ApiRunsListParams)
 	queryBuilder.Order(getOrderBy(params))
 	queryBuilder.Order("id") // secondary criteria to guarantee stable sorting
 
-	queryBuilder.Limit(getLimit(params))
-	queryBuilder.Offset(getOffset(params))
+	queryBuilder.Limit(getLimit(params.Limit))
+	queryBuilder.Offset(getOffset(params.Offset))
 
 	dbResult := queryBuilder.Find(&dbRuns)
 
 	if dbResult.Error != nil {
-		instrumentation.PlaybookRunReadError(ctx, err)
+		instrumentation.PlaybookRunReadError(ctx, dbResult.Error)
 		return ctx.NoContent(http.StatusInternalServerError)
 	}
 
