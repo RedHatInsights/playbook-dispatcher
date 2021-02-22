@@ -12,7 +12,7 @@ objects:
       pod: playbook-dispatcher-validator
     name: playbook-dispatcher-validator
   spec:
-    replicas: ${REPLICAS_VALIDATOR}
+    replicas: ${{REPLICAS_VALIDATOR}}
     selector:
       matchLabels:
         app: playbook-dispatcher
