@@ -1,4 +1,5 @@
 CLOUD_CONNECTOR_SCHEMA ?= https://raw.githubusercontent.com/RedHatInsights/cloud-connector/master/internal/controller/api/api.spec.json
+RBAC_CONNECTOR_SCHEMA ?= https://cloud.redhat.com/api/rbac/v1/openapi.json
 
 init:
 	go install github.com/deepmap/oapi-codegen/cmd/oapi-codegen
@@ -14,7 +15,8 @@ generate-api:
 	# internal API
 	~/go/bin/oapi-codegen -generate server,spec -package private -o internal/api/controllers/private/spec.gen.go -import-mapping=./public.openapi.yaml:playbook-dispatcher/internal/api/controllers/public schema/private.openapi.yaml
 	~/go/bin/oapi-codegen -generate types -package private -o internal/api/controllers/private/types.gen.go -import-mapping=./public.openapi.yaml:playbook-dispatcher/internal/api/controllers/public schema/private.openapi.yaml
-	# client
+
+generate-clients:
 	~/go/bin/oapi-codegen -generate client,types -package public -o internal/api/tests/public/client.gen.go schema/public.openapi.yaml
 	~/go/bin/oapi-codegen -generate client,types -package private -o internal/api/tests/private/client.gen.go -import-mapping=./public.openapi.yaml:playbook-dispatcher/internal/api/controllers/public schema/private.openapi.yaml
 
@@ -27,10 +29,16 @@ generate-cloud-connector:
 	~/go/bin/oapi-codegen -generate client,types -package connectors -exclude-tags connection -o internal/api/connectors/cloudConnector.gen.go cloud-connector.yaml
 	rm cloud-connector.json cloud-connector.yaml
 
+generate-rbac:
+	curl -s ${RBAC_CONNECTOR_SCHEMA} -o rbac.json
+	json2yaml rbac.json rbac.yaml
+	~/go/bin/oapi-codegen -generate client,types -package rbac -include-tags Access -o internal/api/rbac/rbac.gen.go rbac.yaml
+	rm rbac.json rbac.yaml
+
 generate-utils:
 	go generate ./...
 
-generate: generate-api generate-messages generate-cloud-connector generate-utils
+generate: generate-api generate-messages generate-cloud-connector generate-utils generate-clients generate-rbac
 
 build:
 	go build -o pd .

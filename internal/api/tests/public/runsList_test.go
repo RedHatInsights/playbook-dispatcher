@@ -280,14 +280,14 @@ var _ = Describe("runsList", func() {
 			})
 
 			It("finds a run based on service id", func() {
-				runs, res := listRuns("filter[service]", "unknown")
+				runs, res := listRuns("filter[service]", "test")
 				Expect(res.StatusCode()).To(Equal(http.StatusOK))
 				Expect(runs.Meta.Count).To(Equal(1))
 				Expect(string(*runs.Data[0].Id)).To(Equal(data.ID.String()))
 			})
 
 			It("returns nothing if no such service exists", func() {
-				runs, res := listRuns("filter[service]", "salad")
+				runs, res := listRuns("filter[service]", "remediations")
 				Expect(res.StatusCode()).To(Equal(http.StatusOK))
 				Expect(runs.Meta.Count).To(Equal(0))
 			})
@@ -312,6 +312,33 @@ var _ = Describe("runsList", func() {
 			res, err := ParseApiRunsListResponse(raw)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(res.JSON400.Message).To(Equal("unknown field: salad"))
+		})
+	})
+
+	Describe("RBAC", func() {
+		var data []dbModel.Run
+
+		BeforeEach(func() {
+			data = []dbModel.Run{
+				test.NewRun(accountNumber()),
+				test.NewRun(accountNumber()),
+				test.NewRun(accountNumber()),
+			}
+
+			data[0].Service = "test"
+			data[1].Service = "remediations"
+			data[2].Service = "salad"
+
+			Expect(db().Create(&data).Error).ToNot(HaveOccurred())
+		})
+
+		It("finds a run based on RBAC predicate", func() {
+			runs, res := listRuns("fields[data]", "service")
+			Expect(res.StatusCode()).To(Equal(http.StatusOK))
+			Expect(runs.Meta.Count).To(Equal(2))
+
+			Expect(string(*runs.Data[0].Service)).To(BeElementOf("test", "remediations"))
+			Expect(string(*runs.Data[1].Service)).To(BeElementOf("test", "remediations"))
 		})
 	})
 })

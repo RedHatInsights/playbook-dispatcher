@@ -86,7 +86,7 @@ func NewRunWithStatus(account string, status string) dbModel.Run {
 		URL:           "http://example.com",
 		Status:        status,
 		Timeout:       3600,
-		Events:        []byte("[]"),
+		Service:       "test",
 	}
 }
 

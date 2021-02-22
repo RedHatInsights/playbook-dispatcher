@@ -205,6 +205,9 @@ const (
 // BadRequest defines model for BadRequest.
 type BadRequest Error
 
+// Forbidden defines model for Forbidden.
+type Forbidden Error
+
 // ApiRunHostsListParams defines parameters for ApiRunHostsList.
 type ApiRunHostsListParams struct {
 
@@ -703,6 +706,7 @@ type ApiRunHostsListResponse struct {
 	HTTPResponse *http.Response
 	JSON200      *RunHosts
 	JSON400      *Error
+	JSON403      *Error
 }
 
 // Status returns HTTPResponse.Status
@@ -726,6 +730,7 @@ type ApiRunsListResponse struct {
 	HTTPResponse *http.Response
 	JSON200      *Runs
 	JSON400      *Error
+	JSON403      *Error
 }
 
 // Status returns HTTPResponse.Status
@@ -790,6 +795,13 @@ func ParseApiRunHostsListResponse(rsp *http.Response) (*ApiRunHostsListResponse,
 		}
 		response.JSON400 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
 	}
 
 	return response, nil
@@ -822,6 +834,13 @@ func ParseApiRunsListResponse(rsp *http.Response) (*ApiRunsListResponse, error) 
 			return nil, err
 		}
 		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
 
 	}
 

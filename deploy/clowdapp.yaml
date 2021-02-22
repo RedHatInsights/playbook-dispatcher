@@ -77,6 +77,11 @@ objects:
               secretKeyRef:
                 key: key
                 name: client-psk-cloud-connector
+
+          - name: RBAC_IMPL
+            value: ${RBAC_IMPL}
+          - name: RBAC_HOST
+            value: ${RBAC_HOST}
         resources:
           limits:
             cpu: ${CPU_LIMIT}
@@ -209,3 +214,8 @@ parameters:
   value: mock
 - name: CLOUD_CONNECTOR_HOST
   value: mock
+
+- name: RBAC_IMPL
+  value: impl
+- name: RBAC_HOST
+  required: true
