@@ -32,6 +32,8 @@ paths:
                 $ref: '#/components/schemas/Runs'
         '400':
           $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
 
   /api/playbook-dispatcher/v1/run_hosts:
     get:
@@ -58,6 +60,8 @@ paths:
 
         '400':
           $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
 
 components:
   schemas:
@@ -392,6 +396,13 @@ components:
   responses:
     BadRequest:
       description: Bad Request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    Forbidden:
+      description: Access to the given resource is not allowed
       content:
         application/json:
           schema:

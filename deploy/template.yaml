@@ -310,6 +310,10 @@ objects:
             value: "9000"
           - name: RETURN_URL
             value: ${RETURN_URL}
+          - name: RBAC_IMPL
+            value: ${RBAC_IMPL}
+          - name: RBAC_HOST
+            value: ${RBAC_HOST}
           image: ${IMAGE}:${IMAGE_TAG}
           livenessProbe:
             failureThreshold: 3
@@ -510,4 +514,9 @@ parameters:
 - name: CLOUD_CONNECTOR_IMPL
   value: impl
 - name: CLOUD_CONNECTOR_HOST
+  required: true
+
+- name: RBAC_IMPL
+  value: impl
+- name: RBAC_HOST
   required: true

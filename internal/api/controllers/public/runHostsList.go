@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"playbook-dispatcher/internal/api/instrumentation"
 	"playbook-dispatcher/internal/api/middleware"
+	"playbook-dispatcher/internal/api/rbac"
 	"playbook-dispatcher/internal/common/ansible"
 	dbModel "playbook-dispatcher/internal/common/model/db"
 	messageModel "playbook-dispatcher/internal/common/model/message"
@@ -33,6 +34,11 @@ func (this *controllers) ApiRunHostsList(ctx echo.Context, params ApiRunHostsLis
 		Where("account = ?", identity.Identity.AccountNumber).
 		Order("created_at desc").
 		Order("id")
+
+	permissions := middleware.GetPermissions(ctx)
+	if allowedServices := rbac.GetPredicateValues(permissions, "service"); len(allowedServices) > 0 {
+		queryBuilder.Where("service IN ?", allowedServices)
+	}
 
 	if params.Filter != nil {
 		if params.Filter.Status != nil { // TODO: possible 1-n mapping between runs and hosts

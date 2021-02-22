@@ -68,6 +68,10 @@ func Get() *viper.Viper {
 	options.SetDefault("return.url", "https://cloud.redhat.com/api/v1/ingres/upload")
 	options.SetDefault("response.interval", "600")
 
+	options.SetDefault("rbac.impl", "mock")
+	options.SetDefault("rbac.host", "http://rbac:8081")
+	options.SetDefault("rbac.timeout", 10)
+
 	options.SetDefault("db.sslmode", "disable")
 
 	if clowderEnabled() {

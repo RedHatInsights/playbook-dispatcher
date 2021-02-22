@@ -43,6 +43,16 @@ var (
 		Name: "api_cloud_connector_sent_total",
 		Help: "The total number of messages sent via cloud connector",
 	})
+
+	rbacErrorTotal = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "api_rbac_error_total",
+		Help: "The total number of errors from RBAC",
+	})
+
+	rbacRejectedTotal = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "api_rbac_rejected_total",
+		Help: "The total number of requests rejected due to RBAC",
+	})
 )
 
 func InvalidRecipientId(ctx echo.Context, value string, err error) {
@@ -73,6 +83,16 @@ func PlaybookRunCreateError(ctx echo.Context, err error, run *dbModel.Run) {
 func PlaybookRunReadError(ctx echo.Context, err error) {
 	utils.GetLogFromEcho(ctx).Errorw("Error reading playbook runs from database", "error", err)
 	errorTotal.WithLabelValues(labelDb, labelPlaybookRunRead).Inc()
+}
+
+func RbacError(ctx echo.Context, err error) {
+	utils.GetLogFromEcho(ctx).Errorw("error getting permissions from RBAC", "error", err)
+	rbacErrorTotal.Inc()
+}
+
+func RbacRejected(ctx echo.Context) {
+	utils.GetLogFromEcho(ctx).Infow("access rejected due to RBAC")
+	rbacRejectedTotal.Inc()
 }
 
 func Start() {

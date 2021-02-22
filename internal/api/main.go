@@ -9,6 +9,8 @@ import (
 	"playbook-dispatcher/internal/api/controllers/public"
 	"playbook-dispatcher/internal/api/instrumentation"
 	"playbook-dispatcher/internal/api/middleware"
+	"playbook-dispatcher/internal/api/rbac"
+	"playbook-dispatcher/internal/common/constants"
 	"playbook-dispatcher/internal/common/db"
 	"playbook-dispatcher/internal/common/utils"
 	"sync"
@@ -95,6 +97,8 @@ func Start(
 	public.Use(middleware.Hack("filter", "run", "labels"))
 	public.Use(middleware.Hack("fields"))
 	public.Use(oapiMiddleware.OapiRequestValidator(publicSpec))
+	public.Use(middleware.ExtractHeaders(constants.HeaderIdentity))
+	public.Use(middleware.EnforcePermissions(cfg, rbac.RequiredPermission{ResourceType: "run", Verb: "read"}))
 
 	public.GET("/v1/run_hosts", publicController.ApiRunHostsList)
 	public.GET("/v1/runs", publicController.ApiRunsList)

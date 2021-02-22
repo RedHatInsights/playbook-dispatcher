@@ -199,6 +199,9 @@ const (
 // BadRequest defines model for BadRequest.
 type BadRequest Error
 
+// Forbidden defines model for Forbidden.
+type Forbidden Error
+
 // ApiRunHostsListParams defines parameters for ApiRunHostsList.
 type ApiRunHostsListParams struct {
 

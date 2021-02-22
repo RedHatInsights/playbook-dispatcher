@@ -105,12 +105,12 @@ var _ = Describe("runHostList", func() {
 				data[0].Events = utils.MustMarshal(test.EventSequenceOk("ee44fcba-60d2-4a2a-a6bf-74875487c9dc", "localhost"))
 				Expect(db().Create(&data).Error).ToNot(HaveOccurred())
 
-				runs, res := listRunHosts("filter[run][service]", "unknown")
+				runs, res := listRunHosts("filter[run][service]", "test")
 				Expect(res.StatusCode()).To(Equal(http.StatusOK))
 				Expect(runs.Data).To(HaveLen(1))
 				Expect(string(*runs.Data[0].Run.Id)).To(Equal(data[0].ID.String()))
 
-				runs, res = listRunHosts("filter[run][service]", "salad")
+				runs, res = listRunHosts("filter[run][service]", "remediations")
 				Expect(res.StatusCode()).To(Equal(http.StatusOK))
 				Expect(runs.Data).To(HaveLen(0))
 			})
@@ -153,4 +153,36 @@ var _ = Describe("runHostList", func() {
 		Entry("limit=5, offset=10", 1, 5, 10),
 		Entry("limit=5, offset=20", 0, 5, 20),
 	)
+
+	Describe("RBAC", func() {
+		var data []dbModel.Run
+
+		BeforeEach(func() {
+			data = []dbModel.Run{
+				test.NewRun(accountNumber()),
+				test.NewRun(accountNumber()),
+				test.NewRun(accountNumber()),
+			}
+
+			data[0].Service = "test"
+			data[1].Service = "remediations"
+			data[2].Service = "salad"
+
+			data[0].Events = utils.MustMarshal(test.EventSequenceOk("02f54915-0703-4133-8deb-65687b379600", "localhost"))
+			data[1].Events = utils.MustMarshal(test.EventSequenceOk("0dc1b7ef-30cd-4cf8-83cb-5b52fe79318d", "localhost"))
+			data[2].Events = utils.MustMarshal(test.EventSequenceOk("8ed42569-2788-4d5d-9190-c3c6d1f94856", "localhost"))
+
+			Expect(db().Create(&data).Error).ToNot(HaveOccurred())
+		})
+
+		It("finds a run based on RBAC predicate", func() {
+			runs, res := listRunHosts()
+			Expect(res.StatusCode()).To(Equal(http.StatusOK))
+			Expect(runs.Meta.Count).To(Equal(2))
+
+			expected := []string{data[0].ID.String(), data[1].ID.String()}
+			Expect(string(*runs.Data[0].Run.Id)).To(BeElementOf(expected))
+			Expect(string(*runs.Data[1].Run.Id)).To(BeElementOf(expected))
+		})
+	})
 })
