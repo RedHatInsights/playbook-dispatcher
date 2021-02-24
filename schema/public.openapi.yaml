@@ -84,6 +84,11 @@ components:
       minLength: 1
       maxLength: 10
 
+    Service:
+      description: Service that triggered the given Playbook run
+      type: string
+      minLength: 1
+
     Url:
       description: URL hosting the Playbook
       type: string
@@ -137,6 +142,8 @@ components:
           $ref: '#/components/schemas/Account'
         recipient:
           $ref: '#/components/schemas/RunRecipient'
+        service:
+          $ref: '#/components/schemas/Service'
         url:
           $ref: '#/components/schemas/Url'
         labels:
@@ -218,6 +225,14 @@ components:
         - failure
         - timeout
 
+    ServiceNullable:
+      nullable: true
+      # this property should not be nullable however it is set so as a workaround for
+      # https://github.com/getkin/kin-openapi/issues/293
+      # ideally we would reuse '#/components/schemas/Service' here
+      type: string
+      minLength: 1
+
   parameters:
     RunsFilter:
       description: Allows for filtering based on various criteria
@@ -231,6 +246,8 @@ components:
         properties:
           status:
             $ref: '#/components/schemas/StatusNullable'
+          service:
+            $ref: '#/components/schemas/ServiceNullable'
           recipient:
             type: string
             # this property should not be nullable however it is set so as a workaround for
@@ -266,6 +283,8 @@ components:
                 nullable: true
                 format: uuid
               # See ./internal/api/middleware/labelFilters.go
+              service:
+                $ref: '#/components/schemas/ServiceNullable'
               labels:
                 $ref: '#/components/schemas/RunLabelsNullable'
 

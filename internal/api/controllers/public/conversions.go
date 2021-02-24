@@ -20,10 +20,11 @@ const (
 	fieldRun       = "run"
 	fieldHost      = "host"
 	fieldStdout    = "stdout"
+	fieldService   = "service"
 )
 
 var (
-	runFields     = utils.IndexStrings(fieldId, fieldAccount, fieldRecipient, fieldUrl, fieldLabels, fieldTimeout, fieldStatus, fieldCreatedAt, fieldUpdatedAt)
+	runFields     = utils.IndexStrings(fieldId, fieldAccount, fieldRecipient, fieldUrl, fieldLabels, fieldTimeout, fieldStatus, fieldCreatedAt, fieldUpdatedAt, fieldService)
 	runHostFields = utils.IndexStrings(fieldHost, fieldRun, fieldStatus, fieldStdout)
 )
 
@@ -73,6 +74,9 @@ func dbRuntoApiRun(r *dbModel.Run, fields []string) *Run {
 		case fieldUpdatedAt:
 			val := UpdatedAt(r.UpdatedAt)
 			run.UpdatedAt = &val
+		case fieldService:
+			value := Service(r.Service)
+			run.Service = &value
 		default:
 			panic("unknown field " + field)
 		}

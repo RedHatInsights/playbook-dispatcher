@@ -96,6 +96,24 @@ var _ = Describe("runHostList", func() {
 				Expect(runs.Data).To(HaveLen(1))
 				Expect(string(*runs.Data[0].Run.Id)).To(Equal(data[2].ID.String()))
 			})
+
+			It("filters by service", func() {
+				data := []dbModel.Run{
+					test.NewRun(accountNumber()),
+				}
+
+				data[0].Events = utils.MustMarshal(test.EventSequenceOk("ee44fcba-60d2-4a2a-a6bf-74875487c9dc", "localhost"))
+				Expect(db().Create(&data).Error).ToNot(HaveOccurred())
+
+				runs, res := listRunHosts("filter[run][service]", "unknown")
+				Expect(res.StatusCode()).To(Equal(http.StatusOK))
+				Expect(runs.Data).To(HaveLen(1))
+				Expect(string(*runs.Data[0].Run.Id)).To(Equal(data[0].ID.String()))
+
+				runs, res = listRunHosts("filter[run][service]", "salad")
+				Expect(res.StatusCode()).To(Equal(http.StatusOK))
+				Expect(runs.Data).To(HaveLen(0))
+			})
 		})
 	})
 

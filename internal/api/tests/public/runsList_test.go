@@ -270,6 +270,28 @@ var _ = Describe("runsList", func() {
 				Expect(runs.Meta.Count).To(Equal(0))
 			})
 		})
+
+		Describe("service", func() {
+			var data dbModel.Run
+
+			BeforeEach(func() {
+				data = test.NewRun(accountNumber())
+				Expect(db().Create(&data).Error).ToNot(HaveOccurred())
+			})
+
+			It("finds a run based on service id", func() {
+				runs, res := listRuns("filter[service]", "unknown")
+				Expect(res.StatusCode()).To(Equal(http.StatusOK))
+				Expect(runs.Meta.Count).To(Equal(1))
+				Expect(string(*runs.Data[0].Id)).To(Equal(data.ID.String()))
+			})
+
+			It("returns nothing if no such service exists", func() {
+				runs, res := listRuns("filter[service]", "salad")
+				Expect(res.StatusCode()).To(Equal(http.StatusOK))
+				Expect(runs.Meta.Count).To(Equal(0))
+			})
+		})
 	})
 
 	Describe("sparse fieldsets", func() {
@@ -281,7 +303,7 @@ var _ = Describe("runsList", func() {
 		DescribeTable("happy path", fieldTester(listRunsRaw),
 			Entry("single field", "id"),
 			Entry("defaults defined explicitly", "id", "recipient", "url", "labels", "timeout", "status"),
-			Entry("all fields", "id", "recipient", "url", "labels", "timeout", "status", "created_at", "updated_at"),
+			Entry("all fields", "id", "recipient", "url", "labels", "timeout", "status", "created_at", "updated_at", "service"),
 		)
 
 		It("400s on invalid value", func() {
