@@ -18,6 +18,7 @@ const (
 type Run struct {
 	ID      uuid.UUID `gorm:"type:uuid"`
 	Account string
+	Service string `gorm:"default:unknown"`
 
 	Recipient     uuid.UUID `gorm:"type:uuid"`
 	CorrelationID uuid.UUID `gorm:"type:uuid"`
@@ -25,7 +26,7 @@ type Run struct {
 
 	Status string
 	Labels Labels
-	Events []byte
+	Events []byte `gorm:"default:[]"`
 
 	CreatedAt time.Time
 	UpdatedAt time.Time

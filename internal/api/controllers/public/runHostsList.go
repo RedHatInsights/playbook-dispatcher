@@ -52,6 +52,10 @@ func (this *controllers) ApiRunHostsList(ctx echo.Context, params ApiRunHostsLis
 			if id, ok := runFilters["id"]; ok {
 				queryBuilder.Where("runs.id = ?", id)
 			}
+
+			if service, ok := runFilters["service"]; ok {
+				queryBuilder.Where("runs.service = ?", service)
+			}
 		}
 
 		if labelFilters := middleware.GetDeepObject(ctx, "filter", "run", "labels"); len(labelFilters) > 0 {

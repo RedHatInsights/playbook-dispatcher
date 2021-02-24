@@ -65,6 +65,10 @@ func (this *controllers) ApiRunsList(ctx echo.Context, params ApiRunsListParams)
 		if params.Filter.Recipient != nil {
 			queryBuilder.Where("runs.recipient = ?", *params.Filter.Recipient)
 		}
+
+		if params.Filter.Service != nil {
+			queryBuilder.Where("runs.service = ?", *params.Filter.Service)
+		}
 	}
 
 	if labelFilters := middleware.GetDeepObject(ctx, "filter", "labels"); len(labelFilters) > 0 {

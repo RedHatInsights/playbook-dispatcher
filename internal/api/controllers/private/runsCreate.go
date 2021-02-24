@@ -78,7 +78,6 @@ func newRun(input *RunInput, correlationId uuid.UUID, status string, recipient u
 		URL:           string(input.Url),
 		Status:        status,
 		Recipient:     recipient,
-		Events:        []byte("[]"),
 	}
 
 	if input.Labels != nil {
