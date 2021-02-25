@@ -46,6 +46,9 @@ type Run struct {
 	// Identifier of the tenant
 	Account *Account `json:"account,omitempty"`
 
+	// Unique identifier used to match work request with responses
+	CorrelationId *RunCorrelationId `json:"correlation_id,omitempty"`
+
 	// A timestamp when the entry was created
 	CreatedAt *CreatedAt `json:"created_at,omitempty"`
 
@@ -73,6 +76,9 @@ type Run struct {
 	// URL hosting the Playbook
 	Url *Url `json:"url,omitempty"`
 }
+
+// RunCorrelationId defines model for RunCorrelationId.
+type RunCorrelationId string
 
 // RunHost defines model for RunHost.
 type RunHost struct {

@@ -78,6 +78,10 @@ components:
       minimum: 0
       maximum: 604800
 
+    RunCorrelationId:
+      description: Unique identifier used to match work request with responses
+      type: string
+
     Account:
       description: Identifier of the tenant
       type: string
@@ -142,6 +146,8 @@ components:
           $ref: '#/components/schemas/Account'
         recipient:
           $ref: '#/components/schemas/RunRecipient'
+        correlation_id:
+          $ref: '#/components/schemas/RunCorrelationId'
         service:
           $ref: '#/components/schemas/Service'
         url:
@@ -307,10 +313,12 @@ components:
                 - id
                 - account
                 - recipient
+                - correlation_id
                 - url
                 - labels
                 - timeout
                 - status
+                - service
                 - created_at
                 - updated_at
             default:
