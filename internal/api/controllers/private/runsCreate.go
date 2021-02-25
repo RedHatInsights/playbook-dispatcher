@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"playbook-dispatcher/internal/api/controllers/public"
 	"playbook-dispatcher/internal/api/instrumentation"
+	"playbook-dispatcher/internal/api/middleware"
 	"playbook-dispatcher/internal/common/config"
 	dbModel "playbook-dispatcher/internal/common/model/db"
 	"playbook-dispatcher/internal/common/utils"
@@ -54,6 +55,7 @@ func (this *controllers) ApiInternalRunsCreate(ctx echo.Context) error {
 		}
 
 		entity := newRun(&runInput, correlationId, dbModel.RunStatusRunning, recipient)
+		entity.Service = middleware.GetPSKPrincipal(ctx.Request().Context())
 
 		if dbResult := this.database.Create(&entity); dbResult.Error != nil {
 			instrumentation.PlaybookRunCreateError(ctx, dbResult.Error, &entity)

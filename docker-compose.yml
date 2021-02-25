@@ -21,6 +21,7 @@ services:
     environment:
       CLOWDER_ENABLED: "false"
       DB_HOST: "db"
+      PSK_AUTH_TEST: "xwKhCUzgJ8"
     restart: unless-stopped
 
   zookeeper:

@@ -18,7 +18,6 @@ import (
 	echoPrometheus "github.com/globocom/echo-prometheus"
 	"github.com/labstack/echo/v4"
 	echoMiddleware "github.com/labstack/echo/v4/middleware"
-	"github.com/labstack/gommon/log"
 	"github.com/redhatinsights/platform-go-middlewares/identity"
 	"github.com/redhatinsights/platform-go-middlewares/request_id"
 	"github.com/spf13/viper"
@@ -39,6 +38,7 @@ func Start(
 	ready, live *utils.ProbeHandler,
 	wg *sync.WaitGroup,
 ) {
+	log := utils.GetLogFromContext(ctx)
 	instrumentation.Start()
 	db, sql := db.Connect(ctx, cfg)
 
@@ -77,8 +77,12 @@ func Start(
 		log.Warn("Using mock CloudConnectorClient")
 	}
 
+	authConfig := middleware.BuildPskAuthConfigFromEnv()
+	log.Infow("Authentication required for internal API", "principals", utils.MapKeysString(authConfig))
+
 	privateController := private.CreateController(db, cloudConnectorClient)
 	internal := server.Group("/internal")
+	internal.Use(middleware.CheckPskAuth(authConfig))
 	internal.Use(oapiMiddleware.OapiRequestValidator(privateSpec))
 	internal.POST("/dispatch", privateController.ApiInternalRunsCreate)
 
