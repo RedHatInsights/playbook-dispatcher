@@ -8,6 +8,14 @@ func MapKeys(value map[string]interface{}) (result []string) {
 	return
 }
 
+func MapKeysString(value map[string]string) (result []string) {
+	for key := range value {
+		result = append(result, key)
+	}
+
+	return
+}
+
 func Min(x, y int) int {
 	if x < y {
 		return x

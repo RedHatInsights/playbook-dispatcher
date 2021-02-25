@@ -271,6 +271,21 @@ objects:
               secretKeyRef:
                 key: db.password
                 name: playbook-dispatcher-db
+          - name: PSK_AUTH_TEST
+            valueFrom:
+              secretKeyRef:
+                key: key
+                name: auth-psk-test
+          - name: PSK_AUTH_REMEDIATIONS
+            valueFrom:
+              secretKeyRef:
+                key: key
+                name: auth-psk-remediations
+          - name: PSK_AUTH_CONFIG_MANAGER
+            valueFrom:
+              secretKeyRef:
+                key: key
+                name: auth-psk-config-manager
           - name: DB_SSLMODE
             value: ${DB_SSLMODE}
           - name: CLOUD_CONNECTOR_IMPL
