@@ -16,6 +16,8 @@ import (
 	"github.com/spf13/viper"
 )
 
+const basePath = "/api/cloud-connector/v1/"
+
 var cloudConnectorDirective = "playbook"
 
 type CloudConnectorClient interface {
@@ -37,7 +39,7 @@ type cloudConnectorClientImpl struct {
 func NewConnectorClientWithHttpRequestDoer(cfg *viper.Viper, doer HttpRequestDoer) CloudConnectorClient {
 	client := &ClientWithResponses{
 		ClientInterface: &Client{
-			Server: cfg.GetString("cloud.connector.host"),
+			Server: fmt.Sprintf("%s%s", cfg.GetString("cloud.connector.host"), basePath),
 			Client: doer,
 			RequestEditor: func(ctx context.Context, req *http.Request) error {
 				req.Header.Set(constants.HeaderRequestId, request_id.GetReqID(ctx))
