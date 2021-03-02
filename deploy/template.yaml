@@ -288,10 +288,22 @@ objects:
                 name: auth-psk-config-manager
           - name: DB_SSLMODE
             value: ${DB_SSLMODE}
+
           - name: CLOUD_CONNECTOR_IMPL
             value: ${CLOUD_CONNECTOR_IMPL}
           - name: CLOUD_CONNECTOR_HOST
             value: ${CLOUD_CONNECTOR_HOST}
+          - name: CLOUD_CONNECTOR_CLIENT_ID
+            valueFrom:
+              secretKeyRef:
+                key: id
+                name: client-psk-cloud-connector
+          - name: CLOUD_CONNECTOR_PSK
+            valueFrom:
+              secretKeyRef:
+                key: key
+                name: client-psk-cloud-connector
+
           - name: WEB_PORT
             value: "8000"
           - name: METRICS_PORT

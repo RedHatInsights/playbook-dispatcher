@@ -20,6 +20,11 @@ const basePath = "/api/cloud-connector/v1/"
 
 var cloudConnectorDirective = "playbook"
 
+type accountKeyType int
+
+// used to pass account down to request editor (to set headers)
+const accountKey accountKeyType = iota
+
 type CloudConnectorClient interface {
 	SendCloudConnectorRequest(
 		ctx context.Context,
@@ -43,6 +48,10 @@ func NewConnectorClientWithHttpRequestDoer(cfg *viper.Viper, doer HttpRequestDoe
 			Client: doer,
 			RequestEditor: func(ctx context.Context, req *http.Request) error {
 				req.Header.Set(constants.HeaderRequestId, request_id.GetReqID(ctx))
+
+				req.Header.Set(constants.HeaderCloudConnectorClientID, cfg.GetString("cloud.connector.client.id"))
+				req.Header.Set(constants.HeaderCloudConnectorPSK, cfg.GetString("cloud.connector.psk"))
+				req.Header.Set(constants.HeaderCloudConnectorAccount, ctx.Value(accountKey).(string))
 				return nil
 			},
 		},
@@ -70,6 +79,7 @@ func (this *cloudConnectorClientImpl) SendCloudConnectorRequest(
 	correlationId uuid.UUID,
 	url string,
 ) (*string, error) {
+	ctx = context.WithValue(ctx, accountKey, account)
 	recipientString := recipient.String()
 	metadata := map[string]string{
 		"return_url":                    this.returnUrl,
