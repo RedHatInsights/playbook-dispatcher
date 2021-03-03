@@ -32,7 +32,7 @@ type CloudConnectorClient interface {
 		recipient uuid.UUID,
 		correlationId uuid.UUID,
 		url string,
-	) (*string, error)
+	) (*string, bool, error)
 }
 
 type cloudConnectorClientImpl struct {
@@ -78,7 +78,7 @@ func (this *cloudConnectorClientImpl) SendCloudConnectorRequest(
 	recipient uuid.UUID,
 	correlationId uuid.UUID,
 	url string,
-) (*string, error) {
+) (id *string, notFound bool, err error) {
 	ctx = context.WithValue(ctx, accountKey, account)
 	recipientString := recipient.String()
 	metadata := map[string]string{
@@ -106,12 +106,16 @@ func (this *cloudConnectorClientImpl) SendCloudConnectorRequest(
 	})
 
 	if err != nil {
-		return nil, err
+		return nil, false, err
+	}
+
+	if res.HTTPResponse.StatusCode == 404 {
+		return nil, true, nil
 	}
 
 	if res.JSON200 == nil {
-		return nil, fmt.Errorf(`unexpected status code "%d" or content type "%s"`, res.HTTPResponse.StatusCode, res.HTTPResponse.Header.Get("content-type"))
+		return nil, false, fmt.Errorf(`unexpected status code "%d" or content type "%s"`, res.HTTPResponse.StatusCode, res.HTTPResponse.Header.Get("content-type"))
 	}
 
-	return res.JSON200.Id, nil
+	return res.JSON200.Id, false, nil
 }
