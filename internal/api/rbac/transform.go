@@ -10,7 +10,9 @@ func FilterPermissions(permissions []Access, requiredPermission RequiredPermissi
 			continue
 		}
 
-		if matches(requiredPermission.ResourceType, parsed[2]) && matches(requiredPermission.Verb, parsed[3]) {
+		if requiredPermission.Application == parsed[1] &&
+			matches(requiredPermission.ResourceType, parsed[2]) &&
+			matches(requiredPermission.Verb, parsed[3]) {
 			result = append(result, value)
 		}
 	}

@@ -7,6 +7,15 @@ type RbacClient interface {
 }
 
 type RequiredPermission struct {
+	Application  string
 	ResourceType string
 	Verb         string
+}
+
+func DispatcherPermission(resourceType, verb string) RequiredPermission {
+	return RequiredPermission{
+		Application:  "playbook-dispatcher",
+		ResourceType: resourceType,
+		Verb:         verb,
+	}
 }

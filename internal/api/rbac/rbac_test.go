@@ -17,7 +17,7 @@ var _ = Describe("RBAC", func() {
 			client := NewRbacClientWithHttpRequestDoer(config.Get(), &doer)
 			permissions, err := client.GetPermissions(test.TestContext())
 			Expect(err).ToNot(HaveOccurred())
-			matchingPermissions := FilterPermissions(permissions, RequiredPermission{ResourceType: "run", Verb: "read"})
+			matchingPermissions := FilterPermissions(permissions, DispatcherPermission("run", "read"))
 			Expect(len(matchingPermissions) > 0).To(Equal(expected))
 		},
 
@@ -199,6 +199,26 @@ var _ = Describe("RBAC", func() {
 				}
 			]
 		}`),
+
+		Entry("permissions for different application", false, `{
+			"meta": {
+				"count": 1,
+				"limit": 1000,
+				"offset": 0
+			},
+			"links": {
+				"first": "/api/rbac/v1/access/?application=playbook-dispatcher&limit=1000&offset=0",
+				"next": null,
+				"previous": null,
+				"last": "/api/rbac/v1/access/?application=playbook-dispatcher&limit=1000&offset=0"
+			},
+			"data": [
+				{
+					"resourceDefinitions": [],
+					"permission": "patch:*:*"
+				}
+			]
+		}`),
 	)
 
 	Describe("errors", func() {
@@ -241,7 +261,7 @@ var _ = Describe("RBAC", func() {
 			client := NewRbacClientWithHttpRequestDoer(config.Get(), &doer)
 			permissions, err := client.GetPermissions(test.TestContext())
 			Expect(err).ToNot(HaveOccurred())
-			matchingPermissions := FilterPermissions(permissions, RequiredPermission{ResourceType: "run", Verb: "read"})
+			matchingPermissions := FilterPermissions(permissions, DispatcherPermission("run", "read"))
 			services := GetPredicateValues(matchingPermissions, "service")
 			Expect(services).To(ConsistOf(values...))
 		},
