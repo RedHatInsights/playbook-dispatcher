@@ -62,7 +62,7 @@ var _ = Describe("Middleware", func() {
 			data, _ := ioutil.ReadAll(res.Body)
 			defer res.Body.Close()
 
-			Expect(string(data)).To(Equal("Bad Request: missing x-rh-identity header\n"))
+			Expect(data).To(BeEquivalentTo("Bad Request: missing x-rh-identity header\n"))
 		})
 	})
 
