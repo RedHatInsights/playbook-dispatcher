@@ -63,6 +63,17 @@ objects:
           - name: DB_SSLMODE
             value: ${DB_SSLMODE}
 
+          - name: PSK_AUTH_REMEDIATIONS
+            valueFrom:
+              secretKeyRef:
+                key: key
+                name: auth-psk-remediations
+          - name: PSK_AUTH_CONFIG_MANAGER
+            valueFrom:
+              secretKeyRef:
+                key: key
+                name: auth-psk-config-manager
+
           - name: CLOUD_CONNECTOR_IMPL
             value: ${CLOUD_CONNECTOR_IMPL}
           - name: CLOUD_CONNECTOR_HOST
