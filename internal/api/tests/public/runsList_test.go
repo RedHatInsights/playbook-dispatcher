@@ -38,12 +38,12 @@ var _ = Describe("runsList", func() {
 			Expect(res.StatusCode()).To(Equal(http.StatusOK))
 			Expect(runs.Data).To(HaveLen(1))
 			run := runs.Data[0]
-			Expect(string(*run.Id)).To(Equal(data.ID.String()))
+			Expect(*run.Id).To(BeEquivalentTo(data.ID.String()))
 			Expect(run.Labels.AdditionalProperties["foo"]).To(Equal(data.Labels["foo"]))
-			Expect(string(*run.Recipient)).To(Equal(data.Recipient.String()))
-			Expect(string(*run.Status)).To(Equal(data.Status))
-			Expect(int(*run.Timeout)).To(Equal(data.Timeout))
-			Expect(string(*run.Url)).To(Equal(data.URL))
+			Expect(*run.Recipient).To(BeEquivalentTo(data.Recipient.String()))
+			Expect(*run.Status).To(BeEquivalentTo(data.Status))
+			Expect(*run.Timeout).To(BeEquivalentTo(data.Timeout))
+			Expect(*run.Url).To(BeEquivalentTo(data.URL))
 		})
 
 		It("properly infers run status", func() {
@@ -62,10 +62,10 @@ var _ = Describe("runsList", func() {
 
 			runs, res := listRuns()
 			Expect(res.StatusCode()).To(Equal(http.StatusOK))
-			Expect(string(*runs.Data[0].Status)).To(Equal("running"))
-			Expect(string(*runs.Data[1].Status)).To(Equal("success"))
-			Expect(string(*runs.Data[2].Status)).To(Equal("failure"))
-			Expect(string(*runs.Data[3].Status)).To(Equal("timeout"))
+			Expect(*runs.Data[0].Status).To(BeEquivalentTo("running"))
+			Expect(*runs.Data[1].Status).To(BeEquivalentTo("success"))
+			Expect(*runs.Data[2].Status).To(BeEquivalentTo("failure"))
+			Expect(*runs.Data[3].Status).To(BeEquivalentTo("timeout"))
 		})
 	})
 
@@ -180,7 +180,7 @@ var _ = Describe("runsList", func() {
 					runs, res := listRuns("filter[status]", status)
 					Expect(res.StatusCode()).To(Equal(http.StatusOK))
 					Expect(runs.Meta.Count).To(Equal(1))
-					Expect(string(*runs.Data[0].Id)).To(Equal(data[index].ID.String()))
+					Expect(*runs.Data[0].Id).To(BeEquivalentTo(data[index].ID.String()))
 				},
 
 				Entry("success", "success", 0),
@@ -211,7 +211,7 @@ var _ = Describe("runsList", func() {
 				runs, res := listRuns("filter[recipient]", data[1].Recipient)
 				Expect(res.StatusCode()).To(Equal(http.StatusOK))
 				Expect(runs.Meta.Count).To(Equal(1))
-				Expect(string(*runs.Data[0].Recipient)).To(Equal(data[1].Recipient.String()))
+				Expect(*runs.Data[0].Recipient).To(BeEquivalentTo(data[1].Recipient.String()))
 			})
 
 			It("returns empty result on non-match", func() {
@@ -261,7 +261,7 @@ var _ = Describe("runsList", func() {
 				runs, res := listRuns("filter[labels][service]", "remediations", "filter[labels][foo]", "bar")
 				Expect(res.StatusCode()).To(Equal(http.StatusOK))
 				Expect(runs.Meta.Count).To(Equal(1))
-				Expect(string(*runs.Data[0].Id)).To(Equal(data[1].ID.String()))
+				Expect(*runs.Data[0].Id).To(BeEquivalentTo(data[1].ID.String()))
 			})
 
 			It("does not find anything if labels do not match", func() {
@@ -283,7 +283,7 @@ var _ = Describe("runsList", func() {
 				runs, res := listRuns("filter[service]", "test")
 				Expect(res.StatusCode()).To(Equal(http.StatusOK))
 				Expect(runs.Meta.Count).To(Equal(1))
-				Expect(string(*runs.Data[0].Id)).To(Equal(data.ID.String()))
+				Expect(*runs.Data[0].Id).To(BeEquivalentTo(data.ID.String()))
 			})
 
 			It("returns nothing if no such service exists", func() {

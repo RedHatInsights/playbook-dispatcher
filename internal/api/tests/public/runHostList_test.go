@@ -36,8 +36,8 @@ var _ = Describe("runHostList", func() {
 			Expect(res.StatusCode()).To(Equal(http.StatusOK))
 			Expect(runs.Data).To(HaveLen(1))
 			Expect(*runs.Data[0].Host).To(Equal("localhost"))
-			Expect(string(*runs.Data[0].Status)).To(Equal("running"))
-			Expect(string(*runs.Data[0].Run.Id)).To(Equal(data.ID.String()))
+			Expect(*runs.Data[0].Status).To(BeEquivalentTo("running"))
+			Expect(*runs.Data[0].Run.Id).To(BeEquivalentTo(data.ID.String()))
 		})
 
 		Describe("filtering", func() {
@@ -54,7 +54,7 @@ var _ = Describe("runHostList", func() {
 				runs, res := listRunHosts("filter[status]", "failure")
 				Expect(res.StatusCode()).To(Equal(http.StatusOK))
 				Expect(runs.Data).To(HaveLen(1))
-				Expect(string(*runs.Data[0].Run.Id)).To(Equal(data[1].ID.String()))
+				Expect(*runs.Data[0].Run.Id).To(BeEquivalentTo(data[1].ID.String()))
 			})
 
 			It("filters by run id", func() {
@@ -72,7 +72,7 @@ var _ = Describe("runHostList", func() {
 				runs, res := listRunHosts("filter[run][id]", data[1].ID.String())
 				Expect(res.StatusCode()).To(Equal(http.StatusOK))
 				Expect(runs.Data).To(HaveLen(1))
-				Expect(string(*runs.Data[0].Run.Id)).To(Equal(data[1].ID.String()))
+				Expect(*runs.Data[0].Run.Id).To(BeEquivalentTo(data[1].ID.String()))
 			})
 
 			It("filters by run labels", func() {
@@ -94,7 +94,7 @@ var _ = Describe("runHostList", func() {
 				runs, res := listRunHosts("filter[run][labels][remediation]", "2")
 				Expect(res.StatusCode()).To(Equal(http.StatusOK))
 				Expect(runs.Data).To(HaveLen(1))
-				Expect(string(*runs.Data[0].Run.Id)).To(Equal(data[2].ID.String()))
+				Expect(*runs.Data[0].Run.Id).To(BeEquivalentTo(data[2].ID.String()))
 			})
 
 			It("filters by service", func() {
@@ -108,7 +108,7 @@ var _ = Describe("runHostList", func() {
 				runs, res := listRunHosts("filter[run][service]", "test")
 				Expect(res.StatusCode()).To(Equal(http.StatusOK))
 				Expect(runs.Data).To(HaveLen(1))
-				Expect(string(*runs.Data[0].Run.Id)).To(Equal(data[0].ID.String()))
+				Expect(*runs.Data[0].Run.Id).To(BeEquivalentTo(data[0].ID.String()))
 
 				runs, res = listRunHosts("filter[run][service]", "remediations")
 				Expect(res.StatusCode()).To(Equal(http.StatusOK))
