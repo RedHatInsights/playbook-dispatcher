@@ -26,7 +26,6 @@ import (
 )
 
 const specFile = "/api/playbook-dispatcher/v1/openapi.json"
-const requestIdHeader = "x-rh-insights-request-id"
 
 func init() {
 	openapi3.DefineStringFormat("uuid", `^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89aAbB][a-f0-9]{3}-[a-f0-9]{12}$`)
@@ -60,7 +59,7 @@ func Start(
 	server.Use(
 		echoPrometheus.MetricsMiddleware(),
 		echoMiddleware.BodyLimit(cfg.GetString("http.max.body.size")),
-		echo.WrapMiddleware(request_id.ConfiguredRequestID(requestIdHeader)),
+		echo.WrapMiddleware(request_id.ConfiguredRequestID(constants.HeaderRequestId)),
 		middleware.ContextLogger,
 		middleware.RequestLogger,
 		echoMiddleware.Recover(),
@@ -98,7 +97,7 @@ func Start(
 	public.Use(middleware.Hack("fields"))
 	public.Use(oapiMiddleware.OapiRequestValidator(publicSpec))
 	public.Use(middleware.ExtractHeaders(constants.HeaderIdentity))
-	public.Use(middleware.EnforcePermissions(cfg, rbac.RequiredPermission{ResourceType: "run", Verb: "read"}))
+	public.Use(middleware.EnforcePermissions(cfg, rbac.DispatcherPermission("run", "read")))
 
 	public.GET("/v1/run_hosts", publicController.ApiRunHostsList)
 	public.GET("/v1/runs", publicController.ApiRunsList)
