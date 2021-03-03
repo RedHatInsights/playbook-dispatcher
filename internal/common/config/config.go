@@ -69,7 +69,9 @@ func Get() *viper.Viper {
 	options.SetDefault("response.interval", "600")
 
 	options.SetDefault("rbac.impl", "mock")
-	options.SetDefault("rbac.host", "http://rbac:8081")
+	options.SetDefault("rbac.host", "rbac")
+	options.SetDefault("rbac.port", "8080")
+	options.SetDefault("rbac.scheme", "http")
 	options.SetDefault("rbac.timeout", 10)
 
 	options.SetDefault("db.sslmode", "disable")
