@@ -16,6 +16,7 @@ const (
 	applicationID  = "playbook-dispatcher"
 	wildcard       = "*"
 	operationEqual = "equal"
+	basePath       = "/api/rbac/v1/"
 )
 
 var permissionRegex = regexp.MustCompile(`^([[:ascii:]]+?):([[:ascii:]]+?):([[:ascii:]]+?)$`)
@@ -23,7 +24,7 @@ var permissionRegex = regexp.MustCompile(`^([[:ascii:]]+?):([[:ascii:]]+?):([[:a
 func NewRbacClientWithHttpRequestDoer(cfg *viper.Viper, doer HttpRequestDoer) RbacClient {
 	client := &ClientWithResponses{
 		ClientInterface: &Client{
-			Server: cfg.GetString("rbac.host"),
+			Server: fmt.Sprintf("%s://%s:%d%s", cfg.GetString("rbac.scheme"), cfg.GetString("rbac.host"), cfg.GetInt("rbac.port"), basePath),
 			Client: doer,
 			RequestEditor: func(ctx context.Context, req *http.Request) error {
 				req.Header.Set(constants.HeaderRequestId, request_id.GetReqID(ctx))
