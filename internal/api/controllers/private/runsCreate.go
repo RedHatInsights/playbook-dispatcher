@@ -39,7 +39,7 @@ func (this *controllers) ApiInternalRunsCreate(ctx echo.Context) error {
 			correlationId = uuid.UUID{}
 		}
 
-		messageId, err := this.cloudConnectorClient.SendCloudConnectorRequest(
+		messageId, notFound, err := this.cloudConnectorClient.SendCloudConnectorRequest(
 			ctx.Request().Context(),
 			string(runInput.Account),
 			recipient,
@@ -50,6 +50,9 @@ func (this *controllers) ApiInternalRunsCreate(ctx echo.Context) error {
 		if err != nil {
 			instrumentation.CloudConnectorRequestError(ctx, err, recipient)
 			return runCreateError(http.StatusInternalServerError)
+		} else if notFound {
+			instrumentation.CloudConnectorNoConnection(ctx, recipient)
+			return runCreateError(http.StatusNotFound)
 		} else {
 			instrumentation.CloudConnectorOK(ctx, recipient, messageId)
 		}

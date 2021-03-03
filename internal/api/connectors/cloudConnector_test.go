@@ -50,7 +50,8 @@ var _ = Describe("Cloud Connector", func() {
 
 		client := NewConnectorClientWithHttpRequestDoer(config.Get(), &doer)
 		ctx := utils.SetLog(test.TestContext(), zap.NewNop().Sugar())
-		result, err := client.SendCloudConnectorRequest(ctx, "1234", uuid.New(), uuid.New(), "http://example.com")
+		result, notFound, err := client.SendCloudConnectorRequest(ctx, "1234", uuid.New(), uuid.New(), "http://example.com")
+		Expect(notFound).To(BeFalse())
 		Expect(err).ToNot(HaveOccurred())
 		Expect(*result).To(Equal("871e31aa-7d41-43e3-8ef7-05706a0ee34a"))
 	})
@@ -60,9 +61,21 @@ var _ = Describe("Cloud Connector", func() {
 
 		client := NewConnectorClientWithHttpRequestDoer(config.Get(), &doer)
 		ctx := utils.SetLog(test.TestContext(), zap.NewNop().Sugar())
-		_, err := client.SendCloudConnectorRequest(ctx, "1234", uuid.New(), uuid.New(), "http://example.com")
+		_, notFound, err := client.SendCloudConnectorRequest(ctx, "1234", uuid.New(), uuid.New(), "http://example.com")
+		Expect(notFound).To(BeFalse())
 		Expect(err).To(HaveOccurred())
 		Expect(err.Error()).To(ContainSubstring(`unexpected status code "400"`))
+	})
+
+	It("interprets the response correctly on no connection found", func() {
+		doer := withMockResponse(404, `{}`)
+
+		client := NewConnectorClientWithHttpRequestDoer(config.Get(), &doer)
+		ctx := utils.SetLog(test.TestContext(), zap.NewNop().Sugar())
+		id, notFound, err := client.SendCloudConnectorRequest(ctx, "1234", uuid.New(), uuid.New(), "http://example.com")
+		Expect(id).To(BeNil())
+		Expect(notFound).To(BeTrue())
+		Expect(err).ToNot(HaveOccurred())
 	})
 
 	It("constructs a correct request", func() {
@@ -80,7 +93,8 @@ var _ = Describe("Cloud Connector", func() {
 		client := NewConnectorClientWithHttpRequestDoer(cfg, &doer)
 		recipient := uuid.New()
 		ctx := utils.SetLog(test.TestContext(), zap.NewNop().Sugar())
-		result, err := client.SendCloudConnectorRequest(ctx, "1234", recipient, correlationId, url)
+		result, notFound, err := client.SendCloudConnectorRequest(ctx, "1234", recipient, correlationId, url)
+		Expect(notFound).To(BeFalse())
 		Expect(err).ToNot(HaveOccurred())
 		Expect(*result).To(Equal("871e31aa-7d41-43e3-8ef7-05706a0ee34a"))
 
@@ -109,8 +123,9 @@ var _ = Describe("Cloud Connector", func() {
 
 		client := NewConnectorClientWithHttpRequestDoer(config.Get(), &doer)
 		recipient := uuid.New()
-		result, err := client.SendCloudConnectorRequest(ctx, "1234", recipient, uuid.New(), "http://example.com")
+		result, notFound, err := client.SendCloudConnectorRequest(ctx, "1234", recipient, uuid.New(), "http://example.com")
 		Expect(err).ToNot(HaveOccurred())
+		Expect(notFound).To(BeFalse())
 		Expect(*result).To(Equal("871e31aa-7d41-43e3-8ef7-05706a0ee34a"))
 
 		idHeader := doer.request.Header.Get(constants.HeaderRequestId)
