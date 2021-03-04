@@ -7,6 +7,8 @@ Playbook Dispatcher takes care of:
 - dispatching the request to run a Playbook
 - tracking the progress of a Playbook run
 
+<img alt="Communication diagram" src="./docs/communication.svg" width="50%" />
+
 Playbook Dispatcher consists of 3 parts:
 
 - API, which can be used to dispatch a Playbook or to query it's state
