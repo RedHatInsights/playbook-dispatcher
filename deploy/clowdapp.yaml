@@ -73,6 +73,8 @@ objects:
               secretKeyRef:
                 key: key
                 name: auth-psk-config-manager
+          - name: PSK_AUTH_TEST
+            value: ${PSK_AUTH_TEST}
 
           - name: CLOUD_CONNECTOR_IMPL
             value: ${CLOUD_CONNECTOR_IMPL}
@@ -230,3 +232,7 @@ parameters:
   value: impl
 - name: RBAC_HOST
   required: true
+
+  # Used for testing in ephemeral environments only. If a value is not provided the principal is ignored.
+- name: PSK_AUTH_TEST
+  value: ""

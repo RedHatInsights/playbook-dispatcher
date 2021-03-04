@@ -16,7 +16,7 @@ type principalKey int
 const pskPrincipal principalKey = iota
 
 var headerMatcher = regexp.MustCompile(`^PSK\s+([0-9a-zA-Z]+)$`)
-var envMatcher = regexp.MustCompile(`^PSK_AUTH_(.*?)=(.*?)$`)
+var envMatcher = regexp.MustCompile(`^PSK_AUTH_(.+?)=(.+?)$`)
 
 func CheckPskAuth(authKeys map[string]string) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
