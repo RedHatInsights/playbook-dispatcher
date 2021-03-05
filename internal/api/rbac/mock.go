@@ -25,7 +25,7 @@ func (*mockImpl) GetPermissions(ctx context.Context) ([]Access, error) {
 					AttributeFilter: ResourceDefinitionFilter{
 						Key:       "service",
 						Operation: "equal",
-						Value:     "config-manager",
+						Value:     "config_manager",
 					},
 				},
 			},
