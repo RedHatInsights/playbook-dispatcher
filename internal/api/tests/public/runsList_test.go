@@ -323,11 +323,13 @@ var _ = Describe("runsList", func() {
 				test.NewRun(accountNumber()),
 				test.NewRun(accountNumber()),
 				test.NewRun(accountNumber()),
+				test.NewRun(accountNumber()),
 			}
 
 			data[0].Service = "test"
 			data[1].Service = "remediations"
 			data[2].Service = "salad"
+			data[3].Service = "config_manager"
 
 			Expect(db().Create(&data).Error).ToNot(HaveOccurred())
 		})
@@ -335,10 +337,12 @@ var _ = Describe("runsList", func() {
 		It("finds a run based on RBAC predicate", func() {
 			runs, res := listRuns("fields[data]", "service")
 			Expect(res.StatusCode()).To(Equal(http.StatusOK))
-			Expect(runs.Meta.Count).To(Equal(2))
+			Expect(runs.Meta.Count).To(Equal(3))
 
-			Expect(string(*runs.Data[0].Service)).To(BeElementOf("test", "remediations"))
-			Expect(string(*runs.Data[1].Service)).To(BeElementOf("test", "remediations"))
+			expected := []interface{}{"test", "remediations", "config_manager"}
+			Expect(string(*runs.Data[0].Service)).To(BeElementOf(expected...))
+			Expect(string(*runs.Data[1].Service)).To(BeElementOf(expected...))
+			Expect(string(*runs.Data[2].Service)).To(BeElementOf(expected...))
 		})
 	})
 })
