@@ -7,8 +7,7 @@ Playbook Dispatcher takes care of:
 - dispatching the request to run a Playbook
 - tracking the progress of a Playbook run
 
-This project is WIP.
-In the meantime see [API schema](./schemas/public.openapi.yaml) for proposed API.
+<img alt="Communication diagram" src="./docs/communication.svg" width="50%" />
 
 Playbook Dispatcher consists of 3 parts:
 
@@ -17,6 +16,38 @@ Playbook Dispatcher consists of 3 parts:
 - response consumer, which processes validated archives and updates the internal state accordingly
 
 ![Sequence diagram](./docs/sequence.svg)
+
+## Public REST interface
+
+Information about Playbook runs can be queried using the REST API.
+
+The API is placed behind a [web gateway (3scale)](https://internal.cloud.redhat.com/docs/services/3scale/).
+Authentication with the web gateway (basic auth, jwt cookie) is required to access the API.
+The API is only accessible to principals of type User (i.e. cert auth is not sufficient).
+In addition, the API resources are subject [role based access control](https://internal.cloud.redhat.com/docs/services/rbac/).
+
+The API has rich filtering capabilities and supports client-specific representations using sparse fieldsets.
+See [API schema](./schemas/public.openapi.yaml) for more details.
+
+## Internal REST interface
+
+In addition to the public REST interface, an internal REST interface is available.
+This API can only be accessed from within the cluster where playbook-dispatcher is deployed.
+
+In order to authenticate, the client is required to hold an app-specific pre-shared key and use it in HTTP requests in the `Authorization` header.
+
+```
+POST /internal/dispatch HTTP/1.1
+Authorization: PSK <pre-shared key>
+```
+
+playbook-dispatcher supports multiple pre-shared keys to be configured at the same time.
+The keys are configured via environment variables in form of `PSK_AUTH_<service id>=<pre-shared key>` where `service id` identifes the service that's been given the given key and `pre-shared key` is the key itself. For example:
+```
+PSK_AUTH_REMEDIATIONS=xwKhCUzgJ8 ./app run
+```
+
+See [API schema](./schemas/private.openapi.yaml) for more details.
 
 ## Expected input format
 
@@ -33,7 +64,7 @@ Each line in the file matches one job event.
 The structure of each event is validated using a JSON Schema defined in [ansibleRunnerJobEvent.yaml](./schema/ansibleRunnerJobEvent.yaml).
 Note that additional attributes (not defined by the schema) are allowed.
 
-The expected content type of the uploaded file is `application/vnd.redhat.playbook.v1+jsonl` for a plain file or `application/vnd.redhat.playbook.v1+gzip` if the content is compressed (not implemented yet).
+The expected content type of the uploaded file is `application/vnd.redhat.playbook.v1+jsonl` for a plain file or `application/vnd.redhat.playbook.v1+gzip` if the content is compressed.
 
 ### Non-standard event types
 

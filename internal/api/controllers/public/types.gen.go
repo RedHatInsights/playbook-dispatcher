@@ -40,6 +40,9 @@ type Run struct {
 	// Identifier of the tenant
 	Account *Account `json:"account,omitempty"`
 
+	// Unique identifier used to match work request with responses
+	CorrelationId *RunCorrelationId `json:"correlation_id,omitempty"`
+
 	// A timestamp when the entry was created
 	CreatedAt *CreatedAt `json:"created_at,omitempty"`
 
@@ -51,6 +54,9 @@ type Run struct {
 
 	// Identifier of the host to which a given Playbook is addressed
 	Recipient *RunRecipient `json:"recipient,omitempty"`
+
+	// Service that triggered the given Playbook run
+	Service *Service `json:"service,omitempty"`
 
 	// Current status of a Playbook run
 	Status *RunStatus `json:"status,omitempty"`
@@ -64,6 +70,9 @@ type Run struct {
 	// URL hosting the Playbook
 	Url *Url `json:"url,omitempty"`
 }
+
+// RunCorrelationId defines model for RunCorrelationId.
+type RunCorrelationId string
 
 // RunHost defines model for RunHost.
 type RunHost struct {
@@ -120,6 +129,12 @@ type Runs struct {
 	Meta Meta `json:"meta"`
 }
 
+// Service defines model for Service.
+type Service string
+
+// ServiceNullable defines model for ServiceNullable.
+type ServiceNullable string
+
 // StatusNullable defines model for StatusNullable.
 type StatusNullable string
 
@@ -151,8 +166,9 @@ type RunHostFields struct {
 // RunHostFilter defines model for RunHostFilter.
 type RunHostFilter struct {
 	Run *struct {
-		Id     *string            `json:"id"`
-		Labels *RunLabelsNullable `json:"labels"`
+		Id      *string            `json:"id"`
+		Labels  *RunLabelsNullable `json:"labels"`
+		Service *ServiceNullable   `json:"service"`
 	} `json:"run"`
 	Status *StatusNullable `json:"status"`
 }
@@ -166,6 +182,7 @@ type RunsFields struct {
 type RunsFilter struct {
 	Labels    *RunLabelsNullable `json:"labels"`
 	Recipient *string            `json:"recipient"`
+	Service   *ServiceNullable   `json:"service"`
 	Status    *StatusNullable    `json:"status"`
 }
 
@@ -181,6 +198,9 @@ const (
 
 // BadRequest defines model for BadRequest.
 type BadRequest Error
+
+// Forbidden defines model for Forbidden.
+type Forbidden Error
 
 // ApiRunHostsListParams defines parameters for ApiRunHostsList.
 type ApiRunHostsListParams struct {

@@ -1,6 +1,7 @@
 package private
 
 import (
+	"context"
 	"io/ioutil"
 	"net/http"
 	"playbook-dispatcher/internal/api/controllers/public"
@@ -55,6 +56,34 @@ var _ = Describe("runsCreate", func() {
 			Expect(run.Status).To(Equal("running"))
 			Expect(run.Labels).To(BeEmpty())
 			Expect(run.Timeout).To(Equal(3600))
+		})
+
+		It("stores the principal as owning service", func() {
+			recipient := uuid.New()
+			url := "http://example.com"
+			payload := ApiInternalRunsCreateJSONRequestBody{
+				RunInput{
+					Recipient: public.RunRecipient(recipient.String()),
+					Account:   public.Account(accountNumber()),
+					Url:       public.Url(url),
+				},
+			}
+
+			ctx := context.WithValue(test.TestContext(), pskKey, "9yh9WuXWDj")
+			resp, err := client.ApiInternalRunsCreate(ctx, payload)
+			Expect(err).ToNot(HaveOccurred())
+			res, err := ParseApiInternalRunsCreateResponse(resp)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(res.StatusCode()).To(Equal(http.StatusMultiStatus))
+
+			runs := *res.JSON207
+			Expect(runs).To(HaveLen(1))
+			Expect(runs[0].Code).To(Equal(201))
+
+			var run dbModel.Run
+			result := db().Where("id = ?", string(*runs[0].Id)).First(&run)
+			Expect(result.Error).ToNot(HaveOccurred())
+			Expect(run.Service).To(Equal("test02"))
 		})
 	})
 

@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"playbook-dispatcher/internal/api/instrumentation"
 	"playbook-dispatcher/internal/api/middleware"
+	"playbook-dispatcher/internal/api/rbac"
 	dbModel "playbook-dispatcher/internal/common/model/db"
 	"playbook-dispatcher/internal/common/utils"
 	"strings"
@@ -39,7 +40,14 @@ func (this *controllers) ApiRunsList(ctx echo.Context, params ApiRunsListParams)
 
 	identity := identityMiddleware.Get(ctx.Request().Context())
 
+	// tenant isolation
 	queryBuilder := this.database.Where("account = ?", identity.Identity.AccountNumber)
+
+	// rbac
+	permissions := middleware.GetPermissions(ctx)
+	if allowedServices := rbac.GetPredicateValues(permissions, "service"); len(allowedServices) > 0 {
+		queryBuilder.Where("service IN ?", allowedServices)
+	}
 
 	fields, err := parseFields(middleware.GetDeepObject(ctx, "fields"), "data", runFields, defaultRunFields)
 	if err != nil {
@@ -64,6 +72,10 @@ func (this *controllers) ApiRunsList(ctx echo.Context, params ApiRunsListParams)
 
 		if params.Filter.Recipient != nil {
 			queryBuilder.Where("runs.recipient = ?", *params.Filter.Recipient)
+		}
+
+		if params.Filter.Service != nil {
+			queryBuilder.Where("runs.service = ?", *params.Filter.Service)
 		}
 	}
 

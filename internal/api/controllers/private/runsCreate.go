@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"playbook-dispatcher/internal/api/controllers/public"
 	"playbook-dispatcher/internal/api/instrumentation"
+	"playbook-dispatcher/internal/api/middleware"
 	"playbook-dispatcher/internal/common/config"
 	dbModel "playbook-dispatcher/internal/common/model/db"
 	"playbook-dispatcher/internal/common/utils"
@@ -38,7 +39,7 @@ func (this *controllers) ApiInternalRunsCreate(ctx echo.Context) error {
 			correlationId = uuid.UUID{}
 		}
 
-		messageId, err := this.cloudConnectorClient.SendCloudConnectorRequest(
+		messageId, notFound, err := this.cloudConnectorClient.SendCloudConnectorRequest(
 			ctx.Request().Context(),
 			string(runInput.Account),
 			recipient,
@@ -49,11 +50,15 @@ func (this *controllers) ApiInternalRunsCreate(ctx echo.Context) error {
 		if err != nil {
 			instrumentation.CloudConnectorRequestError(ctx, err, recipient)
 			return runCreateError(http.StatusInternalServerError)
+		} else if notFound {
+			instrumentation.CloudConnectorNoConnection(ctx, recipient)
+			return runCreateError(http.StatusNotFound)
 		} else {
 			instrumentation.CloudConnectorOK(ctx, recipient, messageId)
 		}
 
 		entity := newRun(&runInput, correlationId, dbModel.RunStatusRunning, recipient)
+		entity.Service = middleware.GetPSKPrincipal(ctx.Request().Context())
 
 		if dbResult := this.database.Create(&entity); dbResult.Error != nil {
 			instrumentation.PlaybookRunCreateError(ctx, dbResult.Error, &entity)
@@ -78,7 +83,6 @@ func newRun(input *RunInput, correlationId uuid.UUID, status string, recipient u
 		URL:           string(input.Url),
 		Status:        status,
 		Recipient:     recipient,
-		Events:        []byte("[]"),
 	}
 
 	if input.Labels != nil {

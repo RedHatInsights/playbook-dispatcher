@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"playbook-dispatcher/internal/api/instrumentation"
 	"playbook-dispatcher/internal/api/middleware"
+	"playbook-dispatcher/internal/api/rbac"
 	"playbook-dispatcher/internal/common/ansible"
 	dbModel "playbook-dispatcher/internal/common/model/db"
 	messageModel "playbook-dispatcher/internal/common/model/message"
@@ -34,6 +35,11 @@ func (this *controllers) ApiRunHostsList(ctx echo.Context, params ApiRunHostsLis
 		Order("created_at desc").
 		Order("id")
 
+	permissions := middleware.GetPermissions(ctx)
+	if allowedServices := rbac.GetPredicateValues(permissions, "service"); len(allowedServices) > 0 {
+		queryBuilder.Where("service IN ?", allowedServices)
+	}
+
 	if params.Filter != nil {
 		if params.Filter.Status != nil { // TODO: possible 1-n mapping between runs and hosts
 			status := *params.Filter.Status
@@ -51,6 +57,10 @@ func (this *controllers) ApiRunHostsList(ctx echo.Context, params ApiRunHostsLis
 		if runFilters := middleware.GetDeepObject(ctx, "filter", "run"); len(runFilters) > 0 {
 			if id, ok := runFilters["id"]; ok {
 				queryBuilder.Where("runs.id = ?", id)
+			}
+
+			if service, ok := runFilters["service"]; ok {
+				queryBuilder.Where("runs.service = ?", service)
 			}
 		}
 

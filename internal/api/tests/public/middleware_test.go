@@ -62,7 +62,7 @@ var _ = Describe("Middleware", func() {
 			data, _ := ioutil.ReadAll(res.Body)
 			defer res.Body.Close()
 
-			Expect(string(data)).To(Equal("Bad Request: missing x-rh-identity header\n"))
+			Expect(data).To(BeEquivalentTo("Bad Request: missing x-rh-identity header\n"))
 		})
 	})
 
@@ -71,6 +71,7 @@ var _ = Describe("Middleware", func() {
 			req, err := http.NewRequest(http.MethodPost, "http://localhost:9002/internal/dispatch", bytes.NewBuffer([]byte("[]")))
 			Expect(err).ToNot(HaveOccurred())
 			req.Header.Add("content-type", "application/json")
+			req.Header.Add("authorization", "PSK xwKhCUzgJ8")
 			res, err := test.Client.Do(req)
 			Expect(err).ToNot(HaveOccurred())
 

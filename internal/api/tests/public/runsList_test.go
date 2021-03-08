@@ -38,12 +38,12 @@ var _ = Describe("runsList", func() {
 			Expect(res.StatusCode()).To(Equal(http.StatusOK))
 			Expect(runs.Data).To(HaveLen(1))
 			run := runs.Data[0]
-			Expect(string(*run.Id)).To(Equal(data.ID.String()))
+			Expect(*run.Id).To(BeEquivalentTo(data.ID.String()))
 			Expect(run.Labels.AdditionalProperties["foo"]).To(Equal(data.Labels["foo"]))
-			Expect(string(*run.Recipient)).To(Equal(data.Recipient.String()))
-			Expect(string(*run.Status)).To(Equal(data.Status))
-			Expect(int(*run.Timeout)).To(Equal(data.Timeout))
-			Expect(string(*run.Url)).To(Equal(data.URL))
+			Expect(*run.Recipient).To(BeEquivalentTo(data.Recipient.String()))
+			Expect(*run.Status).To(BeEquivalentTo(data.Status))
+			Expect(*run.Timeout).To(BeEquivalentTo(data.Timeout))
+			Expect(*run.Url).To(BeEquivalentTo(data.URL))
 		})
 
 		It("properly infers run status", func() {
@@ -62,10 +62,10 @@ var _ = Describe("runsList", func() {
 
 			runs, res := listRuns()
 			Expect(res.StatusCode()).To(Equal(http.StatusOK))
-			Expect(string(*runs.Data[0].Status)).To(Equal("running"))
-			Expect(string(*runs.Data[1].Status)).To(Equal("success"))
-			Expect(string(*runs.Data[2].Status)).To(Equal("failure"))
-			Expect(string(*runs.Data[3].Status)).To(Equal("timeout"))
+			Expect(*runs.Data[0].Status).To(BeEquivalentTo("running"))
+			Expect(*runs.Data[1].Status).To(BeEquivalentTo("success"))
+			Expect(*runs.Data[2].Status).To(BeEquivalentTo("failure"))
+			Expect(*runs.Data[3].Status).To(BeEquivalentTo("timeout"))
 		})
 	})
 
@@ -180,7 +180,7 @@ var _ = Describe("runsList", func() {
 					runs, res := listRuns("filter[status]", status)
 					Expect(res.StatusCode()).To(Equal(http.StatusOK))
 					Expect(runs.Meta.Count).To(Equal(1))
-					Expect(string(*runs.Data[0].Id)).To(Equal(data[index].ID.String()))
+					Expect(*runs.Data[0].Id).To(BeEquivalentTo(data[index].ID.String()))
 				},
 
 				Entry("success", "success", 0),
@@ -211,7 +211,7 @@ var _ = Describe("runsList", func() {
 				runs, res := listRuns("filter[recipient]", data[1].Recipient)
 				Expect(res.StatusCode()).To(Equal(http.StatusOK))
 				Expect(runs.Meta.Count).To(Equal(1))
-				Expect(string(*runs.Data[0].Recipient)).To(Equal(data[1].Recipient.String()))
+				Expect(*runs.Data[0].Recipient).To(BeEquivalentTo(data[1].Recipient.String()))
 			})
 
 			It("returns empty result on non-match", func() {
@@ -261,11 +261,33 @@ var _ = Describe("runsList", func() {
 				runs, res := listRuns("filter[labels][service]", "remediations", "filter[labels][foo]", "bar")
 				Expect(res.StatusCode()).To(Equal(http.StatusOK))
 				Expect(runs.Meta.Count).To(Equal(1))
-				Expect(string(*runs.Data[0].Id)).To(Equal(data[1].ID.String()))
+				Expect(*runs.Data[0].Id).To(BeEquivalentTo(data[1].ID.String()))
 			})
 
 			It("does not find anything if labels do not match", func() {
 				runs, res := listRuns("filter[labels][abc]", "def")
+				Expect(res.StatusCode()).To(Equal(http.StatusOK))
+				Expect(runs.Meta.Count).To(Equal(0))
+			})
+		})
+
+		Describe("service", func() {
+			var data dbModel.Run
+
+			BeforeEach(func() {
+				data = test.NewRun(accountNumber())
+				Expect(db().Create(&data).Error).ToNot(HaveOccurred())
+			})
+
+			It("finds a run based on service id", func() {
+				runs, res := listRuns("filter[service]", "test")
+				Expect(res.StatusCode()).To(Equal(http.StatusOK))
+				Expect(runs.Meta.Count).To(Equal(1))
+				Expect(*runs.Data[0].Id).To(BeEquivalentTo(data.ID.String()))
+			})
+
+			It("returns nothing if no such service exists", func() {
+				runs, res := listRuns("filter[service]", "remediations")
 				Expect(res.StatusCode()).To(Equal(http.StatusOK))
 				Expect(runs.Meta.Count).To(Equal(0))
 			})
@@ -281,7 +303,7 @@ var _ = Describe("runsList", func() {
 		DescribeTable("happy path", fieldTester(listRunsRaw),
 			Entry("single field", "id"),
 			Entry("defaults defined explicitly", "id", "recipient", "url", "labels", "timeout", "status"),
-			Entry("all fields", "id", "recipient", "url", "labels", "timeout", "status", "created_at", "updated_at"),
+			Entry("all fields", "id", "recipient", "url", "labels", "timeout", "status", "created_at", "updated_at", "service", "correlation_id"),
 		)
 
 		It("400s on invalid value", func() {
@@ -290,6 +312,37 @@ var _ = Describe("runsList", func() {
 			res, err := ParseApiRunsListResponse(raw)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(res.JSON400.Message).To(Equal("unknown field: salad"))
+		})
+	})
+
+	Describe("RBAC", func() {
+		var data []dbModel.Run
+
+		BeforeEach(func() {
+			data = []dbModel.Run{
+				test.NewRun(accountNumber()),
+				test.NewRun(accountNumber()),
+				test.NewRun(accountNumber()),
+				test.NewRun(accountNumber()),
+			}
+
+			data[0].Service = "test"
+			data[1].Service = "remediations"
+			data[2].Service = "salad"
+			data[3].Service = "config_manager"
+
+			Expect(db().Create(&data).Error).ToNot(HaveOccurred())
+		})
+
+		It("finds a run based on RBAC predicate", func() {
+			runs, res := listRuns("fields[data]", "service")
+			Expect(res.StatusCode()).To(Equal(http.StatusOK))
+			Expect(runs.Meta.Count).To(Equal(3))
+
+			expected := []interface{}{"test", "remediations", "config_manager"}
+			Expect(string(*runs.Data[0].Service)).To(BeElementOf(expected...))
+			Expect(string(*runs.Data[1].Service)).To(BeElementOf(expected...))
+			Expect(string(*runs.Data[2].Service)).To(BeElementOf(expected...))
 		})
 	})
 })

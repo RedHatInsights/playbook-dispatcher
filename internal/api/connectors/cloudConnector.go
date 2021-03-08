@@ -16,7 +16,14 @@ import (
 	"github.com/spf13/viper"
 )
 
+const basePath = "/api/cloud-connector/v1/"
+
 var cloudConnectorDirective = "playbook"
+
+type accountKeyType int
+
+// used to pass account down to request editor (to set headers)
+const accountKey accountKeyType = iota
 
 type CloudConnectorClient interface {
 	SendCloudConnectorRequest(
@@ -25,7 +32,7 @@ type CloudConnectorClient interface {
 		recipient uuid.UUID,
 		correlationId uuid.UUID,
 		url string,
-	) (*string, error)
+	) (*string, bool, error)
 }
 
 type cloudConnectorClientImpl struct {
@@ -37,10 +44,14 @@ type cloudConnectorClientImpl struct {
 func NewConnectorClientWithHttpRequestDoer(cfg *viper.Viper, doer HttpRequestDoer) CloudConnectorClient {
 	client := &ClientWithResponses{
 		ClientInterface: &Client{
-			Server: cfg.GetString("cloud.connector.host"),
+			Server: fmt.Sprintf("%s%s", cfg.GetString("cloud.connector.host"), basePath),
 			Client: doer,
 			RequestEditor: func(ctx context.Context, req *http.Request) error {
 				req.Header.Set(constants.HeaderRequestId, request_id.GetReqID(ctx))
+
+				req.Header.Set(constants.HeaderCloudConnectorClientID, cfg.GetString("cloud.connector.client.id"))
+				req.Header.Set(constants.HeaderCloudConnectorPSK, cfg.GetString("cloud.connector.psk"))
+				req.Header.Set(constants.HeaderCloudConnectorAccount, ctx.Value(accountKey).(string))
 				return nil
 			},
 		},
@@ -67,7 +78,8 @@ func (this *cloudConnectorClientImpl) SendCloudConnectorRequest(
 	recipient uuid.UUID,
 	correlationId uuid.UUID,
 	url string,
-) (*string, error) {
+) (id *string, notFound bool, err error) {
+	ctx = context.WithValue(ctx, accountKey, account)
 	recipientString := recipient.String()
 	metadata := map[string]string{
 		"return_url":                    this.returnUrl,
@@ -94,12 +106,16 @@ func (this *cloudConnectorClientImpl) SendCloudConnectorRequest(
 	})
 
 	if err != nil {
-		return nil, err
+		return nil, false, err
+	}
+
+	if res.HTTPResponse.StatusCode == 404 {
+		return nil, true, nil
 	}
 
 	if res.JSON200 == nil {
-		return nil, fmt.Errorf(`unexpected status code "%d" or content type "%s"`, res.HTTPResponse.StatusCode, res.HTTPResponse.Header.Get("content-type"))
+		return nil, false, fmt.Errorf(`unexpected status code "%d" or content type "%s"`, res.HTTPResponse.StatusCode, res.HTTPResponse.Header.Get("content-type"))
 	}
 
-	return res.JSON200.Id, nil
+	return res.JSON200.Id, false, nil
 }

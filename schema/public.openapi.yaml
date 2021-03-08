@@ -32,10 +32,17 @@ paths:
                 $ref: '#/components/schemas/Runs'
         '400':
           $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
 
   /api/playbook-dispatcher/v1/run_hosts:
     get:
       summary: List hosts involved in Playbook runs
+      description: >
+        Returns a list of objects representing hosts involved in Playbook runs.
+        Unless restricted using filters the resources spread across multiple Playbook runs.
+        No merging or deduplication is performed by this resource - i.e. if a host X is involved in playbook runs A and B
+        then two subresources with exist, one representing X running A and one for B.
       operationId: api.run.hosts.list
       parameters:
       - $ref: '#/components/parameters/RunHostFilter'
@@ -53,6 +60,8 @@ paths:
 
         '400':
           $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
 
 components:
   schemas:
@@ -73,11 +82,20 @@ components:
       minimum: 0
       maximum: 604800
 
+    RunCorrelationId:
+      description: Unique identifier used to match work request with responses
+      type: string
+
     Account:
       description: Identifier of the tenant
       type: string
       minLength: 1
       maxLength: 10
+
+    Service:
+      description: Service that triggered the given Playbook run
+      type: string
+      minLength: 1
 
     Url:
       description: URL hosting the Playbook
@@ -132,6 +150,10 @@ components:
           $ref: '#/components/schemas/Account'
         recipient:
           $ref: '#/components/schemas/RunRecipient'
+        correlation_id:
+          $ref: '#/components/schemas/RunCorrelationId'
+        service:
+          $ref: '#/components/schemas/Service'
         url:
           $ref: '#/components/schemas/Url'
         labels:
@@ -213,6 +235,14 @@ components:
         - failure
         - timeout
 
+    ServiceNullable:
+      nullable: true
+      # this property should not be nullable however it is set so as a workaround for
+      # https://github.com/getkin/kin-openapi/issues/293
+      # ideally we would reuse '#/components/schemas/Service' here
+      type: string
+      minLength: 1
+
   parameters:
     RunsFilter:
       description: Allows for filtering based on various criteria
@@ -226,6 +256,8 @@ components:
         properties:
           status:
             $ref: '#/components/schemas/StatusNullable'
+          service:
+            $ref: '#/components/schemas/ServiceNullable'
           recipient:
             type: string
             # this property should not be nullable however it is set so as a workaround for
@@ -261,6 +293,8 @@ components:
                 nullable: true
                 format: uuid
               # See ./internal/api/middleware/labelFilters.go
+              service:
+                $ref: '#/components/schemas/ServiceNullable'
               labels:
                 $ref: '#/components/schemas/RunLabelsNullable'
 
@@ -283,10 +317,12 @@ components:
                 - id
                 - account
                 - recipient
+                - correlation_id
                 - url
                 - labels
                 - timeout
                 - status
+                - service
                 - created_at
                 - updated_at
             default:
@@ -360,6 +396,13 @@ components:
   responses:
     BadRequest:
       description: Bad Request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    Forbidden:
+      description: Access to the given resource is not allowed
       content:
         application/json:
           schema:

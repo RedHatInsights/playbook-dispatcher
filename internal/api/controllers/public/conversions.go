@@ -8,22 +8,24 @@ import (
 )
 
 const (
-	fieldId        = "id"
-	fieldAccount   = "account"
-	fieldRecipient = "recipient"
-	fieldUrl       = "url"
-	fieldLabels    = "labels"
-	fieldTimeout   = "timeout"
-	fieldStatus    = "status"
-	fieldCreatedAt = "created_at"
-	fieldUpdatedAt = "updated_at"
-	fieldRun       = "run"
-	fieldHost      = "host"
-	fieldStdout    = "stdout"
+	fieldId            = "id"
+	fieldAccount       = "account"
+	fieldRecipient     = "recipient"
+	fieldUrl           = "url"
+	fieldLabels        = "labels"
+	fieldTimeout       = "timeout"
+	fieldStatus        = "status"
+	fieldCreatedAt     = "created_at"
+	fieldUpdatedAt     = "updated_at"
+	fieldRun           = "run"
+	fieldHost          = "host"
+	fieldStdout        = "stdout"
+	fieldService       = "service"
+	fieldCorrelationId = "correlation_id"
 )
 
 var (
-	runFields     = utils.IndexStrings(fieldId, fieldAccount, fieldRecipient, fieldUrl, fieldLabels, fieldTimeout, fieldStatus, fieldCreatedAt, fieldUpdatedAt)
+	runFields     = utils.IndexStrings(fieldId, fieldAccount, fieldRecipient, fieldUrl, fieldLabels, fieldTimeout, fieldStatus, fieldCreatedAt, fieldUpdatedAt, fieldService, fieldCorrelationId)
 	runHostFields = utils.IndexStrings(fieldHost, fieldRun, fieldStatus, fieldStdout)
 )
 
@@ -73,6 +75,12 @@ func dbRuntoApiRun(r *dbModel.Run, fields []string) *Run {
 		case fieldUpdatedAt:
 			val := UpdatedAt(r.UpdatedAt)
 			run.UpdatedAt = &val
+		case fieldService:
+			value := Service(r.Service)
+			run.Service = &value
+		case fieldCorrelationId:
+			value := RunCorrelationId(r.CorrelationID.String())
+			run.CorrelationId = &value
 		default:
 			panic("unknown field " + field)
 		}

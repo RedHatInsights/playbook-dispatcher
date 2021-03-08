@@ -19,6 +19,8 @@ const (
 	labelDb                = "db"
 	labelPlaybookRunCreate = "playbook_run_create"
 	labelPlaybookRunRead   = "playbook_run_read"
+	labelNoConnection      = "no_connection"
+	labelErrorGeneric      = "error"
 )
 
 var (
@@ -32,14 +34,24 @@ var (
 		Help: "The total number of errors",
 	}, []string{"type", "subtype"})
 
-	connectorErrorTotal = promauto.NewCounter(prometheus.CounterOpts{
+	connectorErrorTotal = promauto.NewCounterVec(prometheus.CounterOpts{
 		Name: "api_cloud_connector_error_total",
 		Help: "The total number of errors talking to cloud connector",
-	})
+	}, []string{"type"})
 
 	connectorSentTotal = promauto.NewCounter(prometheus.CounterOpts{
 		Name: "api_cloud_connector_sent_total",
 		Help: "The total number of messages sent via cloud connector",
+	})
+
+	rbacErrorTotal = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "api_rbac_error_total",
+		Help: "The total number of errors from RBAC",
+	})
+
+	rbacRejectedTotal = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "api_rbac_rejected_total",
+		Help: "The total number of requests rejected due to RBAC",
 	})
 )
 
@@ -50,7 +62,12 @@ func InvalidRecipientId(ctx echo.Context, value string, err error) {
 
 func CloudConnectorRequestError(ctx echo.Context, err error, recipient uuid.UUID) {
 	utils.GetLogFromEcho(ctx).Errorw("Error sending message to cloud connector", "error", err, "recipient", recipient)
-	connectorErrorTotal.Inc()
+	connectorErrorTotal.WithLabelValues(labelErrorGeneric).Inc()
+}
+
+func CloudConnectorNoConnection(ctx echo.Context, recipient uuid.UUID) {
+	utils.GetLogFromEcho(ctx).Errorw("Cloud connector reporting no connection for recipient", "recipient", recipient)
+	connectorErrorTotal.WithLabelValues(labelNoConnection).Inc()
 }
 
 func CloudConnectorOK(ctx echo.Context, recipient uuid.UUID, messageId *string) {
@@ -66,6 +83,16 @@ func PlaybookRunCreateError(ctx echo.Context, err error, run *dbModel.Run) {
 func PlaybookRunReadError(ctx echo.Context, err error) {
 	utils.GetLogFromEcho(ctx).Errorw("Error reading playbook runs from database", "error", err)
 	errorTotal.WithLabelValues(labelDb, labelPlaybookRunRead).Inc()
+}
+
+func RbacError(ctx echo.Context, err error) {
+	utils.GetLogFromEcho(ctx).Errorw("error getting permissions from RBAC", "error", err)
+	rbacErrorTotal.Inc()
+}
+
+func RbacRejected(ctx echo.Context) {
+	utils.GetLogFromEcho(ctx).Infow("access rejected due to RBAC")
+	rbacRejectedTotal.Inc()
 }
 
 func Start() {

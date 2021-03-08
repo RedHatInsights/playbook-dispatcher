@@ -62,10 +62,39 @@ objects:
             value: "true"
           - name: DB_SSLMODE
             value: ${DB_SSLMODE}
+
+          - name: PSK_AUTH_REMEDIATIONS
+            valueFrom:
+              secretKeyRef:
+                key: key
+                name: auth-psk-remediations
+          - name: PSK_AUTH_CONFIG_MANAGER
+            valueFrom:
+              secretKeyRef:
+                key: key
+                name: auth-psk-config-manager
+          - name: PSK_AUTH_TEST
+            value: ${PSK_AUTH_TEST}
+
           - name: CLOUD_CONNECTOR_IMPL
             value: ${CLOUD_CONNECTOR_IMPL}
           - name: CLOUD_CONNECTOR_HOST
             value: ${CLOUD_CONNECTOR_HOST}
+          - name: CLOUD_CONNECTOR_CLIENT_ID
+            valueFrom:
+              secretKeyRef:
+                key: id
+                name: client-psk-cloud-connector
+          - name: CLOUD_CONNECTOR_PSK
+            valueFrom:
+              secretKeyRef:
+                key: key
+                name: client-psk-cloud-connector
+
+          - name: RBAC_IMPL
+            value: ${RBAC_IMPL}
+          - name: RBAC_HOST
+            value: ${RBAC_HOST}
         resources:
           limits:
             cpu: ${CPU_LIMIT}
@@ -198,3 +227,12 @@ parameters:
   value: mock
 - name: CLOUD_CONNECTOR_HOST
   value: mock
+
+- name: RBAC_IMPL
+  value: impl
+- name: RBAC_HOST
+  required: true
+
+  # Used for testing in ephemeral environments only. If a value is not provided the principal is ignored.
+- name: PSK_AUTH_TEST
+  value: ""

@@ -4,6 +4,7 @@ metadata:
   name: playbook-dispatcher
 objects:
 
+# playbook-dispatcher-validator
 - apiVersion: apps/v1
   kind: Deployment
   metadata:
@@ -12,7 +13,7 @@ objects:
       pod: playbook-dispatcher-validator
     name: playbook-dispatcher-validator
   spec:
-    replicas: ${REPLICAS_VALIDATOR}
+    replicas: ${{REPLICAS_VALIDATOR}}
     selector:
       matchLabels:
         app: playbook-dispatcher
@@ -73,6 +74,414 @@ objects:
         imagePullSecrets:
         - name: quay-cloudservices-pull
 
+# playbook-dispatcher-response-consumer
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    labels:
+      app: playbook-dispatcher
+      pod: playbook-dispatcher-response-consumer
+    name: playbook-dispatcher-response-consumer
+  spec:
+    replicas: ${{REPLICAS_RESPONSE_CONSUMER}}
+    selector:
+      matchLabels:
+        app: playbook-dispatcher
+        pod: playbook-dispatcher-response-consumer
+    template:
+      metadata:
+        labels:
+          app: playbook-dispatcher
+          pod: playbook-dispatcher-response-consumer
+      spec:
+        containers:
+        - args:
+          - run
+          - -m
+          - response-consumer
+          env:
+          - name: LOG_LEVEL
+            value: ${LOG_LEVEL}
+          - name: CLOWDER_ENABLED
+            value: "false"
+          - name: KAFKA_BOOTSTRAP_SERVERS
+            value: ${KAFKA_BOOTSTRAP_HOST}
+          - name: METRICS_PORT
+            value: "9000"
+          - name: DB_HOST
+            valueFrom:
+              secretKeyRef:
+                key: db.host
+                name: playbook-dispatcher-db
+          - name: DB_PORT
+            valueFrom:
+              secretKeyRef:
+                key: db.port
+                name: playbook-dispatcher-db
+          - name: DB_NAME
+            valueFrom:
+              secretKeyRef:
+                key: db.name
+                name: playbook-dispatcher-db
+          - name: DB_USERNAME
+            valueFrom:
+              secretKeyRef:
+                key: db.user
+                name: playbook-dispatcher-db
+          - name: DB_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                key: db.password
+                name: playbook-dispatcher-db
+          - name: DB_SSLMODE
+            value: ${DB_SSLMODE}
+          image: ${IMAGE}:${IMAGE_TAG}
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /live
+              port: 9000
+              scheme: HTTP
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+          name: playbook-dispatcher-response-consumer
+          ports:
+          - containerPort: 9000
+            name: metrics
+            protocol: TCP
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /ready
+              port: 9000
+              scheme: HTTP
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+          resources:
+            limits:
+              cpu: ${CPU_LIMIT}
+              memory: ${MEMORY_LIMIT}
+            requests:
+              cpu: 250m
+              memory: 256Mi
+        imagePullSecrets:
+        - name: quay-cloudservices-pull
+        initContainers:
+        - args:
+          - migrate
+          - up
+          env:
+          - name: LOG_LEVEL
+            value: ${LOG_LEVEL}
+          - name: CLOWDER_ENABLED
+            value: "false"
+          - name: DB_HOST
+            valueFrom:
+              secretKeyRef:
+                key: db.host
+                name: playbook-dispatcher-db
+          - name: DB_PORT
+            valueFrom:
+              secretKeyRef:
+                key: db.port
+                name: playbook-dispatcher-db
+          - name: DB_NAME
+            valueFrom:
+              secretKeyRef:
+                key: db.name
+                name: playbook-dispatcher-db
+          - name: DB_USERNAME
+            valueFrom:
+              secretKeyRef:
+                key: db.user
+                name: playbook-dispatcher-db
+          - name: DB_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                key: db.password
+                name: playbook-dispatcher-db
+          - name: DB_SSLMODE
+            value: ${DB_SSLMODE}
+          image: ${IMAGE}:${IMAGE_TAG}
+          name: playbook-dispatcher-response-consumer-init
+          resources:
+            limits:
+              cpu: ${CPU_LIMIT}
+              memory: ${MEMORY_LIMIT}
+            requests:
+              cpu: 250m
+              memory: 256Mi
+
+# API
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    labels:
+      app: playbook-dispatcher
+      pod: playbook-dispatcher-api
+    name: playbook-dispatcher-api
+  spec:
+    replicas: ${{REPLICAS_API}}
+    selector:
+      matchLabels:
+        app: playbook-dispatcher
+        pod: playbook-dispatcher-api
+    template:
+      metadata:
+        labels:
+          app: playbook-dispatcher
+          pod: playbook-dispatcher-api
+      spec:
+        containers:
+        - args:
+          - run
+          - -m
+          - api
+          env:
+          - name: LOG_LEVEL
+            value: ${LOG_LEVEL}
+          - name: CLOWDER_ENABLED
+            value: "false"
+          - name: DB_HOST
+            valueFrom:
+              secretKeyRef:
+                key: db.host
+                name: playbook-dispatcher-db
+          - name: DB_PORT
+            valueFrom:
+              secretKeyRef:
+                key: db.port
+                name: playbook-dispatcher-db
+          - name: DB_NAME
+            valueFrom:
+              secretKeyRef:
+                key: db.name
+                name: playbook-dispatcher-db
+          - name: DB_USERNAME
+            valueFrom:
+              secretKeyRef:
+                key: db.user
+                name: playbook-dispatcher-db
+          - name: DB_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                key: db.password
+                name: playbook-dispatcher-db
+          - name: DB_SSLMODE
+            value: ${DB_SSLMODE}
+
+          - name: PSK_AUTH_TEST
+            valueFrom:
+              secretKeyRef:
+                key: key
+                name: auth-psk-test
+          - name: PSK_AUTH_REMEDIATIONS
+            valueFrom:
+              secretKeyRef:
+                key: key
+                name: auth-psk-remediations
+          - name: PSK_AUTH_CONFIG_MANAGER
+            valueFrom:
+              secretKeyRef:
+                key: key
+                name: auth-psk-config-manager
+
+          - name: CLOUD_CONNECTOR_IMPL
+            value: ${CLOUD_CONNECTOR_IMPL}
+          - name: CLOUD_CONNECTOR_HOST
+            value: ${CLOUD_CONNECTOR_HOST}
+          - name: CLOUD_CONNECTOR_CLIENT_ID
+            valueFrom:
+              secretKeyRef:
+                key: id
+                name: client-psk-cloud-connector
+          - name: CLOUD_CONNECTOR_PSK
+            valueFrom:
+              secretKeyRef:
+                key: key
+                name: client-psk-cloud-connector
+
+          - name: WEB_PORT
+            value: "8000"
+          - name: METRICS_PORT
+            value: "9000"
+          - name: RETURN_URL
+            value: ${RETURN_URL}
+          - name: RBAC_IMPL
+            value: ${RBAC_IMPL}
+          - name: RBAC_HOST
+            value: ${RBAC_HOST}
+          image: ${IMAGE}:${IMAGE_TAG}
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /live
+              port: 9000
+              scheme: HTTP
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+          name: playbook-dispatcher-api
+          ports:
+          - containerPort: 9000
+            name: metrics
+            protocol: TCP
+          - containerPort: 8000
+            name: web
+            protocol: TCP
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /ready
+              port: 9000
+              scheme: HTTP
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+          resources:
+            limits:
+              cpu: ${CPU_LIMIT}
+              memory: ${MEMORY_LIMIT}
+            requests:
+              cpu: 250m
+              memory: 256Mi
+        imagePullSecrets:
+        - name: quay-cloudservices-pull
+
+- apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      app: playbook-dispatcher
+      pod: playbook-dispatcher-api
+    name: playbook-dispatcher-api
+  spec:
+    ports:
+    - name: metrics
+      port: 9000
+      protocol: TCP
+      targetPort: 9000
+    - appProtocol: http
+      name: public
+      port: 8000
+      protocol: TCP
+      targetPort: 8000
+    selector:
+      pod: playbook-dispatcher-api
+    type: ClusterIP
+
+# Database
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    annotations:
+      description: Defines how to deploy the database
+    labels:
+      app: playbook-dispatcher
+    name: postgres
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        name: postgres
+    template:
+      metadata:
+        labels:
+          app: playbook-dispatcher
+          name: postgres
+      spec:
+        containers:
+        - env:
+          - name: POSTGRESQL_USER
+            valueFrom:
+              secretKeyRef:
+                key: db.user
+                name: playbook-dispatcher-db
+          - name: POSTGRESQL_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                key: db.password
+                name: playbook-dispatcher-db
+          - name: POSTGRESQL_DATABASE
+            valueFrom:
+              secretKeyRef:
+                key: db.name
+                name: playbook-dispatcher-db
+          image: registry.redhat.io/rhel8/postgresql-12:latest
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            exec:
+              command:
+              - /usr/libexec/check-container
+              - --live
+            failureThreshold: 3
+            initialDelaySeconds: 120
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 10
+          name: postgres
+          ports:
+          - containerPort: 5432
+            protocol: TCP
+          readinessProbe:
+            exec:
+              command:
+              - /usr/libexec/check-container
+            failureThreshold: 3
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 200m
+              memory: 512Mi
+          volumeMounts:
+          - mountPath: /var/lib/pgsql/data
+            name: postgres-data
+        volumes:
+        - name: postgres-data
+          persistentVolumeClaim:
+            claimName: postgres-data
+
+- apiVersion: v1
+  kind: PersistentVolumeClaim
+  metadata:
+    labels:
+      app: playbook-dispatcher
+    name: postgres-data
+  spec:
+    accessModes:
+    - ReadWriteOnce
+    resources:
+      requests:
+        storage: ${DB_VOLUME_CAPACITY}
+
+- apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      app: playbook-dispatcher
+    name: postgres
+  spec:
+    ports:
+    - name: postgres
+      port: 5432
+      protocol: TCP
+      targetPort: 5432
+    selector:
+      name: postgres
+    type: ClusterIP
+
 parameters:
 - name: IMAGE_TAG
   required: true
@@ -80,7 +489,7 @@ parameters:
   value: quay.io/cloudservices/playbook-dispatcher
 
 - name: LOG_LEVEL
-  value: INFO
+  value: DEBUG
 - name: CPU_LIMIT
   value: 500m
 - name: MEMORY_LIMIT
@@ -93,15 +502,22 @@ parameters:
 - name: REPLICAS_VALIDATOR
   value: "1"
 
+- name: DB_VOLUME_CAPACITY
+  value: 5Gi
 - name: DB_SSLMODE
-  value: verify-full
-
-- name: CLOUD_CONNECTOR_IMPL
-  value: mock
-- name: CLOUD_CONNECTOR_HOST
-  value: mock
+  value: prefer
 
 - name: KAFKA_BOOTSTRAP_HOST
   required: true
 - name: RETURN_URL
+  required: true
+
+- name: CLOUD_CONNECTOR_IMPL
+  value: impl
+- name: CLOUD_CONNECTOR_HOST
+  required: true
+
+- name: RBAC_IMPL
+  value: impl
+- name: RBAC_HOST
   required: true

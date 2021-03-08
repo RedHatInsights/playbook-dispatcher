@@ -86,3 +86,9 @@ func MustUnmarshal(bytes []byte, result interface{}) {
 	err := json.Unmarshal(bytes, result)
 	DieOnError(err)
 }
+
+func SetRequestContextValue(c echo.Context, key interface{}, value interface{}) echo.Context {
+	req := c.Request()
+	c.SetRequest(req.WithContext(context.WithValue(req.Context(), key, value)))
+	return c
+}

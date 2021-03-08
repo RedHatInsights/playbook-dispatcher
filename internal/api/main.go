@@ -9,6 +9,8 @@ import (
 	"playbook-dispatcher/internal/api/controllers/public"
 	"playbook-dispatcher/internal/api/instrumentation"
 	"playbook-dispatcher/internal/api/middleware"
+	"playbook-dispatcher/internal/api/rbac"
+	"playbook-dispatcher/internal/common/constants"
 	"playbook-dispatcher/internal/common/db"
 	"playbook-dispatcher/internal/common/utils"
 	"sync"
@@ -18,14 +20,12 @@ import (
 	echoPrometheus "github.com/globocom/echo-prometheus"
 	"github.com/labstack/echo/v4"
 	echoMiddleware "github.com/labstack/echo/v4/middleware"
-	"github.com/labstack/gommon/log"
 	"github.com/redhatinsights/platform-go-middlewares/identity"
 	"github.com/redhatinsights/platform-go-middlewares/request_id"
 	"github.com/spf13/viper"
 )
 
 const specFile = "/api/playbook-dispatcher/v1/openapi.json"
-const requestIdHeader = "x-rh-insights-request-id"
 
 func init() {
 	openapi3.DefineStringFormat("uuid", `^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89aAbB][a-f0-9]{3}-[a-f0-9]{12}$`)
@@ -39,6 +39,7 @@ func Start(
 	ready, live *utils.ProbeHandler,
 	wg *sync.WaitGroup,
 ) {
+	log := utils.GetLogFromContext(ctx)
 	instrumentation.Start()
 	db, sql := db.Connect(ctx, cfg)
 
@@ -58,7 +59,7 @@ func Start(
 	server.Use(
 		echoPrometheus.MetricsMiddleware(),
 		echoMiddleware.BodyLimit(cfg.GetString("http.max.body.size")),
-		echo.WrapMiddleware(request_id.ConfiguredRequestID(requestIdHeader)),
+		echo.WrapMiddleware(request_id.ConfiguredRequestID(constants.HeaderRequestId)),
 		middleware.ContextLogger,
 		middleware.RequestLogger,
 		echoMiddleware.Recover(),
@@ -77,8 +78,12 @@ func Start(
 		log.Warn("Using mock CloudConnectorClient")
 	}
 
+	authConfig := middleware.BuildPskAuthConfigFromEnv()
+	log.Infow("Authentication required for internal API", "principals", utils.MapKeysString(authConfig))
+
 	privateController := private.CreateController(db, cloudConnectorClient)
 	internal := server.Group("/internal")
+	internal.Use(middleware.CheckPskAuth(authConfig))
 	internal.Use(oapiMiddleware.OapiRequestValidator(privateSpec))
 	internal.POST("/dispatch", privateController.ApiInternalRunsCreate)
 
@@ -91,6 +96,8 @@ func Start(
 	public.Use(middleware.Hack("filter", "run", "labels"))
 	public.Use(middleware.Hack("fields"))
 	public.Use(oapiMiddleware.OapiRequestValidator(publicSpec))
+	public.Use(middleware.ExtractHeaders(constants.HeaderIdentity))
+	public.Use(middleware.EnforcePermissions(cfg, rbac.DispatcherPermission("run", "read")))
 
 	public.GET("/v1/run_hosts", publicController.ApiRunHostsList)
 	public.GET("/v1/runs", publicController.ApiRunsList)
