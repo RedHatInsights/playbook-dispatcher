@@ -19,8 +19,9 @@ ENV CONNECT_PLUGIN_PATH=/opt/kafka/plugins
 
 USER root
 
-RUN mkdir ${CONNECT_PLUGIN_PATH}
+RUN mkdir -p ${CONNECT_PLUGIN_PATH} /opt/kafka/custom-config/
 COPY --from=builder /deps $CONNECT_PLUGIN_PATH
+COPY event-streams/log4j.properties /opt/kafka/custom-config
 
 USER 1001
 
