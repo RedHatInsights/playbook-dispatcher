@@ -1,0 +1,112 @@
+apiVersion: v1
+kind: Template
+metadata:
+  name: playbook-dispatcher-connect
+parameters:
+- name: KAFKA_CONNECT_IMAGE
+  value: quay.io/cloudservices/playbook-dispatcher-connect
+- name: IMAGE_TAG
+  value: latest
+- name: KAFKA_BOOTSTRAP_HOST
+  value: platform-mq-kafka-bootstrap.platform-mq.svc.cluster.local
+- name: KAFKA_BOOTSTRAP_PORT
+  value: '9092'
+- name: NUM_REPLICAS
+  value: '1'
+- name: VERSION
+  value: '2.6.0'
+- name: CPU_REQUESTS
+  value: 500m
+- name: CPU_LIMITS
+  value: '1'
+- name: MEMORY_REQUESTS
+  value: 2Gi
+- name: MEMORY_LIMITS
+  value: 4Gi
+- name: XMX
+  value: 4G
+- name: XMS
+  value: 4G
+
+objects:
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    labels:
+      app: playbook-dispatcher
+    name: playbook-dispatcher-connect
+  spec:
+    replicas: ${{NUM_REPLICAS}}
+    selector:
+      matchLabels:
+        pod: playbook-dispatcher-connect
+    strategy:
+      rollingUpdate:
+        maxSurge: 1
+        maxUnavailable: 0
+      type: RollingUpdate
+    template:
+      metadata:
+        labels:
+          app: playbook-dispatcher
+          pod: playbook-dispatcher-connect
+      spec:
+        containers:
+        - command:
+          - /opt/kafka/kafka_connect_run.sh
+          env:
+          - name: KAFKA_CONNECT_CONFIGURATION
+            value: |
+              group.id=playbook-dispatcher-connect
+              key.converter=org.apache.kafka.connect.json.JsonConverter
+              value.converter=org.apache.kafka.connect.json.JsonConverter
+              offset.storage.topic=playbook-dispatcher-connect-config
+              status.storage.topic=playbook-dispatcher-connect-status
+              config.storage.topic=playbook-dispatcher-connect-offsets
+          - name: KAFKA_CONNECT_METRICS_ENABLED
+            value: "false"
+          - name: KAFKA_CONNECT_BOOTSTRAP_SERVERS
+            value: ${KAFKA_BOOTSTRAP_HOST}:${KAFKA_BOOTSTRAP_PORT}
+          - name: STRIMZI_KAFKA_GC_LOG_ENABLED
+            value: "false"
+          - name: KAFKA_HEAP_OPTS
+            value: "-Xms${XMS} -Xmx${XMS}"
+          image: ${KAFKA_CONNECT_IMAGE}:${IMAGE_TAG}
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /
+              port: rest-api
+              scheme: HTTP
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+          name: playbook-dispatcher-connect
+          ports:
+          - containerPort: 8083
+            name: rest-api
+            protocol: TCP
+          - containerPort: 9404
+            name: tcp-prometheus
+            protocol: TCP
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /
+              port: rest-api
+              scheme: HTTP
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 5
+          resources:
+            limits:
+              cpu: ${CPU_LIMITS}
+              memory: ${MEMORY_LIMITS}
+            requests:
+              cpu: ${CPU_REQUESTS}
+              memory: ${MEMORY_REQUESTS}
+        imagePullSecrets:
+        - name: quay-cloudservices-pull
+        - name: rh-registry-pull
