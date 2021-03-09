@@ -107,6 +107,14 @@ objects:
             requests:
               cpu: ${CPU_REQUESTS}
               memory: ${MEMORY_REQUESTS}
+          volumeMounts:
+          - mountPath: /opt/kafka/external-configuration/playbook-dispatcher-db
+            name: playbook-dispatcher-db
+            readOnly: true
         imagePullSecrets:
         - name: quay-cloudservices-pull
         - name: rh-registry-pull
+        volumes:
+        - name: playbook-dispatcher-db
+          secret:
+            secretName: playbook-dispatcher-db

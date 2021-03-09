@@ -55,6 +55,17 @@ objects:
     bootstrapServers: ${KAFKA_BOOTSTRAP_HOST}:${KAFKA_BOOTSTRAP_PORT}
     config:
       group.id: playbook-dispatcher-connect
+      config.providers: file
+      config.providers.file.class: org.apache.kafka.common.config.provider.FileConfigProvider
+    externalConfiguration:
+      volumes:
+        - name: rds-client-ca
+          secret:
+            secretName: rds-client-ca
+        # https://developers.redhat.com/blog/2020/02/14/using-secrets-in-apache-kafka-connect-configuration/
+        - name: playbook-dispatcher-db
+          secret:
+            secretName: playbook-dispatcher-db
     template:
       pod:
         imagePullSecrets:
