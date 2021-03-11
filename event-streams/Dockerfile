@@ -25,6 +25,10 @@ USER root
 
 RUN mkdir -p ${CONNECT_PLUGIN_PATH} /opt/kafka/custom-config/
 COPY --from=builder /src/target/playbook-dispatcher-smt.jar $CONNECT_PLUGIN_PATH
+
+# TODO: package separately https://issues.redhat.com/browse/RHCLOUD-12882
+COPY --from=builder /src/target/playbook-dispatcher-smt.jar /opt/kafka/libs
+
 COPY --from=builder /deps $CONNECT_PLUGIN_PATH
 COPY event-streams/log4j.properties /opt/kafka/custom-config
 
