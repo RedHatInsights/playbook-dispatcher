@@ -1,0 +1,63 @@
+---
+$id: run
+$schema: http://json-schema.org/draft-07/schema#
+type: object
+properties:
+  event_type:
+    type: string
+    enum:
+    - create
+    - read
+    - update
+    - delete
+  payload:
+    type: object
+    properties:
+      id:
+        type: string
+      account:
+        type: string
+      recipient:
+        type: string
+      correlation_id:
+        type: string
+      service:
+        type: string
+      url:
+        type: string
+        format: uri
+      labels:
+        type: object
+        additionalProperties:
+          type: string
+      status:
+        type: string
+        enum:
+          - running
+          - success
+          - failure
+          - timeout
+      timeout:
+        type: integer
+        minimum: 0
+      created_at:
+        type: string
+      updated_at:
+        type: string
+    required:
+      - id
+      - account
+      - recipient
+      - correlation_id
+      - service
+      - url
+      - labels
+      - status
+      - timeout
+      - created_at
+      - updated_at
+
+required:
+  - event_type
+  - payload
+

@@ -113,9 +113,9 @@ func (this *cloudConnectorClientImpl) SendCloudConnectorRequest(
 		return nil, true, nil
 	}
 
-	if res.JSON200 == nil {
+	if res.JSON201 == nil {
 		return nil, false, fmt.Errorf(`unexpected status code "%d" or content type "%s"`, res.HTTPResponse.StatusCode, res.HTTPResponse.Header.Get("content-type"))
 	}
 
-	return res.JSON200.Id, false, nil
+	return res.JSON201.Id, false, nil
 }

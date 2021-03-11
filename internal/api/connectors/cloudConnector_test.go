@@ -20,7 +20,7 @@ import (
 
 var _ = Describe("Cloud Connector", func() {
 	It("interprets the response correctly", func() {
-		doer := test.MockHttpClient(200, `{"id": "871e31aa-7d41-43e3-8ef7-05706a0ee34a"}`)
+		doer := test.MockHttpClient(201, `{"id": "871e31aa-7d41-43e3-8ef7-05706a0ee34a"}`)
 
 		client := NewConnectorClientWithHttpRequestDoer(config.Get(), &doer)
 		ctx := utils.SetLog(test.TestContext(), zap.NewNop().Sugar())
@@ -53,7 +53,7 @@ var _ = Describe("Cloud Connector", func() {
 	})
 
 	It("constructs a correct request", func() {
-		doer := test.MockHttpClient(200, `{"id": "871e31aa-7d41-43e3-8ef7-05706a0ee34a"}`)
+		doer := test.MockHttpClient(201, `{"id": "871e31aa-7d41-43e3-8ef7-05706a0ee34a"}`)
 
 		url := "http://example.com"
 		correlationId := uuid.New()
@@ -92,7 +92,7 @@ var _ = Describe("Cloud Connector", func() {
 
 	It("forwards identity header", func() {
 		requestId := "e6b06142-9589-4213-9a5e-1e2f513c448b"
-		doer := test.MockHttpClient(200, `{"id": "871e31aa-7d41-43e3-8ef7-05706a0ee34a"}`)
+		doer := test.MockHttpClient(201, `{"id": "871e31aa-7d41-43e3-8ef7-05706a0ee34a"}`)
 		ctx := context.WithValue(test.TestContext(), request_id.RequestIDKey, requestId)
 
 		client := NewConnectorClientWithHttpRequestDoer(config.Get(), &doer)

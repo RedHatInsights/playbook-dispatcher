@@ -1,0 +1,38 @@
+{
+    "name": "playbook-dispatcher-source",
+    "config": {
+        "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+        "tasks.max": "1",
+
+        "database.hostname": "db",
+        "database.port": "5432",
+        "database.user": "insights",
+        "database.password": "insights",
+        "database.dbname": "insights",
+
+        "slot.name": "debezium",
+        "plugin.name": "pgoutput",
+        "slot.max.retries": 999999999,
+        "database.server.name": "playbook-dispatcher",
+        "table.include.list": "public.runs",
+
+        "key.converter": "org.apache.kafka.connect.storage.StringConverter",
+        "value.converter": "org.apache.kafka.connect.storage.StringConverter",
+
+        "topic.creation.enable": true,
+        "topic.creation.default.replication.factor": 1,
+        "topic.creation.default.partitions": 1,
+        "topic.creation.default.cleanup.policy": "compact",
+
+        "transforms": "transformRunEvent",
+        "transforms.transformRunEvent.type": "com.redhat.cloud.platform.playbook_dispatcher.RunEventTransform",
+        "transforms.transformRunEvent.table": "runs",
+        "transforms.transformRunEvent.topic": "platform.playbook-dispatcher.runs",
+
+        "errors.tolerance": "all",
+        "errors.retry.delay.max.ms": 30000,
+	    "errors.retry.timeout": -1,
+        "errors.log.enable":true,
+	    "errors.log.include.messages":true
+    }
+}
