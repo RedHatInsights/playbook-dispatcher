@@ -57,6 +57,9 @@ objects:
       group.id: playbook-dispatcher-connect
       config.providers: file
       config.providers.file.class: org.apache.kafka.common.config.provider.FileConfigProvider
+      offset.storage.topic: playbook-dispatcher-connect-config
+      status.storage.topic: playbook-dispatcher-connect-status
+      config.storage.topic: playbook-dispatcher-connect-offsets
     externalConfiguration:
       volumes:
         - name: rds-client-ca
