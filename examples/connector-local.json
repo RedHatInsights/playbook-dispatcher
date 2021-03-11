@@ -1,5 +1,5 @@
 {
-    "name": "playbook-dispatcher-source-1",
+    "name": "playbook-dispatcher-source",
     "config": {
         "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
         "tasks.max": "1",
