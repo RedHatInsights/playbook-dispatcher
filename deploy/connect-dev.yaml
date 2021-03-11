@@ -63,6 +63,8 @@ objects:
               offset.storage.topic=playbook-dispatcher-connect-config
               status.storage.topic=playbook-dispatcher-connect-status
               config.storage.topic=playbook-dispatcher-connect-offsets
+              config.providers: file
+              config.providers.file.class: com.redhat.cloud.platform.playbook_dispatcher.config.PlainFileConfigProvider
           - name: KAFKA_CONNECT_METRICS_ENABLED
             value: "false"
           - name: KAFKA_CONNECT_BOOTSTRAP_SERVERS
@@ -118,3 +120,19 @@ objects:
         - name: playbook-dispatcher-db
           secret:
             secretName: playbook-dispatcher-db
+
+- apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      app: playbook-dispatcher
+    name: playbook-dispatcher-connect
+  spec:
+    ports:
+    - name: rest-api
+      port: 8083
+      protocol: TCP
+      targetPort: 8083
+    selector:
+      pod: playbook-dispatcher-connect
+    type: ClusterIP

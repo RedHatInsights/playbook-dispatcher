@@ -387,6 +387,8 @@ objects:
     name: postgres
   spec:
     replicas: 1
+    strategy:
+      type: Recreate
     selector:
       matchLabels:
         name: postgres
@@ -398,28 +400,34 @@ objects:
       spec:
         containers:
         - env:
-          - name: POSTGRESQL_USER
+          - name: POSTGRES_USER
             valueFrom:
               secretKeyRef:
                 key: db.user
                 name: playbook-dispatcher-db
-          - name: POSTGRESQL_PASSWORD
+          - name: POSTGRES_PASSWORD
             valueFrom:
               secretKeyRef:
                 key: db.password
                 name: playbook-dispatcher-db
-          - name: POSTGRESQL_DATABASE
+          - name: POSTGRES_DATABASE
             valueFrom:
               secretKeyRef:
                 key: db.name
                 name: playbook-dispatcher-db
-          image: registry.redhat.io/rhel8/postgresql-12:latest
+          - name: PGDATA
+            value: /var/lib/postgresql/data/pgdata
+          image: quay.io/debezium/postgres:12
           imagePullPolicy: IfNotPresent
           livenessProbe:
             exec:
               command:
-              - /usr/libexec/check-container
-              - --live
+              - psql
+              - -w
+              - -U
+              - insights
+              - -c
+              - 'SELECT 1'
             failureThreshold: 3
             initialDelaySeconds: 120
             periodSeconds: 10
@@ -432,7 +440,12 @@ objects:
           readinessProbe:
             exec:
               command:
-              - /usr/libexec/check-container
+              - psql
+              - -w
+              - -U
+              - insights
+              - -c
+              - 'SELECT 1'
             failureThreshold: 3
             initialDelaySeconds: 5
             periodSeconds: 10
@@ -446,7 +459,7 @@ objects:
               cpu: 200m
               memory: 512Mi
           volumeMounts:
-          - mountPath: /var/lib/pgsql/data
+          - mountPath: /var/lib/postgresql/data
             name: postgres-data
         volumes:
         - name: postgres-data
