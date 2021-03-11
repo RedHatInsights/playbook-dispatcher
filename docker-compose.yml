@@ -109,6 +109,8 @@ services:
         config.storage.topic=playbook-dispatcher-connect-offsets
         config.storage.replication.factor=1
         config.storage.partitions=1
+        config.providers: file
+        config.providers.file.class: com.redhat.cloud.platform.playbook_dispatcher.config.PlainFileConfigProvider
       KAFKA_CONNECT_METRICS_ENABLED: "false"
       STRIMZI_KAFKA_GC_LOG_ENABLED: "false"
       KAFKA_HEAP_OPTS: "-Xms512m -Xmx512m"
