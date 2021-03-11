@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: Template
+metadata:
+  name: playbook-dispatcher-topics
+objects:
+
+- apiVersion: kafka.strimzi.io/v1beta1
+  kind: KafkaTopic
+  metadata:
+    name: platform.playbook-dispatcher.runs
+    labels:
+      strimzi.io/cluster: ${KAFKA_CLUSTER}
+  spec:
+    partitions: 16
+    replicas: 3
+    topicName: platform.playbook-dispatcher.runs
+    config:
+      cleanup.policy: "compact,delete"
+      min.compaction.lag.ms: "3600000"
+      retention.bytes: "1073741824"
+      retention.ms: "2678400000"
+
+- name: KAFKA_CLUSTER
+  value: platform-mq
