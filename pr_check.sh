@@ -10,7 +10,7 @@ IQE_PLUGINS="rhc"
 IQE_MARKER_EXPRESSION="smoke"
 IQE_FILTER_EXPRESSION="playbook_dispatcher"
 
-# Install bonfire repo/initialize
+# Install bonfire repository/initialize
 CICD_URL=https://raw.githubusercontent.com/RedHatInsights/bonfire/master/cicd
 curl -s $CICD_URL/bootstrap.sh -o bootstrap.sh
 source bootstrap.sh  # checks out bonfire and changes to "cicd" dir...
