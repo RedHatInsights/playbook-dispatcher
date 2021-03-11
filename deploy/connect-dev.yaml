@@ -118,3 +118,19 @@ objects:
         - name: playbook-dispatcher-db
           secret:
             secretName: playbook-dispatcher-db
+
+- apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      app: playbook-dispatcher
+    name: playbook-dispatcher-connect
+  spec:
+    ports:
+    - name: rest-api
+      port: 8083
+      protocol: TCP
+      targetPort: 8083
+    selector:
+      pod: playbook-dispatcher-connect
+    type: ClusterIP
