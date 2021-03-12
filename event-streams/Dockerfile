@@ -23,6 +23,9 @@ ENV CONNECT_PLUGIN_PATH=/opt/kafka/plugins
 
 USER root
 
+RUN yum install epel-release -y && yum -y install jq
+COPY event-streams/check-connectors.sh /
+
 RUN mkdir -p ${CONNECT_PLUGIN_PATH} /opt/kafka/custom-config/
 COPY --from=builder /src/target/playbook-dispatcher-smt.jar $CONNECT_PLUGIN_PATH
 
