@@ -20,13 +20,13 @@ parameters:
 - name: CPU_LIMITS
   value: '1'
 - name: MEMORY_REQUESTS
-  value: 2Gi
+  value: 512Mi
 - name: MEMORY_LIMITS
-  value: 4Gi
+  value: 1Gi
 - name: XMX
-  value: 4G
+  value: 512m
 - name: XMS
-  value: 4G
+  value: 512m
 
 objects:
 - apiVersion: apps/v1
@@ -41,10 +41,7 @@ objects:
       matchLabels:
         pod: playbook-dispatcher-connect
     strategy:
-      rollingUpdate:
-        maxSurge: 1
-        maxUnavailable: 0
-      type: RollingUpdate
+      type: Recreate
     template:
       metadata:
         labels:
