@@ -27,6 +27,14 @@ parameters:
   value: 4G
 - name: XMS
   value: 4G
+- name: EVENT_CONSUMER_TOPIC
+  value: platform.playbook-dispatcher.runs
+- name: EVENT_CONSUMER_REPLICAS
+  value: '1'
+- name: EVENT_CONSUMER_GROUP
+  value: playbook-dispatcher-event-consumer
+- name: IMAGE_TAG_EVENT_CONSUMER
+  value: 57b442d
 
 objects:
 - apiVersion: kafka.strimzi.io/v1beta1
@@ -185,3 +193,43 @@ objects:
           name: kafka_connect_worker_rebalance_$1
           help: "Kafka Connect JMX metric rebalance information"
           type: GAUGE
+
+
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    labels:
+      app: playbook-dispatcher
+    name: playbook-dispatcher-event-consumer
+  spec:
+    replicas: ${{EVENT_CONSUMER_REPLICAS}}
+    selector:
+      matchLabels:
+        pod: playbook-dispatcher-event-consumer
+    strategy:
+      type: Recreate
+    template:
+      metadata:
+        labels:
+          app: playbook-dispatcher
+          pod: playbook-dispatcher-event-consumer
+      spec:
+        containers:
+        - command:
+          - /opt/kafka/bin/kafka-console-consumer.sh
+          - --bootstrap-server
+          - ${KAFKA_BOOTSTRAP_HOST}:${KAFKA_BOOTSTRAP_PORT}
+          - --from-beginning
+          - --group
+          - ${EVENT_CONSUMER_GROUP}
+          - --topic
+          - ${EVENT_CONSUMER_TOPIC}
+          image: ${KAFKA_CONNECT_IMAGE}:${IMAGE_TAG_EVENT_CONSUMER}
+          name: playbook-dispatcher-event-consumer
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi
