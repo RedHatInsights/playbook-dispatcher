@@ -211,7 +211,7 @@ objects:
         database.password: "${file:/opt/kafka/external-configuration/playbook-dispatcher-db/db.password}"
         database.dbname: "${file:/opt/kafka/external-configuration/playbook-dispatcher-db/db.name}"
         database.sslmode: verify-full
-        database.sslrootcert: /opt/kafka/external-configuration/rds-client-ca
+        database.sslrootcert: /opt/kafka/external-configuration/rds-client-ca/rds-cacert
 
         slot.name: debezium
         plugin.name: pgoutput
