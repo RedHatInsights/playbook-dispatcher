@@ -27,6 +27,14 @@ parameters:
   value: 4G
 - name: XMS
   value: 4G
+- name: EVENT_CONSUMER_TOPIC
+  value: platform.playbook-dispatcher.runs
+- name: EVENT_CONSUMER_REPLICAS
+  value: '1'
+- name: EVENT_CONSUMER_GROUP
+  value: playbook-dispatcher-event-consumer
+- name: IMAGE_TAG_EVENT_CONSUMER
+  value: 57b442d
 
 objects:
 - apiVersion: kafka.strimzi.io/v1beta1
@@ -185,3 +193,82 @@ objects:
           name: kafka_connect_worker_rebalance_$1
           help: "Kafka Connect JMX metric rebalance information"
           type: GAUGE
+
+- apiVersion: kafka.strimzi.io/v1alpha1
+  kind: KafkaConnector
+  metadata:
+    name: playbook-dispatcher-event-interface
+    labels:
+      app: playbook-dispatcher
+      strimzi.io/cluster: playbook-dispatcher-connect
+  spec:
+    class: io.debezium.connector.postgresql.PostgresConnector
+    tasksMax: 1
+    config:
+        database.hostname: "${file:/opt/kafka/external-configuration/playbook-dispatcher-db/db.host}"
+        database.port: "${file:/opt/kafka/external-configuration/playbook-dispatcher-db/db.port}"
+        database.user: "${file:/opt/kafka/external-configuration/playbook-dispatcher-db/db.user}"
+        database.password: "${file:/opt/kafka/external-configuration/playbook-dispatcher-db/db.password}"
+        database.dbname: "${file:/opt/kafka/external-configuration/playbook-dispatcher-db/db.name}"
+        database.sslmode: verify-full
+        database.sslrootcert: /opt/kafka/external-configuration/rds-client-ca
+
+        slot.name: debezium
+        plugin.name: pgoutput
+        slot.max.retries: 999999999
+        database.server.name: playbook-dispatcher
+        table.include.list: public.runs
+        tombstones.on.delete: false
+
+        key.converter: org.apache.kafka.connect.storage.StringConverter
+        value.converter: org.apache.kafka.connect.storage.StringConverter
+
+        transforms: transformRunEvent
+        transforms.transformRunEvent.type: com.redhat.cloud.platform.playbook_dispatcher.RunEventTransform
+        transforms.transformRunEvent.table: runs
+        transforms.transformRunEvent.topic: platform.playbook-dispatcher.runs
+
+        errors.tolerance: all
+        errors.retry.delay.max.ms: 30000
+        errors.retry.timeout: -1
+        errors.log.enable: "true"
+        errors.log.include.messages: "true"
+
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    labels:
+      app: playbook-dispatcher
+    name: playbook-dispatcher-event-consumer
+  spec:
+    replicas: ${{EVENT_CONSUMER_REPLICAS}}
+    selector:
+      matchLabels:
+        pod: playbook-dispatcher-event-consumer
+    strategy:
+      type: Recreate
+    template:
+      metadata:
+        labels:
+          app: playbook-dispatcher
+          pod: playbook-dispatcher-event-consumer
+      spec:
+        containers:
+        - command:
+          - /opt/kafka/bin/kafka-console-consumer.sh
+          - --bootstrap-server
+          - ${KAFKA_BOOTSTRAP_HOST}:${KAFKA_BOOTSTRAP_PORT}
+          - --from-beginning
+          - --group
+          - ${EVENT_CONSUMER_GROUP}
+          - --topic
+          - ${EVENT_CONSUMER_TOPIC}
+          image: ${KAFKA_CONNECT_IMAGE}:${IMAGE_TAG_EVENT_CONSUMER}
+          name: playbook-dispatcher-event-consumer
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi
