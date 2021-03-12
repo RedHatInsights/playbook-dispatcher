@@ -27,7 +27,7 @@ The API is only accessible to principals of type User (i.e. cert auth is not suf
 In addition, the API resources are subject [role based access control](https://internal.cloud.redhat.com/docs/services/rbac/).
 
 The API has rich filtering capabilities and supports client-specific representations using sparse fieldsets.
-See [API schema](./schemas/public.openapi.yaml) for more details.
+See [API schema](./schema/public.openapi.yaml) for more details.
 
 ## Internal REST interface
 
@@ -47,7 +47,32 @@ The keys are configured via environment variables in form of `PSK_AUTH_<service 
 PSK_AUTH_REMEDIATIONS=xwKhCUzgJ8 ./app run
 ```
 
-See [API schema](./schemas/private.openapi.yaml) for more details.
+See [API schema](./schema/private.openapi.yaml) for more details.
+
+## Event interface
+
+Services can integrate with Playbook Dispatcher by consuming its event interface.
+Playbook Dispatcher emits an event for every state change.
+These events are produced to `platform.playbook-dispatcher.runs` topic in Kafka from where integrating services can consume them.
+
+The key of each event is the id of the given playbook run.
+
+The value of each event is described by [a JSON schema](./schema/run.event.yaml).
+An event can be of type:
+
+- create - when a new playbook run is created
+- update - when the state of a playbook run changes
+- delete - when a playbook run is removed
+- read - special type of event used to re-populate the topic (i.e. to remind the consumers of the latest state of a given run). This event does not indicate state change but can be used to populate caches, etc.
+
+In addition, each event contains the following headers:
+
+- `event_type` - the type of the event (see above)
+- `service` - the service that created the given playbook run
+- `status` - current of the playbook run
+- `account` - the account (tenant) the given playbook run belong to
+
+The event headers make it possible to filter events without the need to parse the value of each event.
 
 ## Expected input format
 
@@ -120,10 +145,12 @@ For each Playbook run request it sents the following message to Cloud Connector:
 ### Prerequisities
 
 - Golang >= 1.14
+- docker-compose
 
 ### Running the service
 
-Run `docker-compose up --build` to start the service and its dependencies
+1. Run `docker-compose up --build` to start the service and its dependencies
+1. Run `make connector_create` to start the event interface
 
 The API can be accessed at <http://localhost:8000/api/playbook-dispatcher/v1/runs>
 

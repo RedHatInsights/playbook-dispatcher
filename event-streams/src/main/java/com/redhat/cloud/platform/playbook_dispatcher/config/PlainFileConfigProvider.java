@@ -3,9 +3,9 @@ package com.redhat.cloud.platform.playbook_dispatcher.config;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.kafka.common.config.ConfigData;
 import org.apache.kafka.common.config.ConfigException;
@@ -41,17 +41,16 @@ public class PlainFileConfigProvider implements ConfigProvider {
     @Override
     @SuppressWarnings("PMD.PreserveStackTrace")
     public ConfigData get(String path, Set<String> keys) {
-        if (path == null || path.length() != 0 || keys.size() != 1) {
+        if (path == null || path.length() != 0) {
             throw new IllegalArgumentException("Only basic syntax (e.g. ${file:/path/to/file}) is supported");
         }
 
-        final String file = keys.iterator().next();
-
-        try {
-            final String value = new String(Files.readAllBytes(Paths.get(file))).trim();
-            return new ConfigData(Collections.singletonMap(file, value));
-        } catch (IOException e) {
-            throw new ConfigException("Error reading " + file + " due to " + e.getMessage());
-        }
+        return new ConfigData(keys.stream().collect(Collectors.toMap(key -> key, key -> {
+            try {
+                return new String(Files.readAllBytes(Paths.get(key))).trim();
+            } catch (IOException e) {
+                throw new ConfigException("Error reading " + key + " due to " + e.toString());
+            }
+        })));
     }
 }

@@ -8,7 +8,7 @@ parameters:
 - name: IMAGE_TAG
   value: latest
 - name: KAFKA_BOOTSTRAP_HOST
-  value: platform-mq-kafka-bootstrap.platform-mq.svc.cluster.local
+  value: platform-mq-ci-kafka-bootstrap.platform-mq-ci.svc.cluster.local
 - name: KAFKA_BOOTSTRAP_PORT
   value: '9092'
 - name: NUM_REPLICAS
@@ -20,13 +20,21 @@ parameters:
 - name: CPU_LIMITS
   value: '1'
 - name: MEMORY_REQUESTS
-  value: 2Gi
+  value: 512Mi
 - name: MEMORY_LIMITS
-  value: 4Gi
+  value: 1Gi
 - name: XMX
-  value: 4G
+  value: 512m
 - name: XMS
-  value: 4G
+  value: 512m
+- name: EVENT_CONSUMER_TOPIC
+  value: platform.playbook-dispatcher.runs
+- name: EVENT_CONSUMER_REPLICAS
+  value: '1'
+- name: EVENT_CONSUMER_GROUP
+  value: playbook-dispatcher-event-consumer
+- name: IMAGE_TAG_EVENT_CONSUMER
+  value: 57b442d
 
 objects:
 - apiVersion: apps/v1
@@ -41,10 +49,7 @@ objects:
       matchLabels:
         pod: playbook-dispatcher-connect
     strategy:
-      rollingUpdate:
-        maxSurge: 1
-        maxUnavailable: 0
-      type: RollingUpdate
+      type: Recreate
     template:
       metadata:
         labels:
@@ -75,15 +80,14 @@ objects:
             value: "-Xms${XMS} -Xmx${XMS}"
           image: ${KAFKA_CONNECT_IMAGE}:${IMAGE_TAG}
           livenessProbe:
-            failureThreshold: 3
-            httpGet:
-              path: /
-              port: rest-api
-              scheme: HTTP
+            exec:
+              command:
+              - /check-connectors.sh
+            failureThreshold: 6
             initialDelaySeconds: 60
-            periodSeconds: 10
+            periodSeconds: 15
             successThreshold: 1
-            timeoutSeconds: 5
+            timeoutSeconds: 10
           name: playbook-dispatcher-connect
           ports:
           - containerPort: 8083
@@ -136,3 +140,42 @@ objects:
     selector:
       pod: playbook-dispatcher-connect
     type: ClusterIP
+
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    labels:
+      app: playbook-dispatcher
+    name: playbook-dispatcher-event-consumer
+  spec:
+    replicas: ${{EVENT_CONSUMER_REPLICAS}}
+    selector:
+      matchLabels:
+        pod: playbook-dispatcher-event-consumer
+    strategy:
+      type: Recreate
+    template:
+      metadata:
+        labels:
+          app: playbook-dispatcher
+          pod: playbook-dispatcher-event-consumer
+      spec:
+        containers:
+        - command:
+          - /opt/kafka/bin/kafka-console-consumer.sh
+          - --bootstrap-server
+          - ${KAFKA_BOOTSTRAP_HOST}:${KAFKA_BOOTSTRAP_PORT}
+          - --from-beginning
+          - --group
+          - ${EVENT_CONSUMER_GROUP}
+          - --topic
+          - ${EVENT_CONSUMER_TOPIC}
+          image: ${KAFKA_CONNECT_IMAGE}:${IMAGE_TAG_EVENT_CONSUMER}
+          name: playbook-dispatcher-event-consumer
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi
