@@ -22,7 +22,7 @@ source build.sh
 source deploy_ephemeral_env.sh
 
 # Deploy Ingress services to the ephemeral environment
-bonfire config deploy --ref-env insights-stage -app ingress --get-dependencies --namespace $NAMESPACE
+bonfire config deploy --ref-env insights-stage --app ingress --get-dependencies --namespace $NAMESPACE
 
 # Deploy an IQE pod and run the smoke tests
 source smoke_test.sh
