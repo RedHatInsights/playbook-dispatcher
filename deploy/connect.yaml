@@ -194,6 +194,24 @@ objects:
           help: "Kafka Connect JMX metric rebalance information"
           type: GAUGE
 
+- apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      app: playbook-dispatcher
+      component: playbook-dispatcher-connect
+    name: playbook-dispatcher-connect-connect-metrics
+  spec:
+    ports:
+    - name: tcp-prometheus
+      port: 9404
+      protocol: TCP
+      targetPort: 9404
+    selector:
+      app: playbook-dispatcher
+      strimzi.io/kind: KafkaConnect
+    type: ClusterIP
+
 - apiVersion: kafka.strimzi.io/v1alpha1
   kind: KafkaConnector
   metadata:
