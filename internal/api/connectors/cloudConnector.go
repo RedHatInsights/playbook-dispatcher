@@ -18,7 +18,7 @@ import (
 
 const basePath = "/api/cloud-connector/v1/"
 
-var cloudConnectorDirective = "playbook"
+var cloudConnectorDirective = "rhc-worker-playbook"
 
 type accountKeyType int
 

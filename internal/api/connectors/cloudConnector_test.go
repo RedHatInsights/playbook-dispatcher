@@ -79,7 +79,7 @@ var _ = Describe("Cloud Connector", func() {
 		Expect(err).ToNot(HaveOccurred())
 
 		Expect(parsedRequest["account"]).To(Equal("1234"))
-		Expect(parsedRequest["directive"]).To(Equal("playbook"))
+		Expect(parsedRequest["directive"]).To(Equal("rhc-worker-playbook"))
 		Expect(parsedRequest["recipient"]).To(Equal(recipient.String()))
 		Expect(parsedRequest["payload"]).To(Equal(url))
 
