@@ -133,7 +133,7 @@ For each Playbook run request it sents the following message to Cloud Connector:
     "metadata":{
         "crc_dispatcher_correlation_id":"e957564e-b823-4047-9ad7-0277dc61c88f", // see Non-standard event types for more details
         "response_interval":"600", // how often the recipient should send back responses
-        "return_url":"https://cloud.redhat.com/api/v1/ingres/upload" // URL to post responses to
+        "return_url":"https://cloud.redhat.com/api/ingress/v1/upload" // URL to post responses to
     },
     // playbook to execute
     "payload": "https://cloud.redhat.com/api/v1/remediations/1234/playbook?hosts=8f876606-5289-47f7-bb65-3966f0ba3ae1"
