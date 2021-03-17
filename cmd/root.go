@@ -57,6 +57,12 @@ func init() {
 		Short: "Undo all database migration",
 		RunE:  migrate,
 	})
+
+	rootCmd.AddCommand(&cobra.Command{
+		Use:   "clean",
+		Short: "Run database cleanup actions",
+		RunE:  clean,
+	})
 }
 
 func Execute() error {

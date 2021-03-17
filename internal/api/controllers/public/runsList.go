@@ -61,13 +61,13 @@ func (this *controllers) ApiRunsList(ctx echo.Context, params ApiRunsListParams)
 			status := *params.Filter.Status
 			switch status {
 			case dbModel.RunStatusTimeout:
-				queryBuilder.Where("runs.created_at + runs.timeout * interval '1 second' <= NOW()")
-				status = dbModel.RunStatusRunning
+				queryBuilder.Where("runs.status = 'timeout' OR runs.status = 'running' AND runs.created_at + runs.timeout * interval '1 second' <= NOW()")
 			case dbModel.RunStatusRunning:
+				queryBuilder.Where("runs.status = ?", status)
 				queryBuilder.Where("runs.created_at + runs.timeout * interval '1 second' > NOW()")
+			default:
+				queryBuilder.Where("runs.status = ?", status)
 			}
-
-			queryBuilder.Where("runs.status = ?", status)
 		}
 
 		if params.Filter.Recipient != nil {
