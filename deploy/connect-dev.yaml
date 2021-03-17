@@ -69,7 +69,7 @@ objects:
               status.storage.topic=playbook-dispatcher-connect-status
               config.storage.topic=playbook-dispatcher-connect-offsets
               config.providers: file
-              config.providers.file.class: com.redhat.cloud.platform.playbook_dispatcher.config.PlainFileConfigProvider
+              config.providers.file.class: com.redhat.insights.kafka.config.providers.PlainFileConfigProvider
           - name: KAFKA_CONNECT_METRICS_ENABLED
             value: "false"
           - name: KAFKA_CONNECT_BOOTSTRAP_SERVERS
