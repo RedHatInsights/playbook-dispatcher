@@ -64,7 +64,7 @@ objects:
     config:
       group.id: playbook-dispatcher-connect
       config.providers: file
-      config.providers.file.class: com.redhat.cloud.platform.playbook_dispatcher.config.PlainFileConfigProvider
+      config.providers.file.class: com.redhat.insights.kafka.config.providers.PlainFileConfigProvider
       offset.storage.topic: playbook-dispatcher-connect-config
       status.storage.topic: playbook-dispatcher-connect-status
       config.storage.topic: playbook-dispatcher-connect-offsets
