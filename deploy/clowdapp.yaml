@@ -196,6 +196,52 @@ objects:
             cpu: 250m
             memory: 256Mi
 
+    jobs:
+    - name: cleaner
+      schedule: ${CLEANER_SCHEDULE}
+      restartPolicy: OnFailure
+      concurrencyPolicy: Replace
+      podSpec:
+        image: ${IMAGE}:${IMAGE_TAG}
+        args:
+        - clean
+        env:
+        - name: LOG_LEVEL
+          value: ${LOG_LEVEL}
+        - name: DB_HOST
+          valueFrom:
+            secretKeyRef:
+              key: db.host
+              name: playbook-dispatcher-db
+        - name: DB_PORT
+          valueFrom:
+            secretKeyRef:
+              key: db.port
+              name: playbook-dispatcher-db
+        - name: DB_NAME
+          valueFrom:
+            secretKeyRef:
+              key: db.name
+              name: playbook-dispatcher-db
+        - name: DB_USERNAME
+          valueFrom:
+            secretKeyRef:
+              key: db.user
+              name: playbook-dispatcher-db
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: db.password
+              name: playbook-dispatcher-db
+        - name: DB_SSLMODE
+          value: ${DB_SSLMODE}
+        resources:
+          limits:
+            cpu: 200m
+            memory: 128Mi
+          requests:
+            cpu: 100m
+            memory: 64Mi
 
 parameters:
 - name: IMAGE_TAG
@@ -236,3 +282,6 @@ parameters:
   # Used for testing in ephemeral environments only. If a value is not provided the principal is ignored.
 - name: PSK_AUTH_TEST
   value: ""
+
+- name: CLEANER_SCHEDULE
+  value: "*/10 * * * *"
