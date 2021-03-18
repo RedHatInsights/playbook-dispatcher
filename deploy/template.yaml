@@ -354,6 +354,69 @@ objects:
         imagePullSecrets:
         - name: quay-cloudservices-pull
 
+- apiVersion: batch/v1beta1
+  kind: CronJob
+  metadata:
+    labels:
+      app: playbook-dispatcher
+    name: playbook-dispatcher-cleaner
+  spec:
+    schedule: ${CLEANER_SCHEDULE}
+    concurrencyPolicy: Replace
+    suspend: ${{CLEANER_SUSPEND}}
+    successfulJobsHistoryLimit: 3
+    failedJobsHistoryLimit: 3
+    jobTemplate:
+      spec:
+        template:
+          spec:
+            restartPolicy: OnFailure
+            containers:
+            - args:
+              - clean
+              env:
+              - name: LOG_LEVEL
+                value: ${LOG_LEVEL}
+              - name: CLOWDER_ENABLED
+                value: "false"
+              - name: DB_HOST
+                valueFrom:
+                  secretKeyRef:
+                    key: db.host
+                    name: playbook-dispatcher-db
+              - name: DB_PORT
+                valueFrom:
+                  secretKeyRef:
+                    key: db.port
+                    name: playbook-dispatcher-db
+              - name: DB_NAME
+                valueFrom:
+                  secretKeyRef:
+                    key: db.name
+                    name: playbook-dispatcher-db
+              - name: DB_USERNAME
+                valueFrom:
+                  secretKeyRef:
+                    key: db.user
+                    name: playbook-dispatcher-db
+              - name: DB_PASSWORD
+                valueFrom:
+                  secretKeyRef:
+                    key: db.password
+                    name: playbook-dispatcher-db
+              - name: DB_SSLMODE
+                value: ${DB_SSLMODE}
+
+              image: ${IMAGE}:${IMAGE_TAG}
+              name: playbook-dispatcher-cleaner
+              resources:
+                limits:
+                  cpu: 200m
+                  memory: 128Mi
+                requests:
+                  cpu: 100m
+                  memory: 64Mi
+
 - apiVersion: v1
   kind: Service
   metadata:
@@ -534,3 +597,8 @@ parameters:
   value: impl
 - name: RBAC_HOST
   required: true
+
+- name: CLEANER_SCHEDULE
+  value: "*/10 * * * *"
+- name: CLEANER_SUSPEND
+  value: "false"
