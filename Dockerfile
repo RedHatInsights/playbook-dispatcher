@@ -9,6 +9,8 @@ RUN go build -v -o app .
 
 FROM registry.access.redhat.com/ubi8-minimal
 
+ARG BUILD_COMMIT=unknown
+
 COPY --from=builder /go/src/app/app .
 COPY schema /schema
 COPY migrations /migrations
@@ -16,7 +18,8 @@ COPY migrations /migrations
 ENV SCHEMA_MESSAGE_RESPONSE=/schema/playbookRunResponse.message.yaml \
     SCHEMA_RUNNER_EVENT=/schema/ansibleRunnerJobEvent.yaml \
     SCHEMA_API_PRIVATE=/schema/private.openapi.yaml \
-    MIGRATIONS_DIR=/migrations
+    MIGRATIONS_DIR=/migrations \
+    BUILD_COMMIT=${BUILD_COMMIT}
 
 USER 1001
 
