@@ -30,7 +30,7 @@ func init() {
 func Get() *viper.Viper {
 	options := viper.New()
 
-	options.SetDefault("openshift.build.commit", "unknown")
+	options.SetDefault("build.commit", "unknown")
 
 	options.SetDefault("log.level", "debug")
 	options.SetDefault("demo.mode", false)

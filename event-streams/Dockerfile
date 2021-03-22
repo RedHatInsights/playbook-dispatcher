@@ -23,8 +23,11 @@ RUN ./mvnw -Dschema.event.run=/src/run.event.yaml clean package && \
 
 FROM quay.io/strimzi/kafka:latest-kafka-2.7.0
 
+ARG BUILD_COMMIT=unknown
+
 ENV CONNECT_PLUGIN_PATH=/opt/kafka/plugins \
-    CONNECT_LIB_PATH=/opt/kafka/libs
+    CONNECT_LIB_PATH=/opt/kafka/libs \
+    BUILD_COMMIT=${BUILD_COMMIT}
 
 USER root
 

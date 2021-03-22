@@ -84,7 +84,7 @@ func run(cmd *cobra.Command, args []string) error {
 		errors <- metricsServer.Start(fmt.Sprintf("0.0.0.0:%d", cfg.GetInt("metrics.port")))
 	}()
 
-	log.Infow("Playbook dispatcher started", "version", cfg.GetString("openshift.build.commit"))
+	log.Infow("Playbook dispatcher started", "version", cfg.GetString("build.commit"))
 
 	// stop on signal or error, whatever comes first
 	select {
