@@ -3,9 +3,15 @@ openapi: 3.0.3
 info:
   title: Playbook Dispatcher
   description: Playbook Dispatcher is a service for running Ansible Playbooks on hosts connected via Cloud Connector.
-  version: 0.0.1
+  version: 1.0.0
   contact:
     email: jozef@redhat.com
+
+servers:
+  - url: https://cloud.redhat.com
+    description: production server
+  - url: /
+    description: relative path
 
 paths:
   /api/playbook-dispatcher/v1/runs:
