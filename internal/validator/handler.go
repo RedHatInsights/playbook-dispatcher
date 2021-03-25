@@ -85,6 +85,7 @@ func (this *handler) handleRequest(
 	events, err := this.validateContent(ctx, data)
 	if err != nil {
 		this.validationFailed(ctx, err, ingressResponse)
+		utils.GetLogFromContext(ctx).Debugw("Invalid payload details", "data", string(data))
 		return
 	}
 
