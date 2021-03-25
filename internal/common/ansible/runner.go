@@ -26,7 +26,9 @@ func GetStdout(events []messageModel.PlaybookRunResponseMessageYamlEventsElem) (
 	})
 
 	for _, event := range events {
-		result += event.Stdout
+		if event.Stdout != nil {
+			result += *event.Stdout
+		}
 	}
 
 	return

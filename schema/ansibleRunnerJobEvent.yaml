@@ -16,7 +16,9 @@ properties:
   counter:
     type: integer
   stdout:
-    type: string
+    type:
+      - string
+      - "null"
   start_line:
     type: integer
     minimum: 0
@@ -43,6 +45,5 @@ required:
   - event
   - uuid
   - counter
-  - stdout
   - start_line
   - end_line
