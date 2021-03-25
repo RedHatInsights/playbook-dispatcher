@@ -304,6 +304,8 @@ objects:
               secretKeyRef:
                 key: key
                 name: client-psk-cloud-connector
+          - name: RESPONSE_INTERVAL
+            value: ${RESPONSE_INTERVAL}
 
           - name: WEB_PORT
             value: "8000"
@@ -592,6 +594,8 @@ parameters:
   value: impl
 - name: CLOUD_CONNECTOR_HOST
   required: true
+- name: RESPONSE_INTERVAL
+  value: "30"
 
 - name: RBAC_IMPL
   value: impl
