@@ -90,6 +90,8 @@ objects:
               secretKeyRef:
                 key: key
                 name: client-psk-cloud-connector
+          - name: RESPONSE_INTERVAL
+            value: ${RESPONSE_INTERVAL}
 
           - name: RBAC_IMPL
             value: ${RBAC_IMPL}
@@ -273,6 +275,8 @@ parameters:
   value: mock
 - name: CLOUD_CONNECTOR_HOST
   value: mock
+- name: RESPONSE_INTERVAL
+  value: "30"
 
 - name: RBAC_IMPL
   value: impl
