@@ -22,7 +22,7 @@ type PlaybookRunResponseMessageYamlEventsElem struct {
 	StartLine int `json:"start_line"`
 
 	// Stdout corresponds to the JSON schema field "stdout".
-	Stdout string `json:"stdout"`
+	Stdout *string `json:"stdout,omitempty"`
 
 	// Uuid corresponds to the JSON schema field "uuid".
 	Uuid string `json:"uuid"`
@@ -60,9 +60,6 @@ func (j *PlaybookRunResponseMessageYamlEventsElem) UnmarshalJSON(b []byte) error
 	}
 	if v, ok := raw["start_line"]; !ok || v == nil {
 		return fmt.Errorf("field start_line: required")
-	}
-	if v, ok := raw["stdout"]; !ok || v == nil {
-		return fmt.Errorf("field stdout: required")
 	}
 	if v, ok := raw["uuid"]; !ok || v == nil {
 		return fmt.Errorf("field uuid: required")
