@@ -59,6 +59,7 @@ func (this *handler) handleRequest(
 	request *messageModel.IngressValidationRequest,
 ) {
 	ctx = utils.WithRequestId(ctx, request.RequestID)
+	ctx = utils.SetLog(ctx, utils.GetLogFromContext(ctx).With("url", request.URL))
 	utils.GetLogFromContext(ctx).Debugw("Processing request", "account", request.Account)
 
 	ingressResponse := &messageModel.IngressValidationResponse{
