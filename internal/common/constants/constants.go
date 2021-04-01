@@ -5,7 +5,7 @@ const (
 	HeaderCorrelationId = "x-rh-insights-playbook-dispatcher-correlation-id"
 	HeaderIdentity      = "x-rh-identity"
 
-	HeaderCloudConnectorClientID = "x-rh-receptor-controller-client-id"
-	HeaderCloudConnectorAccount  = "x-rh-receptor-controller-account"
-	HeaderCloudConnectorPSK      = "x-rh-receptor-controller-psk"
+	HeaderCloudConnectorClientID = "x-rh-cloud-connector-client-id"
+	HeaderCloudConnectorAccount  = "x-rh-cloud-connector-account"
+	HeaderCloudConnectorPSK      = "x-rh-cloud-connector-psk"
 )
