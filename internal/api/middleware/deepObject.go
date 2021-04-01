@@ -78,3 +78,18 @@ func GetDeepObject(ctx echo.Context, param string, fields ...string) map[string]
 		return result
 	}
 }
+
+const queryStringKey string = "playbook-dispatcher-query-string"
+
+func CaptureQueryString() echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			c.Set(queryStringKey, c.QueryString())
+			return next(c)
+		}
+	}
+}
+
+func GetQueryString(ctx echo.Context) string {
+	return ctx.Get(queryStringKey).(string)
+}

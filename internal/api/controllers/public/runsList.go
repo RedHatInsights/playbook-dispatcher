@@ -41,7 +41,7 @@ func (this *controllers) ApiRunsList(ctx echo.Context, params ApiRunsListParams)
 	identity := identityMiddleware.Get(ctx.Request().Context())
 
 	// tenant isolation
-	queryBuilder := this.database.Where("account = ?", identity.Identity.AccountNumber)
+	queryBuilder := this.database.Table("runs").Where("account = ?", identity.Identity.AccountNumber)
 
 	// rbac
 	permissions := middleware.GetPermissions(ctx)
@@ -53,8 +53,6 @@ func (this *controllers) ApiRunsList(ctx echo.Context, params ApiRunsListParams)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
-
-	queryBuilder.Select(utils.MapStrings(fields, mapFieldsToSql))
 
 	if params.Filter != nil {
 		if params.Filter.Status != nil {
@@ -87,6 +85,11 @@ func (this *controllers) ApiRunsList(ctx echo.Context, params ApiRunsListParams)
 		}
 	}
 
+	var total int64
+	queryBuilder.Count(&total)
+
+	queryBuilder.Select(utils.MapStrings(fields, mapFieldsToSql))
+
 	queryBuilder.Order(getOrderBy(params))
 	queryBuilder.Order("id") // secondary criteria to guarantee stable sorting
 
@@ -110,6 +113,8 @@ func (this *controllers) ApiRunsList(ctx echo.Context, params ApiRunsListParams)
 		Data: response,
 		Meta: Meta{
 			Count: len(response),
+			Total: int(total),
 		},
+		Links: createLinks("/api/playbook-dispatcher/v1/runs", middleware.GetQueryString(ctx), getLimit(params.Limit), getOffset(params.Offset), int(total)),
 	})
 }

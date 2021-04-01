@@ -33,11 +33,30 @@ type Labels struct {
 	AdditionalProperties map[string]string `json:"-"`
 }
 
+// Links defines model for Links.
+type Links struct {
+
+	// relative link to the first page of the query results
+	First string `json:"first"`
+
+	// relative link to the last page of the query results
+	Last string `json:"last"`
+
+	// relative link to the next page of the query results
+	Next *string `json:"next,omitempty"`
+
+	// relative link to the previous page of the query results
+	Previous *string `json:"previous,omitempty"`
+}
+
 // Meta defines model for Meta.
 type Meta struct {
 
 	// number of results returned
 	Count int `json:"count"`
+
+	// total number of results matching the query
+	Total int `json:"total"`
 }
 
 // Run defines model for Run.
@@ -96,7 +115,8 @@ type RunHost struct {
 
 // RunHosts defines model for RunHosts.
 type RunHosts struct {
-	Data []RunHost `json:"data"`
+	Data  []RunHost `json:"data"`
+	Links Links     `json:"links"`
 
 	// Information about returned entities
 	Meta Meta `json:"meta"`
@@ -129,7 +149,8 @@ type RunTimeout int
 
 // Runs defines model for Runs.
 type Runs struct {
-	Data []Run `json:"data"`
+	Data  []Run `json:"data"`
+	Links Links `json:"links"`
 
 	// Information about returned entities
 	Meta Meta `json:"meta"`

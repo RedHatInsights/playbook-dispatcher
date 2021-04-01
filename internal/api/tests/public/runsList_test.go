@@ -345,4 +345,48 @@ var _ = Describe("runsList", func() {
 			Expect(string(*runs.Data[2].Service)).To(BeElementOf(expected...))
 		})
 	})
+
+	Describe("links", func() {
+		BeforeEach(func() {
+			var runs = []dbModel.Run{
+				test.NewRun(accountNumber()),
+				test.NewRun(accountNumber()),
+				test.NewRun(accountNumber()),
+				test.NewRun(accountNumber()),
+				test.NewRun(accountNumber()),
+			}
+
+			Expect(db().Create(&runs).Error).ToNot(HaveOccurred())
+		})
+
+		It("returns links on no query params", func() {
+			runs, res := listRuns()
+			Expect(res.StatusCode()).To(Equal(http.StatusOK))
+
+			Expect((*runs).Links.First).To(Equal("/api/playbook-dispatcher/v1/runs?limit=50&offset=0"))
+			Expect((*runs).Links.Last).To(Equal("/api/playbook-dispatcher/v1/runs?limit=50&offset=0"))
+			Expect((*runs).Links.Next).To(BeNil())
+			Expect((*runs).Links.Previous).To(BeNil())
+		})
+
+		It("returns links when paginating", func() {
+			runs, res := listRuns("limit", 1, "offset", 1)
+			Expect(res.StatusCode()).To(Equal(http.StatusOK))
+
+			Expect((*runs).Links.First).To(Equal("/api/playbook-dispatcher/v1/runs?limit=1&offset=0"))
+			Expect((*runs).Links.Last).To(Equal("/api/playbook-dispatcher/v1/runs?limit=1&offset=4"))
+			Expect(*(*runs).Links.Next).To(Equal("/api/playbook-dispatcher/v1/runs?limit=1&offset=2"))
+			Expect(*(*runs).Links.Previous).To(Equal("/api/playbook-dispatcher/v1/runs?limit=1&offset=0"))
+		})
+
+		It("propagates other query parameters", func() {
+			runs, res := listRuns("limit", 1, "offset", 1, "sort_by", "created_at:desc", "fields[data]", "id", "filter[status]", "running")
+			Expect(res.StatusCode()).To(Equal(http.StatusOK))
+
+			Expect((*runs).Links.First).To(Equal("/api/playbook-dispatcher/v1/runs?fields%5Bdata%5D=id&filter%5Bstatus%5D=running&limit=1&offset=0&sort_by=created_at%3Adesc"))
+			Expect((*runs).Links.Last).To(Equal("/api/playbook-dispatcher/v1/runs?fields%5Bdata%5D=id&filter%5Bstatus%5D=running&limit=1&offset=4&sort_by=created_at%3Adesc"))
+			Expect(*(*runs).Links.Next).To(Equal("/api/playbook-dispatcher/v1/runs?fields%5Bdata%5D=id&filter%5Bstatus%5D=running&limit=1&offset=2&sort_by=created_at%3Adesc"))
+			Expect(*(*runs).Links.Previous).To(Equal("/api/playbook-dispatcher/v1/runs?fields%5Bdata%5D=id&filter%5Bstatus%5D=running&limit=1&offset=0&sort_by=created_at%3Adesc"))
+		})
+	})
 })

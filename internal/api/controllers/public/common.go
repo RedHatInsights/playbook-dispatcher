@@ -2,6 +2,10 @@ package public
 
 import (
 	"fmt"
+	"math"
+	"net/url"
+	"playbook-dispatcher/internal/common/utils"
+	"strconv"
 	"strings"
 )
 
@@ -44,4 +48,34 @@ func parseFields(input map[string][]string, key string, knownFields map[string]s
 	}
 
 	return result, nil
+}
+
+func createLinks(base string, queryString string, limit, offset, total int) Links {
+	lastPage := int(math.Floor(float64(utils.Max(total-1, 0)) / float64(limit)))
+
+	links := Links{
+		First: createLink(base, queryString, limit, 0),
+		Last:  createLink(base, queryString, limit, lastPage*limit),
+	}
+
+	if offset > 0 {
+		previous := createLink(base, queryString, limit, utils.Max(offset-limit, 0))
+		links.Previous = &previous
+	}
+
+	if offset+limit < total {
+		next := createLink(base, queryString, limit, offset+limit)
+		links.Next = &next
+	}
+
+	return links
+}
+
+func createLink(base string, queryString string, limit, offset int) string {
+	query, _ := url.ParseQuery(queryString)
+
+	query.Set("limit", strconv.Itoa(limit))
+	query.Set("offset", strconv.Itoa(offset))
+
+	return fmt.Sprintf("%s?%s", base, query.Encode())
 }

@@ -185,4 +185,54 @@ var _ = Describe("runHostList", func() {
 			Expect(string(*runs.Data[1].Run.Id)).To(BeElementOf(expected))
 		})
 	})
+
+	Describe("links", func() {
+		BeforeEach(func() {
+			var data = []dbModel.Run{
+				test.NewRun(accountNumber()),
+				test.NewRun(accountNumber()),
+				test.NewRun(accountNumber()),
+				test.NewRun(accountNumber()),
+				test.NewRun(accountNumber()),
+			}
+
+			data[0].Events = utils.MustMarshal(test.EventSequenceOk("27e04536-a44f-4af5-bcf6-6e419c78ed5f", "localhost"))
+			data[1].Events = utils.MustMarshal(test.EventSequenceOk("012692bc-3d8b-4b5e-a800-055e8b977aa0", "localhost"))
+			data[2].Events = utils.MustMarshal(test.EventSequenceOk("69f45021-c76e-4003-94ea-08b06faaf5c9", "localhost"))
+			data[3].Events = utils.MustMarshal(test.EventSequenceOk("ee68d256-ba31-453e-9d00-74f85bcaa840", "localhost"))
+			data[4].Events = utils.MustMarshal(test.EventSequenceOk("a66f6e04-1388-476e-9e7e-3d270241aea4", "localhost"))
+
+			Expect(db().Create(&data).Error).ToNot(HaveOccurred())
+		})
+
+		It("returns links on no query params", func() {
+			runs, res := listRunHosts()
+			Expect(res.StatusCode()).To(Equal(http.StatusOK))
+
+			Expect((*runs).Links.First).To(Equal("/api/playbook-dispatcher/v1/run_hosts?limit=50&offset=0"))
+			Expect((*runs).Links.Last).To(Equal("/api/playbook-dispatcher/v1/run_hosts?limit=50&offset=0"))
+			Expect((*runs).Links.Next).To(BeNil())
+			Expect((*runs).Links.Previous).To(BeNil())
+		})
+
+		It("returns links when paginating", func() {
+			runs, res := listRunHosts("limit", 1, "offset", 1)
+			Expect(res.StatusCode()).To(Equal(http.StatusOK))
+
+			Expect((*runs).Links.First).To(Equal("/api/playbook-dispatcher/v1/run_hosts?limit=1&offset=0"))
+			Expect((*runs).Links.Last).To(Equal("/api/playbook-dispatcher/v1/run_hosts?limit=1&offset=4"))
+			Expect(*(*runs).Links.Next).To(Equal("/api/playbook-dispatcher/v1/run_hosts?limit=1&offset=2"))
+			Expect(*(*runs).Links.Previous).To(Equal("/api/playbook-dispatcher/v1/run_hosts?limit=1&offset=0"))
+		})
+
+		It("propagates other query parameters", func() {
+			runs, res := listRunHosts("limit", 1, "offset", 1, "fields[data]", "host", "filter[status]", "running")
+			Expect(res.StatusCode()).To(Equal(http.StatusOK))
+
+			Expect((*runs).Links.First).To(Equal("/api/playbook-dispatcher/v1/run_hosts?fields%5Bdata%5D=host&filter%5Bstatus%5D=running&limit=1&offset=0"))
+			Expect((*runs).Links.Last).To(Equal("/api/playbook-dispatcher/v1/run_hosts?fields%5Bdata%5D=host&filter%5Bstatus%5D=running&limit=1&offset=4"))
+			Expect(*(*runs).Links.Next).To(Equal("/api/playbook-dispatcher/v1/run_hosts?fields%5Bdata%5D=host&filter%5Bstatus%5D=running&limit=1&offset=2"))
+			Expect(*(*runs).Links.Previous).To(Equal("/api/playbook-dispatcher/v1/run_hosts?fields%5Bdata%5D=host&filter%5Bstatus%5D=running&limit=1&offset=0"))
+		})
+	})
 })
