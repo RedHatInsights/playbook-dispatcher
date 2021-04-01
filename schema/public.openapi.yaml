@@ -143,9 +143,12 @@ components:
             $ref: '#/components/schemas/Run'
         meta:
           $ref: '#/components/schemas/Meta'
+        links:
+          $ref: '#/components/schemas/Links'
       required:
       - data
       - meta
+      - links
 
     Run:
       type: object
@@ -182,9 +185,12 @@ components:
             $ref: '#/components/schemas/RunHost'
         meta:
           $ref: '#/components/schemas/Meta'
+        links:
+          $ref: '#/components/schemas/Links'
       required:
       - data
       - meta
+      - links
 
     RunHost:
       type: object
@@ -210,8 +216,33 @@ components:
           type: integer
           description: number of results returned
           example: 50
+        total:
+          type: integer
+          description: total number of results matching the query
+          example: 114
       required:
       - count
+      - total
+
+    Links:
+      type: object
+      additionalProperties: false
+      required:
+      - first
+      - last
+      properties:
+        first:
+          type: string
+          description: relative link to the first page of the query results
+        last:
+          type: string
+          description: relative link to the last page of the query results
+        next:
+          type: string
+          description: relative link to the next page of the query results
+        previous:
+          type: string
+          description: relative link to the previous page of the query results
 
     Error:
       type: object
@@ -413,3 +444,4 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
+

@@ -91,6 +91,7 @@ func Start(
 	public := server.Group("/api/playbook-dispatcher")
 	public.Use(echo.WrapMiddleware(identity.EnforceIdentity))
 	public.Use(echo.WrapMiddleware(middleware.EnforceIdentityType))
+	public.Use(middleware.CaptureQueryString())
 	public.Use(middleware.Hack("filter", "labels"))
 	public.Use(middleware.Hack("filter", "run"))
 	public.Use(middleware.Hack("filter", "run", "labels"))

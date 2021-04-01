@@ -26,14 +26,8 @@ func (this *controllers) ApiRunHostsList(ctx echo.Context, params ApiRunHostsLis
 	}
 
 	queryBuilder := this.database.
-		Select(
-			"id",
-			"events",
-			`CASE WHEN runs.status='running' AND runs.created_at + runs.timeout * interval '1 second' <= NOW() THEN 'timeout' ELSE runs.status END as status`,
-		).
-		Where("account = ?", identity.Identity.AccountNumber).
-		Order("created_at desc").
-		Order("id")
+		Table("runs").
+		Where("account = ?", identity.Identity.AccountNumber)
 
 	permissions := middleware.GetPermissions(ctx)
 	if allowedServices := rbac.GetPredicateValues(permissions, "service"); len(allowedServices) > 0 {
@@ -72,6 +66,18 @@ func (this *controllers) ApiRunHostsList(ctx echo.Context, params ApiRunHostsLis
 			}
 		}
 	}
+
+	var total int64
+	queryBuilder.Count(&total)
+
+	queryBuilder.
+		Select(
+			"id",
+			"events",
+			`CASE WHEN runs.status='running' AND runs.created_at + runs.timeout * interval '1 second' <= NOW() THEN 'timeout' ELSE runs.status END as status`,
+		).
+		Order("created_at desc").
+		Order("id")
 
 	var dbRuns []dbModel.Run
 	dbResult := queryBuilder.Find(&dbRuns)
@@ -131,6 +137,8 @@ func (this *controllers) ApiRunHostsList(ctx echo.Context, params ApiRunHostsLis
 		Data: hosts,
 		Meta: Meta{
 			Count: len(hosts),
+			Total: int(total), // TODO: this is inaccurate and will be fixed with db model refactoring
 		},
+		Links: createLinks("/api/playbook-dispatcher/v1/run_hosts", middleware.GetQueryString(ctx), getLimit(params.Limit), getOffset(params.Offset), int(total)),
 	})
 }
