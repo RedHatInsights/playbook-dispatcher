@@ -32,6 +32,11 @@
         <exclude name="LawOfDemeter" />
         <exclude name="LoosePackageCoupling" />
     </rule>
+    <rule ref="category/java/design.xml/CyclomaticComplexity">
+        <properties>
+            <property name="methodReportLevel" value="12" />
+        </properties>
+    </rule>
     <rule ref="category/java/errorprone.xml">
         <exclude name="BeanMembersShouldSerialize"/>
         <exclude name="DataflowAnomalyAnalysis"/>

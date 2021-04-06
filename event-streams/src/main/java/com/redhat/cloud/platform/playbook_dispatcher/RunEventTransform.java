@@ -37,6 +37,8 @@ public class RunEventTransform<T extends ConnectRecord<T>> implements Transforma
     private static final String CONFIG_TOPIC = "topic";
     private static final String CONFIG_TABLE = "table";
 
+    private static final String HEARTBEAT_TOPIC_PREFIX = "__debezium-heartbeat-pd";
+
     private static final Logger LOG = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -64,7 +66,12 @@ public class RunEventTransform<T extends ConnectRecord<T>> implements Transforma
 
     @Override
     public T apply(T record) {
-        if (!(record.key() instanceof Struct) || !(record.value() instanceof Struct)) {
+        if (record.topic() != null && record.topic().startsWith(HEARTBEAT_TOPIC_PREFIX)) {
+            LOG.info("Received heartbeat");
+            return null;
+        }
+
+        if (!(record.key() instanceof Struct) || !(record.value() instanceof Struct) || record.valueSchema().field("op") == null) {
             return record;
         }
 
