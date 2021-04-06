@@ -33,6 +33,9 @@
         "errors.retry.delay.max.ms": 30000,
 	    "errors.retry.timeout": -1,
         "errors.log.enable":true,
-	    "errors.log.include.messages":true
+        "errors.log.include.messages":true,
+
+        "heartbeat.interval.ms": 10000,
+        "heartbeat.topics.prefix": "__debezium-heartbeat-pd"
     }
 }
