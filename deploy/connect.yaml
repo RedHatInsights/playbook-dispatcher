@@ -252,6 +252,9 @@ objects:
         errors.log.enable: "true"
         errors.log.include.messages: "true"
 
+        heartbeat.interval.ms: 300000
+        heartbeat.topics.prefix: "__debezium-heartbeat-pd"
+
 - apiVersion: apps/v1
   kind: Deployment
   metadata:
