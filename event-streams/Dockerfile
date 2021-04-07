@@ -33,6 +33,7 @@ USER root
 
 RUN yum install epel-release -y && yum -y install jq
 COPY event-streams/check-connectors.sh /
+COPY examples/connector-local.json /
 
 RUN mkdir -p ${CONNECT_PLUGIN_PATH} /opt/kafka/custom-config/
 
