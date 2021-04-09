@@ -1,5 +1,6 @@
 CLOUD_CONNECTOR_SCHEMA ?= https://raw.githubusercontent.com/RedHatInsights/cloud-connector/master/internal/controller/api/api.spec.json
 RBAC_CONNECTOR_SCHEMA ?= https://cloud.redhat.com/api/rbac/v1/openapi.json
+PSK ?= secret
 
 init:
 	go install github.com/deepmap/oapi-codegen/cmd/oapi-codegen
@@ -78,3 +79,9 @@ grafana:
 
 run_cleaner:
 	ACG_CONFIG=$(shell pwd)/cdappconfig.json go run . clean
+
+ci-port-forward:
+	oc port-forward svc/playbook-dispatcher-api 8000:8000 -n playbook-dispatcher-ci
+
+ci-dispatch:
+	curl -v -H "content-type: application/json" -H "Authorization: PSK ${PSK}" -d "@examples/payload.json" http://localhost:8000/internal/dispatch

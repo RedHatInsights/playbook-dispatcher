@@ -166,3 +166,14 @@ Useful commands:
 ### Running tests
 
 `make test`
+
+### Running Playbooks using the CI environment
+
+1. Log in to insights-dev cluster using `oc` command
+1. Modify `examples/payload.json`
+    - use the correct account (tenant id)
+    - set the recipient to the rhc id of the target host
+    - set the URL of the Playbook to execute
+
+1. Start port forwarding by running `make ci-port-forward`
+1. Dispatch the playbook run by running `PSK=<pre-shared-key> make ci-dispatch` where `<pre-shared-key>` is replaced with the secret token
