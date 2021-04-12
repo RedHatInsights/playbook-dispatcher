@@ -149,8 +149,7 @@ For each Playbook run request it sents the following message to Cloud Connector:
 
 ### Running the service
 
-1. Run `docker-compose up --build` to start the service and its dependencies
-1. Run `make connector_create` to start the event interface
+Run `docker-compose up --build` to start the service and its dependencies
 
 The API can be accessed at <http://localhost:8000/api/playbook-dispatcher/v1/runs>
 

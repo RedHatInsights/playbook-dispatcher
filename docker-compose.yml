@@ -116,6 +116,14 @@ services:
       KAFKA_HEAP_OPTS: "-Xms512m -Xmx512m"
     command: /opt/kafka/kafka_connect_run.sh
 
+  connect-start:
+    image: quay.io/cloudservices/playbook-dispatcher-connect
+    links:
+      - connect
+    command: "curl -f -i -H 'Content-Type:application/json' -X POST connect:8083/connectors/ -d @/connector-local.json"
+    restart: on-failure
+
+
 volumes:
   minio_conf: {}
   minio_data: {}
