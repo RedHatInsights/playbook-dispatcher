@@ -72,25 +72,25 @@ var _ = Describe("Ansible", func() {
 	Describe("stdout", func() {
 		It("determines stdout from a successful run", func() {
 			events := loadFile("./test-events1.jsonl")
-			stdout := GetStdout(events)
+			stdout := GetStdout(events, nil)
 			Expect(stdout).To(Equal("\r\nPLAY [ping] ********************************************************************\r\nTASK [ping] ********************************************************************\x1b[0;32mok: [localhost]\x1b[0m\r\nPLAY RECAP *********************************************************************\r\n\x1b[0;32mlocalhost\x1b[0m                  : \x1b[0;32mok=1   \x1b[0m changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   \r\n"))
 		})
 
 		It("determines stdout from a failed run", func() {
 			events := loadFile("./test-events2.jsonl")
-			stdout := GetStdout(events)
+			stdout := GetStdout(events, nil)
 			Expect(stdout).To(Equal("\r\nPLAY [ping] ********************************************************************\r\nTASK [fail] ********************************************************************\x1b[0;31mfatal: [localhost]: FAILED! => {\"changed\": false, \"msg\": \"Always fail\"}\x1b[0m\r\nPLAY RECAP *********************************************************************\r\n\x1b[0;31mlocalhost\x1b[0m                  : ok=0    changed=0    unreachable=0    \x1b[0;31mfailed=1   \x1b[0m skipped=0    rescued=0    ignored=0   \r\n"))
 		})
 
 		It("determines stdout from an incomplete run", func() {
 			events := loadFile("./test-events3.jsonl")
-			stdout := GetStdout(events)
+			stdout := GetStdout(events, nil)
 			Expect(stdout).To(Equal("\r\nPLAY [ping] ********************************************************************\r\nTASK [ping] ********************************************************************"))
 		})
 
 		It("determines stdout from an incomplete run (2)", func() {
 			events := loadFile("./test-events4.jsonl")
-			stdout := GetStdout(events)
+			stdout := GetStdout(events, nil)
 			Expect(stdout).To(Equal(""))
 		})
 	})

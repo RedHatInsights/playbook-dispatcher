@@ -98,7 +98,7 @@ func (this *controllers) ApiRunHostsList(ctx echo.Context, params ApiRunHostsLis
 		runStatus := RunStatus(run.Status)
 
 		for _, host := range ansible.GetAnsibleHosts(events) {
-			stdout := ansible.GetStdout(events)
+			stdout := ansible.GetStdout(events, nil)
 			runHost := RunHost{}
 
 			for _, field := range fields {
