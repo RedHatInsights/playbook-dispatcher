@@ -20,12 +20,17 @@ func GetAnsibleHosts(events []messageModel.PlaybookRunResponseMessageYamlEventsE
 	return keys
 }
 
-func GetStdout(events []messageModel.PlaybookRunResponseMessageYamlEventsElem) (result string) {
+func GetStdout(events []messageModel.PlaybookRunResponseMessageYamlEventsElem, host *string) (result string) {
 	sort.SliceStable(events, func(i, j int) bool {
 		return events[i].Counter < events[j].Counter
 	})
 
 	for _, event := range events {
+		// if host parameter is defined only consider events for the given host
+		if host != nil && event.EventData != nil && *event.EventData.Host != *host {
+			continue
+		}
+
 		if event.Stdout != nil {
 			result += *event.Stdout
 		}

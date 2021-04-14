@@ -2,6 +2,8 @@ package responseConsumer
 
 import (
 	"context"
+	"errors"
+	"playbook-dispatcher/internal/common/ansible"
 	"playbook-dispatcher/internal/common/constants"
 	kafkaUtils "playbook-dispatcher/internal/common/kafka"
 	"playbook-dispatcher/internal/common/model/db"
@@ -13,6 +15,7 @@ import (
 	"github.com/google/uuid"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 const (
@@ -42,36 +45,92 @@ func (this *handler) onMessage(ctx context.Context, msg *k.Message) {
 
 	utils.GetLogFromContext(ctx).Debugw("Processing message", "account", value.Account, "upload_timestamp", value.UploadTimestamp)
 
-	status := inferStatus(&value.Events)
-
-	queryBuilder := this.db.Model(db.Run{}).
-		Select("status", "events").
-		Where("account = ?", value.Account).
-		Where("correlation_id = ?", correlationId)
+	status := inferStatus(&value.Events, nil)
 
 	eventsSerialized := utils.MustMarshal(value.Events)
 
-	result := queryBuilder.Updates(db.Run{
-		Status: status,
-		Events: eventsSerialized,
+	var runsUpdated int64
+
+	err = this.db.Transaction(func(tx *gorm.DB) error {
+		baseQuery := tx.Model(db.Run{}).
+			Where("account = ?", value.Account).
+			Where("correlation_id = ?", correlationId)
+
+		run := db.Run{}
+
+		if selectResult := baseQuery.Select("id").First(&run); selectResult.Error != nil {
+			if errors.Is(selectResult.Error, gorm.ErrRecordNotFound) {
+				return nil
+			}
+
+			utils.GetLogFromContext(ctx).Errorw("Error fetching run from db", "error", selectResult.Error)
+			return selectResult.Error
+		}
+
+		toUpdate := db.Run{
+			Status: status,
+			Events: eventsSerialized,
+		}
+
+		if updateResult := baseQuery.Select("status", "events").Updates(toUpdate); updateResult.Error != nil {
+			utils.GetLogFromContext(ctx).Errorw("Error updating run in db", "error", updateResult.Error)
+			return updateResult.Error
+		} else {
+			runsUpdated = updateResult.RowsAffected
+		}
+
+		hosts := ansible.GetAnsibleHosts(value.Events)
+
+		if len(hosts) == 0 {
+			return nil
+		}
+
+		toCreate := mapHostsToRunHosts(hosts, func(host string) db.RunHost {
+			return db.RunHost{
+				ID:     uuid.New(),
+				RunID:  run.ID,
+				Host:   host,
+				Status: inferStatus(&value.Events, &host),
+				Log:    ansible.GetStdout(value.Events, nil),
+			}
+		})
+
+		createResult := tx.Model(db.RunHost{}).
+			Clauses(clause.OnConflict{
+				Columns:   []clause.Column{{Name: "run_id"}, {Name: "host"}},
+				DoUpdates: clause.AssignmentColumns([]string{"status", "log"}),
+			}).
+			Create(&toCreate)
+
+		if createResult.Error != nil {
+			utils.GetLogFromContext(ctx).Errorw("Error upserting run hosts in db", "error", createResult.Error)
+			return createResult.Error
+		}
+
+		return nil
 	})
 
-	if result.Error != nil {
-		instrumentation.PlaybookRunUpdateError(ctx, result.Error, value.Account, status, correlationId)
-	} else if result.RowsAffected > 0 {
+	if err != nil {
+		instrumentation.PlaybookRunUpdateError(ctx, err, value.Account, status, correlationId)
+	} else if runsUpdated > 0 {
 		instrumentation.PlaybookRunUpdated(ctx, value.Account, status, correlationId)
 	} else {
 		instrumentation.PlaybookRunUpdateMiss(ctx, value.Account, status, correlationId)
 	}
 }
 
-func inferStatus(events *[]message.PlaybookRunResponseMessageYamlEventsElem) string {
+func inferStatus(events *[]message.PlaybookRunResponseMessageYamlEventsElem, host *string) string {
 	finished := false
 	failed := false
 
 	for _, event := range *events {
 		if event.Event == EventPlaybookOnStats {
 			finished = true
+		}
+
+		// if host parameter is defined only consider events for the given host
+		if host != nil && event.EventData != nil && event.EventData.Host != nil && *event.EventData.Host != *host {
+			continue
 		}
 
 		if event.Event == EventRunnerOnFailed {
@@ -104,4 +163,13 @@ func getHeaders(msg *k.Message) (requestId string, correlationId uuid.UUID, err 
 	}
 
 	return
+}
+
+func mapHostsToRunHosts(hosts []string, fn func(host string) db.RunHost) []db.RunHost {
+	result := make([]db.RunHost, len(hosts))
+	for i, host := range hosts {
+		result[i] = fn(host)
+	}
+
+	return result
 }
