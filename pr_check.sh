@@ -4,6 +4,7 @@
 # --------------------------------------------
 APP_NAME="playbook-dispatcher"  # name of app-sre "application" folder this component lives in
 COMPONENT_NAME="playbook-dispatcher"  # name of app-sre "resourceTemplate" in deploy.yaml for this component
+TEST_SECRETS_COMPONENT_NAME="test-secret-psk"  # name of app-sre "resourceTemplate" in deploy.yaml for this component
 IMAGE="quay.io/cloudservices/playbook-dispatcher"
 
 IQE_PLUGINS="rhc"
@@ -19,7 +20,18 @@ source bootstrap.sh  # checks out bonfire and changes to "cicd" dir...
 source build.sh
 
 # Deploy the new image to an ephemeral environment
-source deploy_ephemeral_env.sh
+source _common_deploy_logic.sh
+result=$(bonfire config deploy \
+    --ref-env insights-stage \
+    --app $APP_NAME \
+    --set-template-ref $COMPONENT_NAME=$GIT_COMMIT \
+    --set-template-ref $TEST_SECRETS_COMPONENT_NAME=$GIT_COMMIT \
+    --set-image-tag $IMAGE=$IMAGE_TAG \
+    --get-dependencies)
+
+if [ $? -eq 0 ]; then
+    export NAMESPACE=$result
+fi
 
 # Deploy Ingress services to the ephemeral environment
 bonfire config deploy --ref-env insights-stage --app ingress --get-dependencies --namespace $NAMESPACE
