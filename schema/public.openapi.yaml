@@ -205,6 +205,15 @@ components:
           $ref: '#/components/schemas/RunStatus'
         run:
           $ref: '#/components/schemas/Run'
+        links:
+          $ref: '#/components/schemas/RunHostLinks'
+
+    RunHostLinks:
+      type: object
+      properties:
+        inventory_host:
+          type: string
+          nullable: true
 
 
     Meta:
@@ -391,6 +400,7 @@ components:
                 - run
                 - status
                 - stdout
+                - links
             default:
               - host
               - status

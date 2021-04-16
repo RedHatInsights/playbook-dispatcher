@@ -22,11 +22,12 @@ const (
 	fieldStdout        = "stdout"
 	fieldService       = "service"
 	fieldCorrelationId = "correlation_id"
+	fieldLinks         = "links"
 )
 
 var (
 	runFields     = utils.IndexStrings(fieldId, fieldAccount, fieldRecipient, fieldUrl, fieldLabels, fieldTimeout, fieldStatus, fieldCreatedAt, fieldUpdatedAt, fieldService, fieldCorrelationId)
-	runHostFields = utils.IndexStrings(fieldHost, fieldRun, fieldStatus, fieldStdout)
+	runHostFields = utils.IndexStrings(fieldHost, fieldRun, fieldStatus, fieldStdout, fieldLinks)
 )
 
 var defaultRunFields = []string{

@@ -94,7 +94,7 @@ func NewRun(account string) dbModel.Run {
 	return NewRunWithStatus(account, "running")
 }
 
-func NewRunsWithLocalhost(accountNumber string, n int) *[]dbModel.Run {
+func NewRunsWithLocalhost(accountNumber string, n int) []dbModel.Run {
 	runs := make([]dbModel.Run, n)
 
 	for i := 0; i < n; i++ {
@@ -103,5 +103,49 @@ func NewRunsWithLocalhost(accountNumber string, n int) *[]dbModel.Run {
 		runs[i] = run
 	}
 
-	return &runs
+	return runs
+}
+
+func NewRunHost(runID uuid.UUID, status string, inventoryID *uuid.UUID) dbModel.RunHost {
+	return dbModel.RunHost{
+		ID:          uuid.New(),
+		RunID:       runID,
+		InventoryID: inventoryID,
+		Host:        "localhost",
+		Status:      status,
+		Log:         "",
+	}
+}
+
+func NewRunHostWithHostname(runID uuid.UUID, status string, host string) dbModel.RunHost {
+	return dbModel.RunHost{
+		ID:          uuid.New(),
+		RunID:       runID,
+		InventoryID: nil,
+		Host:        host,
+		Status:      status,
+		Log:         "",
+	}
+}
+
+func MapRunToHost(runs []dbModel.Run, fn func(run dbModel.Run) dbModel.RunHost) []dbModel.RunHost {
+	result := []dbModel.RunHost{}
+
+	for _, run := range runs {
+		result = append(result, fn(run))
+	}
+
+	return result
+}
+
+func FlatMapRunToHost(runs []dbModel.Run, fn func(run dbModel.Run) []dbModel.RunHost) []dbModel.RunHost {
+	result := []dbModel.RunHost{}
+
+	for _, run := range runs {
+		for _, host := range fn(run) {
+			result = append(result, host)
+		}
+	}
+
+	return result
 }
