@@ -1,15 +1,15 @@
 package public
 
 import (
+	"fmt"
 	"net/http"
 	"playbook-dispatcher/internal/api/instrumentation"
 	"playbook-dispatcher/internal/api/middleware"
 	"playbook-dispatcher/internal/api/rbac"
-	"playbook-dispatcher/internal/common/ansible"
 	dbModel "playbook-dispatcher/internal/common/model/db"
-	messageModel "playbook-dispatcher/internal/common/model/message"
 	"playbook-dispatcher/internal/common/utils"
 
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	identityMiddleware "github.com/redhatinsights/platform-go-middlewares/identity"
 )
@@ -26,31 +26,32 @@ func (this *controllers) ApiRunHostsList(ctx echo.Context, params ApiRunHostsLis
 	}
 
 	queryBuilder := this.database.
-		Table("runs").
-		Where("account = ?", identity.Identity.AccountNumber)
+		Table("run_hosts").
+		Joins("INNER JOIN runs on runs.id = run_hosts.run_id").
+		Where("runs.account = ?", identity.Identity.AccountNumber)
 
 	permissions := middleware.GetPermissions(ctx)
 	if allowedServices := rbac.GetPredicateValues(permissions, "service"); len(allowedServices) > 0 {
-		queryBuilder.Where("service IN ?", allowedServices)
+		queryBuilder.Where("runs.service IN ?", allowedServices)
 	}
 
 	if params.Filter != nil {
-		if params.Filter.Status != nil { // TODO: possible 1-n mapping between runs and hosts
+		if params.Filter.Status != nil {
 			status := *params.Filter.Status
 			switch status {
 			case dbModel.RunStatusTimeout:
-				queryBuilder.Where("runs.created_at + runs.timeout * interval '1 second' <= NOW()")
-				status = dbModel.RunStatusRunning
+				queryBuilder.Where("runs.status = 'timeout' OR runs.status = 'running' AND runs.created_at + runs.timeout * interval '1 second' <= NOW()")
 			case dbModel.RunStatusRunning:
+				queryBuilder.Where("run_hosts.status = ?", status)
 				queryBuilder.Where("runs.created_at + runs.timeout * interval '1 second' > NOW()")
+			default:
+				queryBuilder.Where("run_hosts.status = ?", status)
 			}
-
-			queryBuilder.Where("runs.status = ?", status)
 		}
 
 		if runFilters := middleware.GetDeepObject(ctx, "filter", "run"); len(runFilters) > 0 {
 			if id, ok := runFilters["id"]; ok {
-				queryBuilder.Where("runs.id = ?", id)
+				queryBuilder.Where("run_hosts.run_id = ?", id)
 			}
 
 			if service, ok := runFilters["service"]; ok {
@@ -70,17 +71,13 @@ func (this *controllers) ApiRunHostsList(ctx echo.Context, params ApiRunHostsLis
 	var total int64
 	queryBuilder.Count(&total)
 
-	queryBuilder.
-		Select(
-			"id",
-			"events",
-			`CASE WHEN runs.status='running' AND runs.created_at + runs.timeout * interval '1 second' <= NOW() THEN 'timeout' ELSE runs.status END as status`,
-		).
-		Order("created_at desc").
-		Order("id")
+	queryBuilder.Limit(limit)
+	queryBuilder.Offset(offset)
 
-	var dbRuns []dbModel.Run
-	dbResult := queryBuilder.Find(&dbRuns)
+	queryBuilder.Select(utils.MapStrings(fields, mapHostFieldsToSql))
+
+	var dbRunHosts []dbModel.RunHost
+	dbResult := queryBuilder.Find(&dbRunHosts)
 
 	if dbResult.Error != nil {
 		instrumentation.PlaybookRunReadError(ctx, dbResult.Error)
@@ -89,56 +86,66 @@ func (this *controllers) ApiRunHostsList(ctx echo.Context, params ApiRunHostsLis
 
 	hosts := []RunHost{}
 
-	var events []messageModel.PlaybookRunResponseMessageYamlEventsElem
+	for _, host := range dbRunHosts {
 
-	for _, run := range dbRuns {
-		utils.MustUnmarshal(run.Events, &events)
+		runHost := RunHost{}
+		runId := RunId(host.RunID.String())
+		runStatus := RunStatus(host.Status)
 
-		runId := RunId(run.ID.String())
-		runStatus := RunStatus(run.Status)
-
-		for _, host := range ansible.GetAnsibleHosts(events) {
-			stdout := ansible.GetStdout(events, nil)
-			runHost := RunHost{}
-
-			for _, field := range fields {
-				switch field {
-				case fieldHost:
-					runHost.Host = &host
-				case fieldStdout:
-					runHost.Stdout = &stdout
-				case fieldStatus:
-					runHost.Status = &runStatus
-				case fieldRun:
-					runHost.Run = &Run{
-						Id: &runId,
-					}
+		for _, field := range fields {
+			switch field {
+			case fieldHost:
+				runHost.Host = &host.Host
+			case fieldStdout:
+				runHost.Stdout = &host.Log
+			case fieldStatus:
+				runHost.Status = &runStatus
+			case fieldRun:
+				runHost.Run = &Run{
+					Id: &runId,
+				}
+			case fieldLinks:
+				runHost.Links = &RunHostLinks{
+					InventoryHost: inventoryLink(host.InventoryID),
 				}
 			}
-
-			hosts = append(hosts, runHost)
 		}
 
-		// TODO: should be in the inner loop
-		if len(hosts) == limit+offset {
-			break
-		}
-	}
-
-	// TODO: this is a very poor way of implementing pagination
-	// it will be fixed with db model refactoring
-	if offset > len(hosts) {
-		hosts = hosts[0:0]
-	} else {
-		hosts = hosts[offset:utils.Min(limit+offset, len(hosts))]
+		hosts = append(hosts, runHost)
 	}
 
 	return ctx.JSON(http.StatusOK, &RunHosts{
 		Data: hosts,
 		Meta: Meta{
 			Count: len(hosts),
-			Total: int(total), // TODO: this is inaccurate and will be fixed with db model refactoring
+			Total: int(total),
 		},
 		Links: createLinks("/api/playbook-dispatcher/v1/run_hosts", middleware.GetQueryString(ctx), getLimit(params.Limit), getOffset(params.Offset), int(total)),
 	})
+}
+
+func mapHostFieldsToSql(field string) string {
+	switch field {
+	case "host":
+		return "run_hosts.host"
+	case "run":
+		return "run_hosts.run_id"
+	case "status":
+		return "run_hosts.status"
+	case "stdout":
+		return "run_hosts.log"
+	case fieldLinks:
+		return "run_hosts.inventory_id"
+	default:
+		panic("unknown field " + field)
+	}
+}
+
+func inventoryLink(inventoryID *uuid.UUID) *string {
+	if inventoryID == nil {
+		return nil
+	}
+
+	link := fmt.Sprintf("/api/inventory/v1/hosts/%s", inventoryID.String())
+	return &link
 }

@@ -3,7 +3,6 @@ package public
 import (
 	"net/http"
 	dbModel "playbook-dispatcher/internal/common/model/db"
-	"playbook-dispatcher/internal/common/utils"
 	"playbook-dispatcher/internal/common/utils/test"
 
 	. "github.com/onsi/ginkgo"
@@ -26,18 +25,26 @@ func listRunHostsRaw(keysAndValues ...interface{}) *http.Response {
 var _ = Describe("runHostList", func() {
 	db := test.WithDatabase()
 
+	dbInsertRuns := func(runs ...dbModel.Run) {
+		Expect(db().Create(runs).Error).ToNot(HaveOccurred())
+	}
+
+	dbInsertHosts := func(hosts ...dbModel.RunHost) {
+		Expect(db().Create(hosts).Error).ToNot(HaveOccurred())
+	}
+
 	Describe("list hosts", func() {
 		It("by default returns a list of run hosts", func() {
-			data := test.NewRun(accountNumber())
-			data.Events = utils.MustMarshal(test.EventSequenceOk("2303e668-dff6-4e4b-8979-71ab6dd14d42", "localhost"))
-			Expect(db().Create(&data).Error).ToNot(HaveOccurred())
+			run := test.NewRun(accountNumber())
+			dbInsertRuns(run)
+			dbInsertHosts(test.NewRunHost(run.ID, "running", nil))
 
 			runs, res := listRunHosts()
 			Expect(res.StatusCode()).To(Equal(http.StatusOK))
 			Expect(runs.Data).To(HaveLen(1))
 			Expect(*runs.Data[0].Host).To(Equal("localhost"))
 			Expect(*runs.Data[0].Status).To(BeEquivalentTo("running"))
-			Expect(*runs.Data[0].Run.Id).To(BeEquivalentTo(data.ID.String()))
+			Expect(*runs.Data[0].Run.Id).To(BeEquivalentTo(run.ID.String()))
 		})
 
 		Describe("filtering", func() {
@@ -47,9 +54,8 @@ var _ = Describe("runHostList", func() {
 					test.NewRunWithStatus(accountNumber(), "failure"),
 				}
 
-				data[0].Events = utils.MustMarshal(test.EventSequenceOk("ee44fcba-60d2-4a2a-a6bf-74875487c9dc", "localhost"))
-				data[1].Events = utils.MustMarshal(test.EventSequenceOk("aea95ec9-4db6-4756-b10e-12bf42444ace", "localhost"))
-				Expect(db().Create(&data).Error).ToNot(HaveOccurred())
+				dbInsertRuns(data...)
+				dbInsertHosts(test.NewRunHost(data[0].ID, "success", nil), test.NewRunHost(data[1].ID, "failure", nil))
 
 				runs, res := listRunHosts("filter[status]", "failure")
 				Expect(res.StatusCode()).To(Equal(http.StatusOK))
@@ -64,10 +70,10 @@ var _ = Describe("runHostList", func() {
 					test.NewRun(accountNumber()),
 				}
 
-				data[0].Events = utils.MustMarshal(test.EventSequenceOk("ee44fcba-60d2-4a2a-a6bf-74875487c9dc", "localhost"))
-				data[1].Events = utils.MustMarshal(test.EventSequenceOk("aea95ec9-4db6-4756-b10e-12bf42444ace", "localhost"))
-				data[2].Events = utils.MustMarshal(test.EventSequenceOk("25e32ee0-41e5-4e14-a63b-35e58d024963", "localhost"))
-				Expect(db().Create(&data).Error).ToNot(HaveOccurred())
+				dbInsertRuns(data...)
+				dbInsertHosts(test.MapRunToHost(data, func(run dbModel.Run) dbModel.RunHost {
+					return test.NewRunHost(run.ID, "running", nil)
+				})...)
 
 				runs, res := listRunHosts("filter[run][id]", data[1].ID.String())
 				Expect(res.StatusCode()).To(Equal(http.StatusOK))
@@ -86,10 +92,10 @@ var _ = Describe("runHostList", func() {
 				data[1].Labels = map[string]string{"remediation": "1"}
 				data[2].Labels = map[string]string{"remediation": "2"}
 
-				data[0].Events = utils.MustMarshal(test.EventSequenceOk("ee44fcba-60d2-4a2a-a6bf-74875487c9dc", "localhost"))
-				data[1].Events = utils.MustMarshal(test.EventSequenceOk("aea95ec9-4db6-4756-b10e-12bf42444ace", "localhost"))
-				data[2].Events = utils.MustMarshal(test.EventSequenceOk("25e32ee0-41e5-4e14-a63b-35e58d024963", "localhost"))
-				Expect(db().Create(&data).Error).ToNot(HaveOccurred())
+				dbInsertRuns(data...)
+				dbInsertHosts(test.MapRunToHost(data, func(run dbModel.Run) dbModel.RunHost {
+					return test.NewRunHost(run.ID, "running", nil)
+				})...)
 
 				runs, res := listRunHosts("filter[run][labels][remediation]", "2")
 				Expect(res.StatusCode()).To(Equal(http.StatusOK))
@@ -98,17 +104,14 @@ var _ = Describe("runHostList", func() {
 			})
 
 			It("filters by service", func() {
-				data := []dbModel.Run{
-					test.NewRun(accountNumber()),
-				}
-
-				data[0].Events = utils.MustMarshal(test.EventSequenceOk("ee44fcba-60d2-4a2a-a6bf-74875487c9dc", "localhost"))
-				Expect(db().Create(&data).Error).ToNot(HaveOccurred())
+				run := test.NewRun(accountNumber())
+				dbInsertRuns(run)
+				dbInsertHosts(test.NewRunHost(run.ID, "running", nil))
 
 				runs, res := listRunHosts("filter[run][service]", "test")
 				Expect(res.StatusCode()).To(Equal(http.StatusOK))
 				Expect(runs.Data).To(HaveLen(1))
-				Expect(*runs.Data[0].Run.Id).To(BeEquivalentTo(data[0].ID.String()))
+				Expect(*runs.Data[0].Run.Id).To(BeEquivalentTo(run.ID.String()))
 
 				runs, res = listRunHosts("filter[run][service]", "remediations")
 				Expect(res.StatusCode()).To(Equal(http.StatusOK))
@@ -119,15 +122,15 @@ var _ = Describe("runHostList", func() {
 
 	Describe("sparse fieldsets", func() {
 		BeforeEach(func() {
-			data := test.NewRun(accountNumber())
-			data.Events = utils.MustMarshal(test.EventSequenceOk("ee44fcba-60d2-4a2a-a6bf-74875487c9dc", "localhost"))
-			Expect(db().Create(&data).Error).ToNot(HaveOccurred())
+			run := test.NewRun(accountNumber())
+			dbInsertRuns(run)
+			dbInsertHosts(test.NewRunHost(run.ID, "running", nil))
 		})
 
 		DescribeTable("happy path", fieldTester(listRunHostsRaw),
 			Entry("single field", "host"),
 			Entry("defaults defined explicitly", "host", "status", "run"),
-			Entry("all fields", "host", "status", "run", "stdout"),
+			Entry("all fields", "host", "status", "run", "stdout", "links"),
 		)
 
 		It("400s on invalid value", func() {
@@ -141,16 +144,28 @@ var _ = Describe("runHostList", func() {
 
 	DescribeTable("pagination",
 		func(expected, limit, offset int) {
-			Expect(db().Create(test.NewRunsWithLocalhost(accountNumber(), 11)).Error).ToNot(HaveOccurred())
+			newRuns := test.NewRunsWithLocalhost(accountNumber(), 3)
+			dbInsertRuns(newRuns...)
+
+			dbInsertHosts(test.FlatMapRunToHost(newRuns, func(run dbModel.Run) []dbModel.RunHost {
+				return []dbModel.RunHost{
+					test.NewRunHostWithHostname(run.ID, "running", "host1"),
+					test.NewRunHostWithHostname(run.ID, "running", "host2"),
+					test.NewRunHostWithHostname(run.ID, "running", "host3"),
+					test.NewRunHostWithHostname(run.ID, "running", "host4"),
+				}
+			})...)
 
 			runs, res := listRunHosts("limit", limit, "offset", offset)
 			Expect(res.StatusCode()).To(Equal(http.StatusOK))
 			Expect(runs.Data).To(HaveLen(expected))
+			Expect(runs.Meta.Count).To(Equal(expected))
+			Expect(runs.Meta.Total).To(Equal(12))
 		},
 
 		Entry("limit=2", 2, 2, 0),
 		Entry("limit=5", 5, 5, 0),
-		Entry("limit=5, offset=10", 1, 5, 10),
+		Entry("limit=5, offset=10", 2, 5, 10),
 		Entry("limit=5, offset=20", 0, 5, 20),
 	)
 
@@ -168,11 +183,10 @@ var _ = Describe("runHostList", func() {
 			data[1].Service = "remediations"
 			data[2].Service = "salad"
 
-			data[0].Events = utils.MustMarshal(test.EventSequenceOk("02f54915-0703-4133-8deb-65687b379600", "localhost"))
-			data[1].Events = utils.MustMarshal(test.EventSequenceOk("0dc1b7ef-30cd-4cf8-83cb-5b52fe79318d", "localhost"))
-			data[2].Events = utils.MustMarshal(test.EventSequenceOk("8ed42569-2788-4d5d-9190-c3c6d1f94856", "localhost"))
-
-			Expect(db().Create(&data).Error).ToNot(HaveOccurred())
+			dbInsertRuns(data...)
+			dbInsertHosts(test.MapRunToHost(data, func(run dbModel.Run) dbModel.RunHost {
+				return test.NewRunHost(run.ID, "running", nil)
+			})...)
 		})
 
 		It("finds a run based on RBAC predicate", func() {
@@ -196,13 +210,10 @@ var _ = Describe("runHostList", func() {
 				test.NewRun(accountNumber()),
 			}
 
-			data[0].Events = utils.MustMarshal(test.EventSequenceOk("27e04536-a44f-4af5-bcf6-6e419c78ed5f", "localhost"))
-			data[1].Events = utils.MustMarshal(test.EventSequenceOk("012692bc-3d8b-4b5e-a800-055e8b977aa0", "localhost"))
-			data[2].Events = utils.MustMarshal(test.EventSequenceOk("69f45021-c76e-4003-94ea-08b06faaf5c9", "localhost"))
-			data[3].Events = utils.MustMarshal(test.EventSequenceOk("ee68d256-ba31-453e-9d00-74f85bcaa840", "localhost"))
-			data[4].Events = utils.MustMarshal(test.EventSequenceOk("a66f6e04-1388-476e-9e7e-3d270241aea4", "localhost"))
-
-			Expect(db().Create(&data).Error).ToNot(HaveOccurred())
+			dbInsertRuns(data...)
+			dbInsertHosts(test.MapRunToHost(data, func(run dbModel.Run) dbModel.RunHost {
+				return test.NewRunHost(run.ID, "running", nil)
+			})...)
 		})
 
 		It("returns links on no query params", func() {

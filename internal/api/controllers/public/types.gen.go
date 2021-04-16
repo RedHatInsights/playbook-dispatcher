@@ -97,14 +97,20 @@ type RunCorrelationId string
 type RunHost struct {
 
 	// Name used to identify a host within Ansible inventory
-	Host *string `json:"host,omitempty"`
-	Run  *Run    `json:"run,omitempty"`
+	Host  *string       `json:"host,omitempty"`
+	Links *RunHostLinks `json:"links,omitempty"`
+	Run   *Run          `json:"run,omitempty"`
 
 	// Current status of a Playbook run
 	Status *RunStatus `json:"status,omitempty"`
 
 	// Output produced by running Ansible Playbook on the given host
 	Stdout *string `json:"stdout,omitempty"`
+}
+
+// RunHostLinks defines model for RunHostLinks.
+type RunHostLinks struct {
+	InventoryHost *string `json:"inventory_host"`
 }
 
 // RunHosts defines model for RunHosts.
