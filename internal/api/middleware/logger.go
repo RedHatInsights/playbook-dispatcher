@@ -18,10 +18,16 @@ func RequestLogger(next echo.HandlerFunc) echo.HandlerFunc {
 		req := c.Request()
 		res := c.Response()
 
+		statusCode := res.Status
+
+		if httpError, ok := err.(*echo.HTTPError); ok {
+			statusCode = httpError.Code
+		}
+
 		log.Infow(
 			"request completed",
 			"time", time.Since(start).String(),
-			"status", res.Status,
+			"status", statusCode,
 			"method", req.Method,
 			"url", req.RequestURI,
 			"referer", req.Referer(),
