@@ -3,6 +3,27 @@ kind: Template
 metadata:
   name: playbook-dispatcher
 objects:
+# The below secrets are used for testing in ephemeral environments only.
+- apiVersion: v1
+  kind: Secret
+  metadata:
+    name: auth-psk-remediations
+  stringData:
+    key: ${KEY_REMEDIATIONS}
+- apiVersion: v1
+  kind: Secret
+  metadata:
+    name: auth-psk-config-manager
+  stringData:
+    key: ${KEY_CONFIG_MANAGER}
+- apiVersion: v1
+  kind: Secret
+  metadata:
+    name: client-psk-cloud-connector
+  stringData:
+    client-id: ${ID_CLOUD_CONNECTOR}
+    client-psk: ${KEY_CLOUD_CONNECTOR}
+
 - apiVersion: cloud.redhat.com/v1alpha1
   kind: ClowdApp
   metadata:
@@ -287,9 +308,17 @@ parameters:
 - name: RBAC_HOST
   required: true
 
-  # Used for testing in ephemeral environments only. If a value is not provided the principal is ignored.
-- name: PSK_AUTH_TEST
-  value: ""
-
 - name: CLEANER_SCHEDULE
   value: "*/10 * * * *"
+
+# Used for testing in ephemeral environments only.
+- name: PSK_AUTH_TEST
+  value: ""  # If a value is not provided the principal is ignored.
+- name: KEY_REMEDIATIONS
+  value: PuqrzbBNxz
+- name: KEY_CONFIG_MANAGER
+  value: FLYdxYZGpq
+- name: ID_CLOUD_CONNECTOR
+  value: playbook-dispatcher
+- name: KEY_CLOUD_CONNECTOR
+  value: cloud_connector
