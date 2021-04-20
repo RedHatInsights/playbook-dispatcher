@@ -29,6 +29,9 @@ objects:
   metadata:
     name: playbook-dispatcher
   spec:
+    optionalDependencies:
+    - ingress
+
     envName: ${ENV_NAME}
 
     database:
