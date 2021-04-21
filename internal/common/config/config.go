@@ -60,7 +60,9 @@ func Get() *viper.Viper {
 	options.SetDefault("artifact.max.size", 1024*1024)
 
 	options.SetDefault("cloud.connector.impl", "mock")
-	options.SetDefault("cloud.connector.host", "http://cloud-connector:8081")
+	options.SetDefault("cloud.connector.host", "cloud-connector")
+	options.SetDefault("cloud.connector.port", "8080")
+	options.SetDefault("cloud.connector.scheme", "http")
 	options.SetDefault("cloud.connector.timeout", 10)
 	options.SetDefault("cloud.connector.client.id", "playbook-dispatcher")
 	options.SetDefault("cloud.connector.psk", "")
