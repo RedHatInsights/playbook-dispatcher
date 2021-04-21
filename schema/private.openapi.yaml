@@ -49,10 +49,35 @@ components:
           $ref: './public.openapi.yaml#/components/schemas/Labels'
         timeout:
           $ref: './public.openapi.yaml#/components/schemas/RunTimeout'
+        hosts:
+          $ref: '#/components/schemas/RunInputHosts'
       required:
       - recipient
       - account
       - url
+
+    RunInputHosts:
+      type: array
+      description: |
+        Optionally, information about hosts involved in the Playbook run can be provided.
+        This information is used to pre-allocate run_host resources.
+        Moreover, it can be used to create a connection between a run_host resource and host inventory.
+      items:
+        type: object
+        properties:
+          ansible_host:
+            type: string
+            description: |
+              Host name as known to Ansible inventory.
+              Used to identify the host in status reports.
+            example: localhost
+          inventory_id:
+            type: string
+            format: uuid
+            description: Inventory id of the given host
+            example: ffb47020-a6fd-484d-80b5-da00a4a30bf2
+        required:
+        - ansible_host
 
     RunCreated:
       type: object

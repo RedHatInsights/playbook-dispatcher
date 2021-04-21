@@ -5,5 +5,8 @@
     "labels": {
         "foo": "1234",
         "baz": "{}"
-    }
+    },
+    "hosts": [{
+        "ansible_host": "localhost"
+    }]
 }]

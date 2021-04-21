@@ -65,6 +65,30 @@ func (this *controllers) ApiInternalRunsCreate(ctx echo.Context) error {
 			return runCreateError(http.StatusInternalServerError)
 		}
 
+		if runInput.Hosts != nil {
+			newHosts := make([]dbModel.RunHost, len(*runInput.Hosts))
+
+			for i, inputHost := range *runInput.Hosts {
+				newHosts[i] = dbModel.RunHost{
+					ID:          uuid.New(),
+					RunID:       entity.ID,
+					InventoryID: nil,
+					Host:        inputHost.AnsibleHost,
+					Status:      dbModel.RunStatusRunning,
+				}
+
+				if inputHost.InventoryId != nil {
+					inventoryID := uuid.MustParse(string(*inputHost.InventoryId))
+					newHosts[i].InventoryID = &inventoryID
+				}
+			}
+
+			if dbResult := this.database.Create(newHosts); dbResult.Error != nil {
+				instrumentation.PlaybookRunHostCreateError(ctx, dbResult.Error, newHosts)
+				return runCreateError(http.StatusInternalServerError)
+			}
+		}
+
 		runId := public.RunId(entity.ID.String())
 		return &RunCreated{
 			Code: http.StatusCreated,
