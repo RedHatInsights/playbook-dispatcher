@@ -58,11 +58,11 @@ func Start(
 
 	server.Use(
 		echoPrometheus.MetricsMiddleware(),
+		echo.WrapMiddleware(request_id.ConfiguredRequestID(constants.HeaderRequestId)),
 		middleware.ContextLogger,
 		middleware.RequestLogger,
 		echoMiddleware.Recover(),
 		echoMiddleware.BodyLimit(cfg.GetString("http.max.body.size")),
-		echo.WrapMiddleware(request_id.ConfiguredRequestID(constants.HeaderRequestId)),
 	)
 
 	server.GET(specFile, func(ctx echo.Context) error {
