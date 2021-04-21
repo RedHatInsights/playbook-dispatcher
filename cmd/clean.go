@@ -8,6 +8,7 @@ import (
 	"playbook-dispatcher/internal/common/utils"
 
 	"github.com/spf13/cobra"
+	"gorm.io/gorm"
 )
 
 func clean(cmd *cobra.Command, args []string) error {
@@ -18,13 +19,38 @@ func clean(cmd *cobra.Command, args []string) error {
 	db, sql := db.Connect(ctx, cfg)
 	defer sql.Close()
 
-	log.Info("Cleaning up timed-out runs")
-	result := db.Model(&dbModel.Run{}).
-		Where("runs.status='running'").
-		Where("runs.created_at + runs.timeout * interval '1 second' <= NOW()").
-		Update("status", "timeout")
+	err := db.Transaction(func(tx *gorm.DB) error {
+		log.Info("Cleaning up timed-out runs")
 
-	log.Infow("Finished updating timed-out runs", "rowCount", result.RowsAffected)
+		result := tx.Model(&dbModel.Run{}).
+			Where("runs.status", "running").
+			Where("runs.created_at + runs.timeout * interval '1 second' <= NOW()").
+			Update("status", "timeout")
 
-	return result.Error
+		log.Infow("Finished updating timed-out runs", "rowCount", result.RowsAffected)
+
+		if result.Error != nil {
+			return result.Error
+		}
+
+		subQuery := tx.Model(&dbModel.RunHost{}).
+			Select("run_hosts.id").
+			Joins("INNER JOIN runs on runs.id = run_hosts.run_id").
+			Where("runs.status", "timeout").
+			Where("run_hosts.status", "running")
+
+		result = tx.Model(&dbModel.RunHost{}).
+			Where("run_hosts.id IN (?)", subQuery).
+			Update("status", "timeout")
+
+		log.Infow("Finished updating timed-out run_hosts", "rowCount", result.RowsAffected)
+
+		return result.Error
+	})
+
+	if err != nil {
+		log.Error(err)
+	}
+
+	return err
 }
