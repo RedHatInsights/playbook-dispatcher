@@ -13,14 +13,15 @@ import (
 )
 
 const (
-	labelParseUuid         = "parse_uuid"
-	labelCorrelationId     = "correlation_id"
-	labelMessageId         = "message_id"
-	labelDb                = "db"
-	labelPlaybookRunCreate = "playbook_run_create"
-	labelPlaybookRunRead   = "playbook_run_read"
-	labelNoConnection      = "no_connection"
-	labelErrorGeneric      = "error"
+	labelParseUuid             = "parse_uuid"
+	labelCorrelationId         = "correlation_id"
+	labelMessageId             = "message_id"
+	labelDb                    = "db"
+	labelPlaybookRunCreate     = "playbook_run_create"
+	labelPlaybookRunHostCreate = "playbook_run_host_create"
+	labelPlaybookRunRead       = "playbook_run_read"
+	labelNoConnection          = "no_connection"
+	labelErrorGeneric          = "error"
 )
 
 var (
@@ -80,6 +81,11 @@ func PlaybookRunCreateError(ctx echo.Context, err error, run *dbModel.Run) {
 	errorTotal.WithLabelValues(labelDb, labelPlaybookRunCreate).Inc()
 }
 
+func PlaybookRunHostCreateError(ctx echo.Context, err error, data []dbModel.RunHost) {
+	utils.GetLogFromEcho(ctx).Errorw("Error creating run host", "error", err, "data", data)
+	errorTotal.WithLabelValues(labelDb, labelPlaybookRunHostCreate).Inc()
+}
+
 func PlaybookRunReadError(ctx echo.Context, err error) {
 	utils.GetLogFromEcho(ctx).Errorw("Error reading playbook runs from database", "error", err)
 	errorTotal.WithLabelValues(labelDb, labelPlaybookRunRead).Inc()
@@ -101,5 +107,6 @@ func Start() {
 	validationFailureTotal.WithLabelValues(labelParseUuid, labelCorrelationId)
 	validationFailureTotal.WithLabelValues(labelParseUuid, labelMessageId)
 	errorTotal.WithLabelValues(labelDb, labelPlaybookRunCreate)
+	errorTotal.WithLabelValues(labelDb, labelPlaybookRunHostCreate)
 	errorTotal.WithLabelValues(labelDb, labelPlaybookRunRead)
 }
