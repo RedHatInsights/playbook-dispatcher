@@ -294,6 +294,8 @@ objects:
             value: ${CLOUD_CONNECTOR_IMPL}
           - name: CLOUD_CONNECTOR_HOST
             value: ${CLOUD_CONNECTOR_HOST}
+          - name: CLOUD_CONNECTOR_PORT
+            value: ${CLOUD_CONNECTOR_PORT}
           - name: CLOUD_CONNECTOR_CLIENT_ID
             valueFrom:
               secretKeyRef:
@@ -594,6 +596,8 @@ parameters:
   value: impl
 - name: CLOUD_CONNECTOR_HOST
   required: true
+- name: CLOUD_CONNECTOR_PORT
+  value: '8080'
 - name: RESPONSE_INTERVAL
   value: "30"
 
