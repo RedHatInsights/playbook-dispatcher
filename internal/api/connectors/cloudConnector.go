@@ -44,7 +44,7 @@ type cloudConnectorClientImpl struct {
 func NewConnectorClientWithHttpRequestDoer(cfg *viper.Viper, doer HttpRequestDoer) CloudConnectorClient {
 	client := &ClientWithResponses{
 		ClientInterface: &Client{
-			Server: fmt.Sprintf("%s%s", cfg.GetString("cloud.connector.host"), basePath),
+			Server: fmt.Sprintf("%s://%s:%d%s", cfg.GetString("cloud.connector.scheme"), cfg.GetString("cloud.connector.host"), cfg.GetInt("cloud.connector.port"), basePath),
 			Client: doer,
 			RequestEditor: func(ctx context.Context, req *http.Request) error {
 				req.Header.Set(constants.HeaderRequestId, request_id.GetReqID(ctx))
