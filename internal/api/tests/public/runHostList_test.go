@@ -5,6 +5,7 @@ import (
 	dbModel "playbook-dispatcher/internal/common/model/db"
 	"playbook-dispatcher/internal/common/utils/test"
 
+	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
@@ -116,6 +117,27 @@ var _ = Describe("runHostList", func() {
 				runs, res = listRunHosts("filter[run][service]", "remediations")
 				Expect(res.StatusCode()).To(Equal(http.StatusOK))
 				Expect(runs.Data).To(HaveLen(0))
+			})
+
+			It("filters by inventory_id", func() {
+				data := []dbModel.Run{
+					test.NewRun(accountNumber()),
+					test.NewRun(accountNumber()),
+					test.NewRun(accountNumber()),
+				}
+
+				dbInsertRuns(data...)
+				hosts := test.MapRunToHost(data, func(run dbModel.Run) dbModel.RunHost {
+					inventoryID := uuid.New()
+					return test.NewRunHost(run.ID, "running", &inventoryID)
+				})
+
+				dbInsertHosts(hosts...)
+
+				runs, res := listRunHosts("filter[inventory_id]", hosts[1].InventoryID.String())
+				Expect(res.StatusCode()).To(Equal(http.StatusOK))
+				Expect(runs.Data).To(HaveLen(1))
+				Expect(*runs.Data[0].Run.Id).To(BeEquivalentTo(data[1].ID.String()))
 			})
 		})
 	})
