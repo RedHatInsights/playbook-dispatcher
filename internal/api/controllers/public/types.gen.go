@@ -192,7 +192,8 @@ type RunHostFields struct {
 
 // RunHostFilter defines model for RunHostFilter.
 type RunHostFilter struct {
-	Run *struct {
+	InventoryId *string `json:"inventory_id"`
+	Run         *struct {
 		Id      *string            `json:"id"`
 		Labels  *RunLabelsNullable `json:"labels"`
 		Service *ServiceNullable   `json:"service"`

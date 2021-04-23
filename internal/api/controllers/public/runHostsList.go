@@ -66,6 +66,10 @@ func (this *controllers) ApiRunHostsList(ctx echo.Context, params ApiRunHostsLis
 				}
 			}
 		}
+
+		if params.Filter.InventoryId != nil {
+			queryBuilder.Where("run_hosts.inventory_id = ?", *params.Filter.InventoryId)
+		}
 	}
 
 	var total int64

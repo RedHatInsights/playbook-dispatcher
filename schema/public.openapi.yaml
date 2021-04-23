@@ -343,6 +343,11 @@ components:
                 $ref: '#/components/schemas/ServiceNullable'
               labels:
                 $ref: '#/components/schemas/RunLabelsNullable'
+          inventory_id:
+            nullable: true
+            type: string
+            format: uuid
+
 
     RunsFields:
       description: >
