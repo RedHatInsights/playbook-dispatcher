@@ -146,13 +146,14 @@ var _ = Describe("runHostList", func() {
 		BeforeEach(func() {
 			run := test.NewRun(accountNumber())
 			dbInsertRuns(run)
-			dbInsertHosts(test.NewRunHost(run.ID, "running", nil))
+			inventoryID := uuid.New()
+			dbInsertHosts(test.NewRunHost(run.ID, "running", &inventoryID))
 		})
 
 		DescribeTable("happy path", fieldTester(listRunHostsRaw),
 			Entry("single field", "host"),
 			Entry("defaults defined explicitly", "host", "status", "run"),
-			Entry("all fields", "host", "status", "run", "stdout", "links"),
+			Entry("all fields", "host", "status", "run", "stdout", "links", "inventory_id"),
 		)
 
 		It("400s on invalid value", func() {

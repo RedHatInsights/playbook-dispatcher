@@ -205,6 +205,9 @@ components:
           $ref: '#/components/schemas/RunStatus'
         run:
           $ref: '#/components/schemas/Run'
+        inventory_id:
+          type: string
+          format: uuid
         links:
           $ref: '#/components/schemas/RunHostLinks'
 
@@ -289,6 +292,11 @@ components:
       type: string
       minLength: 1
 
+    InventoryIdNullable:
+      nullable: true
+      type: string
+      format: uuid
+
   parameters:
     RunsFilter:
       description: Allows for filtering based on various criteria
@@ -344,9 +352,7 @@ components:
               labels:
                 $ref: '#/components/schemas/RunLabelsNullable'
           inventory_id:
-            nullable: true
-            type: string
-            format: uuid
+            $ref: '#/components/schemas/InventoryIdNullable'
 
 
     RunsFields:
@@ -406,6 +412,7 @@ components:
                 - status
                 - stdout
                 - links
+                - inventory_id
             default:
               - host
               - status

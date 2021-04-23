@@ -68,12 +68,22 @@ func (this *controllers) ApiRunHostsList(ctx echo.Context, params ApiRunHostsLis
 		}
 
 		if params.Filter.InventoryId != nil {
-			queryBuilder.Where("run_hosts.inventory_id = ?", *params.Filter.InventoryId)
+			parsedInventoryID, err := uuid.Parse(string(*params.Filter.InventoryId))
+			if err != nil {
+				return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("invalid inventory_id: %s", *params.Filter.InventoryId))
+			}
+
+			queryBuilder.Where("run_hosts.inventory_id = ?", parsedInventoryID)
 		}
 	}
 
 	var total int64
-	queryBuilder.Count(&total)
+	countResult := queryBuilder.Count(&total)
+
+	if countResult.Error != nil {
+		instrumentation.PlaybookRunReadError(ctx, countResult.Error)
+		return ctx.NoContent(http.StatusInternalServerError)
+	}
 
 	queryBuilder.Limit(limit)
 	queryBuilder.Offset(offset)
@@ -112,6 +122,11 @@ func (this *controllers) ApiRunHostsList(ctx echo.Context, params ApiRunHostsLis
 				runHost.Links = &RunHostLinks{
 					InventoryHost: inventoryLink(host.InventoryID),
 				}
+			case fieldInventoryId:
+				if host.InventoryID != nil {
+					inventoryID := host.InventoryID.String()
+					runHost.InventoryId = &inventoryID
+				}
 			}
 		}
 
@@ -139,6 +154,8 @@ func mapHostFieldsToSql(field string) string {
 	case "stdout":
 		return "run_hosts.log"
 	case fieldLinks:
+		return "run_hosts.inventory_id"
+	case fieldInventoryId:
 		return "run_hosts.inventory_id"
 	default:
 		panic("unknown field " + field)
