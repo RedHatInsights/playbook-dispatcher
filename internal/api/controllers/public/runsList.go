@@ -86,7 +86,12 @@ func (this *controllers) ApiRunsList(ctx echo.Context, params ApiRunsListParams)
 	}
 
 	var total int64
-	queryBuilder.Count(&total)
+	countResult := queryBuilder.Count(&total)
+
+	if countResult.Error != nil {
+		instrumentation.PlaybookRunReadError(ctx, countResult.Error)
+		return ctx.NoContent(http.StatusInternalServerError)
+	}
 
 	queryBuilder.Select(utils.MapStrings(fields, mapFieldsToSql))
 

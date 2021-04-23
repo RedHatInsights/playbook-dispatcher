@@ -22,6 +22,9 @@ type Error struct {
 	Message string `json:"message"`
 }
 
+// InventoryIdNullable defines model for InventoryIdNullable.
+type InventoryIdNullable string
+
 // Labels defines model for Labels.
 type Labels struct {
 	AdditionalProperties map[string]string `json:"-"`
@@ -97,9 +100,10 @@ type RunCorrelationId string
 type RunHost struct {
 
 	// Name used to identify a host within Ansible inventory
-	Host  *string       `json:"host,omitempty"`
-	Links *RunHostLinks `json:"links,omitempty"`
-	Run   *Run          `json:"run,omitempty"`
+	Host        *string       `json:"host,omitempty"`
+	InventoryId *string       `json:"inventory_id,omitempty"`
+	Links       *RunHostLinks `json:"links,omitempty"`
+	Run         *Run          `json:"run,omitempty"`
 
 	// Current status of a Playbook run
 	Status *RunStatus `json:"status,omitempty"`
@@ -192,7 +196,7 @@ type RunHostFields struct {
 
 // RunHostFilter defines model for RunHostFilter.
 type RunHostFilter struct {
-	InventoryId *string `json:"inventory_id"`
+	InventoryId *InventoryIdNullable `json:"inventory_id"`
 	Run         *struct {
 		Id      *string            `json:"id"`
 		Labels  *RunLabelsNullable `json:"labels"`
