@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"playbook-dispatcher/internal/common/constants"
+	"playbook-dispatcher/internal/common/utils"
 	"regexp"
 	"time"
 
@@ -25,7 +26,7 @@ func NewRbacClientWithHttpRequestDoer(cfg *viper.Viper, doer HttpRequestDoer) Rb
 	client := &ClientWithResponses{
 		ClientInterface: &Client{
 			Server: fmt.Sprintf("%s://%s:%d%s", cfg.GetString("rbac.scheme"), cfg.GetString("rbac.host"), cfg.GetInt("rbac.port"), basePath),
-			Client: doer,
+			Client: utils.NewMeasuredHttpRequestDoer(doer, "rbac", "getPermissions"),
 			RequestEditor: func(ctx context.Context, req *http.Request) error {
 				req.Header.Set(constants.HeaderRequestId, request_id.GetReqID(ctx))
 
