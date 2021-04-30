@@ -40,6 +40,10 @@ properties:
       crc_dispatcher_correlation_id:
         type: string
         format: uuid
+      crc_dispatcher_error_code:
+        type: string
+      crc_dispatcher_error_details:
+        type: string
 
 required:
   - event
