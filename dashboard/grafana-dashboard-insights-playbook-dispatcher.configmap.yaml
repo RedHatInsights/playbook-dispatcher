@@ -18,7 +18,7 @@ data:
       "editable": true,
       "gnetId": null,
       "graphTooltip": 0,
-      "iteration": 1617873809747,
+      "iteration": 1619768849196,
       "links": [],
       "panels": [
         {
@@ -356,7 +356,7 @@ data:
               "fill": 1,
               "fillGradient": 0,
               "gridPos": {
-                "h": 7,
+                "h": 9,
                 "w": 12,
                 "x": 0,
                 "y": 20
@@ -364,13 +364,14 @@ data:
               "hiddenSeries": false,
               "id": 12,
               "legend": {
+                "alignAsTable": true,
                 "avg": false,
-                "current": false,
-                "max": false,
+                "current": true,
+                "max": true,
                 "min": false,
-                "show": false,
+                "show": true,
                 "total": false,
-                "values": false
+                "values": true
               },
               "lines": true,
               "linewidth": 1,
@@ -457,7 +458,7 @@ data:
               "fill": 1,
               "fillGradient": 0,
               "gridPos": {
-                "h": 7,
+                "h": 9,
                 "w": 12,
                 "x": 12,
                 "y": 20
@@ -465,11 +466,12 @@ data:
               "hiddenSeries": false,
               "id": 13,
               "legend": {
+                "alignAsTable": true,
                 "avg": false,
                 "current": true,
-                "max": false,
+                "max": true,
                 "min": false,
-                "show": false,
+                "show": true,
                 "total": false,
                 "values": true
               },
@@ -560,6 +562,179 @@ data:
               }
             },
             {
+              "cards": {
+                "cardPadding": null,
+                "cardRound": null
+              },
+              "color": {
+                "cardColor": "#b4ff00",
+                "colorScale": "sqrt",
+                "colorScheme": "interpolateOranges",
+                "exponent": 0.5,
+                "min": 0,
+                "mode": "spectrum"
+              },
+              "dataFormat": "tsbuckets",
+              "datasource": "$datasource",
+              "fieldConfig": {
+                "defaults": {
+                  "custom": {}
+                },
+                "overrides": []
+              },
+              "gridPos": {
+                "h": 9,
+                "w": 12,
+                "x": 0,
+                "y": 29
+              },
+              "heatmap": {},
+              "hideZeroBuckets": true,
+              "highlightCards": true,
+              "id": 16,
+              "legend": {
+                "show": true
+              },
+              "pluginVersion": "7.2.1",
+              "reverseYBuckets": false,
+              "targets": [
+                {
+                  "expr": "sum(increase(client_request_duration_seconds_bucket{service=\"playbook-dispatcher-api\"}[1m])) by (le)",
+                  "format": "heatmap",
+                  "interval": "15s",
+                  "legendFormat": "{{le}}",
+                  "refId": "A"
+                }
+              ],
+              "timeFrom": null,
+              "timeShift": null,
+              "title": "Connector latency",
+              "tooltip": {
+                "show": true,
+                "showHistogram": false
+              },
+              "type": "heatmap",
+              "xAxis": {
+                "show": true
+              },
+              "xBucketNumber": null,
+              "xBucketSize": null,
+              "yAxis": {
+                "decimals": null,
+                "format": "none",
+                "logBase": 1,
+                "max": null,
+                "min": null,
+                "show": true,
+                "splitFactor": null
+              },
+              "yBucketBound": "auto",
+              "yBucketNumber": null,
+              "yBucketSize": null
+            },
+            {
+              "aliasColors": {},
+              "bars": false,
+              "dashLength": 10,
+              "dashes": false,
+              "datasource": "$datasource",
+              "description": "",
+              "fieldConfig": {
+                "defaults": {
+                  "custom": {},
+                  "links": []
+                },
+                "overrides": []
+              },
+              "fill": 1,
+              "fillGradient": 0,
+              "gridPos": {
+                "h": 9,
+                "w": 12,
+                "x": 12,
+                "y": 29
+              },
+              "hiddenSeries": false,
+              "id": 17,
+              "legend": {
+                "alignAsTable": true,
+                "avg": false,
+                "current": true,
+                "max": true,
+                "min": false,
+                "show": true,
+                "total": false,
+                "values": true
+              },
+              "lines": true,
+              "linewidth": 1,
+              "links": [],
+              "nullPointMode": "null",
+              "options": {
+                "alertThreshold": true
+              },
+              "percentage": false,
+              "pluginVersion": "7.2.1",
+              "pointradius": 5,
+              "points": false,
+              "renderer": "flot",
+              "seriesOverrides": [],
+              "spaceLength": 10,
+              "stack": true,
+              "steppedLine": false,
+              "targets": [
+                {
+                  "expr": "sum(increase(client_request_duration_seconds_count{service=\"playbook-dispatcher-api\", result!~\"2.*\"}[1m])) by (component)",
+                  "interval": "",
+                  "legendFormat": "{{component}}",
+                  "refId": "A"
+                }
+              ],
+              "thresholds": [],
+              "timeFrom": null,
+              "timeRegions": [],
+              "timeShift": null,
+              "title": "Connector errors",
+              "tooltip": {
+                "shared": true,
+                "sort": 0,
+                "value_type": "individual"
+              },
+              "type": "graph",
+              "xaxis": {
+                "buckets": null,
+                "mode": "time",
+                "name": null,
+                "show": true,
+                "values": []
+              },
+              "yaxes": [
+                {
+                  "$$hashKey": "object:368",
+                  "decimals": null,
+                  "format": "short",
+                  "label": null,
+                  "logBase": 1,
+                  "max": null,
+                  "min": "0",
+                  "show": true
+                },
+                {
+                  "$$hashKey": "object:369",
+                  "format": "short",
+                  "label": null,
+                  "logBase": 1,
+                  "max": null,
+                  "min": null,
+                  "show": false
+                }
+              ],
+              "yaxis": {
+                "align": false,
+                "alignLevel": null
+              }
+            },
+            {
               "aliasColors": {},
               "bars": false,
               "dashLength": 10,
@@ -577,7 +752,7 @@ data:
                 "h": 8,
                 "w": 12,
                 "x": 0,
-                "y": 27
+                "y": 38
               },
               "hiddenSeries": false,
               "id": 15,
@@ -671,7 +846,7 @@ data:
         "list": [
           {
             "current": {
-              "selected": false,
+              "selected": true,
               "text": "crcp01ue1-prometheus",
               "value": "crcp01ue1-prometheus"
             },
