@@ -19,8 +19,9 @@ import (
 )
 
 const (
-	EventPlaybookOnStats = "playbook_on_stats"
-	EventRunnerOnFailed  = "runner_on_failed"
+	EventPlaybookOnStats  = "playbook_on_stats"
+	EventRunnerOnFailed   = "runner_on_failed"
+	EventExecutorOnFailed = "executor_on_failed"
 )
 
 type handler struct {
@@ -135,6 +136,11 @@ func inferStatus(events *[]message.PlaybookRunResponseMessageYamlEventsElem, hos
 
 		if event.Event == EventRunnerOnFailed {
 			failed = true
+		}
+
+		if event.Event == EventExecutorOnFailed {
+			failed = true
+			finished = true
 		}
 	}
 
