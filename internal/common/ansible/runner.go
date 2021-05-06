@@ -25,7 +25,13 @@ func GetStdout(events []messageModel.PlaybookRunResponseMessageYamlEventsElem, h
 		return events[i].Counter < events[j].Counter
 	})
 
+	var executorFailedEvent *messageModel.PlaybookRunResponseMessageYamlEventsElem
+
 	for _, event := range events {
+		if event.Event == "executor_on_failed" {
+			executorFailedEvent = &event
+		}
+
 		// if host parameter is defined only consider events for the given host
 		if host != nil && event.EventData != nil && *event.EventData.Host != *host {
 			continue
@@ -34,6 +40,10 @@ func GetStdout(events []messageModel.PlaybookRunResponseMessageYamlEventsElem, h
 		if event.Stdout != nil {
 			result += *event.Stdout
 		}
+	}
+
+	if len(result) == 0 && executorFailedEvent != nil {
+		result = *executorFailedEvent.Stdout
 	}
 
 	return
