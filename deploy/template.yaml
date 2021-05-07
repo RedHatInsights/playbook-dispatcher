@@ -38,6 +38,26 @@ objects:
             value: ${KAFKA_BOOTSTRAP_HOST}
           - name: METRICS_PORT
             value: "9000"
+          - name: LOG_CW_ACCESSKEYID
+            valueFrom:
+              secretKeyRef:
+                key: aws_access_key_id
+                name: cloudwatch
+          - name: LOG_CW_SECRETACCESSKEY
+            valueFrom:
+              secretKeyRef:
+                key: aws_secret_access_key
+                name: cloudwatch
+          - name: LOG_CW_REGION
+            valueFrom:
+              secretKeyRef:
+                key: aws_region
+                name: cloudwatch
+          - name: LOG_CW_GROUP
+            valueFrom:
+              secretKeyRef:
+                key: log_group_name
+                name: cloudwatch
           image: ${IMAGE}:${IMAGE_TAG}
           livenessProbe:
             failureThreshold: 3
@@ -135,6 +155,26 @@ objects:
                 name: playbook-dispatcher-db
           - name: DB_SSLMODE
             value: ${DB_SSLMODE}
+          - name: LOG_CW_ACCESSKEYID
+            valueFrom:
+              secretKeyRef:
+                key: aws_access_key_id
+                name: cloudwatch
+          - name: LOG_CW_SECRETACCESSKEY
+            valueFrom:
+              secretKeyRef:
+                key: aws_secret_access_key
+                name: cloudwatch
+          - name: LOG_CW_REGION
+            valueFrom:
+              secretKeyRef:
+                key: aws_region
+                name: cloudwatch
+          - name: LOG_CW_GROUP
+            valueFrom:
+              secretKeyRef:
+                key: log_group_name
+                name: cloudwatch
           image: ${IMAGE}:${IMAGE_TAG}
           livenessProbe:
             failureThreshold: 3
@@ -206,6 +246,26 @@ objects:
                 name: playbook-dispatcher-db
           - name: DB_SSLMODE
             value: ${DB_SSLMODE}
+          - name: LOG_CW_ACCESSKEYID
+            valueFrom:
+              secretKeyRef:
+                key: aws_access_key_id
+                name: cloudwatch
+          - name: LOG_CW_SECRETACCESSKEY
+            valueFrom:
+              secretKeyRef:
+                key: aws_secret_access_key
+                name: cloudwatch
+          - name: LOG_CW_REGION
+            valueFrom:
+              secretKeyRef:
+                key: aws_region
+                name: cloudwatch
+          - name: LOG_CW_GROUP
+            valueFrom:
+              secretKeyRef:
+                key: log_group_name
+                name: cloudwatch
           image: ${IMAGE}:${IMAGE_TAG}
           name: playbook-dispatcher-response-consumer-init
           resources:
@@ -319,6 +379,27 @@ objects:
             value: ${RBAC_IMPL}
           - name: RBAC_HOST
             value: ${RBAC_HOST}
+
+          - name: LOG_CW_ACCESSKEYID
+            valueFrom:
+              secretKeyRef:
+                key: aws_access_key_id
+                name: cloudwatch
+          - name: LOG_CW_SECRETACCESSKEY
+            valueFrom:
+              secretKeyRef:
+                key: aws_secret_access_key
+                name: cloudwatch
+          - name: LOG_CW_REGION
+            valueFrom:
+              secretKeyRef:
+                key: aws_region
+                name: cloudwatch
+          - name: LOG_CW_GROUP
+            valueFrom:
+              secretKeyRef:
+                key: log_group_name
+                name: cloudwatch
           image: ${IMAGE}:${IMAGE_TAG}
           livenessProbe:
             failureThreshold: 3
@@ -410,6 +491,26 @@ objects:
                     name: playbook-dispatcher-db
               - name: DB_SSLMODE
                 value: ${DB_SSLMODE}
+              - name: LOG_CW_ACCESSKEYID
+                valueFrom:
+                  secretKeyRef:
+                    key: aws_access_key_id
+                    name: cloudwatch
+              - name: LOG_CW_SECRETACCESSKEY
+                valueFrom:
+                  secretKeyRef:
+                    key: aws_secret_access_key
+                    name: cloudwatch
+              - name: LOG_CW_REGION
+                valueFrom:
+                  secretKeyRef:
+                    key: aws_region
+                    name: cloudwatch
+              - name: LOG_CW_GROUP
+                valueFrom:
+                  secretKeyRef:
+                    key: log_group_name
+                    name: cloudwatch
 
               image: ${IMAGE}:${IMAGE_TAG}
               name: playbook-dispatcher-cleaner
