@@ -22,7 +22,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-const shutdownTimeout = 3 * time.Second
+const shutdownTimeout = 20 * time.Second
 
 type startModuleFn = func(
 	ctx context.Context,
@@ -105,7 +105,7 @@ func shutdown(server *echo.Echo, log *zap.SugaredLogger, wg *sync.WaitGroup) {
 		log.Warn(err)
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
+	ctx, cancel := context.WithTimeout(utils.SetLog(context.Background(), log), shutdownTimeout)
 	defer cancel()
 
 	utils.StopServer(ctx, server)
