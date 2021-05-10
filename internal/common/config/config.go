@@ -43,7 +43,7 @@ func Get() *viper.Viper {
 	options.SetDefault("db.max.open.connections", 20)
 	options.SetDefault("migrations.dir", "./migrations")
 
-	options.SetDefault("kafka.timeout", 5000)
+	options.SetDefault("kafka.timeout", 10000)
 	options.SetDefault("kafka.group.id", "playbook-dispatcher")
 	options.SetDefault("kafka.auto.offset.reset", "latest")
 	options.SetDefault("kafka.auto.commit.interval.ms", 5000)

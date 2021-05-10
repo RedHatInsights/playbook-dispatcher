@@ -50,7 +50,7 @@ func Start(
 		defer wg.Done()
 		defer utils.GetLogFromContext(ctx).Debug("Validator stopped")
 		defer producer.Close()
-		defer producer.Flush(kafkaTimeout)
+		defer utils.GetLogFromContext(ctx).Infof("Producer flushed with %d pending messages", producer.Flush(kafkaTimeout))
 		defer consumer.Close()
 		wg.Add(1)
 		start()
