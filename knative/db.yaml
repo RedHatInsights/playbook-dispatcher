@@ -1,0 +1,153 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: playbook-dispatcher-db
+stringData:
+  db.user: insights
+  db.password: insights
+  db.name: insights
+  db.host: postgres
+  db.port: "5432"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    description: Defines how to deploy the database
+  labels:
+    app: playbook-dispatcher
+  name: postgres
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      name: postgres
+  template:
+    metadata:
+      labels:
+        app: playbook-dispatcher
+        name: postgres
+    spec:
+      containers:
+      - env:
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              key: db.user
+              name: playbook-dispatcher-db
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: db.password
+              name: playbook-dispatcher-db
+        - name: POSTGRES_DATABASE
+          valueFrom:
+            secretKeyRef:
+              key: db.name
+              name: playbook-dispatcher-db
+        image: quay.io/debezium/postgres:12
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          exec:
+            command:
+            - psql
+            - -w
+            - -U
+            - insights
+            - -c
+            - 'SELECT 1'
+          failureThreshold: 3
+          initialDelaySeconds: 120
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 10
+        name: postgres
+        ports:
+        - containerPort: 5432
+          protocol: TCP
+        readinessProbe:
+          exec:
+            command:
+            - psql
+            - -w
+            - -U
+            - insights
+            - -c
+            - 'SELECT 1'
+          failureThreshold: 3
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: 200m
+            memory: 512Mi
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: playbook-dispatcher
+  name: postgres
+spec:
+  ports:
+  - name: postgres
+    port: 5432
+    protocol: TCP
+    targetPort: 5432
+  selector:
+    name: postgres
+  type: ClusterIP
+
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: db-migrations
+spec:
+  template:
+    spec:
+      containers:
+      - name: db-migrations
+        image: quay.io/cloudservices/playbook-dispatcher:latest
+        args:
+        - migrate
+        - up
+        env:
+        - name: LOG_LEVEL
+          value: ${LOG_LEVEL}
+        - name: CLOWDER_ENABLED
+          value: "false"
+        - name: DB_HOST
+          valueFrom:
+            secretKeyRef:
+              key: db.host
+              name: playbook-dispatcher-db
+        - name: DB_PORT
+          valueFrom:
+            secretKeyRef:
+              key: db.port
+              name: playbook-dispatcher-db
+        - name: DB_NAME
+          valueFrom:
+            secretKeyRef:
+              key: db.name
+              name: playbook-dispatcher-db
+        - name: DB_USERNAME
+          valueFrom:
+            secretKeyRef:
+              key: db.user
+              name: playbook-dispatcher-db
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: db.password
+              name: playbook-dispatcher-db
+      restartPolicy: OnFailure

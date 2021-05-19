@@ -8,3 +8,11 @@
     ```
     oc apply -f knative.yaml
     ```
+
+1. Deploy the database
+
+    ```
+    oc project default
+    oc apply -f db.yaml
+    ```
+
