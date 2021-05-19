@@ -1,0 +1,61 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+ name: playbook-dispatcher-api
+ namespace: default
+spec:
+ template:
+  spec:
+   containers:
+    - image: quay.io/jharting/playbook-dispatcher@sha256:f1259753cab2dc5b08b237ae14696bb3078ccd806bf5cefc354c8c67eed71c1b
+      args:
+      - run
+      - -m
+      - api
+      env:
+        - name: CLOWDER_ENABLED
+          value: "false"
+        - name: DB_HOST
+          valueFrom:
+            secretKeyRef:
+              key: db.host
+              name: playbook-dispatcher-db
+        - name: DB_PORT
+          valueFrom:
+            secretKeyRef:
+              key: db.port
+              name: playbook-dispatcher-db
+        - name: DB_NAME
+          valueFrom:
+            secretKeyRef:
+              key: db.name
+              name: playbook-dispatcher-db
+        - name: DB_USERNAME
+          valueFrom:
+            secretKeyRef:
+              key: db.user
+              name: playbook-dispatcher-db
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: db.password
+              name: playbook-dispatcher-db
+
+      livenessProbe:
+        failureThreshold: 3
+        httpGet:
+          path: /live
+          scheme: HTTP
+        initialDelaySeconds: 10
+        periodSeconds: 10
+        successThreshold: 1
+        timeoutSeconds: 5
+      readinessProbe:
+        failureThreshold: 3
+        httpGet:
+          path: /ready
+          scheme: HTTP
+        initialDelaySeconds: 10
+        periodSeconds: 10
+        successThreshold: 1
+        timeoutSeconds: 5

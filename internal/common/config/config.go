@@ -104,8 +104,13 @@ func Get() *viper.Viper {
 		}
 	} else {
 		options.SetDefault("web.port", 8000)
-		options.SetDefault("metrics.port", 9001)
 		options.SetDefault("metrics.path", "/metrics")
+
+		if os.Getenv("PORT") == "" {
+			options.SetDefault("metrics.port", 9001)
+		} else {
+			options.SetDefault("metrics.port", os.Getenv("PORT")) // in knative this serves both metrics and web traffic
+		}
 
 		options.SetDefault("kafka.bootstrap.servers", "kafka:29092")
 		options.SetDefault("topic.updates", "platform.playbook-dispatcher.runner-updates")

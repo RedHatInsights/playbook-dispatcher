@@ -9,6 +9,7 @@ import (
 	"sync"
 
 	"github.com/ghodss/yaml"
+	"github.com/labstack/echo/v4"
 	"github.com/qri-io/jsonschema"
 	"github.com/spf13/viper"
 )
@@ -19,6 +20,7 @@ func Start(
 	errors chan<- error,
 	ready, live *utils.ProbeHandler,
 	wg *sync.WaitGroup,
+	server *echo.Echo,
 ) {
 	var schema jsonschema.Schema
 	file, err := ioutil.ReadFile(cfg.GetString("schema.runner.event"))

@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"playbook-dispatcher/internal/api/connectors"
 	"playbook-dispatcher/internal/api/controllers/private"
@@ -38,6 +37,7 @@ func Start(
 	errors chan<- error,
 	ready, live *utils.ProbeHandler,
 	wg *sync.WaitGroup,
+	server *echo.Echo,
 ) {
 	log := utils.GetLogFromContext(ctx)
 	instrumentation.Start()
@@ -52,7 +52,6 @@ func Start(
 	privateSpec, err := private.GetSwaggerWithExternalRefs()
 	utils.DieOnError(err)
 
-	server := echo.New()
 	server.HideBanner = true
 	server.Debug = false
 
@@ -104,17 +103,19 @@ func Start(
 	public.GET("/v1/runs", publicController.ApiRunsList)
 
 	wg.Add(1)
-	go func() {
-		errors <- server.Start(fmt.Sprintf("0.0.0.0:%d", cfg.GetInt("web.port")))
-	}()
+	/*
+		go func() {
+			errors <- server.Start(fmt.Sprintf("0.0.0.0:%d", cfg.GetInt("web.port")))
+		}()
+	*/
 
 	go func() {
 		defer wg.Done()
 		defer log.Debug("API stopped")
 		<-ctx.Done()
 
-		log.Info("Shutting down API")
-		utils.StopServer(ctx, server)
+		//log.Info("Shutting down API")
+		//utils.StopServer(ctx, server)
 		if sqlConnection, err := db.DB(); err != nil {
 			sqlConnection.Close()
 		}

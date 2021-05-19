@@ -30,6 +30,7 @@ type startModuleFn = func(
 	errors chan<- error,
 	ready, live *utils.ProbeHandler,
 	wg *sync.WaitGroup,
+	server *echo.Echo,
 )
 
 func run(cmd *cobra.Command, args []string) error {
@@ -76,7 +77,7 @@ func run(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("Unknown module %s", module)
 		}
 
-		startModule(ctx, cfg, errors, readinessProbeHandler, livenessProbeHandler, &wg)
+		startModule(ctx, cfg, errors, readinessProbeHandler, livenessProbeHandler, &wg, metricsServer)
 	}
 
 	log.Infof("Listening on service port %d", cfg.GetInt("metrics.port"))

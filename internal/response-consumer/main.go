@@ -9,6 +9,7 @@ import (
 	"playbook-dispatcher/internal/response-consumer/instrumentation"
 	"sync"
 
+	"github.com/labstack/echo/v4"
 	"github.com/spf13/viper"
 
 	"github.com/ghodss/yaml"
@@ -21,6 +22,7 @@ func Start(
 	errors chan<- error,
 	ready, live *utils.ProbeHandler,
 	wg *sync.WaitGroup,
+	server *echo.Echo,
 ) {
 	instrumentation.Start()
 
