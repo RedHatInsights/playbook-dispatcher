@@ -44,8 +44,6 @@ objects:
         value: ${LOG_LEVEL}
       - name: INGRESS_VALIDTOPICS
         value: ${INGRESS_VALIDTOPICS}
-      - name: INGRESS_INVENTORYURL
-        value: ${INGRESS_INVENTORYURL}
       - name: INGRESS_MAXSIZEMAP
         value: ${INGRESS_MAXSIZEMAP}
       - name: CLOWDER_ENABLED
@@ -117,15 +115,13 @@ parameters:
 - name: INGRESS_STAGEBUCKET
   value: insights-upload-perma
 - name: INGRESS_VALIDTOPICS
-  value: advisor,compliance,hccm,qpc,rhv,tower,leapp-reporting,topological-inventory,buckit,xavier,mkt,catalog,playbook,resource-optimization
-- name: INGRESS_INVENTORYURL
-  value: http://insights-inventory:8080/api/inventory/v1/hosts
+  value: playbook
 - name: INGRESS_DEFAULTMAXSIZE
   value: '104857600'
 - name: INGRESS_MAXSIZEMAP
   value: '{"qpc": "157286400"}'
 - name: LOG_LEVEL
-  value: INFO
+  value: DEBUG
 - description: Cpu limit of service
   name: CPU_LIMIT
   value: 100m

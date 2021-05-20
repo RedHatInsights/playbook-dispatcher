@@ -30,6 +30,13 @@ spec:
         app: playbook-dispatcher
         name: postgres
     spec:
+      initContainers:
+      - name: volume-mount-hack
+        image: busybox
+        command: ["sh", "-c", "chmod 775 -R /var/lib/postgresql/data"]
+        volumeMounts:
+        - mountPath: /var/lib/postgresql/data
+          name: postgres-data
       containers:
       - env:
         - name: POSTGRES_USER

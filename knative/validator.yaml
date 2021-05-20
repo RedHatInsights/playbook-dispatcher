@@ -36,3 +36,20 @@ spec:
         periodSeconds: 10
         successThreshold: 1
         timeoutSeconds: 5
+
+---
+apiVersion: sources.knative.dev/v1beta1
+kind: KafkaSource
+metadata:
+  name: kafka-source
+spec:
+  consumerGroup: response-consumer
+  bootstrapServers:
+  - default-kafka.default.svc.cluster.local:29092
+  topics:
+  - platform.upload.playbook-default-default
+  sink:
+    ref:
+      apiVersion: serving.knative.dev/v1
+      kind: Service
+      name: playbook-dispatcher-validator

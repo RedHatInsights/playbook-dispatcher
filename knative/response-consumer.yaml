@@ -7,7 +7,7 @@ spec:
  template:
   spec:
    containers:
-    - image: quay.io/jharting/playbook-dispatcher@sha256:ba551670b9b955ec8b0d53d4316e3e19e7a3d4a1d9a236f6b4acf7c484b2bd37
+    - image: quay.io/jharting/playbook-dispatcher@sha256:ca196ac640a2fd1f526ecaa6b9ebe61539b325d048bff795886f51817a1724bf
       args:
       - run
       - -m
