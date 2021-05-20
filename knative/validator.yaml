@@ -7,7 +7,7 @@ spec:
  template:
   spec:
    containers:
-    - image: quay.io/jharting/playbook-dispatcher@sha256:f78a2dc16d3935d89c4a07aae59d69568b55074674ef1df9bcd0f7f16f24cdc6
+    - image: quay.io/jharting/playbook-dispatcher@sha256:881cea14681ef5e816d1f837876c7e3738f3dedd843037daaf50fefc2ac1554e
       args:
       - run
       - -m
@@ -38,6 +38,14 @@ spec:
         timeoutSeconds: 5
 
 ---
+apiVersion: eventing.knative.dev/v1
+kind: Broker
+metadata:
+  name: default
+  namespace: default
+spec: {}
+
+---
 apiVersion: sources.knative.dev/v1beta1
 kind: KafkaSource
 metadata:
@@ -49,7 +57,21 @@ spec:
   topics:
   - platform.upload.playbook-default-default
   sink:
+    uri: http://broker-ingress.knative-eventing.svc.cluster.local/default/default
+
+---
+apiVersion: eventing.knative.dev/v1
+kind: Trigger
+metadata:
+  labels:
+    eventing.knative.dev/broker: default
+  name: playbook-dispatcher-validator
+spec:
+  broker: default
+  filter: {}
+  subscriber:
     ref:
       apiVersion: serving.knative.dev/v1
       kind: Service
       name: playbook-dispatcher-validator
+      namespace: default
