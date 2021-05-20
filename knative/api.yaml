@@ -1,13 +1,17 @@
 apiVersion: serving.knative.dev/v1
 kind: Service
 metadata:
- name: playbook-dispatcher-api
- namespace: default
+  name: playbook-dispatcher-api
+  namespace: default
 spec:
  template:
+  metadata:
+    labels:
+      rhproject: hackathon2021
   spec:
-   containers:
-    - image: quay.io/jharting/playbook-dispatcher@sha256:f1259753cab2dc5b08b237ae14696bb3078ccd806bf5cefc354c8c67eed71c1b
+    containerConcurrency: 2
+    containers:
+    - image: quay.io/jharting/playbook-dispatcher@sha256:5003db1eebfe2eaa7ba62253f8e152d5dbb130e4de1ecfa1f1f9332b6d247c74
       args:
       - run
       - -m
@@ -15,6 +19,8 @@ spec:
       env:
         - name: LOG_LEVEL
           value: debug
+        - name: DEMO_MODE
+          value: "true"
         - name: PSK_AUTH_TEST
           value: xwKhCUzgJ8
         - name: CLOWDER_ENABLED

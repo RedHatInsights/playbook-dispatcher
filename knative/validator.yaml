@@ -1,13 +1,17 @@
 apiVersion: serving.knative.dev/v1
 kind: Service
 metadata:
- name: playbook-dispatcher-validator
- namespace: default
+  name: playbook-dispatcher-validator
+  namespace: default
 spec:
  template:
+  metadata:
+    labels:
+      rhproject: hackathon2021
   spec:
-   containers:
-    - image: quay.io/jharting/playbook-dispatcher@sha256:881cea14681ef5e816d1f837876c7e3738f3dedd843037daaf50fefc2ac1554e
+    containerConcurrency: 2
+    containers:
+    - image: quay.io/jharting/playbook-dispatcher@sha256:5003db1eebfe2eaa7ba62253f8e152d5dbb130e4de1ecfa1f1f9332b6d247c74
       args:
       - run
       - -m
@@ -36,14 +40,6 @@ spec:
         periodSeconds: 10
         successThreshold: 1
         timeoutSeconds: 5
-
----
-apiVersion: eventing.knative.dev/v1
-kind: Broker
-metadata:
-  name: default
-  namespace: default
-spec: {}
 
 ---
 apiVersion: sources.knative.dev/v1beta1

@@ -53,7 +53,15 @@ metadata:
   namespace: knative-eventing
 spec:
   channel:
-    enabled: true
+    enabled: false
     bootstrapServers: default-kafka.default.svc.cluster.local:29092
   source:
     enabled: true
+
+---
+apiVersion: eventing.knative.dev/v1
+kind: Broker
+metadata:
+  name: default
+  namespace: default
+spec: {}

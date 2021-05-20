@@ -1,13 +1,17 @@
 apiVersion: serving.knative.dev/v1
 kind: Service
 metadata:
- name: playbook-dispatcher-response-consumer
- namespace: default
+  name: playbook-dispatcher-response-consumer
+  namespace: default
 spec:
  template:
+  metadata:
+    labels:
+      rhproject: hackathon2021
   spec:
-   containers:
-    - image: quay.io/jharting/playbook-dispatcher@sha256:ca196ac640a2fd1f526ecaa6b9ebe61539b325d048bff795886f51817a1724bf
+    containerConcurrency: 2
+    containers:
+    - image: quay.io/jharting/playbook-dispatcher@sha256:5003db1eebfe2eaa7ba62253f8e152d5dbb130e4de1ecfa1f1f9332b6d247c74
       args:
       - run
       - -m
@@ -61,3 +65,22 @@ spec:
         periodSeconds: 10
         successThreshold: 1
         timeoutSeconds: 5
+
+---
+apiVersion: eventing.knative.dev/v1
+kind: Trigger
+metadata:
+  labels:
+    eventing.knative.dev/broker: default
+  name: playbook-dispatcher-response-consumer
+spec:
+  broker: default
+  filter:
+    attributes:
+      type: com.github.redhatinsights.playbook-dispatcher.runner-updates
+  subscriber:
+    ref:
+      apiVersion: serving.knative.dev/v1
+      kind: Service
+      name: playbook-dispatcher-response-consumer
+      namespace: default

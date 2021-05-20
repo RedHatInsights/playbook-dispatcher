@@ -29,31 +29,31 @@
     oc process -f ingress.yaml | oc apply -f -
 ```
 
-## Deploying API
+## Running playbook dispatcher
 
-Run `oc apply -f api.yaml` to deploy the API using Knative Serving
+Run
 
-Use
+1. `oc apply -f api.yaml` to deploy the API using Knative Serving
+1. `oc apply -f validator.yaml` to deploy the validator service.
+    This also deploys:
 
-```
-curl -H "x-rh-identity: eyJpZGVudGl0eSI6IHsiYWNjb3VudF9udW1iZXIiOiAiMDAwMDAwMSIsICJ0eXBlIjogIlVzZXIiLCAiaW50ZXJuYWwiOiB7Im9yZ19pZCI6ICIwMDAwMDEifX19" http://playbook-dispatcher-api-default.apps-crc.testing/api/playbook-dispatcher/v1/runs
-```
-to verify it is working as expected.
+    - a KafkaSource for translating kafka messages from ingress to CloudEvents
+    - a trigger for routing these messages to the validator service
 
-TODO:
-- split private/public API
-- set up routing rules https://knative.dev/docs/serving/samples/knative-routing-go/
+1. `oc apply -f response-consumer.yaml` to deploy the response consumer.
+    This also deploys a trigger for routing validator events to the validator service
 
-## Deploying the validator service
+Afterwards, run:
 
-Run `oc apply -f validator.yaml` to deploy the validator services.
-
-Besides the service itself this also deploys
-
-- a KafkaSource for translating kafka messages from ingress to CloudEvents
-- a trigger for routing these messages to the validator service
+1. `make get-runs` to get the list of playbook runs
+1. `make sample_request` to trigger a new playbook run (go to step 1 to verify it got created)
+1. `make sample_updaload` to upload playbook run artifacts
 
 ## Making code changes
 
 After a change is made run `make image-build image-push` to build+promote to quay.
 Then, update the image reference for the new image to get deployed.
+
+TODO:
+- split private/public API
+- set up routing rules https://knative.dev/docs/serving/samples/knative-routing-go/
