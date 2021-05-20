@@ -65,6 +65,15 @@ func Start(
 			return nil, cloudevents.NewHTTPResult(400, "failed to convert data: %s", err)
 		}
 
+		utils.GetLogFromContext(ctx).Infow("Received cloudevent",
+			"type", event.Type(),
+			"specVersion", event.SpecVersion(),
+			"source", event.Source(),
+			"subject", event.Subject(),
+			"id", event.ID(),
+			"time", event.Time(),
+		)
+
 		handler.handleRequest(ctx, data)
 
 		return nil, nil
