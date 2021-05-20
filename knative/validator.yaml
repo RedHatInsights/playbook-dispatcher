@@ -1,0 +1,38 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+ name: playbook-dispatcher-validator
+ namespace: default
+spec:
+ template:
+  spec:
+   containers:
+    - image: quay.io/jharting/playbook-dispatcher@sha256:f78a2dc16d3935d89c4a07aae59d69568b55074674ef1df9bcd0f7f16f24cdc6
+      args:
+      - run
+      - -m
+      - validator
+      env:
+        - name: LOG_LEVEL
+          value: debug
+        - name: CLOWDER_ENABLED
+          value: "false"
+
+      livenessProbe:
+        failureThreshold: 3
+        httpGet:
+          path: /live
+          scheme: HTTP
+        initialDelaySeconds: 10
+        periodSeconds: 10
+        successThreshold: 1
+        timeoutSeconds: 5
+      readinessProbe:
+        failureThreshold: 3
+        httpGet:
+          path: /ready
+          scheme: HTTP
+        initialDelaySeconds: 10
+        periodSeconds: 10
+        successThreshold: 1
+        timeoutSeconds: 5

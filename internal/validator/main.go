@@ -42,8 +42,7 @@ func Start(
 	instrumentation.Start(cfg)
 
 	handler := &handler{
-		producer: producer,
-		schema:   &schema,
+		schema: &schema,
 	}
 
 	/*

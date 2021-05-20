@@ -10,8 +10,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"playbook-dispatcher/internal/common/config"
-	"playbook-dispatcher/internal/common/constants"
-	kafkaUtils "playbook-dispatcher/internal/common/kafka"
 	messageModel "playbook-dispatcher/internal/common/model/message"
 	"playbook-dispatcher/internal/common/utils"
 	"playbook-dispatcher/internal/validator/instrumentation"
@@ -37,9 +35,8 @@ const (
 )
 
 type handler struct {
-	producer *kafka.Producer
-	schema   *jsonschema.Schema
-	errors   chan error
+	schema *jsonschema.Schema
+	errors chan error
 }
 
 func (this *handler) onMessage(ctx context.Context, msg *kafka.Message) {
@@ -96,20 +93,25 @@ func (this *handler) handleRequest(
 		return
 	}
 
+	fmt.Println(correlationId)
+
 	ingressResponse.Validation = validationSuccess
 	instrumentation.ValidationSuccess(ctx)
-	this.produceMessage(ctx, ingressResponseTopic, ingressResponse, request.Account)
+	//this.produceMessage(ctx, ingressResponseTopic, ingressResponse, request.Account)
 
-	headers := kafkaUtils.Headers(constants.HeaderRequestId, request.RequestID, constants.HeaderCorrelationId, correlationId.String())
-	dispatcherResponse := &messageModel.PlaybookRunResponseMessageYaml{
-		Account:         request.Account,
-		B64Identity:     request.B64Identity,
-		RequestId:       request.RequestID,
-		UploadTimestamp: request.Timestamp.Format(time.RFC3339),
-		Events:          events,
-	}
+	// TODO: produce message for response-consumer
+	/*
+		headers := kafkaUtils.Headers(constants.HeaderRequestId, request.RequestID, constants.HeaderCorrelationId, correlationId.String())
+		dispatcherResponse := &messageModel.PlaybookRunResponseMessageYaml{
+			Account:         request.Account,
+			B64Identity:     request.B64Identity,
+			RequestId:       request.RequestID,
+			UploadTimestamp: request.Timestamp.Format(time.RFC3339),
+			Events:          events,
+		}
+	*/
 
-	this.produceMessage(ctx, dispatcherResponseTopic, dispatcherResponse, correlationId.String(), headers...)
+	//this.produceMessage(ctx, dispatcherResponseTopic, dispatcherResponse, correlationId.String(), headers...)
 }
 
 func (this *handler) validateRequest(request *messageModel.IngressValidationRequest) (err error) {
@@ -155,9 +157,10 @@ func (this *handler) validateContent(ctx context.Context, data []byte) (events [
 func (this *handler) validationFailed(ctx context.Context, err error, response *messageModel.IngressValidationResponse) {
 	response.Validation = validationFailure
 	instrumentation.ValidationFailed(ctx, err)
-	this.produceMessage(ctx, ingressResponseTopic, response, response.Account)
+	//this.produceMessage(ctx, ingressResponseTopic, response, response.Account)
 }
 
+/*
 func (this *handler) produceMessage(ctx context.Context, topic string, value interface{}, key string, headers ...kafka.Header) {
 	if value != nil {
 		if err := kafkaUtils.Produce(this.producer, topic, value, key, headers...); err != nil {
@@ -166,6 +169,7 @@ func (this *handler) produceMessage(ctx context.Context, topic string, value int
 		}
 	}
 }
+*/
 
 func (this *handler) readFile(reader io.Reader) (result []byte, err error) {
 	var isGzip bool
