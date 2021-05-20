@@ -44,9 +44,19 @@ func (this *handler) onMessage(ctx context.Context, msg *k.Message) {
 		return
 	}
 
+	this.onRunResponse(ctx, value)
+}
+
+func (this *handler) onRunResponse(ctx context.Context, value *message.PlaybookRunResponseMessageYaml) {
 	utils.GetLogFromContext(ctx).Debugw("Processing message", "account", value.Account, "upload_timestamp", value.UploadTimestamp)
 
 	status := inferStatus(&value.Events, nil)
+	correlationId, err := message.GetCorrelationId(value.Events)
+	if err != nil {
+		panic(err)
+	}
+
+	ctx = utils.WithCorrelationId(ctx, correlationId.String())
 
 	eventsSerialized := utils.MustMarshal(value.Events)
 

@@ -1,22 +1,20 @@
 apiVersion: serving.knative.dev/v1
 kind: Service
 metadata:
- name: playbook-dispatcher-api
+ name: playbook-dispatcher-response-consumer
  namespace: default
 spec:
  template:
   spec:
    containers:
-    - image: quay.io/jharting/playbook-dispatcher@sha256:f1259753cab2dc5b08b237ae14696bb3078ccd806bf5cefc354c8c67eed71c1b
+    - image: quay.io/jharting/playbook-dispatcher@sha256:ba551670b9b955ec8b0d53d4316e3e19e7a3d4a1d9a236f6b4acf7c484b2bd37
       args:
       - run
       - -m
-      - api
+      - response-consumer
       env:
         - name: LOG_LEVEL
           value: debug
-        - name: PSK_AUTH_TEST
-          value: xwKhCUzgJ8
         - name: CLOWDER_ENABLED
           value: "false"
         - name: DB_HOST

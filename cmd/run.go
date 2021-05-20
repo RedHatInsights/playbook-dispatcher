@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/signal"
 	"playbook-dispatcher/internal/api"
+	"playbook-dispatcher/internal/api/middleware"
 	"playbook-dispatcher/internal/common/config"
 	"playbook-dispatcher/internal/common/utils"
 	responseConsumer "playbook-dispatcher/internal/response-consumer"
@@ -13,6 +14,8 @@ import (
 	"sync"
 	"syscall"
 	"time"
+
+	echoMiddleware "github.com/labstack/echo/v4/middleware"
 
 	"go.uber.org/zap"
 
@@ -45,6 +48,11 @@ func run(cmd *cobra.Command, args []string) error {
 	cfg := config.Get()
 
 	metricsServer := echo.New()
+	metricsServer.Use(
+		middleware.ContextLogger,
+		echoMiddleware.Recover(),
+	)
+
 	metricsServer.HideBanner = true
 	metricsServer.Debug = false
 

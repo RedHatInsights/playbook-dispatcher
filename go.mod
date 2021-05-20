@@ -6,6 +6,7 @@ require (
 	github.com/RedHatInsights/cloudwatch v0.0.0-20210111105023-1df2bdfe3291
 	github.com/atombender/go-jsonschema v0.8.1-0.20200630165108-d692b4118fc7 // indirect
 	github.com/aws/aws-sdk-go v1.36.28
+	github.com/cloudevents/sdk-go/v2 v2.4.1
 	github.com/confluentinc/confluent-kafka-go v1.5.2
 	github.com/deepmap/oapi-codegen v1.4.2
 	github.com/getkin/kin-openapi v0.36.0
