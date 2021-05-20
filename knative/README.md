@@ -16,6 +16,19 @@
     oc apply -f db.yaml
     ```
 
+1. Deploy Clowder
+
+    ```
+    oc apply -f https://github.com/RedHatInsights/clowder/releases/download/0.12.0/clowder-manifest-0.12.0.yaml --validate=false
+    oc apply -f clowdenv.yml
+    ```
+
+1. Deploy ingress
+
+```
+    oc process -f ingress.yaml | oc apply -f -
+```
+
 ## Deploying API
 
 Run `oc apply -f api.yaml` to deploy the API using Knative Serving
