@@ -54,7 +54,7 @@ func (this *handler) onMessage(ctx context.Context, msg *kafka.Message) {
 func (this *handler) handleRequest(
 	ctx context.Context,
 	request *messageModel.IngressValidationRequest,
-) {
+) *messageModel.PlaybookRunResponseMessageYaml {
 	ctx = utils.WithRequestId(ctx, request.RequestID)
 	ctx = utils.SetLog(ctx, utils.GetLogFromContext(ctx).With("url", request.URL))
 	utils.GetLogFromContext(ctx).Debugw("Processing request", "account", request.Account)
@@ -70,27 +70,27 @@ func (this *handler) handleRequest(
 	res, err := utils.DoGetWithRetry(client, request.URL, cfg.GetInt("storage.retries"))
 	if err != nil {
 		instrumentation.FetchArchiveError(ctx, err)
-		return
+		return nil
 	}
 
 	defer res.Body.Close()
 	data, err := this.readFile(res.Body)
 	if err != nil {
 		this.validationFailed(ctx, err, ingressResponse)
-		return
+		return nil
 	}
 
 	events, err := this.validateContent(ctx, data)
 	if err != nil {
 		this.validationFailed(ctx, err, ingressResponse)
 		utils.GetLogFromContext(ctx).Debugw("Invalid payload details", "data", string(data))
-		return
+		return nil
 	}
 
 	correlationId, err := messageModel.GetCorrelationId(events)
 	if err != nil {
 		this.validationFailed(ctx, err, ingressResponse)
-		return
+		return nil
 	}
 
 	fmt.Println(correlationId)
@@ -112,6 +112,16 @@ func (this *handler) handleRequest(
 	*/
 
 	//this.produceMessage(ctx, dispatcherResponseTopic, dispatcherResponse, correlationId.String(), headers...)
+
+	dispatcherResponse := messageModel.PlaybookRunResponseMessageYaml{
+		Account:         request.Account,
+		B64Identity:     request.B64Identity,
+		RequestId:       request.RequestID,
+		UploadTimestamp: request.Timestamp.Format(time.RFC3339),
+		Events:          events,
+	}
+
+	return &dispatcherResponse
 }
 
 func (this *handler) validateRequest(request *messageModel.IngressValidationRequest) (err error) {

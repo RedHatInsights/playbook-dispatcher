@@ -11,6 +11,7 @@ import (
 
 	cloudevents "github.com/cloudevents/sdk-go/v2"
 	"github.com/ghodss/yaml"
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/qri-io/jsonschema"
 	"github.com/spf13/viper"
@@ -74,9 +75,20 @@ func Start(
 			"time", event.Time(),
 		)
 
-		handler.handleRequest(ctx, data)
+		reply := handler.handleRequest(ctx, data)
 
-		return nil, nil
+		replyCe := cloudevents.NewEvent()
+		replyCe.SetID(uuid.New().String())
+		replyCe.SetSource("playbook-dispatcher-validator")
+		replyCe.SetType("com.github.redhatinsights.playbook-dispatcher.runner-updates")
+		if err := replyCe.SetData(cloudevents.ApplicationJSON, reply); err != nil {
+			utils.GetLogFromContext(ctx).Errorf("failed to set response data: %s", err)
+			return nil, cloudevents.NewHTTPResult(500, "failed to set response data: %s", err)
+		}
+
+		utils.GetLogFromContext(ctx).Debugw("Responding to validation request")
+
+		return &replyCe, nil
 	})
 	if err != nil {
 		log.Fatalf("failed to create handler: %s", err.Error())
