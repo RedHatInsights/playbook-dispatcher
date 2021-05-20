@@ -68,7 +68,9 @@ metadata:
   name: playbook-dispatcher-validator
 spec:
   broker: default
-  filter: {}
+  filter:
+    attributes:
+      source: /apis/v1/namespaces/default/kafkasources/kafka-source#platform.upload.playbook-default-default
   subscriber:
     ref:
       apiVersion: serving.knative.dev/v1

@@ -44,6 +44,15 @@ TODO:
 - split private/public API
 - set up routing rules https://knative.dev/docs/serving/samples/knative-routing-go/
 
+## Deploying the validator service
+
+Run `oc apply -f validator.yaml` to deploy the validator services.
+
+Besides the service itself this also deploys
+
+- a KafkaSource for translating kafka messages from ingress to CloudEvents
+- a trigger for routing these messages to the validator service
+
 ## Making code changes
 
 After a change is made run `make image-build image-push` to build+promote to quay.
