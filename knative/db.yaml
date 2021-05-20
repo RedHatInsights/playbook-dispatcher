@@ -47,6 +47,8 @@ spec:
             secretKeyRef:
               key: db.name
               name: playbook-dispatcher-db
+        - name: PGDATA
+          value: /var/lib/postgresql/data/pgdata
         image: quay.io/debezium/postgres:12
         imagePullPolicy: IfNotPresent
         livenessProbe:
@@ -88,6 +90,27 @@ spec:
           limits:
             cpu: 200m
             memory: 512Mi
+        volumeMounts:
+        - mountPath: /var/lib/postgresql/data
+          name: postgres-data
+      volumes:
+      - name: postgres-data
+        persistentVolumeClaim:
+          claimName: postgres-data
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  labels:
+    app: playbook-dispatcher
+  name: postgres-data
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
 
 ---
 apiVersion: v1

@@ -13,6 +13,8 @@ spec:
       - -m
       - api
       env:
+        - name: PSK_AUTH_TEST
+          value: xwKhCUzgJ8
         - name: CLOWDER_ENABLED
           value: "false"
         - name: DB_HOST
