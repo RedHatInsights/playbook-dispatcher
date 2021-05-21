@@ -27,6 +27,7 @@
 
 ```
     oc process -f ingress.yaml | oc apply -f -
+    make ingress_port_forward
 ```
 
 ## Running playbook dispatcher
@@ -47,7 +48,7 @@ Afterwards, run:
 
 1. `make get-runs` to get the list of playbook runs
 1. `make sample_request` to trigger a new playbook run (go to step 1 to verify it got created)
-1. `make sample_updaload` to upload playbook run artifacts
+1. `make sample_upload` to upload playbook run artifacts
 
 ## Making code changes
 
