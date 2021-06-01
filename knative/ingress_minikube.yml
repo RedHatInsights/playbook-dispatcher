@@ -1,0 +1,177 @@
+{
+    "kind": "List",
+    "apiVersion": "v1",
+    "metadata": {},
+    "items": [
+        {
+            "apiVersion": "cloud.redhat.com/v1alpha1",
+            "kind": "ClowdApp",
+            "metadata": {
+                "name": "ingress"
+            },
+            "spec": {
+                "envName": "default",
+                "kafkaTopics": [
+                    {
+                        "partitions": 64,
+                        "replicas": 3,
+                        "topicName": "platform.upload.advisor"
+                    },
+                    {
+                        "partitions": 3,
+                        "replicas": 3,
+                        "topicName": "platform.payload-status"
+                    },
+                    {
+                        "partitions": 4,
+                        "replicas": 3,
+                        "topicName": "platform.upload.compliance"
+                    },
+                    {
+                        "partitions": 3,
+                        "replicas": 3,
+                        "topicName": "platform.upload.hccm"
+                    },
+                    {
+                        "partitions": 3,
+                        "replicas": 3,
+                        "topicName": "platform.upload.qpc"
+                    },
+                    {
+                        "partitions": 3,
+                        "replicas": 3,
+                        "topicName": "platform.upload.rhv"
+                    },
+                    {
+                        "partitions": 3,
+                        "replicas": 3,
+                        "topicName": "platform.upload.tower"
+                    },
+                    {
+                        "partitions": 3,
+                        "replicas": 3,
+                        "topicName": "platform.upload.leapp-reporting"
+                    },
+                    {
+                        "partitions": 2,
+                        "replicas": 3,
+                        "topicName": "platform.upload.topological-inventory"
+                    },
+                    {
+                        "partitions": 3,
+                        "replicas": 3,
+                        "topicName": "platform.upload.buckit"
+                    },
+                    {
+                        "partitions": 16,
+                        "replicas": 3,
+                        "topicName": "platform.upload.xavier"
+                    },
+                    {
+                        "partitions": 10,
+                        "replicas": 3,
+                        "topicName": "platform.upload.mkt"
+                    },
+                    {
+                        "partitions": 3,
+                        "replicas": 3,
+                        "topicName": "platform.upload.catalog"
+                    },
+                    {
+                        "partitions": 3,
+                        "replicas": 3,
+                        "topicName": "platform.upload.playbook"
+                    },
+                    {
+                        "partitions": 3,
+                        "replicas": 3,
+                        "topicName": "platform.upload.resource-optimization"
+                    }
+                ],
+                "objectStore": [
+                    "insights-upload-perma"
+                ],
+                "optionalDependencies": [
+                    "puptoo",
+                    "storage-broker"
+                ],
+                "pods": [
+                    {
+                        "env": [
+                            {
+                                "name": "INGRESS_STAGEBUCKET",
+                                "value": "insights-upload-perma"
+                            },
+                            {
+                                "name": "INGRESS_LOG_LEVEL",
+                                "value": "DEBUG"
+                            },
+                            {
+                                "name": "INGRESS_VALIDTOPICS",
+                                "value": "playbook"
+                            },
+                            {
+                                "name": "INGRESS_MAXSIZEMAP",
+                                "value": "{\"qpc\": \"157286400\"}"
+                            },
+                            {
+                                "name": "CLOWDER_ENABLED",
+                                "value": "true"
+                            }
+                        ],
+                        "image": "quay.io/cloudservices/insights-ingress:ce29e78",
+                        "livenessProbe": {
+                            "failureThreshold": 3,
+                            "httpGet": {
+                                "path": "/",
+                                "port": 8000,
+                                "scheme": "HTTP"
+                            },
+                            "initialDelaySeconds": 35,
+                            "periodSeconds": 5,
+                            "successThreshold": 1,
+                            "timeoutSeconds": 120
+                        },
+                        "minReplicas": 1,
+                        "name": "service",
+                        "readinessProbe": {
+                            "failureThreshold": 3,
+                            "httpGet": {
+                                "path": "/",
+                                "port": 8000,
+                                "scheme": "HTTP"
+                            },
+                            "initialDelaySeconds": 35,
+                            "periodSeconds": 5,
+                            "successThreshold": 1,
+                            "timeoutSeconds": 120
+                        },
+                        "resources": {
+                            "limits": {
+                                "cpu": "100m",
+                                "memory": "256Mi"
+                            },
+                            "requests": {
+                                "cpu": "10m",
+                                "memory": "256Mi"
+                            }
+                        },
+                        "volumeMounts": [
+                            {
+                                "mountPath": "/tmp",
+                                "name": "tmpdir"
+                            }
+                        ],
+                        "volumes": [
+                            {
+                                "emptyDir": {},
+                                "name": "tmpdir"
+                            }
+                        ],
+                        "web": true
+                    }
+                ]
+            }
+        }
+    ]
+}

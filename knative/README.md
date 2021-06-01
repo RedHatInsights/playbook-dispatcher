@@ -1,6 +1,6 @@
 # Running playbook-dispatcher using knative
 
-## Prerequisities
+## Prerequisities (Openshift/CRC)
 
 1. Install [CodeReady Containers](https://developers.redhat.com/products/codeready-containers/overview)
 1. Install [OpenShift Serverless operator](https://docs.openshift.com/container-platform/4.7/serverless/admin_guide/installing-openshift-serverless.html#installing-openshift-serverless) by running
@@ -8,6 +8,20 @@
     ```
     oc apply -f knative.yaml
     ```
+## Prerequisities (Minikube)
+
+1. Install [Minikube](https://minikube.sigs.k8s.io/docs/start/).  Recommend the Docker/Podman driver, with 8G RAM
+1. Start minikube tunnel
+
+   ```
+   minikube tunnel
+   ```
+1. Install [Knative](https://github.com/knative) by running
+
+    ```
+    knative-install-minikube.sh
+    ```
+    If you get an error about "resources not found", rerun the command after a brief wait.
 
 1. Deploy the database
 
@@ -46,8 +60,8 @@ Run
 
 Afterwards, run:
 
-1. `make get-runs` to get the list of playbook runs
-1. `make sample_request` to trigger a new playbook run (go to step 1 to verify it got created)
+1. `make get-runs` (`make get-runs_mk` if using minikube) to get the list of playbook runs
+1. `make sample_request` (`make sample_request_mk` if using minikube) to trigger a new playbook run (go to step 1 to verify it got created)
 1. `make sample_upload` to upload playbook run artifacts
 
 ## Making code changes
