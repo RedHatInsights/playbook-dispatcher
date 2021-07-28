@@ -34,6 +34,9 @@ objects:
 
     envName: ${ENV_NAME}
 
+    testing:
+      iqePlugin: rhc
+
     database:
       name: playbook-dispatcher
       version: 12
