@@ -10,6 +10,7 @@ IMAGE="quay.io/cloudservices/playbook-dispatcher"
 IQE_PLUGINS="rhc"
 IQE_MARKER_EXPRESSION="smoke"
 IQE_FILTER_EXPRESSION="playbook_dispatcher"
+IQE_CJI_TIMEOUT="30m"
 
 
 # Install bonfire repository/initialize
@@ -26,4 +27,4 @@ source $CICD_ROOT/build.sh
 source $CICD_ROOT/deploy_ephemeral_env.sh
 
 # Deploy an IQE pod and run the smoke tests
-source $CICD_ROOT/smoke_test.sh
+source $CICD_ROOT/cji_smoke_test.sh
