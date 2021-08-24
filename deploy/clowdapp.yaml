@@ -122,6 +122,9 @@ objects:
           - name: RESPONSE_INTERVAL
             value: ${RESPONSE_INTERVAL}
 
+          - name: RETURN_URL
+            value: ${RETURN_URL}
+
           - name: RBAC_IMPL
             value: ${RBAC_IMPL}
           - name: RBAC_HOST
@@ -313,6 +316,9 @@ parameters:
   value: impl
 - name: RBAC_HOST
   required: true
+
+- name: RETURN_URL
+  value: TBD
 
 - name: CLEANER_SCHEDULE
   value: "*/10 * * * *"
