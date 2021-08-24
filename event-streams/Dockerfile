@@ -12,6 +12,8 @@ WORKDIR /src
 ADD event-streams /src
 ADD schema/run.event.yaml /src
 
+RUN microdnf install gzip
+
 # Taken from https://github.com/debezium/docker-images/blob/master/connect-base/1.5/docker-maven-download.sh
 RUN mkdir -p $EXTRA_PLUGINS $EXTRA_LIBS && \
     MAVEN_DEP_DESTINATION=$EXTRA_PLUGINS /src/docker-maven-download.sh debezium postgres ${DEBEZIUM_VERSION} ${DEBEZIUM_CHECKSUM} && \
@@ -31,7 +33,7 @@ ENV CONNECT_PLUGIN_PATH=/opt/kafka/plugins \
 
 USER root
 
-RUN yum install epel-release -y && yum -y install jq
+RUN microdnf install jq
 COPY event-streams/check-connectors.sh /
 COPY examples/connector-local.json /
 
