@@ -2,18 +2,16 @@ package utils
 
 import (
 	"context"
-	"io"
 	"os"
 	"playbook-dispatcher/internal/common/config"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 
-	"github.com/RedHatInsights/cloudwatch"
+	"github.com/mec07/cloudwatchwriter"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 	"github.com/labstack/echo/v4"
 	"github.com/spf13/viper"
 )
@@ -61,18 +59,15 @@ func createCloudwatch(cfg *viper.Viper, level zap.AtomicLevel) (zap.Option, erro
 		WithRegion(cfg.GetString("log.cw.region"))
 
 	cloudWatchSession := session.Must(session.NewSession(awsConf))
-	cloudWatchClient := cloudwatchlogs.New(cloudWatchSession)
 
-	group := cloudwatch.NewGroup(cfg.GetString("log.cw.group"), cloudWatchClient)
-	w, err := group.Create(hostname)
-
+	w, err := cloudwatchwriter.New(cloudWatchSession, cfg.GetString("log.cw.group"), hostname)
 	if err != nil {
 		return nil, err
 	}
 
 	cwc := zapcore.NewCore(
 		zapcore.NewJSONEncoder(zap.NewProductionEncoderConfig()),
-		wrapWriter(w),
+		zapcore.AddSync(w),
 		zap.NewAtomicLevelAt(level.Level()),
 	)
 
@@ -81,24 +76,6 @@ func createCloudwatch(cfg *viper.Viper, level zap.AtomicLevel) (zap.Option, erro
 	})
 
 	return cloudwatch, nil
-}
-
-func wrapWriter(w io.Writer) zapcore.WriteSyncer {
-	switch w := w.(type) {
-	case *cloudwatch.Writer:
-		return &writerWrapper{w}
-	default:
-		return zapcore.AddSync(w)
-	}
-}
-
-type writerWrapper struct {
-	*cloudwatch.Writer
-}
-
-// this method is required by zapcore
-func (w writerWrapper) Sync() error {
-	return w.Flush()
 }
 
 type loggerKeyType int
