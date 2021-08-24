@@ -3,7 +3,6 @@ module playbook-dispatcher
 go 1.14
 
 require (
-	github.com/RedHatInsights/cloudwatch v0.0.0-20210111105023-1df2bdfe3291
 	github.com/atombender/go-jsonschema v0.8.1-0.20200630165108-d692b4118fc7 // indirect
 	github.com/aws/aws-sdk-go v1.36.28
 	github.com/confluentinc/confluent-kafka-go v1.5.2
@@ -18,6 +17,7 @@ require (
 	github.com/labstack/echo v3.3.10+incompatible
 	github.com/labstack/echo/v4 v4.1.17
 	github.com/labstack/gommon v0.3.0
+	github.com/mec07/cloudwatchwriter v0.2.4
 	github.com/onsi/ginkgo v1.14.2
 	github.com/onsi/gomega v1.10.4
 	github.com/pkg/errors v0.9.1
@@ -31,3 +31,5 @@ require (
 	gorm.io/driver/postgres v1.0.6
 	gorm.io/gorm v1.20.11
 )
+
+replace gopkg.in/oleiade/lane.v1 v1.0.0 => github.com/oleiade/lane v1.0.1
