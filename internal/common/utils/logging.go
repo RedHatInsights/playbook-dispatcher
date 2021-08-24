@@ -102,8 +102,8 @@ func WithRequestId(parent context.Context, requestId string) context.Context {
 	return withKeyValue(parent, "request_id", requestId)
 }
 
-func WithCorrelationId(parent context.Context, requestId string) context.Context {
-	return withKeyValue(parent, "request_id", requestId)
+func WithCorrelationId(parent context.Context, correlationId string) context.Context {
+	return withKeyValue(parent, "correlation_id", correlationId)
 }
 
 func withKeyValue(parent context.Context, key, value string) context.Context {
