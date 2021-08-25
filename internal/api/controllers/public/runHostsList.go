@@ -6,6 +6,7 @@ import (
 	"playbook-dispatcher/internal/api/instrumentation"
 	"playbook-dispatcher/internal/api/middleware"
 	"playbook-dispatcher/internal/api/rbac"
+	"playbook-dispatcher/internal/common/db"
 	dbModel "playbook-dispatcher/internal/common/model/db"
 	"playbook-dispatcher/internal/common/utils"
 
@@ -15,6 +16,9 @@ import (
 )
 
 func (this *controllers) ApiRunHostsList(ctx echo.Context, params ApiRunHostsListParams) error {
+	db.SetLog(this.database, utils.GetLogFromEcho(ctx))
+	defer db.ClearLog(this.database)
+
 	identity := identityMiddleware.Get(ctx.Request().Context())
 
 	limit := getLimit(params.Limit)
