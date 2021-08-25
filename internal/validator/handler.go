@@ -59,6 +59,7 @@ func (this *handler) handleRequest(
 	request *messageModel.IngressValidationRequest,
 ) {
 	ctx = utils.WithRequestId(ctx, request.RequestID)
+	ctx = utils.WithAccount(ctx, request.Account)
 	ctx = utils.SetLog(ctx, utils.GetLogFromContext(ctx).With("url", request.URL))
 	utils.GetLogFromContext(ctx).Debugw("Processing request", "account", request.Account)
 
@@ -95,6 +96,8 @@ func (this *handler) handleRequest(
 		this.validationFailed(ctx, err, ingressResponse)
 		return
 	}
+
+	ctx = utils.WithCorrelationId(ctx, correlationId.String())
 
 	ingressResponse.Validation = validationSuccess
 	instrumentation.ValidationSuccess(ctx)
