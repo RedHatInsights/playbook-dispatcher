@@ -88,7 +88,6 @@ func (this *cloudConnectorClientImpl) SendCloudConnectorRequest(
 	}
 
 	utils.GetLogFromContext(ctx).Debugw("Sending Cloud Connector message",
-		"account", account,
 		"directive", cloudConnectorDirective,
 		"metadata", metadata,
 		"payload", url,

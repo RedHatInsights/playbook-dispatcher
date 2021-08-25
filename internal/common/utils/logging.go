@@ -8,11 +8,11 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 
-	"github.com/mec07/cloudwatchwriter"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/labstack/echo/v4"
+	"github.com/mec07/cloudwatchwriter"
 	"github.com/spf13/viper"
 )
 
@@ -104,6 +104,10 @@ func WithRequestId(parent context.Context, requestId string) context.Context {
 
 func WithCorrelationId(parent context.Context, correlationId string) context.Context {
 	return withKeyValue(parent, "correlation_id", correlationId)
+}
+
+func WithAccount(parent context.Context, account string) context.Context {
+	return withKeyValue(parent, "account", account)
 }
 
 func withKeyValue(parent context.Context, key, value string) context.Context {

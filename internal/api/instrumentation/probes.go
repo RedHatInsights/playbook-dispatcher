@@ -1,6 +1,7 @@
 package instrumentation
 
 import (
+	"context"
 	"playbook-dispatcher/internal/common/utils"
 
 	"github.com/google/uuid"
@@ -61,28 +62,28 @@ func InvalidRecipientId(ctx echo.Context, value string, err error) {
 	validationFailureTotal.WithLabelValues(labelParseUuid, labelCorrelationId).Inc()
 }
 
-func CloudConnectorRequestError(ctx echo.Context, err error, recipient uuid.UUID) {
-	utils.GetLogFromEcho(ctx).Errorw("Error sending message to cloud connector", "error", err, "recipient", recipient)
+func CloudConnectorRequestError(ctx context.Context, err error, recipient uuid.UUID) {
+	utils.GetLogFromContext(ctx).Errorw("Error sending message to cloud connector", "error", err, "recipient", recipient)
 	connectorErrorTotal.WithLabelValues(labelErrorGeneric).Inc()
 }
 
-func CloudConnectorNoConnection(ctx echo.Context, recipient uuid.UUID) {
-	utils.GetLogFromEcho(ctx).Errorw("Cloud connector reporting no connection for recipient", "recipient", recipient)
+func CloudConnectorNoConnection(ctx context.Context, recipient uuid.UUID) {
+	utils.GetLogFromContext(ctx).Errorw("Cloud connector reporting no connection for recipient", "recipient", recipient)
 	connectorErrorTotal.WithLabelValues(labelNoConnection).Inc()
 }
 
-func CloudConnectorOK(ctx echo.Context, recipient uuid.UUID, messageId *string) {
-	utils.GetLogFromEcho(ctx).Debugw("Received response from cloud connector", "recipient", recipient, "message_id", *messageId)
+func CloudConnectorOK(ctx context.Context, recipient uuid.UUID, messageId *string) {
+	utils.GetLogFromContext(ctx).Debugw("Received response from cloud connector", "recipient", recipient, "message_id", *messageId)
 	connectorSentTotal.Inc()
 }
 
-func PlaybookRunCreateError(ctx echo.Context, err error, run *dbModel.Run) {
-	utils.GetLogFromEcho(ctx).Errorw("Error creating run", "error", err, "run", *run)
+func PlaybookRunCreateError(ctx context.Context, err error, run *dbModel.Run) {
+	utils.GetLogFromContext(ctx).Errorw("Error creating run", "error", err, "run", *run)
 	errorTotal.WithLabelValues(labelDb, labelPlaybookRunCreate).Inc()
 }
 
-func PlaybookRunHostCreateError(ctx echo.Context, err error, data []dbModel.RunHost) {
-	utils.GetLogFromEcho(ctx).Errorw("Error creating run host", "error", err, "data", data)
+func PlaybookRunHostCreateError(ctx context.Context, err error, data []dbModel.RunHost) {
+	utils.GetLogFromContext(ctx).Errorw("Error creating run host", "error", err, "data", data)
 	errorTotal.WithLabelValues(labelDb, labelPlaybookRunHostCreate).Inc()
 }
 
@@ -99,6 +100,10 @@ func RbacError(ctx echo.Context, err error) {
 func RbacRejected(ctx echo.Context) {
 	utils.GetLogFromEcho(ctx).Infow("access rejected due to RBAC")
 	rbacRejectedTotal.Inc()
+}
+
+func RunCreated(ctx context.Context, recipient uuid.UUID, runId uuid.UUID, payload string, service string) {
+	utils.GetLogFromContext(ctx).Infow("Created new playbook run", "recipient", recipient.String(), "run_id", runId.String(), "payload", string(payload), "service", service)
 }
 
 func Start() {

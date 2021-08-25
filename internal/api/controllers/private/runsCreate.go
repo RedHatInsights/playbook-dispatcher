@@ -43,8 +43,11 @@ func (this *controllers) ApiInternalRunsCreate(ctx echo.Context) error {
 			correlationId = uuid.UUID{}
 		}
 
+		context := utils.WithCorrelationId(ctx.Request().Context(), correlationId.String())
+		context = utils.WithAccount(context, string(runInput.Account))
+
 		messageId, notFound, err := this.cloudConnectorClient.SendCloudConnectorRequest(
-			ctx.Request().Context(),
+			context,
 			string(runInput.Account),
 			recipient,
 			correlationId,
@@ -52,20 +55,20 @@ func (this *controllers) ApiInternalRunsCreate(ctx echo.Context) error {
 		)
 
 		if err != nil {
-			instrumentation.CloudConnectorRequestError(ctx, err, recipient)
+			instrumentation.CloudConnectorRequestError(context, err, recipient)
 			return runCreateError(http.StatusInternalServerError)
 		} else if notFound {
-			instrumentation.CloudConnectorNoConnection(ctx, recipient)
+			instrumentation.CloudConnectorNoConnection(context, recipient)
 			return runCreateError(http.StatusNotFound)
 		} else {
-			instrumentation.CloudConnectorOK(ctx, recipient, messageId)
+			instrumentation.CloudConnectorOK(context, recipient, messageId)
 		}
 
 		entity := newRun(&runInput, correlationId, dbModel.RunStatusRunning, recipient)
-		entity.Service = middleware.GetPSKPrincipal(ctx.Request().Context())
+		entity.Service = middleware.GetPSKPrincipal(context)
 
 		if dbResult := this.database.Create(&entity); dbResult.Error != nil {
-			instrumentation.PlaybookRunCreateError(ctx, dbResult.Error, &entity)
+			instrumentation.PlaybookRunCreateError(context, dbResult.Error, &entity)
 			return runCreateError(http.StatusInternalServerError)
 		}
 
@@ -88,12 +91,14 @@ func (this *controllers) ApiInternalRunsCreate(ctx echo.Context) error {
 			}
 
 			if dbResult := this.database.Create(newHosts); dbResult.Error != nil {
-				instrumentation.PlaybookRunHostCreateError(ctx, dbResult.Error, newHosts)
+				instrumentation.PlaybookRunHostCreateError(context, dbResult.Error, newHosts)
 				return runCreateError(http.StatusInternalServerError)
 			}
 		}
 
 		runId := public.RunId(entity.ID.String())
+		instrumentation.RunCreated(context, recipient, entity.ID, string(runInput.Url), entity.Service)
+
 		return &RunCreated{
 			Code: http.StatusCreated,
 			Id:   &runId,
