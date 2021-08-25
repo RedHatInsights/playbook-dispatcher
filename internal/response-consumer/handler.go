@@ -5,6 +5,7 @@ import (
 	"errors"
 	"playbook-dispatcher/internal/common/ansible"
 	"playbook-dispatcher/internal/common/constants"
+	database "playbook-dispatcher/internal/common/db"
 	kafkaUtils "playbook-dispatcher/internal/common/kafka"
 	"playbook-dispatcher/internal/common/model/db"
 	"playbook-dispatcher/internal/common/model/message"
@@ -35,7 +36,8 @@ func (this *handler) onMessage(ctx context.Context, msg *k.Message) {
 		return
 	}
 
-	ctx = utils.WithCorrelationId(utils.WithRequestId(ctx, requestId), correlationId.String())
+	ctx = utils.WithRequestId(ctx, requestId)
+	ctx = utils.WithCorrelationId(ctx, correlationId.String())
 
 	value := &message.PlaybookRunResponseMessageYaml{}
 
@@ -44,7 +46,8 @@ func (this *handler) onMessage(ctx context.Context, msg *k.Message) {
 		return
 	}
 
-	utils.GetLogFromContext(ctx).Debugw("Processing message", "account", value.Account, "upload_timestamp", value.UploadTimestamp)
+	ctx = utils.WithAccount(ctx, value.Account)
+	utils.GetLogFromContext(ctx).Debugw("Processing message", "upload_timestamp", value.UploadTimestamp)
 
 	status := inferStatus(&value.Events, nil)
 
@@ -52,12 +55,15 @@ func (this *handler) onMessage(ctx context.Context, msg *k.Message) {
 
 	var runsUpdated int64
 
+	database.SetLog(this.db, utils.GetLogFromContext(ctx))
+	defer database.ClearLog(this.db)
+
+	run := db.Run{}
+
 	err = this.db.Transaction(func(tx *gorm.DB) error {
 		baseQuery := tx.Model(db.Run{}).
 			Where("account = ?", value.Account).
 			Where("correlation_id = ?", correlationId)
-
-		run := db.Run{}
 
 		if selectResult := baseQuery.Select("id").First(&run); selectResult.Error != nil {
 			if errors.Is(selectResult.Error, gorm.ErrRecordNotFound) {
@@ -112,11 +118,11 @@ func (this *handler) onMessage(ctx context.Context, msg *k.Message) {
 	})
 
 	if err != nil {
-		instrumentation.PlaybookRunUpdateError(ctx, err, value.Account, status, correlationId)
+		instrumentation.PlaybookRunUpdateError(ctx, err, status, run.ID)
 	} else if runsUpdated > 0 {
-		instrumentation.PlaybookRunUpdated(ctx, value.Account, status, correlationId)
+		instrumentation.PlaybookRunUpdated(ctx, status, run.ID)
 	} else {
-		instrumentation.PlaybookRunUpdateMiss(ctx, value.Account, status, correlationId)
+		instrumentation.PlaybookRunUpdateMiss(ctx, status)
 	}
 }
 
