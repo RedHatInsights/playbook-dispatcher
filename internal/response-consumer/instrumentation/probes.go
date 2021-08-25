@@ -37,18 +37,18 @@ const (
 	labelHeaderMissing  = "header_missing"
 )
 
-func PlaybookRunUpdated(ctx context.Context, account string, status string, correlationId uuid.UUID) {
-	utils.GetLogFromContext(ctx).Infow("Updated run", "account", account, "status", status, "correlation_id", correlationId)
+func PlaybookRunUpdated(ctx context.Context, status string, runId uuid.UUID) {
+	utils.GetLogFromContext(ctx).Infow("Updated run", "status", status, "run_id", runId.String())
 	playbookRunUpdatedTotal.Inc()
 }
 
-func PlaybookRunUpdateMiss(ctx context.Context, account string, status string, correlationId uuid.UUID) {
-	utils.GetLogFromContext(ctx).Warnw("No run to update", "account", account, "status", status, "correlation_id", correlationId)
+func PlaybookRunUpdateMiss(ctx context.Context, status string) {
+	utils.GetLogFromContext(ctx).Warnw("No run to update", "status", status)
 	playbookRunUpdateMissTotal.Inc()
 }
 
-func PlaybookRunUpdateError(ctx context.Context, err error, account string, status string, correlationId uuid.UUID) {
-	utils.GetLogFromContext(ctx).Errorw("Error updating run", "account", account, "status", status, "correlation_id", correlationId, "error", err)
+func PlaybookRunUpdateError(ctx context.Context, err error, status string, runId uuid.UUID) {
+	utils.GetLogFromContext(ctx).Errorw("Error updating run", "status", status, "error", err, "run_id", runId.String())
 	errorTotal.WithLabelValues(labelDbUpdate).Inc()
 }
 
