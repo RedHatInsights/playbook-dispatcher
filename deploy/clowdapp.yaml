@@ -100,6 +100,12 @@ objects:
               secretKeyRef:
                 key: key
                 name: auth-psk-config-manager
+          - name: PSK_AUTH_EDGE
+            valueFrom:
+              secretKeyRef:
+                key: key
+                name: auth-psk-edge
+                optional: true
           - name: PSK_AUTH_TEST
             value: ${PSK_AUTH_TEST}
 

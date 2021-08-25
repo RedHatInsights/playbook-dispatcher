@@ -349,6 +349,11 @@ objects:
               secretKeyRef:
                 key: key
                 name: auth-psk-config-manager
+          - name: PSK_AUTH_EDGE
+            valueFrom:
+              secretKeyRef:
+                key: key
+                name: auth-psk-edge
 
           - name: CLOUD_CONNECTOR_IMPL
             value: ${CLOUD_CONNECTOR_IMPL}
