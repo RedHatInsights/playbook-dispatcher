@@ -22,9 +22,31 @@ func clean(cmd *cobra.Command, args []string) error {
 	err := db.Transaction(func(tx *gorm.DB) error {
 		log.Info("Cleaning up timed-out runs")
 
+		var dbRuns []dbModel.Run
+
 		result := tx.Model(&dbModel.Run{}).
 			Where("runs.status", "running").
 			Where("runs.created_at + runs.timeout * interval '1 second' <= NOW()").
+			Select("id", "account", "correlation_id", "recipient").
+			Find(&dbRuns)
+
+		if result.Error != nil {
+			return result.Error
+		}
+
+		if len(dbRuns) == 0 {
+			log.Infow("No runs to update")
+			return nil
+		}
+
+		ids := make([]string, len(dbRuns))
+		for i, run := range dbRuns {
+			log.Infow("Updating timed-out run", "run_id", run.ID.String(), "account", run.Account, "correlation_id", run.CorrelationID.String(), "recipient", run.Recipient.String())
+			ids[i] = run.ID.String()
+		}
+
+		result = tx.Model(&dbModel.Run{}).
+			Where("runs.id IN ?", ids).
 			Update("status", "timeout")
 
 		log.Infow("Finished updating timed-out runs", "rowCount", result.RowsAffected)
