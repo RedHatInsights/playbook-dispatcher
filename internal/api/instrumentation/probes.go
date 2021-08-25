@@ -55,6 +55,11 @@ var (
 		Name: "api_rbac_rejected_total",
 		Help: "The total number of requests rejected due to RBAC",
 	})
+
+	runCreatedTotal = promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: "api_run_created_total",
+		Help: "The total number of created playbook runs",
+	}, []string{"service"})
 )
 
 func InvalidRecipientId(ctx echo.Context, value string, err error) {
@@ -104,6 +109,7 @@ func RbacRejected(ctx echo.Context) {
 
 func RunCreated(ctx context.Context, recipient uuid.UUID, runId uuid.UUID, payload string, service string) {
 	utils.GetLogFromContext(ctx).Infow("Created new playbook run", "recipient", recipient.String(), "run_id", runId.String(), "payload", string(payload), "service", service)
+	runCreatedTotal.WithLabelValues(service).Inc()
 }
 
 func Start() {
