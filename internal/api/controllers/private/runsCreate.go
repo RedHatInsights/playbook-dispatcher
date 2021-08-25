@@ -6,6 +6,7 @@ import (
 	"playbook-dispatcher/internal/api/instrumentation"
 	"playbook-dispatcher/internal/api/middleware"
 	"playbook-dispatcher/internal/common/config"
+	"playbook-dispatcher/internal/common/db"
 	dbModel "playbook-dispatcher/internal/common/model/db"
 	"playbook-dispatcher/internal/common/utils"
 
@@ -18,6 +19,9 @@ var cfg = config.Get()
 //go:generate fungen -types RunInput,*RunCreated -methods PMap -package private -filename utils.gen.go
 func (this *controllers) ApiInternalRunsCreate(ctx echo.Context) error {
 	var input RunInputList
+
+	db.SetLog(this.database, utils.GetLogFromEcho(ctx))
+	defer db.ClearLog(this.database)
 
 	err := utils.ReadRequestBody(ctx, &input)
 	if err != nil {
