@@ -102,6 +102,13 @@ func Get() *viper.Viper {
 		if rdsCaPath != nil {
 			options.SetDefault("db.ca", *rdsCaPath)
 		}
+
+		options.SetDefault("cloud.connector.host", clowder.DependencyEndpoints["cloud-connector"]["cloud-connector-api-clowder"].Hostname)
+		options.SetDefault("cloud.connector.port", clowder.DependencyEndpoints["cloud-connector"]["cloud-connector-api-clowder"].Port)
+
+		options.SetDefault("rbac.host", clowder.DependencyEndpoints["rbac"]["service"].Hostname)
+		options.SetDefault("rbac.port", clowder.DependencyEndpoints["rbac"]["service"].Port)
+
 	} else {
 		options.SetDefault("web.port", 8000)
 		options.SetDefault("metrics.port", 9001)

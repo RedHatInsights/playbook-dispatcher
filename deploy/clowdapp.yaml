@@ -31,7 +31,8 @@ objects:
   spec:
     optionalDependencies:
     - ingress
-    - cloud-connector
+    - cloud-connector-api
+    - rbac
 
     envName: ${ENV_NAME}
 
