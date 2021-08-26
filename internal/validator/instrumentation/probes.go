@@ -47,7 +47,7 @@ func Start(cfg *viper.Viper) {
 
 func ValidationSuccess(ctx context.Context) {
 	validationSuccessTotal.Inc()
-	utils.GetLogFromContext(ctx).Debugw("Payload valid")
+	utils.GetLogFromContext(ctx).Infow("Payload valid")
 }
 
 func ValidationFailed(ctx context.Context, cause error) {
