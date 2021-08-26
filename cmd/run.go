@@ -41,6 +41,7 @@ func run(cmd *cobra.Command, args []string) error {
 	errors := make(chan error, 1)
 
 	log := utils.GetLoggerOrDie()
+	defer utils.CloseLogger()
 	cfg := config.Get()
 
 	metricsServer := echo.New()

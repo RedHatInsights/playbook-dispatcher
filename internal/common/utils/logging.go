@@ -16,7 +16,10 @@ import (
 	"github.com/spf13/viper"
 )
 
-var sugar *zap.SugaredLogger
+var (
+	sugar  *zap.SugaredLogger
+	writer *cloudwatchwriter.CloudWatchWriter
+)
 
 func GetLoggerOrDie() *zap.SugaredLogger {
 	if sugar == nil {
@@ -46,6 +49,12 @@ func LogWithRequestId(log *zap.SugaredLogger, value string) *zap.SugaredLogger {
 	return log.With("request_id", value)
 }
 
+func CloseLogger() {
+	if writer != nil {
+		writer.Close()
+	}
+}
+
 func createCloudwatch(cfg *viper.Viper, level zap.AtomicLevel) (zap.Option, error) {
 	hostname, err := os.Hostname()
 	if err != nil {
@@ -60,14 +69,14 @@ func createCloudwatch(cfg *viper.Viper, level zap.AtomicLevel) (zap.Option, erro
 
 	cloudWatchSession := session.Must(session.NewSession(awsConf))
 
-	w, err := cloudwatchwriter.New(cloudWatchSession, cfg.GetString("log.cw.group"), hostname)
+	writer, err = cloudwatchwriter.New(cloudWatchSession, cfg.GetString("log.cw.group"), hostname)
 	if err != nil {
 		return nil, err
 	}
 
 	cwc := zapcore.NewCore(
 		zapcore.NewJSONEncoder(zap.NewProductionEncoderConfig()),
-		zapcore.AddSync(w),
+		zapcore.AddSync(writer),
 		zap.NewAtomicLevelAt(level.Level()),
 	)
 
