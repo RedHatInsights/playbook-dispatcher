@@ -18,7 +18,7 @@ data:
       "editable": true,
       "gnetId": null,
       "graphTooltip": 0,
-      "iteration": 1619768849196,
+      "iteration": 1629901167114,
       "links": [],
       "panels": [
         {
@@ -830,6 +830,86 @@ data:
                 "align": false,
                 "alignLevel": null
               }
+            },
+            {
+              "datasource": "$datasource",
+              "description": "",
+              "fieldConfig": {
+                "defaults": {
+                  "custom": {
+                    "align": null,
+                    "filterable": false
+                  },
+                  "mappings": [],
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "color": "green",
+                        "value": null
+                      },
+                      {
+                        "color": "red",
+                        "value": 80
+                      }
+                    ]
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Value"
+                    },
+                    "properties": [
+                      {
+                        "id": "unit",
+                        "value": "short"
+                      }
+                    ]
+                  }
+                ]
+              },
+              "gridPos": {
+                "h": 8,
+                "w": 12,
+                "x": 12,
+                "y": 38
+              },
+              "id": 19,
+              "options": {
+                "showHeader": true
+              },
+              "pluginVersion": "7.2.1",
+              "targets": [
+                {
+                  "expr": "sum(increase(api_run_created_total[$__range])) by (dispatching_service)",
+                  "format": "table",
+                  "instant": true,
+                  "interval": "",
+                  "legendFormat": "",
+                  "refId": "A"
+                }
+              ],
+              "timeFrom": null,
+              "timeShift": null,
+              "title": "New playbook run increment",
+              "transformations": [
+                {
+                  "id": "organize",
+                  "options": {
+                    "excludeByName": {
+                      "Time": true
+                    },
+                    "indexByName": {},
+                    "renameByName": {
+                      "Value": "increment",
+                      "dispatching_service": "service"
+                    }
+                  }
+                }
+              ],
+              "type": "table"
             }
           ],
           "title": "Details",
