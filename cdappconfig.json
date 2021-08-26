@@ -41,6 +41,7 @@
         "password": "insights",
         "adminUsername": "insights",
         "adminPassword": "insights",
-        "rdsCa": "ca"
+        "rdsCa": "ca",
+        "sslMode": "disable"
     }
 }

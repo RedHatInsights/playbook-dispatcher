@@ -23,7 +23,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.1.0
 	github.com/qri-io/jsonschema v0.2.0
-	github.com/redhatinsights/app-common-go v1.2.0
+	github.com/redhatinsights/app-common-go v1.5.1
 	github.com/redhatinsights/platform-go-middlewares v0.7.1-0.20201009171810-b73c54b47a2d
 	github.com/spf13/cobra v0.0.3
 	github.com/spf13/viper v1.7.1

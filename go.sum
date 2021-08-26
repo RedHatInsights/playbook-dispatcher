@@ -40,6 +40,7 @@ github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802/go.mod h1:IVnqGOEym
 github.com/ClickHouse/clickhouse-go v1.3.12/go.mod h1:EaI/sW7Azgz9UATzd5ZdZHRUhHgv5+JMS9NSr2smCJI=
 github.com/Microsoft/go-winio v0.4.15-0.20190919025122-fc70bd9a86b5/go.mod h1:tTuCMEN+UleMWgg9dVx4Hu52b1bJo+59jBh3ajtinzw=
 github.com/OneOfOne/xxhash v1.2.2/go.mod h1:HSdplMjZKSmBqAxg5vPj2TmRDmfkzw+cTzAElWljhcU=
+github.com/RedHatInsights/app-common-go v1.5.1 h1:8xVf2tuod55y69jHfenavSyIZKxvsSiNxWp7IdY8bgQ=
 github.com/RedHatInsights/cloudwatch v0.0.0-20210111105023-1df2bdfe3291 h1:f2RIq2LvG0Nz7TrPYr8clzUPXIEf+Q3oDoCfAHym4/I=
 github.com/RedHatInsights/cloudwatch v0.0.0-20210111105023-1df2bdfe3291/go.mod h1:8l+HqU8iWM6hA9kSAHgY3ItSlpEsPr8fb2R0GBp9S0U=
 github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=
@@ -471,6 +472,8 @@ github.com/redhatinsights/app-common-go v1.0.0 h1:8TM4GQuSItRZLdxu9ExR9XXQhbp7BH
 github.com/redhatinsights/app-common-go v1.0.0/go.mod h1:SqgG5JkX/RNlk2d+sXamIFxhOIvWLgCBr8uK6q70ESk=
 github.com/redhatinsights/app-common-go v1.2.0 h1:Z4TxbamehwIHdgK0GI7VDDv0q9mhaHlutiZeGtE+an4=
 github.com/redhatinsights/app-common-go v1.2.0/go.mod h1:SqgG5JkX/RNlk2d+sXamIFxhOIvWLgCBr8uK6q70ESk=
+github.com/redhatinsights/app-common-go v1.5.1 h1:M0HuhnP6oR1CzJsCjxlnxcFiEVeg5f6m3FvmdPFodkc=
+github.com/redhatinsights/app-common-go v1.5.1/go.mod h1:SqgG5JkX/RNlk2d+sXamIFxhOIvWLgCBr8uK6q70ESk=
 github.com/redhatinsights/platform-go-middlewares v0.7.0 h1:1prVr6XxYHSKThfblJr3kaLecD/6s4xaQ9zZ+BKhHJM=
 github.com/redhatinsights/platform-go-middlewares v0.7.0/go.mod h1:g//UN9p5sxgIoZfRyyiRy+rAw1/GMqkZ4hWUFcEC71A=
 github.com/redhatinsights/platform-go-middlewares v0.7.1-0.20201009171810-b73c54b47a2d h1:uxm5aXj3SYrAu3beL0+8VLYHA7RPhvoX47NQgBxVPCA=
