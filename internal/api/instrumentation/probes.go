@@ -59,7 +59,7 @@ var (
 	runCreatedTotal = promauto.NewCounterVec(prometheus.CounterOpts{
 		Name: "api_run_created_total",
 		Help: "The total number of created playbook runs",
-	}, []string{"service"})
+	}, []string{"dispatching_service"})
 )
 
 func InvalidRecipientId(ctx echo.Context, value string, err error) {
