@@ -13,6 +13,7 @@ import (
 
 func clean(cmd *cobra.Command, args []string) error {
 	log := utils.GetLoggerOrDie()
+	defer utils.CloseLogger()
 	cfg := config.Get()
 	ctx := utils.SetLog(context.Background(), log)
 
