@@ -38,17 +38,17 @@ const (
 )
 
 func PlaybookRunUpdated(ctx context.Context, status string, runId uuid.UUID) {
-	utils.GetLogFromContext(ctx).Infow("Updated run", "status", status, "run_id", runId.String())
+	utils.GetLogFromContext(ctx).Infow("Updated run", "runStatus", status, "run_id", runId.String())
 	playbookRunUpdatedTotal.Inc()
 }
 
 func PlaybookRunUpdateMiss(ctx context.Context, status string) {
-	utils.GetLogFromContext(ctx).Warnw("No run to update", "status", status)
+	utils.GetLogFromContext(ctx).Warnw("No run to update", "runStatus", status)
 	playbookRunUpdateMissTotal.Inc()
 }
 
 func PlaybookRunUpdateError(ctx context.Context, err error, status string, runId uuid.UUID) {
-	utils.GetLogFromContext(ctx).Errorw("Error updating run", "status", status, "error", err, "run_id", runId.String())
+	utils.GetLogFromContext(ctx).Errorw("Error updating run", "runStatus", status, "error", err, "run_id", runId.String())
 	errorTotal.WithLabelValues(labelDbUpdate).Inc()
 }
 
