@@ -12,9 +12,12 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+	"go.uber.org/ratelimit"
 )
 
 var cfg = config.Get()
+
+var rl = ratelimit.New(cfg.GetInt("cloud.connector.max.rps"))
 
 //go:generate fungen -types RunInput,*RunCreated -methods PMap -package private -filename utils.gen.go
 func (this *controllers) ApiInternalRunsCreate(ctx echo.Context) error {
@@ -45,6 +48,9 @@ func (this *controllers) ApiInternalRunsCreate(ctx echo.Context) error {
 
 		context := utils.WithCorrelationId(ctx.Request().Context(), correlationId.String())
 		context = utils.WithAccount(context, string(runInput.Account))
+
+		// take from the rate limit pool
+		rl.Take()
 
 		messageId, notFound, err := this.cloudConnectorClient.SendCloudConnectorRequest(
 			context,
