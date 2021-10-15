@@ -27,7 +27,7 @@ require (
 	github.com/redhatinsights/platform-go-middlewares v0.7.1-0.20201009171810-b73c54b47a2d
 	github.com/spf13/cobra v0.0.3
 	github.com/spf13/viper v1.7.1
-	go.uber.org/ratelimit v0.2.0 // indirect
+	go.uber.org/ratelimit v0.2.0
 	go.uber.org/zap v1.10.0
 	gorm.io/driver/postgres v1.0.6
 	gorm.io/gorm v1.20.11

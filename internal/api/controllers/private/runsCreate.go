@@ -17,7 +17,7 @@ import (
 
 var cfg = config.Get()
 
-var rl = ratelimit.New(cfg.GetInt("cloud.connector.max.rps"))
+var RateLimiter = ratelimit.New(cfg.GetInt("cloud.connector.rps"))
 
 //go:generate fungen -types RunInput,*RunCreated -methods PMap -package private -filename utils.gen.go
 func (this *controllers) ApiInternalRunsCreate(ctx echo.Context) error {
@@ -50,7 +50,7 @@ func (this *controllers) ApiInternalRunsCreate(ctx echo.Context) error {
 		context = utils.WithAccount(context, string(runInput.Account))
 
 		// take from the rate limit pool
-		rl.Take()
+		RateLimiter.Take()
 
 		messageId, notFound, err := this.cloudConnectorClient.SendCloudConnectorRequest(
 			context,

@@ -113,6 +113,8 @@ objects:
             value: ${CLOUD_CONNECTOR_HOST}
           - name: CLOUD_CONNECTOR_PORT
             value: ${CLOUD_CONNECTOR_PORT}
+          - name: CLOUD_CONNECTOR_RPS
+            value: ${CLOUD_CONNECTOR_RPS}
           - name: CLOUD_CONNECTOR_CLIENT_ID
             valueFrom:
               secretKeyRef:
@@ -284,6 +286,8 @@ parameters:
   required: true
 - name: CLOUD_CONNECTOR_PORT
   value: '8080'
+- name: CLOUD_CONNECTOR_RPS
+  value: "100"
 - name: RESPONSE_INTERVAL
   value: "30"
 

@@ -66,7 +66,7 @@ func Get() *viper.Viper {
 	options.SetDefault("cloud.connector.timeout", 10)
 	options.SetDefault("cloud.connector.client.id", "playbook-dispatcher")
 	options.SetDefault("cloud.connector.psk", "")
-	options.SetDefault("cloud.connector.max.rps", 10)
+	options.SetDefault("cloud.connector.rps", 100)
 
 	options.SetDefault("return.url", "https://cloud.redhat.com/api/ingress/v1/upload")
 	options.SetDefault("response.interval", "600")

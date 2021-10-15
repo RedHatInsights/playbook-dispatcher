@@ -4,15 +4,18 @@ import (
 	"context"
 	"io/ioutil"
 	"net/http"
+	"playbook-dispatcher/internal/api/controllers/private"
 	"playbook-dispatcher/internal/api/controllers/public"
 	dbModel "playbook-dispatcher/internal/common/model/db"
 	"playbook-dispatcher/internal/common/utils/test"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
+	"go.uber.org/ratelimit"
 )
 
 func dispatch(payload *ApiInternalRunsCreateJSONRequestBody) (*RunsCreated, *ApiInternalRunsCreateResponse) {
@@ -23,6 +26,14 @@ func dispatch(payload *ApiInternalRunsCreateJSONRequestBody) (*RunsCreated, *Api
 	Expect(res.StatusCode()).To(Equal(http.StatusMultiStatus))
 
 	return res.JSON207, res
+}
+
+func clientWithCustomTimeout(timeout time.Duration) *Client {
+	newClient := client
+	newClient.Client = &http.Client{
+		Timeout: timeout * time.Second,
+	}
+	return newClient
 }
 
 var _ = Describe("runsCreate", func() {
@@ -84,6 +95,33 @@ var _ = Describe("runsCreate", func() {
 			result := db().Where("id = ?", string(*runs[0].Id)).First(&run)
 			Expect(result.Error).ToNot(HaveOccurred())
 			Expect(run.Service).To(Equal("test02"))
+		})
+
+		It("enforces rate limit", func() {
+			recipient := uuid.New()
+			url := "http://example.com"
+
+			private.RateLimiter = ratelimit.New(1)
+
+			newClient := clientWithCustomTimeout(2)
+
+			payload := ApiInternalRunsCreateJSONRequestBody{
+				RunInput{
+					Recipient: public.RunRecipient(recipient.String()),
+					Account:   public.Account(accountNumber()),
+					Url:       public.Url(url),
+				},
+			}
+
+			ctx := context.WithValue(test.TestContext(), pskKey, "9yh9WuXWDj")
+			start := time.Now()
+			_, err := newClient.ApiInternalRunsCreate(ctx, payload)
+			Expect(err).ToNot(HaveOccurred())
+			_, err = newClient.ApiInternalRunsCreate(ctx, payload)
+			Expect(err).ToNot(HaveOccurred())
+			end := time.Since(start)
+
+			Expect(end).To(BeNumerically(">=", 1))
 		})
 	})
 
