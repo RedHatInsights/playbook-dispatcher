@@ -81,7 +81,7 @@ func Start(
 	authConfig := middleware.BuildPskAuthConfigFromEnv()
 	log.Infow("Authentication required for internal API", "principals", utils.MapKeysString(authConfig))
 
-	privateController := private.CreateController(db, cloudConnectorClient)
+	privateController := private.CreateController(db, cloudConnectorClient, cfg)
 	internal := server.Group("/internal")
 	internal.Use(middleware.CheckPskAuth(authConfig))
 	internal.Use(oapiMiddleware.OapiRequestValidator(privateSpec))
