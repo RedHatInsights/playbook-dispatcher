@@ -101,13 +101,14 @@ var _ = Describe("runsCreate", func() {
 
 			ctx := context.WithValue(test.TestContext(), pskKey, "9yh9WuXWDj")
 			start := time.Now()
-			_, err := client.ApiInternalRunsCreate(ctx, payload)
-			Expect(err).ToNot(HaveOccurred())
-			_, err = client.ApiInternalRunsCreate(ctx, payload)
-			Expect(err).ToNot(HaveOccurred())
+			// send 10 requests
+			for i := 0; i < 10; i++ {
+				_, err := client.ApiInternalRunsCreate(ctx, payload)
+				Expect(err).ToNot(HaveOccurred())
+			}
 			end := time.Since(start)
 
-			Expect(end).To(BeNumerically(">=", time.Second/10))
+			Expect(end).To(BeNumerically(">=", time.Second))
 		})
 	})
 

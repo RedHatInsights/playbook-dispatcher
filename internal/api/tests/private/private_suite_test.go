@@ -38,7 +38,8 @@ func TestConfig(t *testing.T) {
 
 	cfg := config.Get()
 	cfg.Set("web.port", 9002)
-	cfg.Set("cloud.connector.rps", 10)
+	cfg.Set("cloud.connector.rps", 5)
+	cfg.Set("cloud.connector.req.bucket", 5)
 
 	api.WithApi(cfg)
 

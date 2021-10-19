@@ -3,6 +3,7 @@ module playbook-dispatcher
 go 1.14
 
 require (
+	github.com/andres-erbsen/clock v0.0.0-20160526145045-9e14626cd129 // indirect
 	github.com/atombender/go-jsonschema v0.8.1-0.20200630165108-d692b4118fc7 // indirect
 	github.com/aws/aws-sdk-go v1.36.28
 	github.com/confluentinc/confluent-kafka-go v1.5.2
@@ -27,8 +28,9 @@ require (
 	github.com/redhatinsights/platform-go-middlewares v0.7.1-0.20201009171810-b73c54b47a2d
 	github.com/spf13/cobra v0.0.3
 	github.com/spf13/viper v1.7.1
-	go.uber.org/ratelimit v0.2.0
+	go.uber.org/atomic v1.7.0 // indirect
 	go.uber.org/zap v1.10.0
+	golang.org/x/time v0.0.0-20210723032227-1f47c861a9ac
 	gorm.io/driver/postgres v1.0.6
 	gorm.io/gorm v1.20.11
 )

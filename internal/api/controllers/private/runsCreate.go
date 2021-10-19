@@ -44,8 +44,8 @@ func (this *controllers) ApiInternalRunsCreate(ctx echo.Context) error {
 		context := utils.WithCorrelationId(ctx.Request().Context(), correlationId.String())
 		context = utils.WithAccount(context, string(runInput.Account))
 
-		// take from the rate limit pool
-		this.rateLimiter.Take()
+		// take from the rate limit bucket
+		this.rateLimiter.Wait(ctx.Request().Context())
 
 		messageId, notFound, err := this.cloudConnectorClient.SendCloudConnectorRequest(
 			context,

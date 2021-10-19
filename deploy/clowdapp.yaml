@@ -115,6 +115,8 @@ objects:
             value: ${CLOUD_CONNECTOR_PORT}
           - name: CLOUD_CONNECTOR_RPS
             value: ${CLOUD_CONNECTOR_RPS}
+          - name: CLOUD_CONNECTOR_REQ_BUCKET
+            value: ${CLOUD_CONNECTOR_REQ_BUCKET}
           - name: CLOUD_CONNECTOR_CLIENT_ID
             valueFrom:
               secretKeyRef:
@@ -288,6 +290,8 @@ parameters:
   value: '8080'
 - name: CLOUD_CONNECTOR_RPS
   value: "100"
+- name: CLOUD_CONNECTOR_REQ_BUCKET
+  value: "60"
 - name: RESPONSE_INTERVAL
   value: "30"
 
