@@ -26,7 +26,6 @@ func dispatch(payload *ApiInternalRunsCreateJSONRequestBody) (*RunsCreated, *Api
 	return res.JSON207, res
 }
 
-
 var _ = Describe("runsCreate", func() {
 	Describe("create run happy path", func() {
 		db := test.WithDatabase()

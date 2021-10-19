@@ -7,8 +7,8 @@ import (
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/spf13/viper"
-	"gorm.io/gorm"
 	"go.uber.org/ratelimit"
+	"gorm.io/gorm"
 )
 
 func CreateController(database *gorm.DB, cloudConnectorClient connectors.CloudConnectorClient, config *viper.Viper) ServerInterfaceWrapper {
@@ -17,7 +17,7 @@ func CreateController(database *gorm.DB, cloudConnectorClient connectors.CloudCo
 			database:             database,
 			cloudConnectorClient: cloudConnectorClient,
 			config:               config,
-			rateLimiter:		  ratelimit.New(config.GetInt("cloud.connector.rps")),
+			rateLimiter:          ratelimit.New(config.GetInt("cloud.connector.rps")),
 		},
 	}
 }
@@ -27,7 +27,7 @@ type controllers struct {
 	database             *gorm.DB
 	cloudConnectorClient connectors.CloudConnectorClient
 	config               *viper.Viper
-	rateLimiter			 ratelimit.Limiter
+	rateLimiter          ratelimit.Limiter
 }
 
 // workaround for https://github.com/deepmap/oapi-codegen/issues/42
