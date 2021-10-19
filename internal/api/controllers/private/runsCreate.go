@@ -26,7 +26,7 @@ func (this *controllers) ApiInternalRunsCreate(ctx echo.Context) error {
 		utils.GetLogFromEcho(ctx).Error(err)
 		return ctx.NoContent(http.StatusBadRequest)
 	}
-	rl := this.rateLimiter
+
 	// send all requests to cloud connector concurrently
 	result := input.PMapRunCreated(func(runInput RunInput) *RunCreated {
 		recipient, err := uuid.Parse(string(runInput.Recipient))
@@ -45,7 +45,7 @@ func (this *controllers) ApiInternalRunsCreate(ctx echo.Context) error {
 		context = utils.WithAccount(context, string(runInput.Account))
 
 		// take from the rate limit pool
-		rl.Take()
+		this.rateLimiter.Take()
 
 		messageId, notFound, err := this.cloudConnectorClient.SendCloudConnectorRequest(
 			context,
