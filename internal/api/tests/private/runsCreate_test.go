@@ -4,7 +4,6 @@ import (
 	"context"
 	"io/ioutil"
 	"net/http"
-	"playbook-dispatcher/internal/api/controllers/private"
 	"playbook-dispatcher/internal/api/controllers/public"
 	dbModel "playbook-dispatcher/internal/common/model/db"
 	"playbook-dispatcher/internal/common/utils/test"
@@ -15,7 +14,6 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
-	"go.uber.org/ratelimit"
 )
 
 func dispatch(payload *ApiInternalRunsCreateJSONRequestBody) (*RunsCreated, *ApiInternalRunsCreateResponse) {
@@ -28,13 +26,6 @@ func dispatch(payload *ApiInternalRunsCreateJSONRequestBody) (*RunsCreated, *Api
 	return res.JSON207, res
 }
 
-func clientWithCustomTimeout(timeout time.Duration) *Client {
-	newClient := client
-	newClient.Client = &http.Client{
-		Timeout: timeout * time.Second,
-	}
-	return newClient
-}
 
 var _ = Describe("runsCreate", func() {
 	Describe("create run happy path", func() {
@@ -101,10 +92,6 @@ var _ = Describe("runsCreate", func() {
 			recipient := uuid.New()
 			url := "http://example.com"
 
-			private.RateLimiter = ratelimit.New(1)
-
-			newClient := clientWithCustomTimeout(2)
-
 			payload := ApiInternalRunsCreateJSONRequestBody{
 				RunInput{
 					Recipient: public.RunRecipient(recipient.String()),
@@ -115,13 +102,13 @@ var _ = Describe("runsCreate", func() {
 
 			ctx := context.WithValue(test.TestContext(), pskKey, "9yh9WuXWDj")
 			start := time.Now()
-			_, err := newClient.ApiInternalRunsCreate(ctx, payload)
+			_, err := client.ApiInternalRunsCreate(ctx, payload)
 			Expect(err).ToNot(HaveOccurred())
-			_, err = newClient.ApiInternalRunsCreate(ctx, payload)
+			_, err = client.ApiInternalRunsCreate(ctx, payload)
 			Expect(err).ToNot(HaveOccurred())
 			end := time.Since(start)
 
-			Expect(end).To(BeNumerically(">=", 1))
+			Expect(end).To(BeNumerically(">=", time.Second/10))
 		})
 	})
 

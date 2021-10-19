@@ -5,19 +5,14 @@ import (
 	"playbook-dispatcher/internal/api/controllers/public"
 	"playbook-dispatcher/internal/api/instrumentation"
 	"playbook-dispatcher/internal/api/middleware"
-	"playbook-dispatcher/internal/common/config"
 	"playbook-dispatcher/internal/common/db"
 	dbModel "playbook-dispatcher/internal/common/model/db"
 	"playbook-dispatcher/internal/common/utils"
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
-	"go.uber.org/ratelimit"
+	"github.com/spf13/viper"
 )
-
-var cfg = config.Get()
-
-var RateLimiter = ratelimit.New(cfg.GetInt("cloud.connector.rps"))
 
 //go:generate fungen -types RunInput,*RunCreated -methods PMap -package private -filename utils.gen.go
 func (this *controllers) ApiInternalRunsCreate(ctx echo.Context) error {
@@ -31,7 +26,7 @@ func (this *controllers) ApiInternalRunsCreate(ctx echo.Context) error {
 		utils.GetLogFromEcho(ctx).Error(err)
 		return ctx.NoContent(http.StatusBadRequest)
 	}
-
+	rl := this.rateLimiter
 	// send all requests to cloud connector concurrently
 	result := input.PMapRunCreated(func(runInput RunInput) *RunCreated {
 		recipient, err := uuid.Parse(string(runInput.Recipient))
@@ -42,7 +37,7 @@ func (this *controllers) ApiInternalRunsCreate(ctx echo.Context) error {
 
 		correlationId := uuid.New()
 
-		if cfg.GetBool("demo.mode") {
+		if this.config.GetBool("demo.mode") {
 			correlationId = uuid.UUID{}
 		}
 
@@ -50,7 +45,7 @@ func (this *controllers) ApiInternalRunsCreate(ctx echo.Context) error {
 		context = utils.WithAccount(context, string(runInput.Account))
 
 		// take from the rate limit pool
-		RateLimiter.Take()
+		rl.Take()
 
 		messageId, notFound, err := this.cloudConnectorClient.SendCloudConnectorRequest(
 			context,
@@ -70,7 +65,7 @@ func (this *controllers) ApiInternalRunsCreate(ctx echo.Context) error {
 			instrumentation.CloudConnectorOK(context, recipient, messageId)
 		}
 
-		entity := newRun(&runInput, correlationId, dbModel.RunStatusRunning, recipient)
+		entity := newRun(&runInput, correlationId, dbModel.RunStatusRunning, recipient, this.config)
 		entity.Service = middleware.GetPSKPrincipal(context)
 
 		if dbResult := this.database.Create(&entity); dbResult.Error != nil {
@@ -114,7 +109,7 @@ func (this *controllers) ApiInternalRunsCreate(ctx echo.Context) error {
 	return ctx.JSON(http.StatusMultiStatus, result)
 }
 
-func newRun(input *RunInput, correlationId uuid.UUID, status string, recipient uuid.UUID) dbModel.Run {
+func newRun(input *RunInput, correlationId uuid.UUID, status string, recipient uuid.UUID, cfg *viper.Viper) dbModel.Run {
 	run := dbModel.Run{
 		ID:            uuid.New(),
 		Account:       string(input.Account),
