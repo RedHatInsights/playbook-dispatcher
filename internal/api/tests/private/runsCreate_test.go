@@ -8,6 +8,7 @@ import (
 	dbModel "playbook-dispatcher/internal/common/model/db"
 	"playbook-dispatcher/internal/common/utils/test"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo"
@@ -84,6 +85,30 @@ var _ = Describe("runsCreate", func() {
 			result := db().Where("id = ?", string(*runs[0].Id)).First(&run)
 			Expect(result.Error).ToNot(HaveOccurred())
 			Expect(run.Service).To(Equal("test02"))
+		})
+
+		It("enforces rate limit", func() {
+			recipient := uuid.New()
+			url := "http://example.com"
+
+			payload := ApiInternalRunsCreateJSONRequestBody{
+				RunInput{
+					Recipient: public.RunRecipient(recipient.String()),
+					Account:   public.Account(accountNumber()),
+					Url:       public.Url(url),
+				},
+			}
+
+			ctx := context.WithValue(test.TestContext(), pskKey, "9yh9WuXWDj")
+			start := time.Now()
+			// send 10 requests
+			for i := 0; i < 10; i++ {
+				_, err := client.ApiInternalRunsCreate(ctx, payload)
+				Expect(err).ToNot(HaveOccurred())
+			}
+			end := time.Since(start)
+
+			Expect(end).To(BeNumerically(">=", time.Second))
 		})
 	})
 
