@@ -4,6 +4,8 @@ import (
 	"bufio"
 	"io"
 	"net/http"
+
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 const (
@@ -12,9 +14,9 @@ const (
 	gzipByte2 = 0x8b
 )
 
-func DoGetWithRetry(client *http.Client, url string, retries int) (resp *http.Response, err error) {
+func DoGetWithRetry(client *http.Client, url string, retries int, timerFactory func() *prometheus.Timer) (resp *http.Response, err error) {
 	for ; retries > 0; retries-- {
-		resp, err = client.Get(url)
+		resp, err = doGet(client, url, timerFactory)
 
 		if err == nil {
 			break
@@ -22,6 +24,15 @@ func DoGetWithRetry(client *http.Client, url string, retries int) (resp *http.Re
 	}
 
 	return
+}
+
+func doGet(client *http.Client, url string, timerFactory func() *prometheus.Timer) (resp *http.Response, err error) {
+	if timerFactory != nil {
+		timer := timerFactory()
+		defer timer.ObserveDuration()
+	}
+
+	return client.Get(url)
 }
 
 func IsGzip(reader io.Reader) (bool, error) {

@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"playbook-dispatcher/internal/common/config"
 	"playbook-dispatcher/internal/common/constants"
+	commonInstrumentation "playbook-dispatcher/internal/common/instrumentation"
 	kafkaUtils "playbook-dispatcher/internal/common/kafka"
 	messageModel "playbook-dispatcher/internal/common/model/message"
 	"playbook-dispatcher/internal/common/utils"
@@ -29,6 +30,7 @@ var (
 	}
 	ingressResponseTopic    = cfg.GetString("topic.validation.response")
 	dispatcherResponseTopic = cfg.GetString("topic.updates")
+	timerFactory            = commonInstrumentation.OutboundHTTPDurationTimerFactory("storage")
 )
 
 const (
@@ -71,7 +73,7 @@ func (this *handler) handleRequest(
 		this.validationFailed(ctx, err, ingressResponse)
 	}
 
-	res, err := utils.DoGetWithRetry(client, request.URL, cfg.GetInt("storage.retries"))
+	res, err := utils.DoGetWithRetry(client, request.URL, cfg.GetInt("storage.retries"), timerFactory)
 	if err != nil {
 		instrumentation.FetchArchiveError(ctx, err)
 		return
