@@ -58,6 +58,19 @@ services:
       - MINIO_ACCESS_KEY=$MINIO_ACCESS_KEY
       - MINIO_SECRET_KEY=$MINIO_SECRET_KEY
 
+  createbuckets:
+    image: minio/mc
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      /usr/bin/mc config host add myminio http://minio:9000 BQA2GEXO711FVBVXDWKM uvgz3LCwWM3e400cDkQIH/y1Y4xgU4iV91CwFSPC;
+      /usr/bin/mc rm -r --force myminio/insights-upload-perma;
+      /usr/bin/mc mb myminio/insights-upload-perma;
+      /usr/bin/mc policy download myminio/insights-upload-perma;
+      exit 0;
+      "
+
   ingress:
     image: quay.io/cloudservices/insights-ingress:ea99e26
     ports:
