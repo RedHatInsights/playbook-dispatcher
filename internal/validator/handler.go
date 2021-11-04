@@ -17,6 +17,7 @@ import (
 	"playbook-dispatcher/internal/common/utils"
 	"playbook-dispatcher/internal/validator/instrumentation"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
@@ -31,6 +32,7 @@ var (
 	ingressResponseTopic    = cfg.GetString("topic.validation.response")
 	dispatcherResponseTopic = cfg.GetString("topic.updates")
 	timerFactory            = commonInstrumentation.OutboundHTTPDurationTimerFactory("storage")
+	wg                      sync.WaitGroup
 )
 
 const (
@@ -39,9 +41,11 @@ const (
 )
 
 type handler struct {
-	producer *kafka.Producer
-	schema   *jsonschema.Schema
-	errors   chan error
+	producer     *kafka.Producer
+	schema       *jsonschema.Schema
+	errors       chan error
+	requestsChan chan *messageModel.IngressValidationRequest
+	validateChan chan messageInfo
 }
 
 func (this *handler) onMessage(ctx context.Context, msg *kafka.Message) {
@@ -53,18 +57,44 @@ func (this *handler) onMessage(ctx context.Context, msg *kafka.Message) {
 		return
 	}
 
-	this.handleRequest(ctx, request)
+	ctx = utils.WithRequestId(ctx, request.RequestID)
+	ctx = utils.WithAccount(ctx, request.Account)
+	ctx = utils.SetLog(ctx, utils.GetLogFromContext(ctx).With("url", request.URL))
+	utils.GetLogFromContext(ctx).Debugw("Processing request", "account", request.Account)
+
+	this.requestsChan <- request
+}
+
+func (this *handler) initiateWorkers(
+	ctx context.Context,
+	workers int,
+) {
+	var workersWg sync.WaitGroup
+
+	for i := 0; i < workers; i++ {
+		workersWg.Add(1)
+		go func() {
+			defer workersWg.Done()
+
+			for {
+				select {
+				case msg, open := <-this.requestsChan:
+					if !open {
+						return
+					}
+					this.handleRequest(ctx, msg)
+				}
+			}
+		}()
+	}
+	workersWg.Wait()
+	close(this.validateChan)
 }
 
 func (this *handler) handleRequest(
 	ctx context.Context,
 	request *messageModel.IngressValidationRequest,
 ) {
-	ctx = utils.WithRequestId(ctx, request.RequestID)
-	ctx = utils.WithAccount(ctx, request.Account)
-	ctx = utils.SetLog(ctx, utils.GetLogFromContext(ctx).With("url", request.URL))
-	utils.GetLogFromContext(ctx).Debugw("Processing request", "account", request.Account)
-
 	ingressResponse := &messageModel.IngressValidationResponse{
 		IngressValidationRequest: *request,
 	}
@@ -85,6 +115,33 @@ func (this *handler) handleRequest(
 		this.validationFailed(ctx, err, ingressResponse)
 		return
 	}
+
+	this.validateChan <- messageInfo{Request: request, Data: data, Response: ingressResponse}
+}
+
+func (this *handler) validationProcess(
+	ctx context.Context,
+	validateWg *sync.WaitGroup,
+) {
+	defer validateWg.Done()
+
+	for {
+		select {
+		case chData, open := <-this.validateChan:
+			if !open {
+				return
+			}
+			this.validationSteps(ctx, chData)
+		}
+
+	}
+}
+
+func (this *handler) validationSteps(
+	ctx context.Context,
+	chData messageInfo,
+) {
+	request, ingressResponse, data := chData.Request, chData.Response, chData.Data
 
 	events, err := this.validateContent(ctx, data)
 	if err != nil {
@@ -188,4 +245,10 @@ func (this *handler) readFile(reader io.Reader) (result []byte, err error) {
 	}
 
 	return ioutil.ReadAll(reader)
+}
+
+type messageInfo struct {
+	Request  *messageModel.IngressValidationRequest
+	Response *messageModel.IngressValidationResponse
+	Data     []byte
 }
