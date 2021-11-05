@@ -33,8 +33,6 @@ parameters:
   value: '1'
 - name: EVENT_CONSUMER_GROUP
   value: playbook-dispatcher-event-consumer
-- name: IMAGE_TAG_EVENT_CONSUMER
-  value: 57b442d
 - name: CONNECTOR_PAUSE
   value: "false"
 
@@ -295,7 +293,7 @@ objects:
           - ${EVENT_CONSUMER_GROUP}
           - --topic
           - ${EVENT_CONSUMER_TOPIC}
-          image: ${KAFKA_CONNECT_IMAGE}:${IMAGE_TAG_EVENT_CONSUMER}
+          image: ${KAFKA_CONNECT_IMAGE}:${IMAGE_TAG}
           name: playbook-dispatcher-event-consumer
           resources:
             requests:
