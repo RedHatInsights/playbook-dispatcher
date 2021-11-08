@@ -23,7 +23,7 @@ RUN ./mvnw -Dschema.event.run=/src/run.event.yaml clean package && \
     mv target/playbook-dispatcher-smt-*.jar target/playbook-dispatcher-smt.jar
 
 
-FROM quay.io/strimzi/kafka:0.22.1-kafka-2.7.0
+FROM quay.io/strimzi/kafka:latest-kafka-2.7.0
 
 ARG BUILD_COMMIT=unknown
 
@@ -33,8 +33,7 @@ ENV CONNECT_PLUGIN_PATH=/opt/kafka/plugins \
 
 USER root
 
-#RUN microdnf install jq
-RUN yum install epel-release -y && yum -y install jq
+RUN microdnf install jq
 
 COPY event-streams/check-connectors.sh /
 COPY examples/connector-local.json /
