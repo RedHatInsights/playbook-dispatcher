@@ -23,7 +23,7 @@ RUN ./mvnw -Dschema.event.run=/src/run.event.yaml clean package && \
     mv target/playbook-dispatcher-smt-*.jar target/playbook-dispatcher-smt.jar
 
 
-FROM quay.io/strimzi/kafka:latest-kafka-2.7.0
+FROM quay.io/strimzi/kafka:0.26.0-kafka-2.8.1
 
 ARG BUILD_COMMIT=unknown
 
