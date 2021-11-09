@@ -23,9 +23,8 @@ RUN ./mvnw -Dschema.event.run=/src/run.event.yaml clean package && \
     mv target/playbook-dispatcher-smt-*.jar target/playbook-dispatcher-smt.jar
 
 
-# strimzi 0.24 is what amq-streams 1.8 is based on
-# https://access.redhat.com/documentation/en-us/red_hat_amq/2021.q3/html/release_notes_for_amq_streams_1.8_on_openshift/features-str#kafka_2_8_0_support
-FROM quay.io/strimzi/kafka:0.24.0-kafka-2.7.1
+# https://access.redhat.com/documentation/en-us/red_hat_amq/2021.q3/html-single/deploying_and_upgrading_amq_streams_on_openshift/index#creating-new-image-from-base-str
+FROM registry.redhat.io/amq7/amq-streams-kafka-27-rhel8:1.8.0
 
 ARG BUILD_COMMIT=unknown
 
