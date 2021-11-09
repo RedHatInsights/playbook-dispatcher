@@ -14,7 +14,7 @@ parameters:
 - name: NUM_REPLICAS
   value: '1'
 - name: VERSION
-  value: '2.8.1'
+  value: '2.7.1'
 - name: CPU_REQUESTS
   value: 500m
 - name: CPU_LIMITS
