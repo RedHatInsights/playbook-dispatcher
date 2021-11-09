@@ -177,15 +177,15 @@ objects:
       offset.storage.topic: playbook-dispatcher-connect-config
       status.storage.topic: playbook-dispatcher-connect-status
       config.storage.topic: playbook-dispatcher-connect-offsets
-    externalConfiguration:
-      volumes:
-        - name: rds-client-ca
-          secret:
-            secretName: rds-client-ca
+#    externalConfiguration:
+#      volumes:
+#        - name: rds-client-ca
+#          secret:
+#            secretName: rds-client-ca
         # https://developers.redhat.com/blog/2020/02/14/using-secrets-in-apache-kafka-connect-configuration/
-        - name: playbook-dispatcher-db
-          secret:
-            secretName: playbook-dispatcher-db
+#        - name: playbook-dispatcher-db
+#          secret:
+#            secretName: playbook-dispatcher-db
     template:
       pod:
         imagePullSecrets:
