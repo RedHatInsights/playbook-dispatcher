@@ -1,4 +1,4 @@
-FROM registry.access.redhat.com/ubi8/openjdk-11 as builder
+FROM registry.redhat.io/ubi8/openjdk-11 as builder
 USER root
 
 ENV EXTRA_PLUGINS=/deps/plugins \
