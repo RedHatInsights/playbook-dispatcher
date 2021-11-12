@@ -14,6 +14,7 @@ import (
 	"playbook-dispatcher/internal/common/db"
 	"playbook-dispatcher/internal/common/utils"
 	"sync"
+	"time"
 
 	oapiMiddleware "github.com/deepmap/oapi-codegen/pkg/middleware"
 	"github.com/getkin/kin-openapi/openapi3"
@@ -26,6 +27,7 @@ import (
 )
 
 const specFile = "/api/playbook-dispatcher/v1/openapi.json"
+const apiShutdownTimeout = 10 * time.Second
 
 func init() {
 	openapi3.DefineStringFormat("uuid", `^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89aAbB][a-f0-9]{3}-[a-f0-9]{12}$`)
@@ -114,6 +116,9 @@ func Start(
 		<-ctx.Done()
 
 		log.Info("Shutting down API")
+		ctx, cancel := context.WithTimeout(utils.SetLog(context.Background(), log), apiShutdownTimeout)
+		defer cancel()
+
 		utils.StopServer(ctx, server)
 		if sqlConnection, err := db.DB(); err != nil {
 			sqlConnection.Close()
