@@ -196,12 +196,12 @@ objects:
           - name: quay-cloudservices-pull
           - name: rh-registry-pull
 
-    metricsConfig:
-      type: jmxPrometheusExporter
-      valueFrom:
-        configMapKeyRef:
-          key: metrics-config.yml
-          name: playbook-dispatcher-connect-metrics
+#    metricsConfig:
+#      type: jmxPrometheusExporter
+#      valueFrom:
+#        configMapKeyRef:
+#          key: metrics-config.yml
+#          name: playbook-dispatcher-connect-metrics
 
 - apiVersion: v1
   kind: Service
