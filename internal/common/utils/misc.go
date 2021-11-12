@@ -20,7 +20,7 @@ func DieOnError(err error) {
 
 func StopServer(ctx context.Context, server *echo.Echo) {
 	if e := server.Shutdown(ctx); e != nil {
-		GetLogFromContext(ctx).Fatal(e)
+		GetLogFromContext(ctx).Error(e)
 	}
 }
 
