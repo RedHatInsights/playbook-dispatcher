@@ -175,8 +175,12 @@ objects:
       config.providers: file
       config.providers.file.class: com.redhat.insights.kafka.config.providers.PlainFileConfigProvider
       offset.storage.topic: playbook-dispatcher-connect-config
+      offset.storage.replication.factor: 1
       status.storage.topic: playbook-dispatcher-connect-status
+      status.storage.replication.factor: 1
       config.storage.topic: playbook-dispatcher-connect-offsets
+      config.storage.replication.factor: 1
+
 #    externalConfiguration:
 #      volumes:
 #        - name: rds-client-ca
