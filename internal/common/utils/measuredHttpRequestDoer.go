@@ -14,10 +14,6 @@ var baseHistogram = promauto.NewHistogramVec(prometheus.HistogramOpts{
 	Help: "Time spent talking to a service",
 }, []string{"component", "operation", "result"})
 
-type HttpRequestDoer interface {
-	Do(req *http.Request) (*http.Response, error)
-}
-
 func NewMeasuredHttpRequestDoer(delegate HttpRequestDoer, component, operation string) HttpRequestDoer {
 	return &measuredHttpRequestDoer{
 		delegate: delegate,

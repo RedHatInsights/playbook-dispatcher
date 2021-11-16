@@ -108,7 +108,7 @@ N/Kl0lVn2BIPxggdj5H4qC/Fpj5qlsQYR2/78+KeyhtLY8GqVf/f9r/t1GTtrtO96erY7OnSdMb6
 			len, err := base64.StdEncoding.Decode(decoded, []byte(data))
 			Expect(err).ToNot(HaveOccurred())
 
-			content, err := instance.readFile(bytes.NewReader(decoded[0:len]))
+			content, err := readFile(bytes.NewReader(decoded[0:len]))
 			Expect(err).ToNot(HaveOccurred())
 			events, err := instance.validateContent(test.TestContext(), content)
 			Expect(err).ToNot(HaveOccurred())
