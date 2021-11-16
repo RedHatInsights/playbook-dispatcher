@@ -45,7 +45,7 @@ services:
 
   minio:
     image: minio/minio
-    command: server /data
+    command: server /data --console-address ":10000"
     volumes:
       # These vars are defined in .env
       # These are configurable
@@ -54,9 +54,22 @@ services:
       - minio_data:/data:Z
     ports:
       - '9000:9000'
+      - '10000:10000'
     environment:
       - MINIO_ACCESS_KEY=$MINIO_ACCESS_KEY
       - MINIO_SECRET_KEY=$MINIO_SECRET_KEY
+
+  minio-createbuckets:
+    image: minio/mc
+    depends_on:
+      - minio
+    restart: on-failure
+    entrypoint: >
+      /bin/sh -c "
+      /usr/bin/mc config host add myminio http://minio:9000 "$MINIO_ACCESS_KEY" "$MINIO_SECRET_KEY" || exit 1;
+      /usr/bin/mc mb --ignore-existing myminio/insights-upload-perma;
+      /usr/bin/mc policy set upload myminio/insights-upload-perma;
+      "
 
   ingress:
     image: quay.io/cloudservices/insights-ingress:ea99e26
