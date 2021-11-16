@@ -35,6 +35,11 @@ func Start(
 
 	instrumentation.Start(cfg)
 
+	headerFilter := &kafka.HeaderFilter{
+		Key:   "service",
+		Value: "playbook",
+	}
+
 	handler := &handler{
 		producer: producer,
 		schema:   &schema,
@@ -44,7 +49,7 @@ func Start(
 		return kafka.Ping(kafkaTimeout, consumer, producer)
 	})
 
-	start := kafka.NewConsumerEventLoop(ctx, consumer, nil, handler.onMessage, errors)
+	start := kafka.NewConsumerEventLoop(ctx, consumer, headerFilter, nil, handler.onMessage, errors)
 
 	go func() {
 		defer wg.Done()

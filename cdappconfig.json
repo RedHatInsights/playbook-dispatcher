@@ -24,8 +24,8 @@
                 "name": "platform.playbook-dispatcher.runner-updates"
             },
             {
-                "requestedName": "platform.upload.playbook",
-                "name": "platform.upload.playbook"
+                "requestedName": "platform.upload.announce",
+                "name": "platform.upload.announce"
             },
             {
                 "requestedName": "platform.upload.validation",

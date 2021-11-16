@@ -46,7 +46,7 @@ func Start(
 		db: db,
 	}
 
-	start := kafka.NewConsumerEventLoop(ctx, consumer, &schema, handler.onMessage, errors)
+	start := kafka.NewConsumerEventLoop(ctx, consumer, nil, &schema, handler.onMessage, errors)
 
 	go func() {
 		defer wg.Done()
