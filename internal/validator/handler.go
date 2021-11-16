@@ -1,17 +1,11 @@
 package validator
 
 import (
-	"bufio"
-	"compress/gzip"
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
-	"io/ioutil"
-	"net/http"
 	"playbook-dispatcher/internal/common/config"
 	"playbook-dispatcher/internal/common/constants"
-	commonInstrumentation "playbook-dispatcher/internal/common/instrumentation"
 	kafkaUtils "playbook-dispatcher/internal/common/kafka"
 	messageModel "playbook-dispatcher/internal/common/model/message"
 	"playbook-dispatcher/internal/common/utils"
@@ -25,14 +19,9 @@ import (
 )
 
 var (
-	cfg    = config.Get()
-	client = &http.Client{
-		Timeout: time.Duration(cfg.GetInt64("storage.timeout") * int64(time.Second)),
-	}
+	cfg                     = config.Get()
 	ingressResponseTopic    = cfg.GetString("topic.validation.response")
 	dispatcherResponseTopic = cfg.GetString("topic.updates")
-	timerFactory            = commonInstrumentation.OutboundHTTPDurationTimerFactory("storage")
-	wg                      sync.WaitGroup
 )
 
 const (
@@ -44,13 +33,23 @@ type handler struct {
 	producer     *kafka.Producer
 	schema       *jsonschema.Schema
 	errors       chan error
-	requestsChan chan *messageModel.IngressValidationRequest
-	validateChan chan messageInfo
+	requestsChan chan messageContext
+	validateChan chan enrichedMessageContext
+}
+
+type messageContext struct {
+	request messageModel.IngressValidationRequest
+	ctx     context.Context
+}
+
+type enrichedMessageContext struct {
+	data []byte
+	messageContext
 }
 
 func (this *handler) onMessage(ctx context.Context, msg *kafka.Message) {
-	request := &messageModel.IngressValidationRequest{}
-	err := json.Unmarshal(msg.Value, request)
+	request := messageModel.IngressValidationRequest{}
+	err := json.Unmarshal(msg.Value, &request)
 
 	if err != nil {
 		instrumentation.UnmarshallingError(ctx, err)
@@ -62,103 +61,56 @@ func (this *handler) onMessage(ctx context.Context, msg *kafka.Message) {
 	ctx = utils.SetLog(ctx, utils.GetLogFromContext(ctx).With("url", request.URL))
 	utils.GetLogFromContext(ctx).Debugw("Processing request", "account", request.Account)
 
-	this.requestsChan <- request
-}
-
-func (this *handler) initiateWorkers(
-	ctx context.Context,
-	workers int,
-) {
-	var workersWg sync.WaitGroup
-
-	for i := 0; i < workers; i++ {
-		workersWg.Add(1)
-		go func() {
-			defer workersWg.Done()
-
-			for {
-				select {
-				case msg, open := <-this.requestsChan:
-					if !open {
-						return
-					}
-					this.handleRequest(ctx, msg)
-				}
-			}
-		}()
-	}
-	workersWg.Wait()
-	close(this.validateChan)
-}
-
-func (this *handler) handleRequest(
-	ctx context.Context,
-	request *messageModel.IngressValidationRequest,
-) {
-	ingressResponse := &messageModel.IngressValidationResponse{
-		IngressValidationRequest: *request,
-	}
-
-	if err := this.validateRequest(request); err != nil {
-		this.validationFailed(ctx, err, ingressResponse)
-	}
-
-	res, err := utils.DoGetWithRetry(client, request.URL, cfg.GetInt("storage.retries"), timerFactory)
-	if err != nil {
-		instrumentation.FetchArchiveError(ctx, err)
+	if err := this.validateRequest(&request); err != nil {
+		this.validationFailed(ctx, err, &request)
 		return
 	}
 
-	defer res.Body.Close()
-	data, err := this.readFile(res.Body)
-	if err != nil {
-		this.validationFailed(ctx, err, ingressResponse)
-		return
-	}
-
-	this.validateChan <- messageInfo{Request: request, Data: data, Response: ingressResponse}
+	this.requestsChan <- messageContext{request: request, ctx: ctx}
 }
 
-func (this *handler) validationProcess(
-	ctx context.Context,
+func (this *handler) initiateValidationWorker(
 	validateWg *sync.WaitGroup,
 ) {
 	defer validateWg.Done()
 
 	for {
 		select {
-		case chData, open := <-this.validateChan:
+		case msg, open := <-this.validateChan:
 			if !open {
 				return
 			}
-			this.validationSteps(ctx, chData)
+			this.validationSteps(msg)
 		}
 
 	}
 }
 
 func (this *handler) validationSteps(
-	ctx context.Context,
-	chData messageInfo,
+	msg enrichedMessageContext,
 ) {
-	request, ingressResponse, data := chData.Request, chData.Response, chData.Data
+	request, ctx, data := &msg.request, msg.ctx, msg.data
 
 	events, err := this.validateContent(ctx, data)
 	if err != nil {
-		this.validationFailed(ctx, err, ingressResponse)
+		this.validationFailed(ctx, err, request)
 		utils.GetLogFromContext(ctx).Debugw("Invalid payload details", "data", string(data))
 		return
 	}
 
 	correlationId, err := messageModel.GetCorrelationId(events)
 	if err != nil {
-		this.validationFailed(ctx, err, ingressResponse)
+		this.validationFailed(ctx, err, request)
 		return
 	}
 
 	ctx = utils.WithCorrelationId(ctx, correlationId.String())
 
-	ingressResponse.Validation = validationSuccess
+	ingressResponse := &messageModel.IngressValidationResponse{
+		IngressValidationRequest: *request,
+		Validation:               validationSuccess,
+	}
+
 	instrumentation.ValidationSuccess(ctx)
 	this.produceMessage(ctx, ingressResponseTopic, ingressResponse, request.Account)
 
@@ -214,8 +166,12 @@ func (this *handler) validateContent(ctx context.Context, data []byte) (events [
 	return events, nil
 }
 
-func (this *handler) validationFailed(ctx context.Context, err error, response *messageModel.IngressValidationResponse) {
-	response.Validation = validationFailure
+func (this *handler) validationFailed(ctx context.Context, err error, request *messageModel.IngressValidationRequest) {
+	response := &messageModel.IngressValidationResponse{
+		IngressValidationRequest: *request,
+		Validation:               validationFailure,
+	}
+
 	instrumentation.ValidationFailed(ctx, err)
 	this.produceMessage(ctx, ingressResponseTopic, response, response.Account)
 }
@@ -227,28 +183,4 @@ func (this *handler) produceMessage(ctx context.Context, topic string, value int
 			this.errors <- err // TODO: is "shutdown-on-error" a good strategy?
 		}
 	}
-}
-
-func (this *handler) readFile(reader io.Reader) (result []byte, err error) {
-	var isGzip bool
-	reader = bufio.NewReaderSize(reader, 2)
-
-	if isGzip, err = utils.IsGzip(reader); err != nil {
-		return
-	} else if isGzip {
-		if gzipReader, err := gzip.NewReader(reader); err != nil {
-			return nil, err
-		} else {
-			defer gzipReader.Close()
-			reader = gzipReader
-		}
-	}
-
-	return ioutil.ReadAll(reader)
-}
-
-type messageInfo struct {
-	Request  *messageModel.IngressValidationRequest
-	Response *messageModel.IngressValidationResponse
-	Data     []byte
 }

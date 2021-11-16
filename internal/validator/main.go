@@ -4,7 +4,6 @@ import (
 	"context"
 	"io/ioutil"
 	"playbook-dispatcher/internal/common/kafka"
-	messageModel "playbook-dispatcher/internal/common/model/message"
 	"playbook-dispatcher/internal/common/utils"
 	"playbook-dispatcher/internal/validator/instrumentation"
 	"sync"
@@ -27,8 +26,7 @@ func Start(
 	err = yaml.Unmarshal(file, &schema)
 	utils.DieOnError(err)
 
-	kafkaBatchSize := cfg.GetInt("kafka.batch.size")
-
+	storageConnectorConcurrency := cfg.GetInt("storage.max.concurrency")
 	kafkaTimeout := cfg.GetInt("kafka.timeout")
 	consumedTopic := cfg.GetString("topic.validation.request")
 	consumer, err := kafka.NewConsumer(ctx, cfg, consumedTopic)
@@ -41,10 +39,11 @@ func Start(
 	handler := &handler{
 		producer:     producer,
 		schema:       &schema,
-		requestsChan: make(chan *messageModel.IngressValidationRequest, kafkaBatchSize),
-		validateChan: make(chan messageInfo, kafkaBatchSize),
+		requestsChan: make(chan messageContext),
+		validateChan: make(chan enrichedMessageContext),
 	}
 
+	storageConnector := newStorageConnector(cfg)
 	var validateWg sync.WaitGroup
 
 	ready.Register(func() error {
@@ -61,12 +60,12 @@ func Start(
 		defer validateWg.Wait()
 		defer close(handler.requestsChan)
 		defer consumer.Close()
+
 		wg.Add(1)
-
-		go handler.initiateWorkers(ctx, kafkaBatchSize)
-
 		validateWg.Add(1)
-		go handler.validationProcess(ctx, &validateWg)
+
+		go storageConnector.initiateFetchWorkers(storageConnectorConcurrency, handler.requestsChan, handler.validateChan)
+		go handler.initiateValidationWorker(&validateWg)
 
 		start()
 	}()

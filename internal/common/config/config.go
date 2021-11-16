@@ -50,7 +50,6 @@ func Get() *viper.Viper {
 	options.SetDefault("kafka.request.required.acks", -1) // -1 == "all"
 	options.SetDefault("kafka.message.send.max.retries", 15)
 	options.SetDefault("kafka.retry.backoff.ms", 100)
-	options.SetDefault("kafka.batch.size", 5)
 
 	options.SetDefault("schema.message.response", "./schema/playbookRunResponse.message.yaml")
 	options.SetDefault("schema.runner.event", "./schema/ansibleRunnerJobEvent.yaml")
@@ -58,6 +57,7 @@ func Get() *viper.Viper {
 
 	options.SetDefault("storage.timeout", 10)
 	options.SetDefault("storage.retries", 3)
+	options.SetDefault("storage.max.concurrency", 5)
 	options.SetDefault("artifact.max.size", 1024*1024)
 
 	options.SetDefault("cloud.connector.impl", "mock")
