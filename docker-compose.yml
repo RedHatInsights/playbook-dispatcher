@@ -72,7 +72,7 @@ services:
       "
 
   ingress:
-    image: quay.io/cloudservices/insights-ingress:ea99e26
+    image: quay.io/cloudservices/insights-ingress:1e56a78
     ports:
       - '8080:3000'
     environment:

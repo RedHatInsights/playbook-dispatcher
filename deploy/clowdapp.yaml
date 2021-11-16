@@ -47,7 +47,7 @@ objects:
       topicName: platform.playbook-dispatcher.runner-updates
     - replicas: 3
       partitions: 16
-      topicName: platform.upload.playbook
+      topicName: platform.upload.announce
     - replicas: 3
       partitions: 16
       topicName: platform.upload.validation

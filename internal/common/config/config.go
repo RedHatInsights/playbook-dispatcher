@@ -88,7 +88,7 @@ func Get() *viper.Viper {
 
 		options.SetDefault("kafka.bootstrap.servers", strings.Join(clowder.KafkaServers, ","))
 		options.SetDefault("topic.updates", clowder.KafkaTopics["platform.playbook-dispatcher.runner-updates"].Name)
-		options.SetDefault("topic.validation.request", clowder.KafkaTopics["platform.upload.playbook"].Name)
+		options.SetDefault("topic.validation.request", clowder.KafkaTopics["platform.upload.announce"].Name)
 		options.SetDefault("topic.validation.response", clowder.KafkaTopics["platform.upload.validation"].Name)
 
 		options.SetDefault("log.cw.accessKeyId", clowder.LoadedConfig.Logging.Cloudwatch.AccessKeyId)
@@ -112,7 +112,7 @@ func Get() *viper.Viper {
 
 		options.SetDefault("kafka.bootstrap.servers", "kafka:29092")
 		options.SetDefault("topic.updates", "platform.playbook-dispatcher.runner-updates")
-		options.SetDefault("topic.validation.request", "platform.upload.playbook")
+		options.SetDefault("topic.validation.request", "platform.upload.announce")
 		options.SetDefault("topic.validation.response", "platform.upload.validation")
 
 		options.SetDefault("db.host", "localhost")
