@@ -137,6 +137,9 @@ objects:
             value: ${RBAC_IMPL}
           - name: RBAC_HOST
             value: ${RBAC_HOST}
+
+          - name: STORAGE_MAX_CONCURRENCY
+            value: ${STORAGE_MAX_CONCURRENCY}
         resources:
           limits:
             cpu: ${CPU_LIMIT}
@@ -299,6 +302,9 @@ parameters:
   value: impl
 - name: RBAC_HOST
   required: true
+
+- name: STORAGE_MAX_CONCURRENCY
+  value: "5"
 
 - name: RETURN_URL
   value: TBD

@@ -57,6 +57,7 @@ func Get() *viper.Viper {
 
 	options.SetDefault("storage.timeout", 10)
 	options.SetDefault("storage.retries", 3)
+	options.SetDefault("storage.max.concurrency", 5)
 	options.SetDefault("artifact.max.size", 1024*1024)
 
 	options.SetDefault("cloud.connector.impl", "mock")

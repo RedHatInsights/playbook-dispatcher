@@ -26,6 +26,7 @@ func Start(
 	err = yaml.Unmarshal(file, &schema)
 	utils.DieOnError(err)
 
+	storageConnectorConcurrency := cfg.GetInt("storage.max.concurrency")
 	kafkaTimeout := cfg.GetInt("kafka.timeout")
 	consumedTopic := cfg.GetString("topic.validation.request")
 	consumer, err := kafka.NewConsumer(ctx, cfg, consumedTopic)
@@ -41,9 +42,14 @@ func Start(
 	}
 
 	handler := &handler{
-		producer: producer,
-		schema:   &schema,
+		producer:     producer,
+		schema:       &schema,
+		requestsChan: make(chan messageContext),
+		validateChan: make(chan enrichedMessageContext),
 	}
+
+	storageConnector := newStorageConnector(cfg)
+	var validateWg sync.WaitGroup
 
 	ready.Register(func() error {
 		return kafka.Ping(kafkaTimeout, consumer, producer)
@@ -56,8 +62,16 @@ func Start(
 		defer utils.GetLogFromContext(ctx).Debug("Validator stopped")
 		defer producer.Close()
 		defer utils.GetLogFromContext(ctx).Infof("Producer flushed with %d pending messages", producer.Flush(kafkaTimeout))
+		defer validateWg.Wait()
+		defer close(handler.requestsChan)
 		defer consumer.Close()
+
 		wg.Add(1)
+		validateWg.Add(1)
+
+		go storageConnector.initiateFetchWorkers(storageConnectorConcurrency, handler.requestsChan, handler.validateChan)
+		go handler.initiateValidationWorker(&validateWg)
+
 		start()
 	}()
 }
