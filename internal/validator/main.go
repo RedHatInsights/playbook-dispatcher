@@ -8,9 +8,17 @@ import (
 	"playbook-dispatcher/internal/validator/instrumentation"
 	"sync"
 
+	k "github.com/confluentinc/confluent-kafka-go/kafka"
+
 	"github.com/ghodss/yaml"
 	"github.com/qri-io/jsonschema"
 	"github.com/spf13/viper"
+	"go.uber.org/zap"
+)
+
+const (
+	payloadTypeHeader          = "service"
+	playbookPayloadHeaderValue = "playbook"
 )
 
 func Start(
@@ -36,11 +44,6 @@ func Start(
 
 	instrumentation.Start(cfg)
 
-	headerFilter := &kafka.HeaderFilter{
-		Key:   "service",
-		Value: "playbook",
-	}
-
 	handler := &handler{
 		producer:     producer,
 		schema:       &schema,
@@ -55,7 +58,9 @@ func Start(
 		return kafka.Ping(kafkaTimeout, consumer, producer)
 	})
 
-	start := kafka.NewConsumerEventLoop(ctx, consumer, headerFilter, nil, handler.onMessage, errors)
+	predicate := newPlaybookServiceMessagePredicate(utils.GetLogFromContext(ctx))
+
+	start := kafka.NewConsumerEventLoop(ctx, consumer, predicate, nil, handler.onMessage, errors)
 
 	go func() {
 		defer wg.Done()
@@ -74,4 +79,15 @@ func Start(
 
 		start()
 	}()
+}
+
+func newPlaybookServiceMessagePredicate(log *zap.SugaredLogger) kafka.KafkaMessagePredicate {
+	return func(msg *k.Message) bool {
+		if val, err := kafka.GetHeader(msg, payloadTypeHeader); err != nil {
+			log.Warnw("Error reading kafka message header", "err", err, "topic", *msg.TopicPartition.Topic, "partition", msg.TopicPartition.Partition, "offset", msg.TopicPartition.Offset.String())
+			return false
+		} else {
+			return val == playbookPayloadHeaderValue
+		}
+	}
 }

@@ -62,7 +62,7 @@ func NewConsumer(ctx context.Context, config *viper.Viper, topic string) (*kafka
 func NewConsumerEventLoop(
 	ctx context.Context,
 	consumer *kafka.Consumer,
-	headerFilter *HeaderFilter,
+	messagePredicate KafkaMessagePredicate,
 	schema *jsonschema.Schema,
 	handler func(context.Context, *kafka.Message),
 	errors chan<- error,
@@ -87,15 +87,8 @@ func NewConsumerEventLoop(
 				continue
 			}
 
-			if headerFilter != nil {
-				val, err := GetHeader(msg, headerFilter.Key)
-				if err != nil {
-					utils.GetLogFromContext(ctx).Warnw("Error reading kafka message header", "err", err)
-					continue
-				}
-				if val != headerFilter.Value {
-					continue
-				}
+			if messagePredicate != nil && !messagePredicate(msg) {
+				continue
 			}
 
 			if schema != nil {
@@ -134,10 +127,7 @@ func Produce(producer *kafka.Producer, topic string, value interface{}, key stri
 	return producer.Produce(msg, nil)
 }
 
-type HeaderFilter struct {
-	Key   string
-	Value string
-}
+type KafkaMessagePredicate func(msg *kafka.Message) bool
 
 type pingable interface {
 	GetMetadata(topic *string, allTopics bool, timeoutMs int) (*kafka.Metadata, error)
