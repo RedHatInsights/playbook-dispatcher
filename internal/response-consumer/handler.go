@@ -47,7 +47,12 @@ func (this *handler) onMessage(ctx context.Context, msg *k.Message) {
 	}
 
 	ctx = utils.WithAccount(ctx, value.Account)
-	utils.GetLogFromContext(ctx).Debugw("Processing message", "upload_timestamp", value.UploadTimestamp)
+	utils.GetLogFromContext(ctx).Debugw("Processing message",
+		"upload_timestamp", value.UploadTimestamp,
+		"topic", *msg.TopicPartition.Topic,
+		"partition", msg.TopicPartition.Partition,
+		"offset", msg.TopicPartition.Offset.String(),
+	)
 
 	status := inferStatus(&value.Events, nil)
 
