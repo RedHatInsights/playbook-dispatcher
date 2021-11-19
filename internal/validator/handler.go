@@ -59,7 +59,12 @@ func (this *handler) onMessage(ctx context.Context, msg *kafka.Message) {
 	ctx = utils.WithRequestId(ctx, request.RequestID)
 	ctx = utils.WithAccount(ctx, request.Account)
 	ctx = utils.SetLog(ctx, utils.GetLogFromContext(ctx).With("url", request.URL))
-	utils.GetLogFromContext(ctx).Debugw("Processing request", "account", request.Account)
+	utils.GetLogFromContext(ctx).Debugw("Processing request",
+		"account", request.Account,
+		"topic", *msg.TopicPartition.Topic,
+		"partition", msg.TopicPartition.Partition,
+		"offset", msg.TopicPartition.Offset.String(),
+	)
 
 	if err := this.validateRequest(&request); err != nil {
 		this.validationFailed(ctx, err, &request)

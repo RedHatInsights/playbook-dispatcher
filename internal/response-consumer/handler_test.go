@@ -29,9 +29,16 @@ func newResponseMessage(events *[]messageModel.PlaybookRunResponseMessageYamlEve
 	value, err := json.Marshal(data)
 	Expect(err).ToNot(HaveOccurred())
 
+	topic := "platform.playbook-dispatcher.runs"
+
 	return &k.Message{
 		Value:   value,
 		Headers: kafkaUtils.Headers(constants.HeaderCorrelationId, correlationId.String(), constants.HeaderRequestId, "test"),
+		TopicPartition: k.TopicPartition{
+			Topic:     &topic,
+			Partition: 0,
+			Offset:    k.Offset(0),
+		},
 	}
 }
 
