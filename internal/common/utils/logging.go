@@ -123,6 +123,10 @@ func WithOrgId(parent context.Context, orgId string) context.Context {
 	return withKeyValue(parent, "org_id", orgId)
 }
 
+func WithRequestType(parent context.Context, requestType string) context.Context {
+	return withKeyValue(parent, "request_type", requestType)
+}
+
 func withKeyValue(parent context.Context, key, value string) context.Context {
 	return SetLog(parent, GetLogFromContext(parent).With(key, value))
 }

@@ -52,7 +52,7 @@ func (this *storageConnector) initiateFetchWorkers(workers int, input <-chan mes
 					}
 
 					if payload, err := this.fetchPayload(msg.request.URL); err != nil {
-						instrumentation.FetchArchiveError(msg.ctx, err)
+						instrumentation.FetchArchiveError(msg.ctx, err, msg.requestType)
 					} else {
 						output <- enrichedMessageContext{messageContext: msg, data: payload}
 					}

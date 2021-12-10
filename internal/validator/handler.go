@@ -31,15 +31,16 @@ const (
 
 type handler struct {
 	producer     *kafka.Producer
-	schema       *jsonschema.Schema
+	schemas      []*jsonschema.Schema
 	errors       chan error
 	requestsChan chan messageContext
 	validateChan chan enrichedMessageContext
 }
 
 type messageContext struct {
-	request messageModel.IngressValidationRequest
-	ctx     context.Context
+	requestType string
+	request     messageModel.IngressValidationRequest
+	ctx         context.Context
 }
 
 type enrichedMessageContext struct {
@@ -49,10 +50,14 @@ type enrichedMessageContext struct {
 
 func (this *handler) onMessage(ctx context.Context, msg *kafka.Message) {
 	request := messageModel.IngressValidationRequest{}
+	requestType, _ := kafkaUtils.GetHeader(msg, payloadTypeHeader)
+
+	ctx = utils.WithRequestType(ctx, requestType)
+
 	err := json.Unmarshal(msg.Value, &request)
 
 	if err != nil {
-		instrumentation.UnmarshallingError(ctx, err)
+		instrumentation.UnmarshallingError(ctx, err, requestType)
 		return
 	}
 
@@ -73,11 +78,11 @@ func (this *handler) onMessage(ctx context.Context, msg *kafka.Message) {
 	)
 
 	if err := this.validateRequest(&request); err != nil {
-		this.validationFailed(ctx, err, &request)
+		this.validationFailed(ctx, err, requestType, &request)
 		return
 	}
 
-	this.requestsChan <- messageContext{request: request, ctx: ctx}
+	this.requestsChan <- messageContext{requestType: requestType, request: request, ctx: ctx}
 }
 
 func (this *handler) initiateValidationWorker(
@@ -100,18 +105,18 @@ func (this *handler) initiateValidationWorker(
 func (this *handler) validationSteps(
 	msg enrichedMessageContext,
 ) {
-	request, ctx, data := &msg.request, msg.ctx, msg.data
+	request, requestType, ctx, data := &msg.request, msg.requestType, msg.ctx, msg.data
 
-	events, err := this.validateContent(ctx, data)
+	events, err := this.validateContent(ctx, requestType, data)
 	if err != nil {
-		this.validationFailed(ctx, err, request)
+		this.validationFailed(ctx, err, requestType, request)
 		utils.GetLogFromContext(ctx).Debugw("Invalid payload details", "data", string(data))
 		return
 	}
 
-	correlationId, err := messageModel.GetCorrelationId(events)
+	correlationId, err := messageModel.GetCorrelationId(*events, playbookSatPayloadHeaderValue)
 	if err != nil {
-		this.validationFailed(ctx, err, request)
+		this.validationFailed(ctx, err, requestType, request)
 		return
 	}
 
@@ -122,16 +127,29 @@ func (this *handler) validationSteps(
 		Validation:               validationSuccess,
 	}
 
-	instrumentation.ValidationSuccess(ctx)
+	instrumentation.ValidationSuccess(ctx, requestType)
 	this.produceMessage(ctx, ingressResponseTopic, ingressResponse, request.Account)
 
-	headers := kafkaUtils.Headers(constants.HeaderRequestId, request.RequestID, constants.HeaderCorrelationId, correlationId.String())
+	headers := kafkaUtils.Headers(constants.HeaderRequestId, request.RequestID, constants.HeaderCorrelationId, correlationId.String(), payloadTypeHeader, requestType)
+
+	if requestType == playbookSatPayloadHeaderValue {
+		dispatcherResponse := &messageModel.PlaybookSatRunResponseMessageYaml{
+			Account:         request.Account,
+			B64Identity:     request.B64Identity,
+			RequestId:       request.RequestID,
+			UploadTimestamp: request.Timestamp.Format(time.RFC3339),
+			Events:          events.PlaybookSat,
+		}
+		this.produceMessage(ctx, dispatcherResponseTopic, dispatcherResponse, correlationId.String(), headers...)
+		return
+	}
+
 	dispatcherResponse := &messageModel.PlaybookRunResponseMessageYaml{
 		Account:         request.Account,
 		B64Identity:     request.B64Identity,
 		RequestId:       request.RequestID,
 		UploadTimestamp: request.Timestamp.Format(time.RFC3339),
-		Events:          events,
+		Events:          events.Playbook,
 	}
 
 	this.produceMessage(ctx, dispatcherResponseTopic, dispatcherResponse, correlationId.String(), headers...)
@@ -145,45 +163,71 @@ func (this *handler) validateRequest(request *messageModel.IngressValidationRequ
 	return
 }
 
-func (this *handler) validateContent(ctx context.Context, data []byte) (events []messageModel.PlaybookRunResponseMessageYamlEventsElem, err error) {
+func (this *handler) validateContent(ctx context.Context, requestType string, data []byte) (events *messageModel.ValidatedMessages, err error) {
+	events = &messageModel.ValidatedMessages{}
+	events.PlaybookType = requestType
+
 	lines := strings.Split(string(data), "\n")
 
 	for _, line := range lines {
 		if len(strings.TrimSpace(line)) == 0 {
 			continue
 		}
-
-		errors, parserError := this.schema.ValidateBytes(ctx, []byte(line))
-		if parserError != nil {
-			return nil, parserError
-		} else if len(errors) > 0 {
-			return nil, errors[0]
+		if requestType == playbookSatPayloadHeaderValue {
+			err = validateWithSchema(ctx, this.schemas[1], true, line, events)
+		} else {
+			err = validateWithSchema(ctx, this.schemas[0], false, line, events)
 		}
-
-		event := messageModel.PlaybookRunResponseMessageYamlEventsElem{}
-		err = json.Unmarshal([]byte(line), &event)
 
 		if err != nil {
 			return nil, err
 		}
 
-		events = append(events, event)
 	}
 
-	if len(events) == 0 {
+	if len(events.PlaybookSat) == 0 && len(events.Playbook) == 0 {
 		return nil, fmt.Errorf("No events found")
 	}
 
 	return events, nil
 }
 
-func (this *handler) validationFailed(ctx context.Context, err error, request *messageModel.IngressValidationRequest) {
+func validateWithSchema(ctx context.Context, schema *jsonschema.Schema, rhcsatRequest bool, line string, events *messageModel.ValidatedMessages) (err error) {
+	errors, parserError := schema.ValidateBytes(ctx, []byte(line))
+	if parserError != nil {
+		return parserError
+	} else if len(errors) > 0 {
+		return errors[0]
+	}
+
+	if rhcsatRequest {
+		event := &messageModel.PlaybookSatRunResponseMessageYamlEventsElem{}
+		err = json.Unmarshal([]byte(line), &event)
+		if err != nil {
+			return err
+		}
+
+		events.PlaybookSat = append(events.PlaybookSat, *event)
+		return
+	}
+
+	event := &messageModel.PlaybookRunResponseMessageYamlEventsElem{}
+	err = json.Unmarshal([]byte(line), &event)
+	if err != nil {
+		return err
+	}
+
+	events.Playbook = append(events.Playbook, *event)
+	return
+}
+
+func (this *handler) validationFailed(ctx context.Context, err error, requestType string, request *messageModel.IngressValidationRequest) {
 	response := &messageModel.IngressValidationResponse{
 		IngressValidationRequest: *request,
 		Validation:               validationFailure,
 	}
 
-	instrumentation.ValidationFailed(ctx, err)
+	instrumentation.ValidationFailed(ctx, err, requestType)
 	this.produceMessage(ctx, ingressResponseTopic, response, response.Account)
 }
 

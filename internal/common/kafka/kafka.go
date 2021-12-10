@@ -10,6 +10,7 @@ import (
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/qri-io/jsonschema"
 	"github.com/spf13/viper"
+	"go.uber.org/zap"
 )
 
 var defaultTopic = "__consumer_offsets"
@@ -168,4 +169,20 @@ func GetHeader(msg *kafka.Message, key string) (string, error) {
 	}
 
 	return "", fmt.Errorf("Header not found: %s", key)
+}
+
+func FilterByHeaderPredicate(log *zap.SugaredLogger, header string, filterVals ...string) KafkaMessagePredicate {
+	return func(msg *kafka.Message) bool {
+		if val, err := GetHeader(msg, header); err != nil {
+			log.Warnw("Error reading kafka message header", "err", err, "topic", *msg.TopicPartition.Topic, "partition", msg.TopicPartition.Partition, "offset", msg.TopicPartition.Offset.String())
+			return false
+		} else {
+			for _, filterVal := range filterVals {
+				if val == filterVal {
+					return true
+				}
+			}
+			return false
+		}
+	}
 }
