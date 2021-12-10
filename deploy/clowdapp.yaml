@@ -55,7 +55,9 @@ objects:
     deployments:
     - name: api
       minReplicas: ${{REPLICAS_API}}
-      web: true
+      webServices:
+        public:
+          enabled: true
       podSpec:
         image: ${IMAGE}:${IMAGE_TAG}
         args:
@@ -150,7 +152,6 @@ objects:
 
     - name: response-consumer
       minReplicas: ${{REPLICAS_RESPONSE_CONSUMER}}
-      web: false
       podSpec:
         image: ${IMAGE}:${IMAGE_TAG}
         args:
@@ -197,7 +198,6 @@ objects:
 
     - name: validator
       minReplicas: ${{REPLICAS_VALIDATOR}}
-      web: false
       podSpec:
         image: ${IMAGE}:${IMAGE_TAG}
         args:
