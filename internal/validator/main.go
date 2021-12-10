@@ -8,17 +8,15 @@ import (
 	"playbook-dispatcher/internal/validator/instrumentation"
 	"sync"
 
-	k "github.com/confluentinc/confluent-kafka-go/kafka"
-
 	"github.com/ghodss/yaml"
 	"github.com/qri-io/jsonschema"
 	"github.com/spf13/viper"
-	"go.uber.org/zap"
 )
 
 const (
-	payloadTypeHeader          = "service"
-	playbookPayloadHeaderValue = "playbook"
+	payloadTypeHeader             = "service"
+	playbookPayloadHeaderValue    = "playbook"
+	playbookSatPayloadHeaderValue = "playbook-sat"
 )
 
 func Start(
@@ -28,11 +26,18 @@ func Start(
 	ready, live *utils.ProbeHandler,
 	wg *sync.WaitGroup,
 ) {
-	var schema jsonschema.Schema
-	file, err := ioutil.ReadFile(cfg.GetString("schema.runner.event"))
-	utils.DieOnError(err)
-	err = yaml.Unmarshal(file, &schema)
-	utils.DieOnError(err)
+	var schemas []*jsonschema.Schema
+	var schemaNames = []string{"schema.runner.event", "schema.rhcsat.event"}
+
+	for _, schemaName := range schemaNames {
+		var schema jsonschema.Schema
+		file, err := ioutil.ReadFile(cfg.GetString(schemaName))
+		utils.DieOnError(err)
+		err = yaml.Unmarshal(file, &schema)
+		utils.DieOnError(err)
+
+		schemas = append(schemas, &schema)
+	}
 
 	storageConnectorConcurrency := cfg.GetInt("storage.max.concurrency")
 	kafkaTimeout := cfg.GetInt("kafka.timeout")
@@ -46,7 +51,7 @@ func Start(
 
 	handler := &handler{
 		producer:     producer,
-		schema:       &schema,
+		schemas:      schemas,
 		requestsChan: make(chan messageContext),
 		validateChan: make(chan enrichedMessageContext),
 	}
@@ -58,7 +63,7 @@ func Start(
 		return kafka.Ping(kafkaTimeout, consumer, producer)
 	})
 
-	predicate := newPlaybookServiceMessagePredicate(utils.GetLogFromContext(ctx))
+	predicate := kafka.FilterByHeaderPredicate(utils.GetLogFromContext(ctx), payloadTypeHeader, playbookPayloadHeaderValue, playbookSatPayloadHeaderValue)
 
 	start := kafka.NewConsumerEventLoop(ctx, consumer, predicate, nil, handler.onMessage, errors)
 
@@ -79,15 +84,4 @@ func Start(
 
 		start()
 	}()
-}
-
-func newPlaybookServiceMessagePredicate(log *zap.SugaredLogger) kafka.KafkaMessagePredicate {
-	return func(msg *k.Message) bool {
-		if val, err := kafka.GetHeader(msg, payloadTypeHeader); err != nil {
-			log.Warnw("Error reading kafka message header", "err", err, "topic", *msg.TopicPartition.Topic, "partition", msg.TopicPartition.Partition, "offset", msg.TopicPartition.Offset.String())
-			return false
-		} else {
-			return val == playbookPayloadHeaderValue
-		}
-	}
 }

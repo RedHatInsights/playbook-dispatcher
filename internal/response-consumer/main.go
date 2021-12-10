@@ -46,7 +46,9 @@ func Start(
 		db: db,
 	}
 
-	start := kafka.NewConsumerEventLoop(ctx, consumer, nil, &schema, handler.onMessage, errors)
+	predicate := kafka.FilterByHeaderPredicate(utils.GetLogFromContext(ctx), "service", "playbook")
+
+	start := kafka.NewConsumerEventLoop(ctx, consumer, predicate, &schema, handler.onMessage, errors)
 
 	go func() {
 		defer wg.Done()

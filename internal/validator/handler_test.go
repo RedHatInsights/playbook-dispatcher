@@ -18,15 +18,21 @@ var instance handler
 
 var _ = Describe("Handler", func() {
 	BeforeEach(func() {
-		var schema jsonschema.Schema
-		file, err := ioutil.ReadFile("../../schema/ansibleRunnerJobEvent.yaml")
-		Expect(err).ToNot(HaveOccurred())
-		err = yaml.Unmarshal(file, &schema)
-		Expect(err).ToNot(HaveOccurred())
+		var schemas []*jsonschema.Schema
+
+		for _, filePath := range []string{"../../schema/ansibleRunnerJobEvent.yaml", "../../schema/rhcsatJobEvent.yaml"} {
+			var schema jsonschema.Schema
+			file, err := ioutil.ReadFile(filePath)
+			Expect(err).ToNot(HaveOccurred())
+			err = yaml.Unmarshal(file, &schema)
+			Expect(err).ToNot(HaveOccurred())
+
+			schemas = append(schemas, &schema)
+		}
 
 		instance = handler{
 			producer: nil,
-			schema:   &schema,
+			schemas:  schemas,
 		}
 	})
 
@@ -44,30 +50,50 @@ var _ = Describe("Handler", func() {
 	Describe("Validation", func() {
 
 		DescribeTable("Rejects invalid files",
-			func(file string) {
-				_, err := instance.validateContent(test.TestContext(), []byte(file))
+			func(requestType string, file string) {
+				_, err := instance.validateContent(test.TestContext(), requestType, []byte(file))
 				Expect(err).To(HaveOccurred())
 			},
-			Entry("empty file", ""),
-			Entry("whitespace-only file", "         "),
-			Entry("newline-only file", "\n\n\n\n"),
-			Entry("invalid JSON (trailing braces)", `{"event": "playbook_on_start", "uuid": "60049c81-4f4b-41a0-bcf4-84399bf1b693", "counter": 0, "stdout": "", "start_line": 0, "end_line": 0}}`),
-			Entry("missing uuid", `{"event": "playbook_on_start", "counter": 0, "stdout": "", "start_line": 0, "end_line": 0}`),
+			Entry("empty file", "playbook", ""),
+			Entry("whitespace-only file", "playbook", "         "),
+			Entry("newline-only file", "playbook", "\n\n\n\n"),
+			Entry("invalid JSON (trailing braces)", "playbook", `{"event": "playbook_on_start", "uuid": "60049c81-4f4b-41a0-bcf4-84399bf1b693", "counter": 0, "stdout": "", "start_line": 0, "end_line": 0}}`),
+			Entry("missing uuid", "playbook", `{"event": "playbook_on_start", "counter": 0, "stdout": "", "start_line": 0, "end_line": 0}`),
+
+			Entry("rhc-sat newline-only file", "playbook-sat", "\n\n\n\n"),
+			Entry("missing rhc-sat uuid", "playbook-sat", `{"type" : "playbook_run_update", "version": 3}`),
+			Entry("rhc-sat invalid JSON", "playbook-sat", `{"type" : "playbook_run_update", "version": 3, "correlation_id": "0465783c-2e36-4e57-8514-c2cb962d323a"}}`),
+			Entry("rhc-sat invalid type", "playbook-sat", `{"type" : "invalid_type", "version": 3, "correlation_id": "0465783c-2e36-4e57-8514-c2cb962d323a"}`),
 		)
 
-		DescribeTable("Accepts valid files",
-			func(file string) {
-				events, err := instance.validateContent(test.TestContext(), []byte(file))
+		DescribeTable("Accepts valid runner files",
+			func(requestType string, file string) {
+				events, err := instance.validateContent(test.TestContext(), requestType, []byte(file))
 				Expect(err).ToNot(HaveOccurred())
-				Expect(events).ToNot(BeEmpty())
+				Expect(events.Playbook).ToNot(BeEmpty())
 			},
 
-			Entry("multiple events", `
+			Entry("multiple events", "playbook", `
 			{"event": "playbook_on_start", "uuid": "cb93301e-5ff8-4f75-ade6-57d0ec2fc662", "counter": 0, "stdout": "", "start_line": 0, "end_line": 0}
 			{"event": "playbook_on_stats", "uuid": "998a4bd2-2d6b-4c31-905c-2d5ad7a7f8ab", "counter": 1, "stdout": "", "start_line": 0, "end_line": 0}
 			`),
 
-			Entry("extra attributes", `{"event": "playbook_on_start", "uuid": "cb93301e-5ff8-4f75-ade6-57d0ec2fc662", "counter": 0, "stdout": "", "start_line": 0, "end_line": 0, "event_data": {"playbook": "ping.yml", "playbook_uuid": "db6da5c7-37a6-479f-b18a-1db5af7f0932", "uuid": "db6da5c7-37a6-479f-b18a-1db5af7f0932"}}`),
+			Entry("extra attributes", "playbook", `{"event": "playbook_on_start", "uuid": "cb93301e-5ff8-4f75-ade6-57d0ec2fc662", "counter": 0, "stdout": "", "start_line": 0, "end_line": 0, "event_data": {"playbook": "ping.yml", "playbook_uuid": "db6da5c7-37a6-479f-b18a-1db5af7f0932", "uuid": "db6da5c7-37a6-479f-b18a-1db5af7f0932"}}`),
+		)
+
+		DescribeTable("Accepts valid rhc-sat files",
+			func(requestType string, file string) {
+				events, err := instance.validateContent(test.TestContext(), requestType, []byte(file))
+				Expect(err).ToNot(HaveOccurred())
+				Expect(events.PlaybookSat).To(HaveLen(3))
+				Expect(events.Playbook).To(BeEmpty())
+			},
+
+			Entry("multiple events", "playbook-sat", `
+			{"type": "playbook_run_update", "version": 3, "correlation_id": "0465783c-2e36-4e57-8514-c2cb962d323a", "sequence": 1, "host": "03.example.com", "console": "03.example.com | SUCCESS => {\n    \"changed\": false,\n    \"ping\": \"pong\"\n}"}
+			{"type": "playbook_run_finished", "version": 3, "correlation_id": "0465783c-2e36-4e57-8514-c2cb962d323a", "host": "03.example.com", "status": "success", "connection_code": 0, "execution_code": 0}
+			{"type": "playbook_run_completed", "version": 3, "correlation_id": "0465783c-2e36-4e57-8514-c2cb962d323a", "status": "success", "satellite_connection_code": 0, "satellite_infrastructure_code": 0}
+			`),
 		)
 
 		It("parses Runner events", func() {
@@ -80,9 +106,9 @@ var _ = Describe("Handler", func() {
 			{"uuid": "c8347ac2-61d3-4a36-9cbb-c51e14984eee", "counter": 6, "stdout": "\r\nPLAY RECAP *********************************************************************\r\n\u001b[0;32mlocalhost\u001b[0m                  : \u001b[0;32mok=1   \u001b[0m changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   \r\n", "start_line": 5, "end_line": 9, "runner_ident": "test05", "event": "playbook_on_stats", "pid": 1149259, "created": "2021-01-22T14:42:00.009228", "parent_uuid": "d4ae95cf-71fd-4386-8dbf-2bce933ce713", "event_data": {"playbook": "minimal.yml", "playbook_uuid": "d4ae95cf-71fd-4386-8dbf-2bce933ce713", "changed": {}, "dark": {}, "failures": {}, "ignored": {}, "ok": {"localhost": 1}, "processed": {"localhost": 1}, "rescued": {}, "skipped": {}, "artifact_data": {}, "uuid": "c8347ac2-61d3-4a36-9cbb-c51e14984eee"}}
 			`
 
-			events, err := instance.validateContent(test.TestContext(), []byte(data))
+			events, err := instance.validateContent(test.TestContext(), "playbook", []byte(data))
 			Expect(err).ToNot(HaveOccurred())
-			Expect(events).To(HaveLen(6))
+			Expect(events.Playbook).To(HaveLen(6))
 		})
 	})
 
@@ -110,9 +136,9 @@ N/Kl0lVn2BIPxggdj5H4qC/Fpj5qlsQYR2/78+KeyhtLY8GqVf/f9r/t1GTtrtO96erY7OnSdMb6
 
 			content, err := readFile(bytes.NewReader(decoded[0:len]))
 			Expect(err).ToNot(HaveOccurred())
-			events, err := instance.validateContent(test.TestContext(), content)
+			events, err := instance.validateContent(test.TestContext(), "playbook", content)
 			Expect(err).ToNot(HaveOccurred())
-			Expect(events).To(HaveLen(6))
+			Expect(events.Playbook).To(HaveLen(6))
 		})
 	})
 
