@@ -119,6 +119,10 @@ func WithAccount(parent context.Context, account string) context.Context {
 	return withKeyValue(parent, "account", account)
 }
 
+func WithOrgId(parent context.Context, orgId string) context.Context {
+	return withKeyValue(parent, "org_id", orgId)
+}
+
 func withKeyValue(parent context.Context, key, value string) context.Context {
 	return SetLog(parent, GetLogFromContext(parent).With(key, value))
 }
