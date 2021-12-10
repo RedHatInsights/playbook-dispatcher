@@ -47,6 +47,12 @@ func (this *handler) onMessage(ctx context.Context, msg *k.Message) {
 	}
 
 	ctx = utils.WithAccount(ctx, value.Account)
+
+	identity, err := utils.ParseIdentityHeader(value.B64Identity)
+	if err == nil {
+		ctx = utils.WithOrgId(ctx, identity.Identity.Internal.OrgID)
+	}
+
 	utils.GetLogFromContext(ctx).Debugw("Processing message",
 		"upload_timestamp", value.UploadTimestamp,
 		"topic", *msg.TopicPartition.Topic,
