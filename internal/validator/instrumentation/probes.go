@@ -60,7 +60,7 @@ func ValidationSuccess(ctx context.Context, requestType string) {
 
 func ValidationFailed(ctx context.Context, cause error, requestType string) {
 	validationFailureTotal.WithLabelValues(requestType).Inc()
-	utils.GetLogFromContext(ctx).Infow("Rejecting payload due to validation failure", "cause", cause)
+	utils.GetLogFromContext(ctx).Warnw("Rejecting payload due to validation failure", "cause", cause)
 }
 
 func UnmarshallingError(ctx context.Context, err error, requestType string) {
