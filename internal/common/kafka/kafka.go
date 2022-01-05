@@ -64,7 +64,7 @@ func NewConsumerEventLoop(
 	ctx context.Context,
 	consumer *kafka.Consumer,
 	messagePredicate KafkaMessagePredicate,
-	schema *jsonschema.Schema,
+	validationPredicate KafkaMessagePredicate,
 	handler func(context.Context, *kafka.Message),
 	errors chan<- error,
 ) (start func()) {
@@ -92,16 +92,8 @@ func NewConsumerEventLoop(
 				continue
 			}
 
-			if schema != nil {
-				errors, parserError := schema.ValidateBytes(ctx, msg.Value)
-
-				if len(errors) > 0 {
-					utils.GetLogFromContext(ctx).Warnw("Incoming message does not match schema", "err", errors[0])
-					continue
-				} else if parserError != nil {
-					utils.GetLogFromContext(ctx).Warnw("Incoming message cannot be parsed", "err", parserError)
-					continue
-				}
+			if validationPredicate != nil && !validationPredicate(msg) {
+				continue
 			}
 
 			handler(ctx, msg)
@@ -184,5 +176,22 @@ func FilterByHeaderPredicate(log *zap.SugaredLogger, header string, filterVals .
 			}
 			return false
 		}
+	}
+}
+
+func SchemaValidationPredicate(ctx context.Context, header string, schemaMapper map[string]*jsonschema.Schema) KafkaMessagePredicate {
+	return func(msg *kafka.Message) bool {
+		val, _ := GetHeader(msg, header)
+
+		schema := schemaMapper[val]
+		errors, parserError := schema.ValidateBytes(ctx, msg.Value)
+		if len(errors) > 0 {
+			utils.GetLogFromContext(ctx).Warnw("Incoming message does not match schema", "err", errors[0])
+			return false
+		} else if parserError != nil {
+			utils.GetLogFromContext(ctx).Warnw("Incoming message cannot be parsed", "err", parserError)
+			return false
+		}
+		return true
 	}
 }

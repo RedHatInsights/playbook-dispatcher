@@ -122,6 +122,7 @@ components:
         - success
         - failure
         - timeout
+        - canceled
 
     CreatedAt:
       description: A timestamp when the entry was created
@@ -282,6 +283,7 @@ components:
         - success
         - failure
         - timeout
+        - canceled
 
     ServiceNullable:
       nullable: true

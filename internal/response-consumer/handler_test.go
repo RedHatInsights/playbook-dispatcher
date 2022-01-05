@@ -19,21 +19,33 @@ import (
 
 var localhost = "localhost"
 
-func newResponseMessage(events *[]messageModel.PlaybookRunResponseMessageYamlEventsElem, correlationId uuid.UUID) *k.Message {
-	data := messageModel.PlaybookRunResponseMessageYaml{
-		Account:   accountNumber(),
-		RequestId: uuid.New().String(),
-		Events:    *events,
+func newResponseMessage(runnerEvents *[]messageModel.PlaybookRunResponseMessageYamlEventsElem, satEvents *[]messageModel.PlaybookSatRunResponseMessageYamlEventsElem, correlationId uuid.UUID, requestType string) *k.Message {
+	var value []uint8
+	var err error
+
+	if requestType == runnerMessageHeaderValue {
+		data := messageModel.PlaybookRunResponseMessageYaml{
+			Account:   accountNumber(),
+			RequestId: uuid.New().String(),
+			Events:    *runnerEvents,
+		}
+		value, err = json.Marshal(data)
+	} else {
+		data := messageModel.PlaybookSatRunResponseMessageYaml{
+			Account:   accountNumber(),
+			RequestId: uuid.New().String(),
+			Events:    *satEvents,
+		}
+		value, err = json.Marshal(data)
 	}
 
-	value, err := json.Marshal(data)
 	Expect(err).ToNot(HaveOccurred())
 
 	topic := "platform.playbook-dispatcher.runs"
 
 	return &k.Message{
 		Value:   value,
-		Headers: kafkaUtils.Headers(constants.HeaderCorrelationId, correlationId.String(), constants.HeaderRequestId, "test"),
+		Headers: kafkaUtils.Headers(constants.HeaderCorrelationId, correlationId.String(), constants.HeaderRequestId, "test", constants.HeaderRequestType, requestType),
 		TopicPartition: k.TopicPartition{
 			Topic:     &topic,
 			Partition: 0,
@@ -42,7 +54,7 @@ func newResponseMessage(events *[]messageModel.PlaybookRunResponseMessageYamlEve
 	}
 }
 
-func createEvents(events ...string) *[]messageModel.PlaybookRunResponseMessageYamlEventsElem {
+func createRunnerEvents(events ...string) *[]messageModel.PlaybookRunResponseMessageYamlEventsElem {
 	result := make([]messageModel.PlaybookRunResponseMessageYamlEventsElem, len(events))
 
 	for i, event := range events {
@@ -55,6 +67,28 @@ func createEvents(events ...string) *[]messageModel.PlaybookRunResponseMessageYa
 		}
 	}
 
+	return &result
+}
+
+type eventData struct {
+	Type   string
+	Status string
+}
+
+func createSatEvents(correlationId uuid.UUID, events ...eventData) *[]messageModel.PlaybookSatRunResponseMessageYamlEventsElem {
+	result := make([]messageModel.PlaybookSatRunResponseMessageYamlEventsElem, len(events))
+
+	for i, event := range events {
+		status := messageModel.PlaybookSatRunResponseMessageYamlEventsElemStatus(event.Status)
+		result[i] = messageModel.PlaybookSatRunResponseMessageYamlEventsElem{
+			Type:          messageModel.PlaybookSatRunResponseMessageYamlEventsElemType(event.Type),
+			Version:       3,
+			Sequence:      &i,
+			CorrelationId: correlationId.String(),
+			Host:          &localhost,
+			Status:        &status,
+		}
+	}
 	return &result
 }
 
@@ -83,13 +117,14 @@ var _ = Describe("handler", func() {
 		return hosts
 	}
 
-	checkHost := func(runId uuid.UUID, status string, log string) {
+	checkHost := func(runId uuid.UUID, status string, satSeq *int, log string) {
 		hosts := fetchHosts(runId)
 		Expect(hosts).To(HaveLen(1))
 		Expect(hosts[0].RunID).To(Equal(runId))
 		Expect(hosts[0].InventoryID).To(BeNil())
 		Expect(hosts[0].Host).To(Equal("localhost"))
 		Expect(hosts[0].Status).To(Equal(status))
+		Expect(hosts[0].SatSequence).To(Equal(satSeq))
 		Expect(hosts[0].Log).To(Equal(log))
 	}
 
@@ -98,7 +133,7 @@ var _ = Describe("handler", func() {
 			var data = test.NewRun(accountNumber())
 			Expect(db().Create(&data).Error).ToNot(HaveOccurred())
 
-			msg := newResponseMessage(&[]messageModel.PlaybookRunResponseMessageYamlEventsElem{}, uuid.New())
+			msg := newResponseMessage(&[]messageModel.PlaybookRunResponseMessageYamlEventsElem{}, nil, uuid.New(), runnerMessageHeaderValue)
 			instance.onMessage(test.TestContext(), msg)
 
 			run := fetchRun(data.ID)
@@ -112,7 +147,7 @@ var _ = Describe("handler", func() {
 			var data = test.NewRun(accountNumber())
 			Expect(db().Create(&data).Error).ToNot(HaveOccurred())
 
-			events := createEvents(
+			events := createRunnerEvents(
 				messageModel.EventExecutorOnStart,
 				"playbook_on_start",
 				"playbook_on_play_start",
@@ -122,18 +157,18 @@ var _ = Describe("handler", func() {
 				"playbook_on_stats",
 			)
 
-			instance.onMessage(test.TestContext(), newResponseMessage(events, data.CorrelationID))
+			instance.onMessage(test.TestContext(), newResponseMessage(events, nil, data.CorrelationID, runnerMessageHeaderValue))
 
 			run := fetchRun(data.ID)
 			Expect(run.Status).To(Equal("success"))
-			checkHost(data.ID, "success", "")
+			checkHost(data.ID, "success", nil, "")
 		})
 
 		It("updates the run status based on failure runner events", func() {
 			var data = test.NewRun(accountNumber())
 			Expect(db().Create(&data).Error).ToNot(HaveOccurred())
 
-			events := createEvents(
+			events := createRunnerEvents(
 				messageModel.EventExecutorOnStart,
 				"playbook_on_start",
 				"playbook_on_play_start",
@@ -143,18 +178,18 @@ var _ = Describe("handler", func() {
 				"playbook_on_stats",
 			)
 
-			instance.onMessage(test.TestContext(), newResponseMessage(events, data.CorrelationID))
+			instance.onMessage(test.TestContext(), newResponseMessage(events, nil, data.CorrelationID, runnerMessageHeaderValue))
 
 			run := fetchRun(data.ID)
 			Expect(run.Status).To(Equal("failure"))
-			checkHost(data.ID, "failure", "")
+			checkHost(data.ID, "failure", nil, "")
 		})
 
 		It("updates multiple hosts involved in a run", func() {
 			var data = test.NewRun(accountNumber())
 			Expect(db().Create(&data).Error).ToNot(HaveOccurred())
 
-			events := createEvents(
+			events := createRunnerEvents(
 				messageModel.EventExecutorOnStart,
 				"playbook_on_start",
 				"playbook_on_play_start",
@@ -181,7 +216,7 @@ var _ = Describe("handler", func() {
 			(*events)[12].EventData.Host = &localhost2
 			(*events)[12].Stdout = utils.StringRef("2")
 
-			instance.onMessage(test.TestContext(), newResponseMessage(events, data.CorrelationID))
+			instance.onMessage(test.TestContext(), newResponseMessage(events, nil, data.CorrelationID, runnerMessageHeaderValue))
 
 			run := fetchRun(data.ID)
 			Expect(run.Status).To(Equal("failure"))
@@ -203,6 +238,151 @@ var _ = Describe("handler", func() {
 			Expect(hosts[0].Log).To(Equal("a1b2"))
 			Expect(hosts[1].Log).To(Equal("a1b2"))
 		})
+
+		It("updates the run status based on successful satellite events", func() {
+			var data = test.NewRun(accountNumber())
+			Expect(db().Create(&data).Error).ToNot(HaveOccurred())
+
+			events := createSatEvents(
+				data.CorrelationID,
+				eventData{"playbook_run_update", "success"},
+				eventData{"playbook_run_update", "success"},
+				eventData{"playbook_run_finished", "success"},
+			)
+
+			instance.onMessage(test.TestContext(), newResponseMessage(nil, events, data.CorrelationID, satMessageHeaderValue))
+
+			run := fetchRun(data.ID)
+			seq := 2
+			Expect(run.Status).To(Equal("success"))
+			checkHost(data.ID, "success", &seq, "")
+		})
+
+		It("updates the run status based on failed satellite events", func() {
+			var data = test.NewRun(accountNumber())
+			Expect(db().Create(&data).Error).ToNot(HaveOccurred())
+
+			events := createSatEvents(
+				data.CorrelationID,
+				eventData{"playbook_run_update", "success"},
+				eventData{"playbook_run_update", "failure"},
+				eventData{"playbook_run_finished", "failure"},
+			)
+
+			instance.onMessage(test.TestContext(), newResponseMessage(nil, events, data.CorrelationID, satMessageHeaderValue))
+
+			run := fetchRun(data.ID)
+			seq := 2
+			Expect(run.Status).To(Equal("failure"))
+			checkHost(data.ID, "failure", &seq, "")
+		})
+
+		It("updates the run status based on canceled satellite events", func() {
+			var data = test.NewRun(accountNumber())
+			Expect(db().Create(&data).Error).ToNot(HaveOccurred())
+
+			events := createSatEvents(
+				data.CorrelationID,
+				eventData{"playbook_run_update", "success"},
+				eventData{"playbook_run_finished", "canceled"},
+			)
+
+			instance.onMessage(test.TestContext(), newResponseMessage(nil, events, data.CorrelationID, satMessageHeaderValue))
+
+			run := fetchRun(data.ID)
+			seq := 1
+			Expect(run.Status).To(Equal("canceled"))
+			checkHost(data.ID, "canceled", &seq, "")
+		})
+
+		It("updates multiple satellite hosts involved in a run", func() {
+			var data = test.NewRun(accountNumber())
+			Expect(db().Create(&data).Error).ToNot(HaveOccurred())
+
+			events := createSatEvents(
+				data.CorrelationID,
+				eventData{"playbook_run_update", "success"},   // host 1
+				eventData{"playbook_run_update", "success"},   // host 2
+				eventData{"playbook_run_finished", "success"}, //host 1
+				eventData{"playbook_run_finished", "failure"}, //host 2
+			)
+
+			localhost2 := "localhost2"
+			(*events)[0].Console = utils.StringRef("c3")
+			(*events)[1].Host = &localhost2
+			(*events)[1].Console = utils.StringRef("e5")
+			(*events)[2].Console = utils.StringRef("d4")
+			(*events)[3].Host = &localhost2
+			(*events)[3].Console = utils.StringRef("f6")
+
+			instance.onMessage(test.TestContext(), newResponseMessage(nil, events, data.CorrelationID, satMessageHeaderValue))
+
+			run := fetchRun(data.ID)
+			Expect(run.Status).To(Equal("failure"))
+			hosts := fetchHosts(data.ID)
+			Expect(hosts).To(HaveLen(2))
+
+			sort.Slice(hosts, func(i, j int) bool {
+				return hosts[i].Host == "localhost"
+			})
+
+			Expect(hosts[0].RunID).To(Equal(data.ID))
+			Expect(hosts[1].RunID).To(Equal(data.ID))
+			Expect(hosts[0].Host).To(Equal("localhost"))
+			Expect(hosts[1].Host).To(Equal("localhost2"))
+			Expect(hosts[0].Status).To(Equal("success"))
+			Expect(hosts[1].Status).To(Equal("failure"))
+			Expect(hosts[0].Log).To(Equal("c3d4"))
+			Expect(hosts[1].Log).To(Equal("e5f6"))
+		})
+
+		It("copies over satellite_connection_error to console", func() {
+			var data = test.NewRun(accountNumber())
+			Expect(db().Create(&data).Error).ToNot(HaveOccurred())
+
+			events := createSatEvents(
+				data.CorrelationID,
+				eventData{"playbook_run_update", "success"},
+				eventData{"playbook_run_finished", "failure"},
+			)
+
+			code := 1
+			errorDescription := "Satellite unreachable"
+
+			(*events)[1].SatelliteConnectionCode = &code
+			(*events)[1].SatelliteConnectionError = &errorDescription
+
+			instance.onMessage(test.TestContext(), newResponseMessage(nil, events, data.CorrelationID, satMessageHeaderValue))
+
+			run := fetchRun(data.ID)
+			seq := 1
+			Expect(run.Status).To(Equal("failure"))
+			checkHost(data.ID, "failure", &seq, errorDescription)
+		})
+
+		It("copies over satellite_infrastructure_error to console", func() {
+			var data = test.NewRun(accountNumber())
+			Expect(db().Create(&data).Error).ToNot(HaveOccurred())
+
+			events := createSatEvents(
+				data.CorrelationID,
+				eventData{"playbook_run_update", "success"},
+				eventData{"playbook_run_finished", "failure"},
+			)
+
+			code := 1
+			errorDescription := "Capsule is down"
+
+			(*events)[1].SatelliteInfrastructureCode = &code
+			(*events)[1].SatelliteInfrastructureError = &errorDescription
+
+			instance.onMessage(test.TestContext(), newResponseMessage(nil, events, data.CorrelationID, satMessageHeaderValue))
+
+			run := fetchRun(data.ID)
+			seq := 1
+			Expect(run.Status).To(Equal("failure"))
+			checkHost(data.ID, "failure", &seq, errorDescription)
+		})
 	})
 
 	Describe("correlation", func() {
@@ -214,7 +394,7 @@ var _ = Describe("handler", func() {
 
 			Expect(db().Create(&data).Error).ToNot(HaveOccurred())
 
-			events := createEvents(
+			events := createRunnerEvents(
 				messageModel.EventExecutorOnStart,
 				"playbook_on_start",
 				"playbook_on_play_start",
@@ -224,7 +404,7 @@ var _ = Describe("handler", func() {
 				"playbook_on_stats",
 			)
 
-			msg := newResponseMessage(events, data[1].CorrelationID)
+			msg := newResponseMessage(events, nil, data[1].CorrelationID, runnerMessageHeaderValue)
 			instance.onMessage(test.TestContext(), msg)
 
 			run0 := fetchRun(data[0].ID)
@@ -234,7 +414,7 @@ var _ = Describe("handler", func() {
 
 			run1 := fetchRun(data[1].ID)
 			Expect(run1.Status).To(Equal("success"))
-			checkHost(data[1].ID, "success", "")
+			checkHost(data[1].ID, "success", nil, "")
 		})
 	})
 })

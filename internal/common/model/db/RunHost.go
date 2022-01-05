@@ -13,6 +13,8 @@ type RunHost struct {
 	InventoryID *uuid.UUID `gorm:"type:uuid"`
 	Host        string
 
+	SatSequence *int
+
 	Status string
 	Log    string
 

@@ -9,10 +9,11 @@ import (
 )
 
 const (
-	RunStatusRunning = "running"
-	RunStatusSuccess = "success"
-	RunStatusFailure = "failure"
-	RunStatusTimeout = "timeout"
+	RunStatusRunning  = "running"
+	RunStatusSuccess  = "success"
+	RunStatusFailure  = "failure"
+	RunStatusTimeout  = "timeout"
+	RunStatusCanceled = "canceled"
 )
 
 type Run struct {

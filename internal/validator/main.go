@@ -2,14 +2,11 @@ package validator
 
 import (
 	"context"
-	"io/ioutil"
 	"playbook-dispatcher/internal/common/kafka"
 	"playbook-dispatcher/internal/common/utils"
 	"playbook-dispatcher/internal/validator/instrumentation"
 	"sync"
 
-	"github.com/ghodss/yaml"
-	"github.com/qri-io/jsonschema"
 	"github.com/spf13/viper"
 )
 
@@ -26,18 +23,8 @@ func Start(
 	ready, live *utils.ProbeHandler,
 	wg *sync.WaitGroup,
 ) {
-	var schemas []*jsonschema.Schema
 	var schemaNames = []string{"schema.runner.event", "schema.rhcsat.event"}
-
-	for _, schemaName := range schemaNames {
-		var schema jsonschema.Schema
-		file, err := ioutil.ReadFile(cfg.GetString(schemaName))
-		utils.DieOnError(err)
-		err = yaml.Unmarshal(file, &schema)
-		utils.DieOnError(err)
-
-		schemas = append(schemas, &schema)
-	}
+	schemas := utils.LoadSchemas(cfg, schemaNames)
 
 	storageConnectorConcurrency := cfg.GetInt("storage.max.concurrency")
 	kafkaTimeout := cfg.GetInt("kafka.timeout")
