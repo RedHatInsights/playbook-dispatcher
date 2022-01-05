@@ -37,6 +37,7 @@ properties:
           - success
           - failure
           - timeout
+          - canceled
       timeout:
         type: integer
         minimum: 0

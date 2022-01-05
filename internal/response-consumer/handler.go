@@ -9,6 +9,7 @@ import (
 	kafkaUtils "playbook-dispatcher/internal/common/kafka"
 	"playbook-dispatcher/internal/common/model/db"
 	"playbook-dispatcher/internal/common/model/message"
+	"playbook-dispatcher/internal/common/satellite"
 	"playbook-dispatcher/internal/common/utils"
 	"playbook-dispatcher/internal/response-consumer/instrumentation"
 
@@ -23,6 +24,13 @@ const (
 	EventPlaybookOnStats  = "playbook_on_stats"
 	EventRunnerOnFailed   = "runner_on_failed"
 	EventExecutorOnFailed = "executor_on_failed"
+
+	EventSatPlaybookFinished  = "playbook_run_finished"
+	EventSatPlaybookCompleted = "playbook_run_completed"
+
+	EventSatStatusFailure  = "failure"
+	EventSatStatusSuccess  = "success"
+	EventSatStatusCanceled = "canceled"
 )
 
 type handler struct {
@@ -30,7 +38,8 @@ type handler struct {
 }
 
 func (this *handler) onMessage(ctx context.Context, msg *k.Message) {
-	requestId, correlationId, err := getHeaders(msg)
+	requestId, correlationId, requestType, err := getHeaders(msg)
+
 	if err != nil {
 		instrumentation.CannotReadHeaders(ctx, err)
 		return
@@ -39,10 +48,8 @@ func (this *handler) onMessage(ctx context.Context, msg *k.Message) {
 	ctx = utils.WithRequestId(ctx, requestId)
 	ctx = utils.WithCorrelationId(ctx, correlationId.String())
 
-	value := &message.PlaybookRunResponseMessageYaml{}
-
-	if err := value.UnmarshalJSON(msg.Value); err != nil {
-		instrumentation.UnmarshallIncomingMessageError(ctx, err)
+	value := parseMessage(ctx, requestType, msg)
+	if value == nil {
 		return
 	}
 
@@ -60,9 +67,15 @@ func (this *handler) onMessage(ctx context.Context, msg *k.Message) {
 		"offset", msg.TopicPartition.Offset.String(),
 	)
 
-	status := inferStatus(&value.Events, nil)
-
-	eventsSerialized := utils.MustMarshal(value.Events)
+	var status string
+	var eventsSerialized []byte
+	if requestType == runnerMessageHeaderValue {
+		status = inferStatus(value.RunnerEvents, nil)
+		eventsSerialized = utils.MustMarshal(value.RunnerEvents)
+	} else {
+		status = inferSatStatus(value.SatEvents, nil)
+		eventsSerialized = utils.MustMarshal(value.SatEvents)
+	}
 
 	var runsUpdated int64
 
@@ -97,21 +110,43 @@ func (this *handler) onMessage(ctx context.Context, msg *k.Message) {
 			runsUpdated = updateResult.RowsAffected
 		}
 
-		hosts := ansible.GetAnsibleHosts(value.Events)
+		var toCreate []db.RunHost
 
-		if len(hosts) == 0 {
-			return nil
-		}
+		if requestType == runnerMessageHeaderValue {
+			hosts := ansible.GetAnsibleHosts(*value.RunnerEvents)
 
-		toCreate := mapHostsToRunHosts(hosts, func(host string) db.RunHost {
-			return db.RunHost{
-				ID:     uuid.New(),
-				RunID:  run.ID,
-				Host:   host,
-				Status: inferStatus(&value.Events, &host),
-				Log:    ansible.GetStdout(value.Events, nil),
+			if len(hosts) == 0 {
+				return nil
 			}
-		})
+
+			toCreate = mapHostsToRunHosts(hosts, func(host string) db.RunHost {
+				return db.RunHost{
+					ID:     uuid.New(),
+					RunID:  run.ID,
+					Host:   host,
+					Status: inferStatus(value.RunnerEvents, &host),
+					Log:    ansible.GetStdout(*value.RunnerEvents, nil),
+				}
+			})
+		} else if requestType == satMessageHeaderValue {
+			hosts := satellite.GetSatHosts(*value.SatEvents)
+
+			if len(hosts) == 0 {
+				return nil
+			}
+
+			toCreate = mapHostsToRunHosts(hosts, func(host string) db.RunHost {
+				satHost := satellite.GetSatHostInfo(*value.SatEvents, &host)
+				return db.RunHost{
+					ID:          uuid.New(),
+					RunID:       run.ID,
+					Host:        host,
+					SatSequence: &satHost.Sequence,
+					Status:      inferSatStatus(value.SatEvents, &host),
+					Log:         satHost.Console,
+				}
+			})
+		}
 
 		createResult := tx.Model(db.RunHost{}).
 			Clauses(clause.OnConflict{
@@ -171,7 +206,82 @@ func inferStatus(events *[]message.PlaybookRunResponseMessageYamlEventsElem, hos
 	}
 }
 
-func getHeaders(msg *k.Message) (requestId string, correlationId uuid.UUID, err error) {
+func inferSatStatus(events *[]message.PlaybookSatRunResponseMessageYamlEventsElem, host *string) string {
+	finished := false
+	failed := false
+	canceled := false
+
+	for _, event := range *events {
+		if event.Type == EventSatPlaybookCompleted {
+			finished = true
+		}
+		if host != nil && event.Host != nil && *event.Host != *host {
+			continue
+		}
+		if event.Type == EventSatPlaybookFinished {
+			finished = true
+		}
+		if event.Status != nil && *event.Status == EventSatStatusCanceled {
+			canceled = true
+		}
+		if event.Status != nil && *event.Status == EventSatStatusFailure {
+			failed = true
+		}
+	}
+
+	switch {
+	case finished && canceled:
+		return db.RunStatusCanceled
+	case finished && failed:
+		return db.RunStatusFailure
+	case finished && !failed || finished && !canceled:
+		return db.RunStatusSuccess
+	default:
+		return db.RunStatusRunning
+	}
+}
+
+type parsedMessageInfo struct {
+	Account         string
+	B64Identity     string
+	UploadTimestamp string
+	RunnerEvents    *[]message.PlaybookRunResponseMessageYamlEventsElem
+	SatEvents       *[]message.PlaybookSatRunResponseMessageYamlEventsElem
+}
+
+func parseMessage(ctx context.Context, requestType string, msg *k.Message) *parsedMessageInfo {
+	if requestType == runnerMessageHeaderValue {
+		value := &message.PlaybookRunResponseMessageYaml{}
+
+		if err := value.UnmarshalJSON(msg.Value); err != nil {
+			instrumentation.UnmarshallIncomingMessageError(ctx, err)
+			return nil
+		}
+
+		return &parsedMessageInfo{
+			Account:         value.Account,
+			B64Identity:     value.B64Identity,
+			UploadTimestamp: value.UploadTimestamp,
+			RunnerEvents:    &value.Events,
+		}
+	} else {
+		value := &message.PlaybookSatRunResponseMessageYaml{}
+
+		if err := value.UnmarshalJSON(msg.Value); err != nil {
+			instrumentation.UnmarshallIncomingMessageError(ctx, err)
+			return nil
+		}
+
+		return &parsedMessageInfo{
+			Account:         value.Account,
+			B64Identity:     value.B64Identity,
+			UploadTimestamp: value.UploadTimestamp,
+			SatEvents:       &value.Events,
+		}
+	}
+}
+
+func getHeaders(msg *k.Message) (requestId string, correlationId uuid.UUID, requestType string, err error) {
 	if requestId, err = kafkaUtils.GetHeader(msg, constants.HeaderRequestId); err != nil {
 		return
 	}
@@ -182,6 +292,10 @@ func getHeaders(msg *k.Message) (requestId string, correlationId uuid.UUID, err 
 	}
 
 	if correlationId, err = uuid.Parse(correlationIdRaw); err != nil {
+		return
+	}
+
+	if requestType, err = kafkaUtils.GetHeader(msg, constants.HeaderRequestType); err != nil {
 		return
 	}
 

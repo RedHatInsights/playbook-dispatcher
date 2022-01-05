@@ -52,6 +52,7 @@ func Get() *viper.Viper {
 	options.SetDefault("kafka.retry.backoff.ms", 100)
 
 	options.SetDefault("schema.message.response", "./schema/playbookRunResponse.message.yaml")
+	options.SetDefault("schema.satmessage.response", "./schema/playbookSatRunResponse.message.yaml")
 	options.SetDefault("schema.runner.event", "./schema/ansibleRunnerJobEvent.yaml")
 	options.SetDefault("schema.rhcsat.event", "./schema/rhcsatJobEvent.yaml")
 	options.SetDefault("schema.api.private", "./schema/private.openapi.yaml")

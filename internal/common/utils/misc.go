@@ -4,12 +4,16 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/url"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/ghodss/yaml"
 	"github.com/labstack/echo/v4"
+	"github.com/qri-io/jsonschema"
+	"github.com/spf13/viper"
 )
 
 func DieOnError(err error) {
@@ -91,4 +95,17 @@ func SetRequestContextValue(c echo.Context, key interface{}, value interface{}) 
 	req := c.Request()
 	c.SetRequest(req.WithContext(context.WithValue(req.Context(), key, value)))
 	return c
+}
+
+func LoadSchemas(cfg *viper.Viper, schemaNames []string) (schemas []*jsonschema.Schema) {
+	for _, schemaName := range schemaNames {
+		var schema jsonschema.Schema
+		file, err := ioutil.ReadFile(cfg.GetString(schemaName))
+		DieOnError(err)
+		err = yaml.Unmarshal(file, &schema)
+		DieOnError(err)
+
+		schemas = append(schemas, &schema)
+	}
+	return
 }
