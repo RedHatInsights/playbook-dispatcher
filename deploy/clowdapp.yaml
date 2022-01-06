@@ -35,7 +35,7 @@ objects:
     envName: ${ENV_NAME}
 
     testing:
-      iqePlugin: rhc
+      iqePlugin: playbook-dispatcher
 
     database:
       name: playbook-dispatcher
