@@ -4,12 +4,11 @@
 # --------------------------------------------
 APP_NAME="playbook-dispatcher"  # name of app-sre "application" folder this component lives in
 COMPONENT_NAME="playbook-dispatcher"  # name of app-sre "resourceTemplate" in deploy.yaml for this component
-TEST_SECRETS_COMPONENT_NAME="test-secret-psk"  # name of app-sre "resourceTemplate" in deploy.yaml for this component
 IMAGE="quay.io/cloudservices/playbook-dispatcher"
 
-IQE_PLUGINS="rhc"
+IQE_PLUGINS="playbook-dispatcher"
 IQE_MARKER_EXPRESSION="smoke"
-IQE_FILTER_EXPRESSION="playbook_dispatcher"
+IQE_FILTER_EXPRESSION=""
 IQE_CJI_TIMEOUT="30m"
 
 
