@@ -62,6 +62,8 @@ func Get() *viper.Viper {
 	options.SetDefault("storage.max.concurrency", 5)
 	options.SetDefault("artifact.max.size", 1024*1024)
 
+	options.SetDefault("satellite.response.full", true)
+
 	options.SetDefault("cloud.connector.impl", "mock")
 	options.SetDefault("cloud.connector.host", "cloud-connector")
 	options.SetDefault("cloud.connector.port", "8080")
@@ -73,6 +75,7 @@ func Get() *viper.Viper {
 	options.SetDefault("cloud.connector.req.bucket", 60)
 
 	options.SetDefault("return.url", "https://cloud.redhat.com/api/ingress/v1/upload")
+	options.SetDefault("web.console.url.default", "https://console.redhat.com")
 	options.SetDefault("response.interval", "600")
 
 	options.SetDefault("rbac.impl", "mock")

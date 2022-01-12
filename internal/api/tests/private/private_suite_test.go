@@ -14,7 +14,11 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-const pskKey = "pskKey"
+const (
+	pskKey = "pskKey"
+
+	webConsoleUrlDefault = "https://example.com"
+)
 
 var (
 	accountNumber = test.WithAccountNumber()
@@ -40,6 +44,8 @@ func TestConfig(t *testing.T) {
 	cfg.Set("web.port", 9002)
 	cfg.Set("cloud.connector.rps", 5)
 	cfg.Set("cloud.connector.req.bucket", 5)
+
+	cfg.Set("web.console.url.default", webConsoleUrlDefault)
 
 	api.WithApi(cfg)
 

@@ -20,6 +20,22 @@ import (
 // OrgId defines model for OrgId.
 type OrgId string
 
+// PlaybookName defines model for PlaybookName.
+type PlaybookName string
+
+// Principal defines model for Principal.
+type Principal string
+
+// RecipientConfig defines model for RecipientConfig.
+type RecipientConfig struct {
+
+	// Identifier of the Satellite instance
+	SatId *string `json:"sat_id,omitempty"`
+
+	// Identifier of the organization within Satellite
+	SatOrgId *string `json:"sat_org_id,omitempty"`
+}
+
 // RecipientStatus defines model for RecipientStatus.
 type RecipientStatus struct {
 	// Embedded struct due to allOf(#/components/schemas/RecipientWithOrg)
@@ -33,7 +49,7 @@ type RecipientStatus struct {
 // RecipientWithOrg defines model for RecipientWithOrg.
 type RecipientWithOrg struct {
 
-	// Identifier of the tenant
+	// Identifies the organization that the given resource belongs to
 	OrgId OrgId `json:"org_id"`
 
 	// Identifier of the host to which a given Playbook is addressed
@@ -79,23 +95,68 @@ type RunInputHosts []struct {
 
 	// Host name as known to Ansible inventory.
 	// Used to identify the host in status reports.
-	AnsibleHost string `json:"ansible_host"`
+	AnsibleHost *string `json:"ansible_host,omitempty"`
 
 	// Inventory id of the given host
 	InventoryId *string `json:"inventory_id,omitempty"`
 }
 
+// RunInputV2 defines model for RunInputV2.
+type RunInputV2 struct {
+
+	// Optionally, information about hosts involved in the Playbook run can be provided.
+	// This information is used to pre-allocate run_host resources.
+	// Moreover, it can be used to create a connection between a run_host resource and host inventory.
+	Hosts *RunInputHosts `json:"hosts,omitempty"`
+
+	// Additional metadata about the Playbook run. Can be used for filtering purposes.
+	Labels *externalRef0.Labels `json:"labels,omitempty"`
+
+	// Human readable name of the playbook run. Used to present the given playbook run in external systems (Satellite).
+	Name PlaybookName `json:"name"`
+
+	// Identifier of the tenant
+	OrgId externalRef0.OrgId `json:"org_id"`
+
+	// Username of the user interacting with the service
+	Principal Principal `json:"principal"`
+
+	// Identifier of the host to which a given Playbook is addressed
+	Recipient externalRef0.RunRecipient `json:"recipient"`
+
+	// recipient-specific configuration options
+	RecipientConfig *RecipientConfig `json:"recipient_config,omitempty"`
+
+	// Amount of seconds after which the run is considered failed due to timeout
+	Timeout *externalRef0.RunTimeout `json:"timeout,omitempty"`
+
+	// URL hosting the Playbook
+	Url externalRef0.Url `json:"url"`
+
+	// URL that points to the section of the web console where the user find more information about the playbook run. The field is optional but highly suggested.
+	WebConsoleUrl *WebConsoleUrl `json:"web_console_url,omitempty"`
+}
+
 // RunsCreated defines model for RunsCreated.
 type RunsCreated []RunCreated
 
+// WebConsoleUrl defines model for WebConsoleUrl.
+type WebConsoleUrl string
+
 // ApiInternalRunsCreateJSONBody defines parameters for ApiInternalRunsCreate.
 type ApiInternalRunsCreateJSONBody []RunInput
+
+// ApiInternalV2RunsCreateJSONBody defines parameters for ApiInternalV2RunsCreate.
+type ApiInternalV2RunsCreateJSONBody []RunInputV2
 
 // ApiInternalV2RecipientsStatusJSONBody defines parameters for ApiInternalV2RecipientsStatus.
 type ApiInternalV2RecipientsStatusJSONBody []RecipientWithOrg
 
 // ApiInternalRunsCreateRequestBody defines body for ApiInternalRunsCreate for application/json ContentType.
 type ApiInternalRunsCreateJSONRequestBody ApiInternalRunsCreateJSONBody
+
+// ApiInternalV2RunsCreateRequestBody defines body for ApiInternalV2RunsCreate for application/json ContentType.
+type ApiInternalV2RunsCreateJSONRequestBody ApiInternalV2RunsCreateJSONBody
 
 // ApiInternalV2RecipientsStatusRequestBody defines body for ApiInternalV2RecipientsStatus for application/json ContentType.
 type ApiInternalV2RecipientsStatusJSONRequestBody ApiInternalV2RecipientsStatusJSONBody
@@ -178,6 +239,11 @@ type ClientInterface interface {
 
 	ApiInternalRunsCreate(ctx context.Context, body ApiInternalRunsCreateJSONRequestBody) (*http.Response, error)
 
+	// ApiInternalV2RunsCreate request  with any body
+	ApiInternalV2RunsCreateWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error)
+
+	ApiInternalV2RunsCreate(ctx context.Context, body ApiInternalV2RunsCreateJSONRequestBody) (*http.Response, error)
+
 	// ApiInternalV2RecipientsStatus request  with any body
 	ApiInternalV2RecipientsStatusWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error)
 
@@ -201,6 +267,36 @@ func (c *Client) ApiInternalRunsCreateWithBody(ctx context.Context, contentType 
 
 func (c *Client) ApiInternalRunsCreate(ctx context.Context, body ApiInternalRunsCreateJSONRequestBody) (*http.Response, error) {
 	req, err := NewApiInternalRunsCreateRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if c.RequestEditor != nil {
+		err = c.RequestEditor(ctx, req)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ApiInternalV2RunsCreateWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error) {
+	req, err := NewApiInternalV2RunsCreateRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if c.RequestEditor != nil {
+		err = c.RequestEditor(ctx, req)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ApiInternalV2RunsCreate(ctx context.Context, body ApiInternalV2RunsCreateJSONRequestBody) (*http.Response, error) {
+	req, err := NewApiInternalV2RunsCreateRequest(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -265,6 +361,45 @@ func NewApiInternalRunsCreateRequestWithBody(server string, contentType string, 
 	}
 
 	basePath := fmt.Sprintf("/internal/dispatch")
+	if basePath[0] == '/' {
+		basePath = basePath[1:]
+	}
+
+	queryUrl, err = queryUrl.Parse(basePath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryUrl.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+	return req, nil
+}
+
+// NewApiInternalV2RunsCreateRequest calls the generic ApiInternalV2RunsCreate builder with application/json body
+func NewApiInternalV2RunsCreateRequest(server string, body ApiInternalV2RunsCreateJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewApiInternalV2RunsCreateRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewApiInternalV2RunsCreateRequestWithBody generates requests for ApiInternalV2RunsCreate with any type of body
+func NewApiInternalV2RunsCreateRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	queryUrl, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	basePath := fmt.Sprintf("/internal/v2/dispatch")
 	if basePath[0] == '/' {
 		basePath = basePath[1:]
 	}
@@ -356,6 +491,11 @@ type ClientWithResponsesInterface interface {
 
 	ApiInternalRunsCreateWithResponse(ctx context.Context, body ApiInternalRunsCreateJSONRequestBody) (*ApiInternalRunsCreateResponse, error)
 
+	// ApiInternalV2RunsCreate request  with any body
+	ApiInternalV2RunsCreateWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*ApiInternalV2RunsCreateResponse, error)
+
+	ApiInternalV2RunsCreateWithResponse(ctx context.Context, body ApiInternalV2RunsCreateJSONRequestBody) (*ApiInternalV2RunsCreateResponse, error)
+
 	// ApiInternalV2RecipientsStatus request  with any body
 	ApiInternalV2RecipientsStatusWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*ApiInternalV2RecipientsStatusResponse, error)
 
@@ -378,6 +518,28 @@ func (r ApiInternalRunsCreateResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r ApiInternalRunsCreateResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type ApiInternalV2RunsCreateResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON207      *RunsCreated
+}
+
+// Status returns HTTPResponse.Status
+func (r ApiInternalV2RunsCreateResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ApiInternalV2RunsCreateResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -423,6 +585,23 @@ func (c *ClientWithResponses) ApiInternalRunsCreateWithResponse(ctx context.Cont
 	return ParseApiInternalRunsCreateResponse(rsp)
 }
 
+// ApiInternalV2RunsCreateWithBodyWithResponse request with arbitrary body returning *ApiInternalV2RunsCreateResponse
+func (c *ClientWithResponses) ApiInternalV2RunsCreateWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*ApiInternalV2RunsCreateResponse, error) {
+	rsp, err := c.ApiInternalV2RunsCreateWithBody(ctx, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	return ParseApiInternalV2RunsCreateResponse(rsp)
+}
+
+func (c *ClientWithResponses) ApiInternalV2RunsCreateWithResponse(ctx context.Context, body ApiInternalV2RunsCreateJSONRequestBody) (*ApiInternalV2RunsCreateResponse, error) {
+	rsp, err := c.ApiInternalV2RunsCreate(ctx, body)
+	if err != nil {
+		return nil, err
+	}
+	return ParseApiInternalV2RunsCreateResponse(rsp)
+}
+
 // ApiInternalV2RecipientsStatusWithBodyWithResponse request with arbitrary body returning *ApiInternalV2RecipientsStatusResponse
 func (c *ClientWithResponses) ApiInternalV2RecipientsStatusWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*ApiInternalV2RecipientsStatusResponse, error) {
 	rsp, err := c.ApiInternalV2RecipientsStatusWithBody(ctx, contentType, body)
@@ -449,6 +628,32 @@ func ParseApiInternalRunsCreateResponse(rsp *http.Response) (*ApiInternalRunsCre
 	}
 
 	response := &ApiInternalRunsCreateResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 207:
+		var dest RunsCreated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON207 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseApiInternalV2RunsCreateResponse parses an HTTP response from a ApiInternalV2RunsCreateWithResponse call
+func ParseApiInternalV2RunsCreateResponse(rsp *http.Response) (*ApiInternalV2RunsCreateResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ApiInternalV2RunsCreateResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}

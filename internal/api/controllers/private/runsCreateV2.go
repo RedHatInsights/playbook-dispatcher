@@ -10,10 +10,9 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-//go:generate fungen -types RunInput,*RunCreated -methods PMap -package private -filename utils.gen.go
-func (this *controllers) ApiInternalRunsCreate(ctx echo.Context) error {
-	var input RunInputList
-	requestType := "ansible"
+//go:generate fungen -types RunInputV2,*RunCreated -methods PMap -package private -filename utils.v2.gen.go
+func (this *controllers) ApiInternalV2RunsCreate(ctx echo.Context) error {
+	var input RunInputV2List
 
 	db.SetLog(this.database, utils.GetLogFromEcho(ctx))
 	defer db.ClearLog(this.database)
@@ -25,8 +24,21 @@ func (this *controllers) ApiInternalRunsCreate(ctx echo.Context) error {
 	}
 
 	// send all requests to cloud connector concurrently
-	result := input.PMapRunCreated(func(runInputV1 RunInput) *RunCreated {
-		runInput := RunInputV1GenericMap(runInputV1, this.config)
+	result := input.PMapRunCreated(func(runInputV2 RunInputV2) *RunCreated {
+		ansibleReq, satReq := CheckV2ReqFields(runInputV2)
+		if !ansibleReq && !satReq {
+			return runCreateError(http.StatusBadRequest)
+		}
+		if ansibleReq && satReq {
+			ansibleReq, satReq = false, true
+		}
+
+		requestType := "ansible"
+		if satReq {
+			requestType = "satellite"
+		}
+
+		runInput := RunInputV2GenericMap(runInputV2, satReq, this.config)
 
 		recipient, err := uuid.Parse(runInput.Recipient)
 		if err != nil {
@@ -34,21 +46,27 @@ func (this *controllers) ApiInternalRunsCreate(ctx echo.Context) error {
 			return runCreateError(http.StatusBadRequest)
 		}
 
-		context := utils.WithCorrelationId(ctx.Request().Context(), runInput.CorrelationId.String())
-		context = utils.WithAccount(context, runInput.Account)
+		context := utils.WithRequestType(ctx.Request().Context(), requestType)
+		context = utils.WithCorrelationId(context, runInput.CorrelationId.String())
+		context = utils.WithAccount(context, *runInput.OrgId)
 
 		// take from the rate limit bucket
 		this.rateLimiter.Wait(ctx.Request().Context())
 
+		ean, err := this.translator.OrgIDToEAN(context, *runInput.OrgId)
+		if err != nil {
+			return runCreateError(http.StatusBadRequest)
+		}
+		runInput.Account = *ean
+
 		createError := sendToCloudConnector(
-			false,
-			runInput.Account,
+			satReq,
+			*ean,
 			recipient,
 			runInput,
 			this.cloudConnectorClient,
 			context,
 		)
-
 		if createError != nil {
 			return createError
 		}
@@ -57,8 +75,8 @@ func (this *controllers) ApiInternalRunsCreate(ctx echo.Context) error {
 			runInput,
 			recipient,
 			runInput.CorrelationId,
-			false,
-			false,
+			true,
+			satReq,
 			requestType,
 			this.database,
 			this.config,
