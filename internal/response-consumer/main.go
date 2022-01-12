@@ -38,6 +38,8 @@ func Start(
 	ready.Register(sql.Ping)
 	live.Register(sql.Ping)
 
+	responseFull := cfg.GetBool("satellite.response.full")
+
 	kafkaTimeout := cfg.GetInt("kafka.timeout")
 	consumer, err := kafka.NewConsumer(ctx, cfg, cfg.GetString("topic.updates"))
 	utils.DieOnError(err)
@@ -47,7 +49,8 @@ func Start(
 	})
 
 	handler := &handler{
-		db: db,
+		db:           db,
+		responseFull: responseFull,
 	}
 
 	headerPredicate := kafka.FilterByHeaderPredicate(utils.GetLogFromContext(ctx), requestTypeHeader, runnerMessageHeaderValue, satMessageHeaderValue)

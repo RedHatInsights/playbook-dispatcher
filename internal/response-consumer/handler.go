@@ -33,7 +33,8 @@ const (
 )
 
 type handler struct {
-	db *gorm.DB
+	db           *gorm.DB
+	responseFull bool
 }
 
 func (this *handler) onMessage(ctx context.Context, msg *k.Message) {
@@ -120,6 +121,7 @@ func (this *handler) onMessage(ctx context.Context, msg *k.Message) {
 					Log:    ansible.GetStdout(*value.RunnerEvents, nil),
 				}
 			})
+			return createRecord(ctx, tx, toCreate)
 		} else if requestType == satMessageHeaderValue {
 			hosts := satellite.GetSatHosts(*value.SatEvents)
 
@@ -138,18 +140,7 @@ func (this *handler) onMessage(ctx context.Context, msg *k.Message) {
 					Log:         satHost.Console,
 				}
 			})
-		}
-
-		createResult := tx.Model(db.RunHost{}).
-			Clauses(clause.OnConflict{
-				Columns:   []clause.Column{{Name: "run_id"}, {Name: "host"}},
-				DoUpdates: clause.AssignmentColumns([]string{"status", "log"}),
-			}).
-			Create(&toCreate)
-
-		if createResult.Error != nil {
-			utils.GetLogFromContext(ctx).Errorw("Error upserting run hosts in db", "error", createResult.Error)
-			return createResult.Error
+			return createUpdateRecord(ctx, tx, this.responseFull, toCreate)
 		}
 
 		return nil
@@ -162,6 +153,58 @@ func (this *handler) onMessage(ctx context.Context, msg *k.Message) {
 	} else {
 		instrumentation.PlaybookRunUpdateMiss(ctx, status)
 	}
+}
+
+func createRecord(ctx context.Context, tx *gorm.DB, toCreate []db.RunHost) error {
+	createResult := tx.Model(db.RunHost{}).
+		Clauses(clause.OnConflict{
+			Columns:   []clause.Column{{Name: "run_id"}, {Name: "host"}},
+			DoUpdates: clause.AssignmentColumns([]string{"status", "log"}),
+		}).
+		Create(&toCreate)
+
+	if createResult.Error != nil {
+		utils.GetLogFromContext(ctx).Errorw("Error upserting run hosts in db", "error", createResult.Error)
+		return createResult.Error
+	}
+
+	return nil
+}
+
+func hostToUpdate(ctx context.Context, tx *gorm.DB, runId uuid.UUID, hostName string) *db.RunHost {
+	host := db.RunHost{}
+	baseQuery := tx.Model(db.RunHost{}).Where("run_id=?", runId).Where("host=?", hostName)
+
+	if selectResult := baseQuery.Order("sat_sequence desc").First(&host); selectResult.Error != nil {
+		if errors.Is(selectResult.Error, gorm.ErrRecordNotFound) {
+			return nil
+		}
+		utils.GetLogFromContext(ctx).Errorw("Error fetching runHost from db", "error", selectResult.Error)
+	}
+	return &host
+}
+
+func createUpdateRecord(ctx context.Context, tx *gorm.DB, responseFull bool, toUpdate []db.RunHost) error {
+	if responseFull != true {
+		for _, runHost := range toUpdate {
+			if host := hostToUpdate(ctx, tx, runHost.RunID, runHost.Host); host != nil {
+				if *host.SatSequence != *runHost.SatSequence-1 {
+					runHost.Log = "\n...\n" + runHost.Log
+				}
+
+				runHost.Log = host.Log + runHost.Log
+
+				if updateHost := tx.Model(host).Select("sat_sequence", "status", "log").Updates(runHost); updateHost.Error != nil {
+					utils.GetLogFromContext(ctx).Errorw("Error updating host in db", "error", updateHost.Error)
+					return updateHost.Error
+				}
+				return nil
+			}
+			return createRecord(ctx, tx, toUpdate)
+		}
+	}
+
+	return createRecord(ctx, tx, toUpdate)
 }
 
 func inferStatus(events *[]message.PlaybookRunResponseMessageYamlEventsElem, host *string) string {

@@ -101,7 +101,8 @@ var _ = Describe("handler", func() {
 
 	BeforeEach(func() {
 		instance = handler{
-			db: db(),
+			db:           db(),
+			responseFull: true,
 		}
 	})
 
@@ -384,6 +385,77 @@ var _ = Describe("handler", func() {
 			seq := 1
 			Expect(run.Status).To(Equal("failure"))
 			checkHost(data.ID, "failure", &seq, errorDescription)
+		})
+	})
+
+	Describe("response_full false", func() {
+		It("concatenates the logs for the same host", func() {
+			instance.responseFull = false
+			var data = test.NewRun(accountNumber())
+			Expect(db().Create(&data).Error).ToNot(HaveOccurred())
+
+			events := createSatEvents(
+				data.CorrelationID,
+				eventData{"playbook_run_update", "success"},
+			)
+
+			consoleLog := "first console log\n"
+			(*events)[0].Console = &consoleLog
+
+			instance.onMessage(test.TestContext(), newSatResponseMessage(events, data.CorrelationID))
+
+			events = createSatEvents(
+				data.CorrelationID,
+				eventData{"playbook_run_finished", "success"},
+			)
+
+			consoleLog = "second console log"
+			seq := 1
+
+			(*events)[0].Console = &consoleLog
+			(*events)[0].Sequence = &seq
+
+			instance.onMessage(test.TestContext(), newSatResponseMessage(events, data.CorrelationID))
+
+			run := fetchRun(data.ID)
+
+			Expect(run.Status).To(Equal("success"))
+			checkHost(data.ID, "success", &seq, "first console log\nsecond console log")
+		})
+
+		It("adds indicator in logs for missed host sequence", func() {
+			instance.responseFull = false
+			var data = test.NewRun(accountNumber())
+			Expect(db().Create(&data).Error).ToNot(HaveOccurred())
+
+			events := createSatEvents(
+				data.CorrelationID,
+				eventData{"playbook_run_update", "success"},
+			)
+
+			consoleLog := "first console log\n"
+			(*events)[0].Console = &consoleLog
+
+			instance.onMessage(test.TestContext(), newSatResponseMessage(events, data.CorrelationID))
+
+			events = createSatEvents(
+				data.CorrelationID,
+				eventData{"playbook_run_finished", "success"},
+			)
+
+			consoleLog = "second console log"
+
+			seq := 6 // we missed some data
+
+			(*events)[0].Console = &consoleLog
+			(*events)[0].Sequence = &seq
+
+			instance.onMessage(test.TestContext(), newSatResponseMessage(events, data.CorrelationID))
+
+			run := fetchRun(data.ID)
+
+			Expect(run.Status).To(Equal("success"))
+			checkHost(data.ID, "success", &seq, "first console log\n\n...\nsecond console log")
 		})
 	})
 
