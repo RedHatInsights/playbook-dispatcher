@@ -54,11 +54,7 @@ func (this *handler) onMessage(ctx context.Context, msg *k.Message) {
 	}
 
 	ctx = utils.WithAccount(ctx, value.Account)
-
-	identity, err := utils.ParseIdentityHeader(value.B64Identity)
-	if err == nil {
-		ctx = utils.WithOrgId(ctx, identity.Identity.Internal.OrgID)
-	}
+	ctx = utils.WithOrgId(ctx, value.OrgId)
 
 	utils.GetLogFromContext(ctx).Debugw("Processing message",
 		"upload_timestamp", value.UploadTimestamp,
@@ -243,6 +239,7 @@ func inferSatStatus(events *[]message.PlaybookSatRunResponseMessageYamlEventsEle
 
 type parsedMessageInfo struct {
 	Account         string
+	OrgId           string
 	B64Identity     string
 	UploadTimestamp string
 	RunnerEvents    *[]message.PlaybookRunResponseMessageYamlEventsElem
@@ -260,6 +257,7 @@ func parseMessage(ctx context.Context, requestType string, msg *k.Message) *pars
 
 		return &parsedMessageInfo{
 			Account:         value.Account,
+			OrgId:           value.OrgId,
 			B64Identity:     value.B64Identity,
 			UploadTimestamp: value.UploadTimestamp,
 			RunnerEvents:    &value.Events,
@@ -274,6 +272,7 @@ func parseMessage(ctx context.Context, requestType string, msg *k.Message) *pars
 
 		return &parsedMessageInfo{
 			Account:         value.Account,
+			OrgId:           value.OrgId,
 			B64Identity:     value.B64Identity,
 			UploadTimestamp: value.UploadTimestamp,
 			SatEvents:       &value.Events,
