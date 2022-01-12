@@ -17,8 +17,10 @@ func (this *cloudConnectorClientMock) SendCloudConnectorRequest(
 	ctx context.Context,
 	account string,
 	recipient uuid.UUID,
-	correlationId uuid.UUID,
 	url string,
+	directive string,
+	metadata map[string]string,
+
 ) (*string, bool, error) {
 	id := uuid.New().String()
 	return &id, false, nil

@@ -18,8 +18,6 @@ import (
 
 const basePath = "/api/cloud-connector/v1/"
 
-var cloudConnectorDirective = "rhc-worker-playbook"
-
 type tenantKeyType int
 
 // used to pass account, org_id down to request editor (to set headers)
@@ -33,8 +31,9 @@ type CloudConnectorClient interface {
 		ctx context.Context,
 		account string,
 		recipient uuid.UUID,
-		correlationId uuid.UUID,
 		url string,
+		directive string,
+		metadata map[string]string,
 	) (*string, bool, error)
 
 	GetConnectionStatus(
@@ -49,6 +48,7 @@ type cloudConnectorClientImpl struct {
 	returnUrl        string
 	responseInterval int
 	client           ClientWithResponsesInterface
+	responseFull     string
 }
 
 func NewConnectorClientWithHttpRequestDoer(cfg *viper.Viper, doer HttpRequestDoer) CloudConnectorClient {
@@ -76,6 +76,7 @@ func NewConnectorClientWithHttpRequestDoer(cfg *viper.Viper, doer HttpRequestDoe
 		returnUrl:        cfg.GetString("return.url"),
 		responseInterval: cfg.GetInt("response.interval"),
 		client:           client,
+		responseFull:     strconv.FormatBool(cfg.GetBool("satellite.response.full")),
 	}
 }
 
@@ -91,19 +92,19 @@ func (this *cloudConnectorClientImpl) SendCloudConnectorRequest(
 	ctx context.Context,
 	account string,
 	recipient uuid.UUID,
-	correlationId uuid.UUID,
 	url string,
+	directive string,
+	metadata map[string]string,
 ) (id *string, notFound bool, err error) {
 	ctx = context.WithValue(ctx, accountKey, account)
 	recipientString := recipient.String()
-	metadata := map[string]string{
-		"return_url":                    this.returnUrl,
-		"response_interval":             strconv.Itoa(this.responseInterval),
-		"crc_dispatcher_correlation_id": correlationId.String(),
-	}
+
+	metadata["return_url"] = this.returnUrl
+	metadata["response_interval"] = strconv.Itoa(this.responseInterval)
+	metadata["response_full"] = this.responseFull
 
 	utils.GetLogFromContext(ctx).Debugw("Sending Cloud Connector message",
-		"directive", cloudConnectorDirective,
+		"directive", directive,
 		"metadata", metadata,
 		"payload", url,
 		"recipient", recipientString,
@@ -111,7 +112,7 @@ func (this *cloudConnectorClientImpl) SendCloudConnectorRequest(
 
 	res, err := this.client.PostMessageWithResponse(ctx, PostMessageJSONRequestBody{
 		Account:   &account,
-		Directive: &cloudConnectorDirective,
+		Directive: &directive,
 		Metadata: &MessageRequest_Metadata{
 			AdditionalProperties: metadata,
 		},

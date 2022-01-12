@@ -1,0 +1,19 @@
+[{
+    "org_id": "0000001",
+    "recipient": "dd018b96-da04-4651-84d1-187fa5c23f6c",
+    "url": "http://example.com",
+    "labels": {
+        "foo": "1234",
+        "baz": "{}"
+    },
+    "name":"sat playbook",
+    "web_console_url": "http://example.com",
+    "recipient_config": {
+        "sat_id":"16372e6f-1c18-4cdb-b780-50ab4b88e74b",
+        "sat_org_id":"6826"
+    },
+    "principal": "test-user",
+    "hosts": [{
+        "inventory_id": "16372e6f-1c18-4cdb-b780-50ab4b88e74b"
+    }]
+}]
