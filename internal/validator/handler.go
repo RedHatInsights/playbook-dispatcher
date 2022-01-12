@@ -63,11 +63,7 @@ func (this *handler) onMessage(ctx context.Context, msg *kafka.Message) {
 
 	ctx = utils.WithRequestId(ctx, request.RequestID)
 	ctx = utils.WithAccount(ctx, request.Account)
-
-	identity, err := utils.ParseIdentityHeader(request.B64Identity)
-	if err == nil {
-		ctx = utils.WithOrgId(ctx, identity.Identity.Internal.OrgID)
-	}
+	ctx = utils.WithOrgId(ctx, request.Principal)
 
 	ctx = utils.SetLog(ctx, utils.GetLogFromContext(ctx).With("url", request.URL))
 	utils.GetLogFromContext(ctx).Debugw("Processing request",
@@ -135,6 +131,7 @@ func (this *handler) validationSteps(
 	if requestType == playbookSatPayloadHeaderValue {
 		dispatcherResponse := &messageModel.PlaybookSatRunResponseMessageYaml{
 			Account:         request.Account,
+			OrgId:           request.Principal,
 			B64Identity:     request.B64Identity,
 			RequestId:       request.RequestID,
 			UploadTimestamp: request.Timestamp.Format(time.RFC3339),
@@ -146,6 +143,7 @@ func (this *handler) validationSteps(
 
 	dispatcherResponse := &messageModel.PlaybookRunResponseMessageYaml{
 		Account:         request.Account,
+		OrgId:           request.Principal,
 		B64Identity:     request.B64Identity,
 		RequestId:       request.RequestID,
 		UploadTimestamp: request.Timestamp.Format(time.RFC3339),
