@@ -19,32 +19,14 @@ import (
 
 var localhost = "localhost"
 
-func newResponseMessage(runnerEvents *[]messageModel.PlaybookRunResponseMessageYamlEventsElem, satEvents *[]messageModel.PlaybookSatRunResponseMessageYamlEventsElem, correlationId uuid.UUID, requestType string) *k.Message {
-	var value []uint8
-	var err error
-
-	if requestType == runnerMessageHeaderValue {
-		data := messageModel.PlaybookRunResponseMessageYaml{
-			Account:   accountNumber(),
-			RequestId: uuid.New().String(),
-			Events:    *runnerEvents,
-		}
-		value, err = json.Marshal(data)
-	} else {
-		data := messageModel.PlaybookSatRunResponseMessageYaml{
-			Account:   accountNumber(),
-			RequestId: uuid.New().String(),
-			Events:    *satEvents,
-		}
-		value, err = json.Marshal(data)
-	}
-
+func newResponseMessage(value interface{}, correlationId uuid.UUID, requestType string) *k.Message {
+	marshalled, err := json.Marshal(value)
 	Expect(err).ToNot(HaveOccurred())
 
 	topic := "platform.playbook-dispatcher.runs"
 
 	return &k.Message{
-		Value:   value,
+		Value:   marshalled,
 		Headers: kafkaUtils.Headers(constants.HeaderCorrelationId, correlationId.String(), constants.HeaderRequestId, "test", constants.HeaderRequestType, requestType),
 		TopicPartition: k.TopicPartition{
 			Topic:     &topic,
@@ -52,6 +34,26 @@ func newResponseMessage(runnerEvents *[]messageModel.PlaybookRunResponseMessageY
 			Offset:    k.Offset(0),
 		},
 	}
+}
+
+func newSatResponseMessage(satEvents *[]messageModel.PlaybookSatRunResponseMessageYamlEventsElem, correlationId uuid.UUID) *k.Message {
+	data := messageModel.PlaybookSatRunResponseMessageYaml{
+		Account:   accountNumber(),
+		RequestId: uuid.New().String(),
+		Events:    *satEvents,
+	}
+
+	return newResponseMessage(data, correlationId, satMessageHeaderValue)
+}
+
+func newRunnerResponseMessage(runnerEvents *[]messageModel.PlaybookRunResponseMessageYamlEventsElem, correlationId uuid.UUID) *k.Message {
+	data := messageModel.PlaybookRunResponseMessageYaml{
+		Account:   accountNumber(),
+		RequestId: uuid.New().String(),
+		Events:    *runnerEvents,
+	}
+
+	return newResponseMessage(data, correlationId, runnerMessageHeaderValue)
 }
 
 func createRunnerEvents(events ...string) *[]messageModel.PlaybookRunResponseMessageYamlEventsElem {
@@ -133,7 +135,7 @@ var _ = Describe("handler", func() {
 			var data = test.NewRun(accountNumber())
 			Expect(db().Create(&data).Error).ToNot(HaveOccurred())
 
-			msg := newResponseMessage(&[]messageModel.PlaybookRunResponseMessageYamlEventsElem{}, nil, uuid.New(), runnerMessageHeaderValue)
+			msg := newRunnerResponseMessage(&[]messageModel.PlaybookRunResponseMessageYamlEventsElem{}, uuid.New())
 			instance.onMessage(test.TestContext(), msg)
 
 			run := fetchRun(data.ID)
@@ -157,7 +159,7 @@ var _ = Describe("handler", func() {
 				"playbook_on_stats",
 			)
 
-			instance.onMessage(test.TestContext(), newResponseMessage(events, nil, data.CorrelationID, runnerMessageHeaderValue))
+			instance.onMessage(test.TestContext(), newRunnerResponseMessage(events, data.CorrelationID))
 
 			run := fetchRun(data.ID)
 			Expect(run.Status).To(Equal("success"))
@@ -178,7 +180,7 @@ var _ = Describe("handler", func() {
 				"playbook_on_stats",
 			)
 
-			instance.onMessage(test.TestContext(), newResponseMessage(events, nil, data.CorrelationID, runnerMessageHeaderValue))
+			instance.onMessage(test.TestContext(), newRunnerResponseMessage(events, data.CorrelationID))
 
 			run := fetchRun(data.ID)
 			Expect(run.Status).To(Equal("failure"))
@@ -216,7 +218,7 @@ var _ = Describe("handler", func() {
 			(*events)[12].EventData.Host = &localhost2
 			(*events)[12].Stdout = utils.StringRef("2")
 
-			instance.onMessage(test.TestContext(), newResponseMessage(events, nil, data.CorrelationID, runnerMessageHeaderValue))
+			instance.onMessage(test.TestContext(), newRunnerResponseMessage(events, data.CorrelationID))
 
 			run := fetchRun(data.ID)
 			Expect(run.Status).To(Equal("failure"))
@@ -250,7 +252,7 @@ var _ = Describe("handler", func() {
 				eventData{"playbook_run_finished", "success"},
 			)
 
-			instance.onMessage(test.TestContext(), newResponseMessage(nil, events, data.CorrelationID, satMessageHeaderValue))
+			instance.onMessage(test.TestContext(), newSatResponseMessage(events, data.CorrelationID))
 
 			run := fetchRun(data.ID)
 			seq := 2
@@ -269,7 +271,7 @@ var _ = Describe("handler", func() {
 				eventData{"playbook_run_finished", "failure"},
 			)
 
-			instance.onMessage(test.TestContext(), newResponseMessage(nil, events, data.CorrelationID, satMessageHeaderValue))
+			instance.onMessage(test.TestContext(), newSatResponseMessage(events, data.CorrelationID))
 
 			run := fetchRun(data.ID)
 			seq := 2
@@ -287,7 +289,7 @@ var _ = Describe("handler", func() {
 				eventData{"playbook_run_finished", "canceled"},
 			)
 
-			instance.onMessage(test.TestContext(), newResponseMessage(nil, events, data.CorrelationID, satMessageHeaderValue))
+			instance.onMessage(test.TestContext(), newSatResponseMessage(events, data.CorrelationID))
 
 			run := fetchRun(data.ID)
 			seq := 1
@@ -315,7 +317,7 @@ var _ = Describe("handler", func() {
 			(*events)[3].Host = &localhost2
 			(*events)[3].Console = utils.StringRef("f6")
 
-			instance.onMessage(test.TestContext(), newResponseMessage(nil, events, data.CorrelationID, satMessageHeaderValue))
+			instance.onMessage(test.TestContext(), newSatResponseMessage(events, data.CorrelationID))
 
 			run := fetchRun(data.ID)
 			Expect(run.Status).To(Equal("failure"))
@@ -352,7 +354,7 @@ var _ = Describe("handler", func() {
 			(*events)[1].SatelliteConnectionCode = &code
 			(*events)[1].SatelliteConnectionError = &errorDescription
 
-			instance.onMessage(test.TestContext(), newResponseMessage(nil, events, data.CorrelationID, satMessageHeaderValue))
+			instance.onMessage(test.TestContext(), newSatResponseMessage(events, data.CorrelationID))
 
 			run := fetchRun(data.ID)
 			seq := 1
@@ -376,7 +378,7 @@ var _ = Describe("handler", func() {
 			(*events)[1].SatelliteInfrastructureCode = &code
 			(*events)[1].SatelliteInfrastructureError = &errorDescription
 
-			instance.onMessage(test.TestContext(), newResponseMessage(nil, events, data.CorrelationID, satMessageHeaderValue))
+			instance.onMessage(test.TestContext(), newSatResponseMessage(events, data.CorrelationID))
 
 			run := fetchRun(data.ID)
 			seq := 1
@@ -404,7 +406,7 @@ var _ = Describe("handler", func() {
 				"playbook_on_stats",
 			)
 
-			msg := newResponseMessage(events, nil, data[1].CorrelationID, runnerMessageHeaderValue)
+			msg := newRunnerResponseMessage(events, data[1].CorrelationID)
 			instance.onMessage(test.TestContext(), msg)
 
 			run0 := fetchRun(data[0].ID)
