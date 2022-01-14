@@ -5,9 +5,5 @@
     "labels": {
         "foo": "1234",
         "baz": "{}"
-    },
-    "hosts": [{
-        "ansible_host": "localhost",
-        "inventory_id": "16372e6f-1c18-4cdb-b780-50ab4b88e74b"
-    }]
+    }
 }]
