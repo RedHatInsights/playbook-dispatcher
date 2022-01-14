@@ -113,9 +113,9 @@ func (this *controllers) ApiRunHostsList(ctx echo.Context, params ApiRunHostsLis
 		for _, field := range fields {
 			switch field {
 			case fieldHost:
-				runHost.Host = &host.Host
+				runHost.Host = utils.StringRef(host.Host)
 			case fieldStdout:
-				runHost.Stdout = &host.Log
+				runHost.Stdout = utils.StringRef(host.Log)
 			case fieldStatus:
 				runHost.Status = &runStatus
 			case fieldRun:

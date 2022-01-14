@@ -38,14 +38,18 @@ var _ = Describe("runHostList", func() {
 		It("by default returns a list of run hosts", func() {
 			run := test.NewRun(accountNumber())
 			dbInsertRuns(run)
-			dbInsertHosts(test.NewRunHost(run.ID, "running", nil))
+			host1, host2 := test.NewRunHost(run.ID, "running", nil), test.NewRunHost(run.ID, "failure", nil)
+			host1.Host = "01.example.com"
+			host2.Host = "02.example.com"
+			dbInsertHosts(host1, host2)
 
 			runs, res := listRunHosts()
 			Expect(res.StatusCode()).To(Equal(http.StatusOK))
-			Expect(runs.Data).To(HaveLen(1))
-			Expect(*runs.Data[0].Host).To(Equal("localhost"))
-			Expect(*runs.Data[0].Status).To(BeEquivalentTo("running"))
+			Expect(runs.Data).To(HaveLen(2))
+			Expect([]RunStatus{*runs.Data[0].Status, *runs.Data[1].Status}).To(ContainElements(RunStatus_failure, RunStatus_running))
+			Expect([]string{*runs.Data[0].Host, *runs.Data[1].Host}).To(ContainElements(host1.Host, host2.Host))
 			Expect(*runs.Data[0].Run.Id).To(BeEquivalentTo(run.ID.String()))
+			Expect(*runs.Data[1].Run.Id).To(BeEquivalentTo(run.ID.String()))
 		})
 
 		Describe("filtering", func() {
