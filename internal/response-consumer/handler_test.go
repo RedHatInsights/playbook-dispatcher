@@ -101,8 +101,7 @@ var _ = Describe("handler", func() {
 
 	BeforeEach(func() {
 		instance = handler{
-			db:           db(),
-			responseFull: true,
+			db: db(),
 		}
 	})
 
@@ -390,8 +389,9 @@ var _ = Describe("handler", func() {
 
 	Describe("response_full false", func() {
 		It("concatenates the logs for the same host", func() {
-			instance.responseFull = false
 			var data = test.NewRun(accountNumber())
+			data.ResponseFull = false
+
 			Expect(db().Create(&data).Error).ToNot(HaveOccurred())
 
 			events := createSatEvents(
@@ -406,7 +406,7 @@ var _ = Describe("handler", func() {
 
 			events = createSatEvents(
 				data.CorrelationID,
-				eventData{"playbook_run_finished", "success"},
+				eventData{"playbook_run_update", "success"},
 			)
 
 			consoleLog = "second console log"
@@ -419,13 +419,14 @@ var _ = Describe("handler", func() {
 
 			run := fetchRun(data.ID)
 
-			Expect(run.Status).To(Equal("success"))
-			checkHost(data.ID, "success", &seq, "first console log\nsecond console log")
+			Expect(run.Status).To(Equal("running"))
+			checkHost(data.ID, "running", &seq, "first console log\nsecond console log")
 		})
 
 		It("adds indicator in logs for missed host sequence", func() {
-			instance.responseFull = false
 			var data = test.NewRun(accountNumber())
+			data.ResponseFull = false
+
 			Expect(db().Create(&data).Error).ToNot(HaveOccurred())
 
 			events := createSatEvents(
@@ -440,7 +441,7 @@ var _ = Describe("handler", func() {
 
 			events = createSatEvents(
 				data.CorrelationID,
-				eventData{"playbook_run_finished", "success"},
+				eventData{"playbook_run_update", "success"},
 			)
 
 			consoleLog = "second console log"
@@ -454,8 +455,8 @@ var _ = Describe("handler", func() {
 
 			run := fetchRun(data.ID)
 
-			Expect(run.Status).To(Equal("success"))
-			checkHost(data.ID, "success", &seq, "first console log\n\n...\nsecond console log")
+			Expect(run.Status).To(Equal("running"))
+			checkHost(data.ID, "running", &seq, "first console log\n&#8230;second console log")
 		})
 	})
 

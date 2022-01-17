@@ -33,8 +33,7 @@ const (
 )
 
 type handler struct {
-	db           *gorm.DB
-	responseFull bool
+	db *gorm.DB
 }
 
 func (this *handler) onMessage(ctx context.Context, msg *k.Message) {
@@ -140,7 +139,7 @@ func (this *handler) onMessage(ctx context.Context, msg *k.Message) {
 					Log:         satHost.Console,
 				}
 			})
-			return createUpdateRecord(ctx, tx, this.responseFull, toCreate)
+			return createUpdateRecord(ctx, tx, run.ResponseFull, toCreate)
 		}
 
 		return nil
@@ -171,37 +170,52 @@ func createRecord(ctx context.Context, tx *gorm.DB, toCreate []db.RunHost) error
 	return nil
 }
 
-func hostToUpdate(ctx context.Context, tx *gorm.DB, runId uuid.UUID, hostName string) *db.RunHost {
-	host := db.RunHost{}
-	baseQuery := tx.Model(db.RunHost{}).Where("run_id=?", runId).Where("host=?", hostName)
-
-	if selectResult := baseQuery.Order("sat_sequence desc").First(&host); selectResult.Error != nil {
-		if errors.Is(selectResult.Error, gorm.ErrRecordNotFound) {
-			return nil
-		}
-		utils.GetLogFromContext(ctx).Errorw("Error fetching runHost from db", "error", selectResult.Error)
+func buildCaseExpr(caseOptions []string) clause.Expr {
+	return clause.Expr{
+		SQL:  "CASE WHEN (?) THEN (?) ELSE (?) END",
+		Vars: []interface{}{clause.Expr{SQL: caseOptions[0]}, clause.Expr{SQL: caseOptions[1]}, clause.Expr{SQL: caseOptions[2]}},
 	}
-	return &host
+}
+
+func assignmentWithCase() clause.Set {
+	satSeqCase := []string{
+		"run_hosts.sat_sequence < EXCLUDED.sat_sequence",
+		"EXCLUDED.sat_sequence",
+		"run_hosts.sat_sequence",
+	}
+	satSeqAssign := clause.Assignment{
+		Column: clause.Column{Name: "sat_sequence"},
+		Value:  []interface{}{buildCaseExpr(satSeqCase)},
+	}
+
+	logCase := []string{
+		"run_hosts.sat_sequence + 1 < EXCLUDED.sat_sequence",
+		"run_hosts.log || '&#8230;' || EXCLUDED.log",
+		"run_hosts.log || EXCLUDED.log",
+	}
+	logAssign := clause.Assignment{
+		Column: clause.Column{Name: "log"},
+		Value:  []interface{}{buildCaseExpr(logCase)},
+	}
+
+	return clause.Set{satSeqAssign, logAssign}
 }
 
 func createUpdateRecord(ctx context.Context, tx *gorm.DB, responseFull bool, toUpdate []db.RunHost) error {
 	if responseFull != true {
-		for _, runHost := range toUpdate {
-			if host := hostToUpdate(ctx, tx, runHost.RunID, runHost.Host); host != nil {
-				if *host.SatSequence != *runHost.SatSequence-1 {
-					runHost.Log = "\n...\n" + runHost.Log
-				}
+		createResult := tx.Model(db.RunHost{}).
+			Clauses(clause.OnConflict{
+				Columns:   []clause.Column{{Name: "run_id"}, {Name: "host"}},
+				DoUpdates: assignmentWithCase(),
+			}).
+			Create(&toUpdate)
 
-				runHost.Log = host.Log + runHost.Log
-
-				if updateHost := tx.Model(host).Select("sat_sequence", "status", "log").Updates(runHost); updateHost.Error != nil {
-					utils.GetLogFromContext(ctx).Errorw("Error updating host in db", "error", updateHost.Error)
-					return updateHost.Error
-				}
-				return nil
-			}
-			return createRecord(ctx, tx, toUpdate)
+		if createResult.Error != nil {
+			utils.GetLogFromContext(ctx).Errorw("Error upserting run hosts in db", "error", createResult.Error)
+			return createResult.Error
 		}
+
+		return nil
 	}
 
 	return createRecord(ctx, tx, toUpdate)
