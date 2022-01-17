@@ -406,7 +406,7 @@ var _ = Describe("handler", func() {
 
 			events = createSatEvents(
 				data.CorrelationID,
-				eventData{"playbook_run_update", "success"},
+				eventData{"playbook_run_finished", "success"},
 			)
 
 			consoleLog = "second console log"
@@ -419,8 +419,8 @@ var _ = Describe("handler", func() {
 
 			run := fetchRun(data.ID)
 
-			Expect(run.Status).To(Equal("running"))
-			checkHost(data.ID, "running", &seq, "first console log\nsecond console log")
+			Expect(run.Status).To(Equal("success"))
+			checkHost(data.ID, "success", &seq, "first console log\nsecond console log")
 		})
 
 		It("adds indicator in logs for missed host sequence", func() {
@@ -441,7 +441,7 @@ var _ = Describe("handler", func() {
 
 			events = createSatEvents(
 				data.CorrelationID,
-				eventData{"playbook_run_update", "success"},
+				eventData{"playbook_run_finished", "success"},
 			)
 
 			consoleLog = "second console log"
@@ -455,8 +455,8 @@ var _ = Describe("handler", func() {
 
 			run := fetchRun(data.ID)
 
-			Expect(run.Status).To(Equal("running"))
-			checkHost(data.ID, "running", &seq, "first console log\n&#8230;second console log")
+			Expect(run.Status).To(Equal("success"))
+			checkHost(data.ID, "success", &seq, "first console log\n&#8230;second console log")
 		})
 	})
 

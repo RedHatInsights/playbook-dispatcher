@@ -178,6 +178,11 @@ func buildCaseExpr(caseOptions []string) clause.Expr {
 }
 
 func assignmentWithCase() clause.Set {
+	statusAssign := clause.Assignment{
+		Column: clause.Column{Name: "status"},
+		Value:  clause.Column{Table: "excluded", Name: "status"},
+	}
+
 	satSeqCase := []string{
 		"run_hosts.sat_sequence < EXCLUDED.sat_sequence",
 		"EXCLUDED.sat_sequence",
@@ -198,7 +203,7 @@ func assignmentWithCase() clause.Set {
 		Value:  []interface{}{buildCaseExpr(logCase)},
 	}
 
-	return clause.Set{satSeqAssign, logAssign}
+	return clause.Set{statusAssign, satSeqAssign, logAssign}
 }
 
 func createUpdateRecord(ctx context.Context, tx *gorm.DB, responseFull bool, toUpdate []db.RunHost) error {
