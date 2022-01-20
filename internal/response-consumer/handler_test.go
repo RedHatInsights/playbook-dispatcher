@@ -72,24 +72,57 @@ func createRunnerEvents(events ...string) *[]messageModel.PlaybookRunResponseMes
 	return &result
 }
 
-type eventData struct {
-	Type   string
-	Status string
+type satEventBuilder func(correlationId string) messageModel.PlaybookSatRunResponseMessageYamlEventsElem
+
+func satPlaybookRunUpdateEvent(sequence int, host, console string) satEventBuilder {
+	return func(correlationId string) messageModel.PlaybookSatRunResponseMessageYamlEventsElem {
+		return messageModel.PlaybookSatRunResponseMessageYamlEventsElem{
+			Type:          messageModel.PlaybookSatRunResponseMessageYamlEventsElemTypePlaybookRunUpdate,
+			Version:       3,
+			CorrelationId: correlationId,
+			Sequence:      &sequence,
+			Host:          &host,
+			Console:       &console,
+		}
+	}
 }
 
-func createSatEvents(correlationId uuid.UUID, events ...eventData) *[]messageModel.PlaybookSatRunResponseMessageYamlEventsElem {
-	result := make([]messageModel.PlaybookSatRunResponseMessageYamlEventsElem, len(events))
-
-	for i, event := range events {
-		status := messageModel.PlaybookSatRunResponseMessageYamlEventsElemStatus(event.Status)
-		result[i] = messageModel.PlaybookSatRunResponseMessageYamlEventsElem{
-			Type:          messageModel.PlaybookSatRunResponseMessageYamlEventsElemType(event.Type),
-			Version:       3,
-			Sequence:      &i,
-			CorrelationId: correlationId.String(),
-			Host:          &localhost,
-			Status:        &status,
+func satPlaybookRunFinishedEvent(host, status string) satEventBuilder {
+	return func(correlationId string) messageModel.PlaybookSatRunResponseMessageYamlEventsElem {
+		status := messageModel.PlaybookSatRunResponseMessageYamlEventsElemStatus(status)
+		return messageModel.PlaybookSatRunResponseMessageYamlEventsElem{
+			Type:           messageModel.PlaybookSatRunResponseMessageYamlEventsElemTypePlaybookRunFinished,
+			Version:        3,
+			CorrelationId:  correlationId,
+			Host:           &host,
+			Status:         &status,
+			ExecutionCode:  utils.IntRef(0),
+			ConnectionCode: utils.IntRef(0),
 		}
+	}
+}
+
+func satPlaybookRunCompletedEvent(status string) satEventBuilder {
+	return func(correlationId string) messageModel.PlaybookSatRunResponseMessageYamlEventsElem {
+		status := messageModel.PlaybookSatRunResponseMessageYamlEventsElemStatus(status)
+		return messageModel.PlaybookSatRunResponseMessageYamlEventsElem{
+			Type:                         messageModel.PlaybookSatRunResponseMessageYamlEventsElemTypePlaybookRunCompleted,
+			Version:                      3,
+			CorrelationId:                correlationId,
+			Status:                       &status,
+			SatelliteConnectionCode:      utils.IntRef(0),
+			SatelliteInfrastructureCode:  utils.IntRef(0),
+			SatelliteConnectionError:     nil,
+			SatelliteInfrastructureError: nil,
+		}
+	}
+}
+
+func buildSatEvents(correlationId uuid.UUID, builders ...satEventBuilder) *[]messageModel.PlaybookSatRunResponseMessageYamlEventsElem {
+	result := make([]messageModel.PlaybookSatRunResponseMessageYamlEventsElem, len(builders))
+
+	for i, builder := range builders {
+		result[i] = builder(correlationId.String())
 	}
 	return &result
 }
@@ -245,11 +278,11 @@ var _ = Describe("handler", func() {
 			var data = test.NewRun(accountNumber())
 			Expect(db().Create(&data).Error).ToNot(HaveOccurred())
 
-			events := createSatEvents(
+			events := buildSatEvents(
 				data.CorrelationID,
-				eventData{"playbook_run_update", "success"},
-				eventData{"playbook_run_update", "success"},
-				eventData{"playbook_run_finished", "success"},
+				satPlaybookRunUpdateEvent(1, "localhost", ""),
+				satPlaybookRunUpdateEvent(2, "localhost", ""),
+				satPlaybookRunFinishedEvent("localhost", "success"),
 			)
 
 			instance.onMessage(test.TestContext(), newSatResponseMessage(events, data.CorrelationID))
@@ -264,11 +297,11 @@ var _ = Describe("handler", func() {
 			var data = test.NewRun(accountNumber())
 			Expect(db().Create(&data).Error).ToNot(HaveOccurred())
 
-			events := createSatEvents(
+			events := buildSatEvents(
 				data.CorrelationID,
-				eventData{"playbook_run_update", "success"},
-				eventData{"playbook_run_update", "failure"},
-				eventData{"playbook_run_finished", "failure"},
+				satPlaybookRunUpdateEvent(1, "localhost", ""),
+				satPlaybookRunUpdateEvent(2, "localhost", ""),
+				satPlaybookRunFinishedEvent("localhost", "failure"),
 			)
 
 			instance.onMessage(test.TestContext(), newSatResponseMessage(events, data.CorrelationID))
@@ -283,10 +316,10 @@ var _ = Describe("handler", func() {
 			var data = test.NewRun(accountNumber())
 			Expect(db().Create(&data).Error).ToNot(HaveOccurred())
 
-			events := createSatEvents(
+			events := buildSatEvents(
 				data.CorrelationID,
-				eventData{"playbook_run_update", "success"},
-				eventData{"playbook_run_finished", "canceled"},
+				satPlaybookRunUpdateEvent(1, "localhost", ""),
+				satPlaybookRunFinishedEvent("localhost", "canceled"),
 			)
 
 			instance.onMessage(test.TestContext(), newSatResponseMessage(events, data.CorrelationID))
@@ -301,21 +334,15 @@ var _ = Describe("handler", func() {
 			var data = test.NewRun(accountNumber())
 			Expect(db().Create(&data).Error).ToNot(HaveOccurred())
 
-			events := createSatEvents(
+			events := buildSatEvents(
 				data.CorrelationID,
-				eventData{"playbook_run_update", "success"},   // host 1
-				eventData{"playbook_run_update", "success"},   // host 2
-				eventData{"playbook_run_finished", "success"}, //host 1
-				eventData{"playbook_run_finished", "failure"}, //host 2
+				satPlaybookRunUpdateEvent(0, "localhost", "c3"),
+				satPlaybookRunUpdateEvent(0, "localhost2", "e5"),
+				satPlaybookRunUpdateEvent(1, "localhost", "d4"),
+				satPlaybookRunUpdateEvent(1, "localhost2", "f6"),
+				satPlaybookRunFinishedEvent("localhost", "success"),
+				satPlaybookRunFinishedEvent("localhost2", "failure"),
 			)
-
-			localhost2 := "localhost2"
-			(*events)[0].Console = utils.StringRef("c3")
-			(*events)[1].Host = &localhost2
-			(*events)[1].Console = utils.StringRef("e5")
-			(*events)[2].Console = utils.StringRef("d4")
-			(*events)[3].Host = &localhost2
-			(*events)[3].Console = utils.StringRef("f6")
 
 			instance.onMessage(test.TestContext(), newSatResponseMessage(events, data.CorrelationID))
 
@@ -342,10 +369,10 @@ var _ = Describe("handler", func() {
 			var data = test.NewRun(accountNumber())
 			Expect(db().Create(&data).Error).ToNot(HaveOccurred())
 
-			events := createSatEvents(
+			events := buildSatEvents(
 				data.CorrelationID,
-				eventData{"playbook_run_update", "success"},
-				eventData{"playbook_run_finished", "failure"},
+				satPlaybookRunUpdateEvent(1, "localhost", ""),
+				satPlaybookRunFinishedEvent("localhost", "failure"),
 			)
 
 			code := 1
@@ -366,10 +393,10 @@ var _ = Describe("handler", func() {
 			var data = test.NewRun(accountNumber())
 			Expect(db().Create(&data).Error).ToNot(HaveOccurred())
 
-			events := createSatEvents(
+			events := buildSatEvents(
 				data.CorrelationID,
-				eventData{"playbook_run_update", "success"},
-				eventData{"playbook_run_finished", "failure"},
+				satPlaybookRunUpdateEvent(1, "localhost", ""),
+				satPlaybookRunFinishedEvent("localhost", "failure"),
 			)
 
 			code := 1
@@ -394,33 +421,25 @@ var _ = Describe("handler", func() {
 
 			Expect(db().Create(&data).Error).ToNot(HaveOccurred())
 
-			events := createSatEvents(
+			events := buildSatEvents(
 				data.CorrelationID,
-				eventData{"playbook_run_update", "success"},
+				satPlaybookRunUpdateEvent(0, "localhost", "first console log\n"),
 			)
-
-			consoleLog := "first console log\n"
-			(*events)[0].Console = &consoleLog
 
 			instance.onMessage(test.TestContext(), newSatResponseMessage(events, data.CorrelationID))
 
-			events = createSatEvents(
+			events = buildSatEvents(
 				data.CorrelationID,
-				eventData{"playbook_run_finished", "success"},
+				satPlaybookRunUpdateEvent(1, "localhost", "second console log"),
+				satPlaybookRunFinishedEvent("localhost", "success"),
 			)
-
-			consoleLog = "second console log"
-			seq := 1
-
-			(*events)[0].Console = &consoleLog
-			(*events)[0].Sequence = &seq
 
 			instance.onMessage(test.TestContext(), newSatResponseMessage(events, data.CorrelationID))
 
 			run := fetchRun(data.ID)
 
 			Expect(run.Status).To(Equal("success"))
-			checkHost(data.ID, "success", &seq, "first console log\nsecond console log")
+			checkHost(data.ID, "success", utils.IntRef(1), "first console log\nsecond console log")
 		})
 
 		It("adds indicator in logs for missed host sequence", func() {
@@ -429,34 +448,25 @@ var _ = Describe("handler", func() {
 
 			Expect(db().Create(&data).Error).ToNot(HaveOccurred())
 
-			events := createSatEvents(
+			events := buildSatEvents(
 				data.CorrelationID,
-				eventData{"playbook_run_update", "success"},
+				satPlaybookRunUpdateEvent(0, "localhost", "first console log\n"),
 			)
-
-			consoleLog := "first console log\n"
-			(*events)[0].Console = &consoleLog
 
 			instance.onMessage(test.TestContext(), newSatResponseMessage(events, data.CorrelationID))
 
-			events = createSatEvents(
+			events = buildSatEvents(
 				data.CorrelationID,
-				eventData{"playbook_run_finished", "success"},
+				satPlaybookRunUpdateEvent(6, "localhost", "second console log"),
+				satPlaybookRunFinishedEvent("localhost", "success"),
 			)
-
-			consoleLog = "second console log"
-
-			seq := 6 // we missed some data
-
-			(*events)[0].Console = &consoleLog
-			(*events)[0].Sequence = &seq
 
 			instance.onMessage(test.TestContext(), newSatResponseMessage(events, data.CorrelationID))
 
 			run := fetchRun(data.ID)
 
 			Expect(run.Status).To(Equal("success"))
-			checkHost(data.ID, "success", &seq, "first console log\n&#8230;second console log")
+			checkHost(data.ID, "success", utils.IntRef(6), "first console log\n&#8230;second console log")
 		})
 	})
 
