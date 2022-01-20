@@ -273,10 +273,48 @@ var _ = Describe("handler", func() {
 			Expect(hosts[0].Log).To(Equal("a1b2"))
 			Expect(hosts[1].Log).To(Equal("a1b2"))
 		})
+	})
 
+	Describe("correlation", func() {
+		It("updates the correct run", func() {
+			data := []dbModel.Run{
+				test.NewRun(accountNumber()),
+				test.NewRun(accountNumber()),
+			}
+
+			Expect(db().Create(&data).Error).ToNot(HaveOccurred())
+
+			events := createRunnerEvents(
+				messageModel.EventExecutorOnStart,
+				"playbook_on_start",
+				"playbook_on_play_start",
+				"playbook_on_task_start",
+				"runner_on_start",
+				"runner_on_ok",
+				"playbook_on_stats",
+			)
+
+			msg := newRunnerResponseMessage(events, data[1].CorrelationID)
+			instance.onMessage(test.TestContext(), msg)
+
+			run0 := fetchRun(data[0].ID)
+			Expect(run0.Status).To(Equal("running"))
+			hosts := fetchHosts(data[0].ID)
+			Expect(hosts).To(BeEmpty())
+
+			run1 := fetchRun(data[1].ID)
+			Expect(run1.Status).To(Equal("success"))
+			checkHost(data[1].ID, "success", nil, "")
+		})
+	})
+
+	Describe("Satellite", func() {
 		It("updates the run status based on successful satellite events", func() {
 			var data = test.NewRun(accountNumber())
 			Expect(db().Create(&data).Error).ToNot(HaveOccurred())
+
+			var hostData = test.NewRunHost(data.ID, "running", nil)
+			Expect(db().Create(&hostData).Error).ToNot(HaveOccurred())
 
 			events := buildSatEvents(
 				data.CorrelationID,
@@ -297,6 +335,9 @@ var _ = Describe("handler", func() {
 			var data = test.NewRun(accountNumber())
 			Expect(db().Create(&data).Error).ToNot(HaveOccurred())
 
+			var hostData = test.NewRunHost(data.ID, "running", nil)
+			Expect(db().Create(&hostData).Error).ToNot(HaveOccurred())
+
 			events := buildSatEvents(
 				data.CorrelationID,
 				satPlaybookRunUpdateEvent(1, "localhost", ""),
@@ -316,6 +357,9 @@ var _ = Describe("handler", func() {
 			var data = test.NewRun(accountNumber())
 			Expect(db().Create(&data).Error).ToNot(HaveOccurred())
 
+			var hostData = test.NewRunHost(data.ID, "running", nil)
+			Expect(db().Create(&hostData).Error).ToNot(HaveOccurred())
+
 			events := buildSatEvents(
 				data.CorrelationID,
 				satPlaybookRunUpdateEvent(1, "localhost", ""),
@@ -333,6 +377,13 @@ var _ = Describe("handler", func() {
 		It("updates multiple satellite hosts involved in a run", func() {
 			var data = test.NewRun(accountNumber())
 			Expect(db().Create(&data).Error).ToNot(HaveOccurred())
+
+			var hostData = test.NewRunHost(data.ID, "running", nil)
+			Expect(db().Create(&hostData).Error).ToNot(HaveOccurred())
+
+			var host2Data = test.NewRunHost(data.ID, "running", nil)
+			host2Data.Host = "localhost2"
+			Expect(db().Create(&host2Data).Error).ToNot(HaveOccurred())
 
 			events := buildSatEvents(
 				data.CorrelationID,
@@ -369,6 +420,9 @@ var _ = Describe("handler", func() {
 			var data = test.NewRun(accountNumber())
 			Expect(db().Create(&data).Error).ToNot(HaveOccurred())
 
+			var hostData = test.NewRunHost(data.ID, "running", nil)
+			Expect(db().Create(&hostData).Error).ToNot(HaveOccurred())
+
 			events := buildSatEvents(
 				data.CorrelationID,
 				satPlaybookRunUpdateEvent(1, "localhost", ""),
@@ -393,6 +447,9 @@ var _ = Describe("handler", func() {
 			var data = test.NewRun(accountNumber())
 			Expect(db().Create(&data).Error).ToNot(HaveOccurred())
 
+			var hostData = test.NewRunHost(data.ID, "running", nil)
+			Expect(db().Create(&hostData).Error).ToNot(HaveOccurred())
+
 			events := buildSatEvents(
 				data.CorrelationID,
 				satPlaybookRunUpdateEvent(1, "localhost", ""),
@@ -412,94 +469,137 @@ var _ = Describe("handler", func() {
 			Expect(run.Status).To(Equal("failure"))
 			checkHost(data.ID, "failure", &seq, errorDescription)
 		})
-	})
 
-	Describe("response_full false", func() {
-		It("concatenates the logs for the same host", func() {
-			var data = test.NewRun(accountNumber())
-			data.ResponseFull = false
+		Describe("response_full false", func() {
+			It("infers the logs properly (1 host)", func() {
+				var data = test.NewRun(accountNumber())
+				data.ResponseFull = true
 
-			Expect(db().Create(&data).Error).ToNot(HaveOccurred())
+				Expect(db().Create(&data).Error).ToNot(HaveOccurred())
 
-			events := buildSatEvents(
-				data.CorrelationID,
-				satPlaybookRunUpdateEvent(0, "localhost", "first console log\n"),
-			)
+				var hostData = test.NewRunHost(data.ID, "running", nil)
+				Expect(db().Create(&hostData).Error).ToNot(HaveOccurred())
 
-			instance.onMessage(test.TestContext(), newSatResponseMessage(events, data.CorrelationID))
+				events := buildSatEvents(
+					data.CorrelationID,
+					satPlaybookRunUpdateEvent(0, "localhost", "first console log\n"),
+				)
 
-			events = buildSatEvents(
-				data.CorrelationID,
-				satPlaybookRunUpdateEvent(1, "localhost", "second console log"),
-				satPlaybookRunFinishedEvent("localhost", "success"),
-			)
+				instance.onMessage(test.TestContext(), newSatResponseMessage(events, data.CorrelationID))
 
-			instance.onMessage(test.TestContext(), newSatResponseMessage(events, data.CorrelationID))
+				events = buildSatEvents(
+					data.CorrelationID,
+					satPlaybookRunUpdateEvent(0, "localhost", "first console log\n"),
+					satPlaybookRunUpdateEvent(1, "localhost", "second console log"),
+					satPlaybookRunFinishedEvent("localhost", "success"),
+				)
 
-			run := fetchRun(data.ID)
+				instance.onMessage(test.TestContext(), newSatResponseMessage(events, data.CorrelationID))
 
-			Expect(run.Status).To(Equal("success"))
-			checkHost(data.ID, "success", utils.IntRef(1), "first console log\nsecond console log")
+				run := fetchRun(data.ID)
+
+				Expect(run.Status).To(Equal("success"))
+				checkHost(data.ID, "success", utils.IntRef(1), "first console log\nsecond console log")
+			})
 		})
 
-		It("adds indicator in logs for missed host sequence", func() {
-			var data = test.NewRun(accountNumber())
-			data.ResponseFull = false
+		Describe("response_full false", func() {
+			It("concatenates the logs for the same host", func() {
+				var data = test.NewRun(accountNumber())
+				data.ResponseFull = false
 
-			Expect(db().Create(&data).Error).ToNot(HaveOccurred())
+				Expect(db().Create(&data).Error).ToNot(HaveOccurred())
 
-			events := buildSatEvents(
-				data.CorrelationID,
-				satPlaybookRunUpdateEvent(0, "localhost", "first console log\n"),
-			)
+				var hostData = test.NewRunHost(data.ID, "running", nil)
+				Expect(db().Create(&hostData).Error).ToNot(HaveOccurred())
 
-			instance.onMessage(test.TestContext(), newSatResponseMessage(events, data.CorrelationID))
+				events := buildSatEvents(
+					data.CorrelationID,
+					satPlaybookRunUpdateEvent(0, "localhost", "first console log\n"),
+				)
 
-			events = buildSatEvents(
-				data.CorrelationID,
-				satPlaybookRunUpdateEvent(6, "localhost", "second console log"),
-				satPlaybookRunFinishedEvent("localhost", "success"),
-			)
+				instance.onMessage(test.TestContext(), newSatResponseMessage(events, data.CorrelationID))
 
-			instance.onMessage(test.TestContext(), newSatResponseMessage(events, data.CorrelationID))
+				events = buildSatEvents(
+					data.CorrelationID,
+					satPlaybookRunUpdateEvent(1, "localhost", "second console log"),
+					satPlaybookRunFinishedEvent("localhost", "success"),
+				)
 
-			run := fetchRun(data.ID)
+				instance.onMessage(test.TestContext(), newSatResponseMessage(events, data.CorrelationID))
 
-			Expect(run.Status).To(Equal("success"))
-			checkHost(data.ID, "success", utils.IntRef(6), "first console log\n&#8230;second console log")
-		})
-	})
+				run := fetchRun(data.ID)
 
-	Describe("correlation", func() {
-		It("updates the correct run", func() {
-			data := []dbModel.Run{
-				test.NewRun(accountNumber()),
-				test.NewRun(accountNumber()),
-			}
+				Expect(run.Status).To(Equal("success"))
+				checkHost(data.ID, "success", utils.IntRef(1), "first console log\nsecond console log")
+			})
 
-			Expect(db().Create(&data).Error).ToNot(HaveOccurred())
+			It("adds indicator in logs for missed host sequence", func() {
+				var data = test.NewRun(accountNumber())
+				data.ResponseFull = false
 
-			events := createRunnerEvents(
-				messageModel.EventExecutorOnStart,
-				"playbook_on_start",
-				"playbook_on_play_start",
-				"playbook_on_task_start",
-				"runner_on_start",
-				"runner_on_ok",
-				"playbook_on_stats",
-			)
+				Expect(db().Create(&data).Error).ToNot(HaveOccurred())
 
-			msg := newRunnerResponseMessage(events, data[1].CorrelationID)
-			instance.onMessage(test.TestContext(), msg)
+				var hostData = test.NewRunHost(data.ID, "running", nil)
+				Expect(db().Create(&hostData).Error).ToNot(HaveOccurred())
 
-			run0 := fetchRun(data[0].ID)
-			Expect(run0.Status).To(Equal("running"))
-			hosts := fetchHosts(data[0].ID)
-			Expect(hosts).To(BeEmpty())
+				events := buildSatEvents(
+					data.CorrelationID,
+					satPlaybookRunUpdateEvent(0, "localhost", "first console log\n"),
+				)
 
-			run1 := fetchRun(data[1].ID)
-			Expect(run1.Status).To(Equal("success"))
-			checkHost(data[1].ID, "success", nil, "")
+				instance.onMessage(test.TestContext(), newSatResponseMessage(events, data.CorrelationID))
+
+				events = buildSatEvents(
+					data.CorrelationID,
+					satPlaybookRunUpdateEvent(6, "localhost", "second console log"),
+					satPlaybookRunFinishedEvent("localhost", "success"),
+				)
+
+				instance.onMessage(test.TestContext(), newSatResponseMessage(events, data.CorrelationID))
+
+				run := fetchRun(data.ID)
+
+				Expect(run.Status).To(Equal("success"))
+				checkHost(data.ID, "success", utils.IntRef(6), "first console log\n&#8230;second console log")
+			})
+
+			It("event ignored if received out of order", func() {
+				var data = test.NewRun(accountNumber())
+				data.ResponseFull = false
+
+				Expect(db().Create(&data).Error).ToNot(HaveOccurred())
+
+				var hostData = test.NewRunHost(data.ID, "running", nil)
+				Expect(db().Create(&hostData).Error).ToNot(HaveOccurred())
+
+				events := buildSatEvents(
+					data.CorrelationID,
+					satPlaybookRunUpdateEvent(1, "localhost", "second console log\n"),
+				)
+
+				instance.onMessage(test.TestContext(), newSatResponseMessage(events, data.CorrelationID))
+
+				events = buildSatEvents(
+					data.CorrelationID,
+					satPlaybookRunUpdateEvent(0, "localhost", "first console log\n"),
+				)
+
+				instance.onMessage(test.TestContext(), newSatResponseMessage(events, data.CorrelationID))
+
+				events = buildSatEvents(
+					data.CorrelationID,
+					satPlaybookRunUpdateEvent(2, "localhost", "third console log"),
+					satPlaybookRunFinishedEvent("localhost", "success"),
+				)
+
+				instance.onMessage(test.TestContext(), newSatResponseMessage(events, data.CorrelationID))
+
+				run := fetchRun(data.ID)
+
+				Expect(run.Status).To(Equal("success"))
+				checkHost(data.ID, "success", utils.IntRef(2), "&#8230;second console log\nthird console log")
+			})
 		})
 	})
 })

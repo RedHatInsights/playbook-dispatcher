@@ -3,6 +3,8 @@ package responseConsumer
 import (
 	"context"
 	"errors"
+	"fmt"
+	"strconv"
 	"playbook-dispatcher/internal/common/ansible"
 	"playbook-dispatcher/internal/common/constants"
 	kafkaUtils "playbook-dispatcher/internal/common/kafka"
@@ -139,7 +141,7 @@ func (this *handler) onMessage(ctx context.Context, msg *k.Message) {
 					Log:         satHost.Console,
 				}
 			})
-			return createUpdateRecord(ctx, tx, run.ResponseFull, toCreate)
+			return satUpdateRecord(ctx, tx, run.ResponseFull, toCreate)
 		}
 
 		return nil
@@ -152,6 +154,92 @@ func (this *handler) onMessage(ctx context.Context, msg *k.Message) {
 	} else {
 		instrumentation.PlaybookRunUpdateMiss(ctx, status)
 	}
+}
+
+func buildCaseExpr(caseOptions []string) clause.Expr {
+	argsLen := len(caseOptions)
+	caseExprStr := "CASE "
+	varsArray := make([]interface{}, argsLen)
+
+	for i, option := range caseOptions {
+		varsArray[i] = clause.Expr{SQL: option}
+
+		if i == argsLen-1 {
+			caseExprStr += fmt.Sprintf("ELSE (?) END")
+		} else if i%2 == 0 {
+			caseExprStr += fmt.Sprintf("WHEN (?) ")
+		} else {
+			caseExprStr += fmt.Sprintf("THEN (?) ")
+		}
+	}
+
+	return clause.Expr{
+		SQL:  caseExprStr,
+		Vars: varsArray,
+	}
+
+}
+
+func satAssignmentWithCase(responseFull bool, updateHost db.RunHost) clause.Set {
+	satSequence, status, log := *updateHost.SatSequence, updateHost.Status, updateHost.Log
+
+	statusCase := []string{
+		fmt.Sprintf("run_hosts.sat_sequence < %d", satSequence),
+		status,
+		"run_hosts.status",
+	}
+	statusAssign := clause.Assignment{
+		Column: clause.Column{Name: "status"},
+		Value:  []interface{}{buildCaseExpr(statusCase)},
+	}
+
+	satSeqCase := []string{
+		fmt.Sprintf("run_hosts.sat_sequence < %d", satSequence),
+		strconv.Itoa(satSequence),
+		"run_hosts.sat_sequence",
+	}
+	satSeqAssign := clause.Assignment{
+		Column: clause.Column{Name: "sat_sequence"},
+		Value:  []interface{}{buildCaseExpr(satSeqCase)},
+	}
+
+	logCase := []string {
+		fmt.Sprintf("run_hosts.sat_sequence < %d", satSequence),
+		log,
+		"run_hosts.log",
+	}
+	if !responseFull {
+		logCase = []string{
+			fmt.Sprintf("run_hosts.sat_sequence IS NULL OR run_hosts.sat_sequence < %d+1", satSequence),
+			fmt.Sprintf("run_host.log || '&#8230;' || %s", log),
+			fmt.Sprintf("run_hosts.sat_sequence > %d", satSequence),
+			"run_hosts.log",
+			fmt.Sprintf("run_hosts.log || %s", log),
+		}
+	}
+	logAssign := clause.Assignment{
+		Column: clause.Column{Name: "log"},
+		Value:  []interface{}{buildCaseExpr(logCase)},
+	}
+	return clause.Set{statusAssign, satSeqAssign, logAssign}
+}
+
+func satUpdateRecord(ctx context.Context, tx *gorm.DB, responseFull bool, toUpdate []db.RunHost) error {
+	for _, runHost := range toUpdate {
+		fmt.Println("clause...", satAssignmentWithCase(responseFull, runHost)[0])
+		updateResult := tx.Model(db.RunHost{}).Debug().
+		// Clauses(clause.Set{clause.Assignment{clause.Column{Name: "log"}, "log_modified"}}).
+		Select("status", "sat_sequence", "log").
+		Clauses(satAssignmentWithCase(responseFull, runHost)).
+		Where("run_id = ? AND host = ?", runHost.RunID, runHost.Host).
+		Updates(&runHost)
+
+		if updateResult.Error != nil {
+			utils.GetLogFromContext(ctx).Errorw("Error updating satellite host in db", "error", updateResult.Error)
+			return updateResult.Error
+		}
+	}
+	return nil
 }
 
 func createRecord(ctx context.Context, tx *gorm.DB, toCreate []db.RunHost) error {
@@ -168,62 +256,6 @@ func createRecord(ctx context.Context, tx *gorm.DB, toCreate []db.RunHost) error
 	}
 
 	return nil
-}
-
-func buildCaseExpr(caseOptions []string) clause.Expr {
-	return clause.Expr{
-		SQL:  "CASE WHEN (?) THEN (?) ELSE (?) END",
-		Vars: []interface{}{clause.Expr{SQL: caseOptions[0]}, clause.Expr{SQL: caseOptions[1]}, clause.Expr{SQL: caseOptions[2]}},
-	}
-}
-
-func assignmentWithCase() clause.Set {
-	statusAssign := clause.Assignment{
-		Column: clause.Column{Name: "status"},
-		Value:  clause.Column{Table: "excluded", Name: "status"},
-	}
-
-	satSeqCase := []string{
-		"run_hosts.sat_sequence < EXCLUDED.sat_sequence",
-		"EXCLUDED.sat_sequence",
-		"run_hosts.sat_sequence",
-	}
-	satSeqAssign := clause.Assignment{
-		Column: clause.Column{Name: "sat_sequence"},
-		Value:  []interface{}{buildCaseExpr(satSeqCase)},
-	}
-
-	logCase := []string{
-		"run_hosts.sat_sequence + 1 < EXCLUDED.sat_sequence",
-		"run_hosts.log || '&#8230;' || EXCLUDED.log",
-		"run_hosts.log || EXCLUDED.log",
-	}
-	logAssign := clause.Assignment{
-		Column: clause.Column{Name: "log"},
-		Value:  []interface{}{buildCaseExpr(logCase)},
-	}
-
-	return clause.Set{statusAssign, satSeqAssign, logAssign}
-}
-
-func createUpdateRecord(ctx context.Context, tx *gorm.DB, responseFull bool, toUpdate []db.RunHost) error {
-	if responseFull != true {
-		createResult := tx.Model(db.RunHost{}).
-			Clauses(clause.OnConflict{
-				Columns:   []clause.Column{{Name: "run_id"}, {Name: "host"}},
-				DoUpdates: assignmentWithCase(),
-			}).
-			Create(&toUpdate)
-
-		if createResult.Error != nil {
-			utils.GetLogFromContext(ctx).Errorw("Error upserting run hosts in db", "error", createResult.Error)
-			return createResult.Error
-		}
-
-		return nil
-	}
-
-	return createRecord(ctx, tx, toUpdate)
 }
 
 func inferStatus(events *[]message.PlaybookRunResponseMessageYamlEventsElem, host *string) string {
