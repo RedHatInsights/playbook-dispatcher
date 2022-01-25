@@ -28,7 +28,7 @@ generate-messages:
 generate-cloud-connector:
 	curl -s ${CLOUD_CONNECTOR_SCHEMA} -o cloud-connector.json
 	json2yaml cloud-connector.json cloud-connector.yaml
-	~/go/bin/oapi-codegen -generate client,types -package connectors -exclude-tags connection -o internal/api/connectors/cloudConnector.gen.go cloud-connector.yaml
+	~/go/bin/oapi-codegen -generate client,types -package connectors -o internal/api/connectors/cloudConnector.gen.go cloud-connector.yaml
 	rm cloud-connector.json cloud-connector.yaml
 
 generate-rbac:
