@@ -34,6 +34,28 @@ paths:
               schema:
                 $ref: '#/components/schemas/RunsCreated'
 
+  /internal/v2/recipients/status:
+    post:
+      summary: Obtain connection status of recipient(s)
+      operationId: api.internal.v2.recipients.status
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/RecipientWithOrg'
+              minItems: 1
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RecipientStatus'
+
 components:
   schemas:
     RunInput:
@@ -95,3 +117,31 @@ components:
       type: array
       items:
         $ref: '#/components/schemas/RunCreated'
+
+    RecipientWithOrg:
+      type: object
+      properties:
+        recipient:
+          $ref: './public.openapi.yaml#/components/schemas/RunRecipient'
+        org_id:
+          $ref: '#/components/schemas/OrgId'
+      required:
+      - recipient
+      - org_id
+
+    RecipientStatus:
+      allOf:
+      - $ref: '#/components/schemas/RecipientWithOrg'
+      - type: object
+        properties:
+          connected:
+            type: boolean
+            description: Indicates whether a connection is established with the recipient
+        required:
+        - connected
+
+    OrgId:
+      description: Identifier of the tenant
+      type: string
+      minLength: 1
+      maxLength: 10
