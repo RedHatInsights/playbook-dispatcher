@@ -36,6 +36,9 @@ type PlaybookSatRunResponseMessageYaml struct {
 	// Events corresponds to the JSON schema field "events".
 	Events []PlaybookSatRunResponseMessageYamlEventsElem `json:"events"`
 
+	// OrgId corresponds to the JSON schema field "org_id".
+	OrgId string `json:"org_id"`
+
 	// RequestId corresponds to the JSON schema field "request_id".
 	RequestId string `json:"request_id"`
 
@@ -169,6 +172,9 @@ func (j *PlaybookSatRunResponseMessageYaml) UnmarshalJSON(b []byte) error {
 	}
 	if v, ok := raw["events"]; !ok || v == nil {
 		return fmt.Errorf("field events: required")
+	}
+	if v, ok := raw["org_id"]; !ok || v == nil {
+		return fmt.Errorf("field org_id: required")
 	}
 	if v, ok := raw["request_id"]; !ok || v == nil {
 		return fmt.Errorf("field request_id: required")

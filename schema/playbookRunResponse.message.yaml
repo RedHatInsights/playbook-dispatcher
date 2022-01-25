@@ -5,6 +5,8 @@ type: object
 properties:
   account:
     type: string
+  org_id:
+    type: string
   request_id:
     type: string
   b64_identity:
@@ -64,6 +66,7 @@ properties:
 
 required:
   - account
+  - org_id
   - request_id
   - b64_identity
   - upload_timestamp

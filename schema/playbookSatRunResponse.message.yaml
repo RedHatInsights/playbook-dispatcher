@@ -5,6 +5,8 @@ type: object
 properties:
   account:
     type: string
+  org_id:
+    type: string
   request_id:
     type: string
   b64_identity:
@@ -41,7 +43,7 @@ properties:
           minimum: 0
         execution_code:
           type: integer
-          minimum: 0     
+          minimum: 0
         satellite_connection_code:
           type: integer
           minimum: 0
@@ -62,6 +64,7 @@ properties:
 
 required:
   - account
+  - org_id
   - request_id
   - b64_identity
   - upload_timestamp
