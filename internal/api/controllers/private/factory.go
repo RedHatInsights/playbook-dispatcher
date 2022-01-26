@@ -3,6 +3,7 @@ package private
 import (
 	"fmt"
 	"playbook-dispatcher/internal/api/connectors"
+	"playbook-dispatcher/internal/api/connectors/tenants"
 	"playbook-dispatcher/internal/common/config"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -18,6 +19,7 @@ func CreateController(database *gorm.DB, cloudConnectorClient connectors.CloudCo
 			cloudConnectorClient: cloudConnectorClient,
 			config:               config,
 			rateLimiter:          getRateLimiter(config),
+			translator:           tenants.NewMockTenantIDTranslator(),
 		},
 	}
 }
@@ -28,6 +30,7 @@ type controllers struct {
 	cloudConnectorClient connectors.CloudConnectorClient
 	config               *viper.Viper
 	rateLimiter          *rate.Limiter
+	translator           tenants.TenantIDTranslator
 }
 
 // workaround for https://github.com/deepmap/oapi-codegen/issues/42

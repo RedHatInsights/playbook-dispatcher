@@ -148,10 +148,11 @@ type RunStatus string
 
 // List of RunStatus
 const (
-	RunStatus_failure RunStatus = "failure"
-	RunStatus_running RunStatus = "running"
-	RunStatus_success RunStatus = "success"
-	RunStatus_timeout RunStatus = "timeout"
+	RunStatus_canceled RunStatus = "canceled"
+	RunStatus_failure  RunStatus = "failure"
+	RunStatus_running  RunStatus = "running"
+	RunStatus_success  RunStatus = "success"
+	RunStatus_timeout  RunStatus = "timeout"
 )
 
 // RunTimeout defines model for RunTimeout.
@@ -177,10 +178,11 @@ type StatusNullable string
 
 // List of StatusNullable
 const (
-	StatusNullable_failure StatusNullable = "failure"
-	StatusNullable_running StatusNullable = "running"
-	StatusNullable_success StatusNullable = "success"
-	StatusNullable_timeout StatusNullable = "timeout"
+	StatusNullable_canceled StatusNullable = "canceled"
+	StatusNullable_failure  StatusNullable = "failure"
+	StatusNullable_running  StatusNullable = "running"
+	StatusNullable_success  StatusNullable = "success"
+	StatusNullable_timeout  StatusNullable = "timeout"
 )
 
 // UpdatedAt defines model for UpdatedAt.

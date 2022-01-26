@@ -9,4 +9,5 @@ const (
 	HeaderCloudConnectorClientID = "x-rh-cloud-connector-client-id"
 	HeaderCloudConnectorAccount  = "x-rh-cloud-connector-account"
 	HeaderCloudConnectorPSK      = "x-rh-cloud-connector-psk"
+	HeaderCloudConnectorOrgID    = "x-rh-cloud-connector-org-id"
 )

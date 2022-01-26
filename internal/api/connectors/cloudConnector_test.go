@@ -3,6 +3,7 @@ package connectors
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"playbook-dispatcher/internal/common/config"
 	"playbook-dispatcher/internal/common/constants"
@@ -14,6 +15,7 @@ import (
 
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
 	"go.uber.org/zap"
 )
@@ -104,5 +106,44 @@ var _ = Describe("Cloud Connector", func() {
 
 		idHeader := doer.Request.Header.Get(constants.HeaderRequestId)
 		Expect(idHeader).To(Equal(requestId))
+	})
+
+	Describe("connection status", func() {
+		DescribeTable("interprets the response correctly",
+			func(status string, expectedStatus ConnectionStatus) {
+				doer := test.MockHttpClient(200, fmt.Sprintf(`{"status": "%s"}`, status))
+
+				client := NewConnectorClientWithHttpRequestDoer(config.Get(), &doer)
+				ctx := utils.SetLog(test.TestContext(), zap.NewNop().Sugar())
+
+				result, err := client.GetConnectionStatus(ctx, "901578", "5318290", "be175f04-4634-49f2-a292-b4ad7107af78")
+				Expect(err).ToNot(HaveOccurred())
+				Expect(result).To(Equal(expectedStatus))
+			},
+
+			Entry("connected", "connected", ConnectionStatus_connected),
+			Entry("disconnected", "disconnected", ConnectionStatus_disconnected),
+		)
+
+		It("constructs a correct request", func() {
+			doer := test.MockHttpClient(200, `{"status": "connected"}`)
+
+			client := NewConnectorClientWithHttpRequestDoer(config.Get(), &doer)
+			ctx := utils.SetLog(test.TestContext(), zap.NewNop().Sugar())
+			_, err := client.GetConnectionStatus(ctx, "901578", "5318290", "be175f04-4634-49f2-a292-b4ad7107af78")
+			Expect(err).ToNot(HaveOccurred())
+
+			bytes, err := ioutil.ReadAll(doer.Request.Body)
+			Expect(err).ToNot(HaveOccurred())
+			parsedRequest := make(map[string]interface{})
+			err = json.Unmarshal(bytes, &parsedRequest)
+			Expect(err).ToNot(HaveOccurred())
+
+			Expect(parsedRequest["account"]).To(Equal("901578"))
+			Expect(parsedRequest["node_id"]).To(Equal("be175f04-4634-49f2-a292-b4ad7107af78"))
+
+			Expect(doer.Request.Header.Get(constants.HeaderCloudConnectorAccount)).To(Equal("901578"))
+			Expect(doer.Request.Header.Get(constants.HeaderCloudConnectorOrgID)).To(Equal("5318290"))
+		})
 	})
 })
