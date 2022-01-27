@@ -128,7 +128,7 @@ func (this *cloudConnectorClientImpl) SendCloudConnectorRequest(
 	}
 
 	if res.JSON201 == nil {
-		return nil, false, fmt.Errorf(`unexpected status code "%d" or content type "%s"`, res.HTTPResponse.StatusCode, res.HTTPResponse.Header.Get("content-type"))
+		return nil, false, unexpectedResponse(res.HTTPResponse)
 	}
 
 	return res.JSON201.Id, false, nil
@@ -158,7 +158,7 @@ func (this *cloudConnectorClientImpl) GetConnectionStatus(
 	}
 
 	if res.JSON200 == nil {
-		return "", fmt.Errorf(`unexpected status code "%d" or content type "%s"`, res.HTTPResponse.StatusCode, res.HTTPResponse.Header.Get("content-type"))
+		return "", unexpectedResponse(res.HTTPResponse)
 	}
 
 	return *res.JSON200.Status, nil
