@@ -46,6 +46,11 @@ func (this *controllers) ApiInternalV2RecipientsStatus(ctx echo.Context) error {
 	for i, recipient := range input {
 		account := orgToEAN[string(recipient.OrgId)]
 
+		// take from the rate limit bucket
+		// TODO: consider moving this to the httpClient level (e.g. as an HttpRequestDoer decorator)
+		this.rateLimiter.Wait(ctx.Request().Context())
+
+		// TODO: parallelize this
 		status, err := this.cloudConnectorClient.GetConnectionStatus(ctx.Request().Context(), account, string(recipient.OrgId), string(recipient.Recipient))
 		if err != nil {
 			utils.GetLogFromEcho(ctx).Error(err)
