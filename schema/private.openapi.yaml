@@ -37,6 +37,7 @@ paths:
   /internal/v2/recipients/status:
     post:
       summary: Obtain connection status of recipient(s)
+      description: Indicates whether the given recipient(s) are available
       operationId: api.internal.v2.recipients.status
       requestBody:
         content:
@@ -141,7 +142,7 @@ components:
         - connected
 
     OrgId:
-      description: Identifier of the tenant
+      description: Identifies the organization that the given resource belongs to
       type: string
       minLength: 1
       maxLength: 10
