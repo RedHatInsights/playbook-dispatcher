@@ -7,6 +7,29 @@ import (
 	externalRef0 "playbook-dispatcher/internal/api/controllers/public"
 )
 
+// OrgId defines model for OrgId.
+type OrgId string
+
+// RecipientStatus defines model for RecipientStatus.
+type RecipientStatus struct {
+	// Embedded struct due to allOf(#/components/schemas/RecipientWithOrg)
+	RecipientWithOrg `yaml:",inline"`
+	// Embedded fields due to inline allOf schema
+
+	// Indicates whether a connection is established with the recipient
+	Connected bool `json:"connected"`
+}
+
+// RecipientWithOrg defines model for RecipientWithOrg.
+type RecipientWithOrg struct {
+
+	// Identifier of the tenant
+	OrgId OrgId `json:"org_id"`
+
+	// Identifier of the host to which a given Playbook is addressed
+	Recipient externalRef0.RunRecipient `json:"recipient"`
+}
+
 // RunCreated defines model for RunCreated.
 type RunCreated struct {
 
@@ -58,5 +81,11 @@ type RunsCreated []RunCreated
 // ApiInternalRunsCreateJSONBody defines parameters for ApiInternalRunsCreate.
 type ApiInternalRunsCreateJSONBody []RunInput
 
+// ApiInternalV2RecipientsStatusJSONBody defines parameters for ApiInternalV2RecipientsStatus.
+type ApiInternalV2RecipientsStatusJSONBody []RecipientWithOrg
+
 // ApiInternalRunsCreateRequestBody defines body for ApiInternalRunsCreate for application/json ContentType.
 type ApiInternalRunsCreateJSONRequestBody ApiInternalRunsCreateJSONBody
+
+// ApiInternalV2RecipientsStatusRequestBody defines body for ApiInternalV2RecipientsStatus for application/json ContentType.
+type ApiInternalV2RecipientsStatusJSONRequestBody ApiInternalV2RecipientsStatusJSONBody

@@ -20,10 +20,13 @@ const basePath = "/api/cloud-connector/v1/"
 
 var cloudConnectorDirective = "rhc-worker-playbook"
 
-type accountKeyType int
+type tenantKeyType int
 
-// used to pass account down to request editor (to set headers)
-const accountKey accountKeyType = iota
+// used to pass account, org_id down to request editor (to set headers)
+const (
+	accountKey = iota
+	orgIDKey   = iota
+)
 
 type CloudConnectorClient interface {
 	SendCloudConnectorRequest(
@@ -33,6 +36,13 @@ type CloudConnectorClient interface {
 		correlationId uuid.UUID,
 		url string,
 	) (*string, bool, error)
+
+	GetConnectionStatus(
+		ctx context.Context,
+		account string,
+		orgID string,
+		recipient string,
+	) (ConnectionStatus, error)
 }
 
 type cloudConnectorClientImpl struct {
@@ -52,6 +62,11 @@ func NewConnectorClientWithHttpRequestDoer(cfg *viper.Viper, doer HttpRequestDoe
 				req.Header.Set(constants.HeaderCloudConnectorClientID, cfg.GetString("cloud.connector.client.id"))
 				req.Header.Set(constants.HeaderCloudConnectorPSK, cfg.GetString("cloud.connector.psk"))
 				req.Header.Set(constants.HeaderCloudConnectorAccount, ctx.Value(accountKey).(string))
+
+				if orgID := ctx.Value(orgIDKey); orgID != nil {
+					req.Header.Set(constants.HeaderCloudConnectorOrgID, ctx.Value(orgIDKey).(string))
+				}
+
 				return nil
 			},
 		},
@@ -113,8 +128,38 @@ func (this *cloudConnectorClientImpl) SendCloudConnectorRequest(
 	}
 
 	if res.JSON201 == nil {
-		return nil, false, fmt.Errorf(`unexpected status code "%d" or content type "%s"`, res.HTTPResponse.StatusCode, res.HTTPResponse.Header.Get("content-type"))
+		return nil, false, unexpectedResponse(res.HTTPResponse)
 	}
 
 	return res.JSON201.Id, false, nil
+}
+
+func (this *cloudConnectorClientImpl) GetConnectionStatus(
+	ctx context.Context,
+	account string,
+	orgID string,
+	recipient string,
+) (status ConnectionStatus, err error) {
+	ctx = context.WithValue(ctx, accountKey, account)
+	ctx = context.WithValue(ctx, orgIDKey, orgID)
+
+	utils.GetLogFromContext(ctx).Debugw("Sending Cloud Connector status request",
+		"account", account,
+		"recipient", recipient,
+	)
+
+	res, err := this.client.PostConnectionStatusWithResponse(ctx, PostConnectionStatusJSONRequestBody{
+		Account: &account,
+		NodeId:  &recipient,
+	})
+
+	if err != nil {
+		return "", err
+	}
+
+	if res.JSON200 == nil {
+		return "", unexpectedResponse(res.HTTPResponse)
+	}
+
+	return *res.JSON200.Status, nil
 }

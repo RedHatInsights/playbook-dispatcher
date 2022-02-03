@@ -47,6 +47,40 @@ The keys are configured via environment variables in form of `PSK_AUTH_<service 
 PSK_AUTH_REMEDIATIONS=xwKhCUzgJ8 ./app run
 ```
 
+### Recipient status
+
+One of the operations available in the internal API is the recipient status.
+This operation allows the client to obtain connection information for a given set of recipients.
+
+Sample request:
+```
+POST /internal/v2/recipients/status
+[
+    {
+        "recipient": "35720ecb-bc23-4b06-a8cd-f0c264edf2c1",
+        "org_id": "5318290"
+    }, {
+        "recipient": "73dca8b6-cc11-4954-8f6c-9ecc732ec212",
+        "org_id": "5318290"
+    }
+]
+```
+
+Sample response:
+```
+[
+    {
+        "recipient": "35720ecb-bc23-4b06-a8cd-f0c264edf2c1",
+        "org_id": "5318290",
+        "connected": true
+    }, {
+        "recipient": "73dca8b6-cc11-4954-8f6c-9ecc732ec212",
+        "org_id": "5318290",
+        "connected": false
+    }
+]
+```
+
 See [API schema](./schema/private.openapi.yaml) for more details.
 
 ## Event interface
