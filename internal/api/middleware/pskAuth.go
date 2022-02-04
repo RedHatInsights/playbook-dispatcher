@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/labstack/echo/v4"
+	"go.uber.org/zap"
 )
 
 type principalKey int
@@ -21,6 +22,8 @@ var envMatcher = regexp.MustCompile(`^PSK_AUTH_(.+?)=(.+?)$`)
 func CheckPskAuth(authKeys map[string]string) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
+			checkIdentityHeader(c.Request(), utils.GetLogFromEcho(c))
+
 			authorization := c.Request().Header.Get("authorization")
 
 			if authorization == "" {
@@ -69,4 +72,11 @@ func BuildPskAuthConfigFromEnv() map[string]string {
 	}
 
 	return result
+}
+
+// TODO: enable x509 for auth in the future
+func checkIdentityHeader(request *http.Request, log *zap.SugaredLogger) {
+	if identity := request.Header.Get("x-rh-identity"); identity != "" {
+		log.Debugw("received identity header", "identity", identity)
+	}
 }
