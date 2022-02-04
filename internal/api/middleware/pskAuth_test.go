@@ -1,14 +1,17 @@
 package middleware
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"playbook-dispatcher/internal/common/utils"
 
 	"github.com/labstack/echo/v4"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"go.uber.org/zap"
 )
 
 const key = "secret"
@@ -32,6 +35,7 @@ func testPskAuth(req *http.Request) (*httptest.ResponseRecorder, error) {
 func newReqInternal() *http.Request {
 	req, err := http.NewRequest("GET", "/internal/dispatch", nil)
 	Expect(err).ToNot(HaveOccurred())
+	req = req.WithContext(utils.SetLog(context.Background(), zap.NewNop().Sugar()))
 	return req
 }
 
