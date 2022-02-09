@@ -12,14 +12,14 @@ import (
 	"gorm.io/gorm"
 )
 
-func CreateController(database *gorm.DB, cloudConnectorClient connectors.CloudConnectorClient, config *viper.Viper) ServerInterfaceWrapper {
+func CreateController(database *gorm.DB, cloudConnectorClient connectors.CloudConnectorClient, config *viper.Viper, translator tenants.TenantIDTranslator) ServerInterfaceWrapper {
 	return ServerInterfaceWrapper{
 		Handler: &controllers{
 			database:             database,
 			cloudConnectorClient: cloudConnectorClient,
 			config:               config,
 			rateLimiter:          getRateLimiter(config),
-			translator:           tenants.NewMockTenantIDTranslator(),
+			translator:           translator,
 		},
 	}
 }

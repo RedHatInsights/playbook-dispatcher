@@ -46,6 +46,10 @@ func (this *mockTenantIDTranslator) OrgIDToEAN(ctx context.Context, orgId string
 	return value, nil
 }
 
+func (this *mockTenantIDTranslator) RHCIDToTenantIDs(ctx context.Context, rhcID string) (orgId string, ean *string, err error) {
+	return "", nil, fmt.Errorf("not implemented")
+}
+
 func inverseMap(input map[string]*string) (result map[string]string) {
 	result = make(map[string]string, len(input))
 	for key, value := range input {
