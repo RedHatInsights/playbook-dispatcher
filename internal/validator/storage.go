@@ -94,10 +94,8 @@ func readFile(reader io.Reader) (result []byte, err error) {
 	}
 
 	if compression == "xz" {
-		if xzReader, err := xz.NewReader(reader, 0); err != nil {
+		if reader, err = xz.NewReader(reader, 0); err != nil {
 			return nil, err
-		} else {
-			reader = xzReader
 		}
 	}
 
