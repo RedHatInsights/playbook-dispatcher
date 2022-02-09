@@ -1,0 +1,1 @@
+CREATE INDEX runs_org_id_index ON runs (org_id);

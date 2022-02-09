@@ -1,0 +1,1 @@
+DROP INDEX runs_org_id_index;
