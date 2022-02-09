@@ -20,6 +20,13 @@ type mockHttpRequestDoer struct {
 	callback httpCallback
 }
 
+type Compression string
+
+const (
+	GZip Compression = "gzip"
+	XZ   Compression = "xz"
+)
+
 const (
 	// https://tools.ietf.org/html/rfc1952#section-2.3.1
 	gzipByte1 = 0x1f
@@ -60,7 +67,7 @@ func doGet(client HttpRequestDoer, url string, timerFactory func() *prometheus.T
 	return client.Do(req)
 }
 
-func GetCompressionType(reader io.Reader) (string, error) {
+func GetCompressionType(reader io.Reader) (Compression, error) {
 	bufferedReader := bufio.NewReaderSize(reader, 6)
 	peek, err := bufferedReader.Peek(2)
 
@@ -69,7 +76,7 @@ func GetCompressionType(reader io.Reader) (string, error) {
 	}
 
 	if peek[0] == gzipByte1 && peek[1] == gzipByte2 {
-		return "gzip", nil
+		return GZip, nil
 	}
 	if peek[0] == xzByte1 && peek[1] == xzByte2 {
 		peek, err = bufferedReader.Peek(6)
@@ -77,7 +84,7 @@ func GetCompressionType(reader io.Reader) (string, error) {
 			return "", err
 		}
 		if peek[2] == xzByte3 && peek[3] == xzByte4 && peek[4] == xzByte5 && peek[5] == xzByte6 {
-			return "xz", nil
+			return XZ, nil
 		}
 	}
 
