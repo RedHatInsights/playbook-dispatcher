@@ -14,7 +14,7 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/spf13/viper"
-	"github.com/therootcompany/xz"
+	"github.com/xi2/xz"
 )
 
 type storageConnector struct {
