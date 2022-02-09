@@ -142,6 +142,12 @@ objects:
 
           - name: STORAGE_MAX_CONCURRENCY
             value: ${STORAGE_MAX_CONCURRENCY}
+
+          - name: TENANT_TRANSLATOR_IMPL
+            value: ${TENANT_TRANSLATOR_IMPL}
+          - name: TENANT_TRANSLATOR_HOST
+            value: ${TENANT_TRANSLATOR_HOST}
+
         resources:
           limits:
             cpu: ${CPU_LIMIT}
@@ -311,6 +317,12 @@ parameters:
 
 - name: CLEANER_SCHEDULE
   value: "*/10 * * * *"
+
+- name: TENANT_TRANSLATOR_HOST
+  required: true
+- name: TENANT_TRANSLATOR_IMPL
+  value: impl
+
 
 # Used for testing in ephemeral environments only.
 - name: PSK_AUTH_TEST
