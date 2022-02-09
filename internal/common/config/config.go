@@ -84,7 +84,7 @@ func Get() *viper.Viper {
 	options.SetDefault("tenant.translator.impl", "mock")
 	options.SetDefault("tenant.translator.host", "localhost")
 	options.SetDefault("tenant.translator.scheme", "http")
-	options.SetDefault("tenant.translator.port", "8890")
+	options.SetDefault("tenant.translator.port", "8892")
 	options.SetDefault("tenant.translator.timeout", 10)
 
 	options.SetDefault("db.sslmode", "disable")
