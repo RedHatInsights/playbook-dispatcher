@@ -84,7 +84,7 @@ func readFile(reader io.Reader) (result []byte, err error) {
 		return nil, err
 	}
 
-	if compression == "gzip" {
+	if compression == utils.GZip {
 		if gzipReader, err := gzip.NewReader(reader); err != nil {
 			return nil, err
 		} else {
@@ -93,7 +93,7 @@ func readFile(reader io.Reader) (result []byte, err error) {
 		}
 	}
 
-	if compression == "xz" {
+	if compression == utils.XZ {
 		if reader, err = xz.NewReader(reader, 0); err != nil {
 			return nil, err
 		}
