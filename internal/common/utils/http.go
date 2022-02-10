@@ -1,9 +1,7 @@
 package utils
 
 import (
-	"bufio"
 	"bytes"
-	"io"
 	"io/ioutil"
 	"net/http"
 
@@ -19,12 +17,6 @@ type httpCallback func(req *http.Request) (status int, body string, err error)
 type mockHttpRequestDoer struct {
 	callback httpCallback
 }
-
-const (
-	// https://tools.ietf.org/html/rfc1952#section-2.3.1
-	gzipByte1 = 0x1f
-	gzipByte2 = 0x8b
-)
 
 func DoGetWithRetry(client HttpRequestDoer, url string, retries int, timerFactory func() *prometheus.Timer) (resp *http.Response, err error) {
 	for ; retries > 0; retries-- {
@@ -50,17 +42,6 @@ func doGet(client HttpRequestDoer, url string, timerFactory func() *prometheus.T
 	}
 
 	return client.Do(req)
-}
-
-func IsGzip(reader io.Reader) (bool, error) {
-	bufferedReader := bufio.NewReaderSize(reader, 2)
-	peek, err := bufferedReader.Peek(2)
-
-	if err != nil {
-		return false, err
-	}
-
-	return peek[0] == gzipByte1 && peek[1] == gzipByte2, nil
 }
 
 func (this *mockHttpRequestDoer) Do(req *http.Request) (*http.Response, error) {

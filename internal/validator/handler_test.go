@@ -113,7 +113,7 @@ var _ = Describe("Handler", func() {
 	})
 
 	Describe("compression", func() {
-		It("parses compressed Runner events", func() {
+		It("parses gzip compressed Runner events", func() {
 			data := `H4sICMI0KmAAA2Zvby5qc29ubADtV8tu2zAQvPcrDB2D0iApUg8XOQRFT+0haHMpkkCgSMoRLJGG
 HgECw/9ekpYUq06ayEmLoIjgg3e5S652ZlbSxmvbXHiLmScIkzHlGQhRJgDxowBEIs0ATrmMfZ/L
 EPnex5nHdasaWZkUZKy6EbptbL7nLFY1SZEraTzQOKQS+2bVKiWrJBdSuZxG1g2kNlPedq51we5S
@@ -129,6 +129,37 @@ CRPCcs1DOJwb6OZot1bvOm/Ps+fqbn6rW7NFV83GK7VoC9kXsvE6xHbh261JSJiq89TEKJ0Uerk3
 f/l8dv4q70snds99HQ+ADAqeHVyL2Vj5p8g47+O7Pp5CG9sqo0zjMR3fOTKWF/1ivcrX694wCPO2
 N/Kl0lVn2BIPxggdj5H4qC/Fpj5qlsQYR2/78+KeyhtLY8GqVf/f9r/t1GTtrtO96erY7OnSdMb6
 15Xmsq53gYfLHXj9Lh2wvWlwyzMzM4ab3u7p6FmqMDr6BVcdZ0B3EAAA`
+
+			decoded := make([]byte, 1024)
+			len, err := base64.StdEncoding.Decode(decoded, []byte(data))
+			Expect(err).ToNot(HaveOccurred())
+
+			content, err := readFile(bytes.NewReader(decoded[0:len]))
+			Expect(err).ToNot(HaveOccurred())
+			events, err := instance.validateContent(test.TestContext(), "playbook", content)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(events.Playbook).To(HaveLen(6))
+		})
+
+		It("parses xz compressed Runner events", func() {
+			data := `/Td6WFoAAATm1rRGAgAhARYAAAB0L+Wj4BB2Ax5dAD2IirhpM/wQyDbKPZVz6i4u
+F0k2zwumHpHS6LbmpVzQY/Qn61bLqlbTGLEd5VB0RVrj2BDG/9edwKvzAKvYAL0g
+cccEUqY6zcsF/40wBWGNFoQcmZPCFnycrKLj+AVp4/gCvRrqVtLTGVK55oXXZ++2
+wm+H/AQne3stDQ3WaPUIptiQpV8RleUXrrdxTY7rfDvwUYL8koR5KyvpJmsr2nMQ
+QpFR3vlP1f6Fo7ju5ij5Dq5EE7VmYMP1vX6qaeBpsKJwJtTIphMNsU7ZRmxQqLOz
+XP2aPStwrYMDFLyN3Cm5753TLaADsxqNxqxwfjv9e7DKwJgMCOqu9QwOngn0IPV/
+Z0v1iZ1gUIBdXxuFMcHFSv66SDUdU48A4YBQbEWzd3DcgkBnVzwbzUOQkpZV3KNR
+wMmkV6E56xtZaTkLsZR1hDswLjHI/Ea0e40z6wTqWMDt+u6wov7gIHy/gccg0VxO
+SykeIE5BYGtovIaG0dHik7M67ECWmxhc8zHwMewM6m3ffqHBGFrGSGTSN9BAX/qr
+0GbVwEfuOqRCq5h7rJC0dRRDxeT14HKJ2znlGJI69EtkOZHnFhrglXHjhc2pYX0c
+0y2BpSayl8KFJUfsVYJAxYcJA0elMU4LVCHDwZH7X6Z4PISqeMNi0EMqziq1K1cv
+UxBq3AbZRBBREhLDGHLkXpY8sWql0VfZN6tjvBl8mmgWAXM+9JvaCQysi1QOz3kY
+MAyB6OOEtRz3+4yb1jwuPjOquINfvq2REjGDX5QU23qgPHqqSE8v1lWf+mUrQgxX
+XGPAvk1OpNSd6Z47M7hW9mnHI3OjKnS5mXmKkdBUrPdkoJGw2ACUyD7+lwuDZlDj
+5NFZkwYVaytR95XeMhcYdO691/U5suWdtKB/2jHYOiHISdO3SbQ2QNyD2UT48O4T
+fdqPl7IwpOzJmfqrZ1duqTJ62NbTeDDPjOvQ6F70PsJi4KXiLSqngthpIkJLtF3l
+/UD4A5NoFO1WZvxb/InvzpUxAEK9ralelcUKXwTwdeL+SfVgK7l4HCe1pReL4vpT
+4Hk1AH0kWz6sh6LgeAAAAPu52djbfybdAAG6BvcgAACQebjUscRn+wIAAAAABFla`
 
 			decoded := make([]byte, 1024)
 			len, err := base64.StdEncoding.Decode(decoded, []byte(data))

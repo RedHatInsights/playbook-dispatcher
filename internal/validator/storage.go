@@ -14,6 +14,7 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/spf13/viper"
+	"github.com/xi2/xz"
 )
 
 type storageConnector struct {
@@ -77,17 +78,24 @@ func (this *storageConnector) fetchPayload(url string) (payload []byte, err erro
 }
 
 func readFile(reader io.Reader) (result []byte, err error) {
-	var isGzip bool
 	reader = bufio.NewReaderSize(reader, 2)
+	compression, err := utils.GetCompressionType(reader)
+	if err != nil {
+		return nil, err
+	}
 
-	if isGzip, err = utils.IsGzip(reader); err != nil {
-		return
-	} else if isGzip {
+	if compression == utils.GZip {
 		if gzipReader, err := gzip.NewReader(reader); err != nil {
 			return nil, err
 		} else {
 			defer gzipReader.Close()
 			reader = gzipReader
+		}
+	}
+
+	if compression == utils.XZ {
+		if reader, err = xz.NewReader(reader, 0); err != nil {
+			return nil, err
 		}
 	}
 

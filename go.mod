@@ -28,6 +28,7 @@ require (
 	github.com/redhatinsights/platform-go-middlewares v0.7.1-0.20201009171810-b73c54b47a2d
 	github.com/spf13/cobra v0.0.3
 	github.com/spf13/viper v1.7.1
+	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect
 	go.uber.org/atomic v1.7.0 // indirect
 	go.uber.org/zap v1.10.0
 	golang.org/x/time v0.0.0-20210723032227-1f47c861a9ac
