@@ -31,7 +31,7 @@ func (this *controllers) ApiInternalV2RecipientsStatus(ctx echo.Context) error {
 			if this.config.Get("tenant.translator.impl") == "impl" {
 				var orgID string
 				orgID, ean, err = this.translator.RHCIDToTenantIDs(ctx.Request().Context(), string(recipient.Recipient))
-				utils.GetLogFromEcho(ctx).Debugw("Received translated tenant info", "recipient", recipient.Recipient, "original_org_id", recipient.OrgId, "org_id", orgID, "ean", "ean")
+				utils.GetLogFromEcho(ctx).Debugw("Received translated tenant info", "recipient", recipient.Recipient, "original_org_id", recipient.OrgId, "org_id", orgID, "ean", ean)
 			} else {
 				ean, err = this.translator.OrgIDToEAN(ctx.Request().Context(), orgId)
 			}
