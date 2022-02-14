@@ -3,7 +3,7 @@ package private
 import (
 	"net/http"
 	"playbook-dispatcher/internal/api/instrumentation"
-	"playbook-dispatcher/internal/common/db"
+	"playbook-dispatcher/internal/api/middleware"
 	"playbook-dispatcher/internal/common/utils"
 
 	"github.com/google/uuid"
@@ -14,83 +14,62 @@ import (
 func (this *controllers) ApiInternalV2RunsCreate(ctx echo.Context) error {
 	var input RunInputV2List
 
-	db.SetLog(this.database, utils.GetLogFromEcho(ctx))
-	defer db.ClearLog(this.database)
-
 	err := utils.ReadRequestBody(ctx, &input)
 	if err != nil {
 		utils.GetLogFromEcho(ctx).Error(err)
 		return ctx.NoContent(http.StatusBadRequest)
 	}
 
-	// send all requests to cloud connector concurrently
+	for _, run := range input {
+		err = validateSatelliteFields(run)
+		if err != nil {
+			instrumentation.InvalidSatelliteRequest(ctx, err)
+			return invalidRequest(ctx, err)
+		}
+	}
+
+	// process individual requests concurrently
 	result := input.PMapRunCreated(func(runInputV2 RunInputV2) *RunCreated {
-		ansibleReq, satReq := CheckV2ReqFields(runInputV2)
-		if !ansibleReq && !satReq {
-			return runCreateError(http.StatusBadRequest)
-		}
-		if ansibleReq && satReq {
-			ansibleReq, satReq = false, true
-		}
+		context := utils.WithOrgId(ctx.Request().Context(), string(runInputV2.OrgId))
+		context = utils.WithRequestType(context, getRequestTypeLabel(runInputV2))
 
-		requestType := "ansible"
-		if satReq {
-			requestType = "satellite"
-		}
-
-		runInput := RunInputV2GenericMap(runInputV2, satReq, this.config)
-
-		recipient, err := uuid.Parse(runInput.Recipient)
+		ean, err := this.translator.OrgIDToEAN(context, string(runInputV2.OrgId))
 		if err != nil {
-			instrumentation.InvalidRecipientId(ctx, runInput.Recipient, err, requestType)
+			return runCreateError(http.StatusInternalServerError)
+		} else if ean == nil {
+			instrumentation.TenantAnemic(ctx, string(runInputV2.OrgId))
 			return runCreateError(http.StatusBadRequest)
 		}
 
-		context := utils.WithRequestType(ctx.Request().Context(), requestType)
-		context = utils.WithCorrelationId(context, runInput.CorrelationId.String())
-		context = utils.WithAccount(context, *runInput.OrgId)
+		recipient := parseValidatedUUID(string(runInputV2.Recipient))
 
-		// take from the rate limit bucket
-		this.rateLimiter.Wait(ctx.Request().Context())
+		hosts := parseRunHosts(runInputV2.Hosts)
 
-		ean, err := this.translator.OrgIDToEAN(context, *runInput.OrgId)
+		var parsedSatID *uuid.UUID
+		if runInputV2.RecipientConfig != nil && runInputV2.RecipientConfig.SatId != nil {
+			parsedSatID = utils.UUIDRef(parseValidatedUUID(string(*runInputV2.RecipientConfig.SatId)))
+		}
+
+		runInput := RunInputV2GenericMap(runInputV2, *ean, recipient, hosts, parsedSatID, this.config)
+
+		runID, _, err := this.dispatchManager.ProcessRun(context, *ean, middleware.GetPSKPrincipal(context), runInput)
+
 		if err != nil {
-			return runCreateError(http.StatusBadRequest)
-		}
-		runInput.Account = *ean
-
-		createError := sendToCloudConnector(
-			satReq,
-			*ean,
-			recipient,
-			runInput,
-			this.cloudConnectorClient,
-			context,
-		)
-		if createError != nil {
-			return createError
+			return handleRunCreateError(err)
 		}
 
-		runId, recordCreateError := recordRunInformation(
-			runInput,
-			recipient,
-			runInput.CorrelationId,
-			true,
-			satReq,
-			requestType,
-			this.database,
-			this.config,
-			context,
-		)
-		if recordCreateError != nil {
-			return recordCreateError
-		}
-
-		return &RunCreated{
-			Code: http.StatusCreated,
-			Id:   runId,
-		}
+		return runCreated(runID)
 	})
 
 	return ctx.JSON(http.StatusMultiStatus, result)
+}
+
+func getRequestTypeLabel(run RunInputV2) string {
+	result := instrumentation.LabelAnsibleRequest
+
+	if run.RecipientConfig != nil && run.RecipientConfig.SatId != nil {
+		result = instrumentation.LabelSatRequest
+	}
+
+	return result
 }

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"playbook-dispatcher/internal/api/connectors"
 	"playbook-dispatcher/internal/api/connectors/tenants"
+	"playbook-dispatcher/internal/api/dispatch"
 	"playbook-dispatcher/internal/common/config"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -13,24 +14,26 @@ import (
 )
 
 func CreateController(database *gorm.DB, cloudConnectorClient connectors.CloudConnectorClient, config *viper.Viper, translator tenants.TenantIDTranslator) ServerInterfaceWrapper {
+	rateLimiter := getRateLimiter(config)
+
 	return ServerInterfaceWrapper{
 		Handler: &controllers{
-			database:             database,
 			cloudConnectorClient: cloudConnectorClient,
 			config:               config,
-			rateLimiter:          getRateLimiter(config),
+			rateLimiter:          rateLimiter,
 			translator:           translator,
+			dispatchManager:      dispatch.NewDispatchManager(config, cloudConnectorClient, rateLimiter, database),
 		},
 	}
 }
 
 // implements api.ServerInterface
 type controllers struct {
-	database             *gorm.DB
 	cloudConnectorClient connectors.CloudConnectorClient
 	config               *viper.Viper
 	rateLimiter          *rate.Limiter
 	translator           tenants.TenantIDTranslator
+	dispatchManager      dispatch.DispatchManager
 }
 
 // workaround for https://github.com/deepmap/oapi-codegen/issues/42

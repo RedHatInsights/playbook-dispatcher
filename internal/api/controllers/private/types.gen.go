@@ -7,6 +7,13 @@ import (
 	externalRef0 "playbook-dispatcher/internal/api/controllers/public"
 )
 
+// Error defines model for Error.
+type Error struct {
+
+	// Human readable error message
+	Message string `json:"message"`
+}
+
 // OrgId defines model for OrgId.
 type OrgId string
 
@@ -132,6 +139,9 @@ type RunsCreated []RunCreated
 
 // WebConsoleUrl defines model for WebConsoleUrl.
 type WebConsoleUrl string
+
+// BadRequest defines model for BadRequest.
+type BadRequest Error
 
 // ApiInternalRunsCreateJSONBody defines parameters for ApiInternalRunsCreate.
 type ApiInternalRunsCreateJSONBody []RunInput

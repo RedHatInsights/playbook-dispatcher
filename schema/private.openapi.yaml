@@ -33,6 +33,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RunsCreated'
+        '400':
+          $ref: '#/components/responses/BadRequest'
 
   /internal/v2/recipients/status:
     post:
@@ -56,6 +58,8 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/RecipientStatus'
+        '400':
+          $ref: '#/components/responses/BadRequest'
 
   /internal/v2/dispatch:
     post:
@@ -177,6 +181,7 @@ components:
           description: Identifier of the organization within Satellite
           type: string
           example: "12345"
+          minLength: 1
 
     RunsCreated:
       type: array
@@ -215,13 +220,34 @@ components:
       description: Username of the user interacting with the service
       type: string
       example: jharting
+      minLength: 1
 
     PlaybookName:
       description: Human readable name of the playbook run. Used to present the given playbook run in external systems (Satellite).
       type: string
       example: Fix Critical CVEs
+      minLength: 1
 
     WebConsoleUrl:
       description: URL that points to the section of the web console where the user find more information about the playbook run. The field is optional but highly suggested.
       type: string
       format: url
+      minLength: 1
+
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+          description: Human readable error message
+          example: Minimum string length is 1
+      required:
+      - message
+
+  responses:
+    BadRequest:
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'

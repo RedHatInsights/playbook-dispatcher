@@ -21,13 +21,15 @@ import (
 )
 
 var (
-	ansibleDirective = "rhc-worker-playbook"
+	ansibleDirective = "playbook"
 	satDirective     = "playbook-sat"
 )
 
 func ansibleMetadata(correlationId uuid.UUID) map[string]string {
 	return map[string]string{
 		"crc_dispatcher_correlation_id": correlationId.String(),
+		"return_url":                    "http://example.com/return",
+		"response_interval":             "60",
 	}
 }
 
@@ -74,13 +76,7 @@ var _ = Describe("Cloud Connector", func() {
 		url := "http://example.com"
 		correlationId := uuid.New()
 
-		returnUrl := "http://example.com/return"
-		responseInterval := 60
-		cfg := config.Get()
-		cfg.Set("return.url", returnUrl)
-		cfg.Set("response.interval", responseInterval)
-
-		client := NewConnectorClientWithHttpRequestDoer(cfg, &doer)
+		client := NewConnectorClientWithHttpRequestDoer(config.Get(), &doer)
 		recipient := uuid.New()
 		ctx := utils.SetLog(test.TestContext(), zap.NewNop().Sugar())
 		result, notFound, err := client.SendCloudConnectorRequest(ctx, "1234", recipient, url, ansibleDirective, ansibleMetadata(correlationId))
@@ -95,15 +91,15 @@ var _ = Describe("Cloud Connector", func() {
 		Expect(err).ToNot(HaveOccurred())
 
 		Expect(parsedRequest["account"]).To(Equal("1234"))
-		Expect(parsedRequest["directive"]).To(Equal("rhc-worker-playbook"))
+		Expect(parsedRequest["directive"]).To(Equal("playbook"))
 		Expect(parsedRequest["recipient"]).To(Equal(recipient.String()))
 		Expect(parsedRequest["payload"]).To(Equal(url))
 
 		metadata, ok := parsedRequest["metadata"].(map[string]interface{})
 		Expect(ok).To(BeTrue())
 		Expect(metadata["crc_dispatcher_correlation_id"]).To(Equal(correlationId.String()))
-		Expect(metadata["return_url"]).To(Equal(returnUrl))
-		Expect(metadata["response_interval"]).To(Equal(strconv.Itoa(responseInterval)))
+		Expect(metadata["return_url"]).To(Equal("http://example.com/return"))
+		Expect(metadata["response_interval"]).To(Equal(strconv.Itoa(60)))
 	})
 
 	It("constructs a correct satellite request", func() {
@@ -111,12 +107,6 @@ var _ = Describe("Cloud Connector", func() {
 
 		url := "http://example.com"
 		correlationId := uuid.New()
-
-		returnUrl := "http://example.com/return"
-		responseInterval := 60
-		cfg := config.Get()
-		cfg.Set("return.url", returnUrl)
-		cfg.Set("response.interval", responseInterval)
 
 		satMetadata := map[string]string{
 			"operation":         "run",
@@ -127,9 +117,11 @@ var _ = Describe("Cloud Connector", func() {
 			"sat_org_id":        "123",
 			"initiator_user_id": "test-user",
 			"hosts":             "16372e6f-1c18-4cdb-b780-50ab4b88e74b,baf2bb2f-06a3-42cc-ae7b-68ccc8e2a344",
+			"return_url":        "http://example.com/return",
+			"response_interval": "60",
 		}
 
-		client := NewConnectorClientWithHttpRequestDoer(cfg, &doer)
+		client := NewConnectorClientWithHttpRequestDoer(config.Get(), &doer)
 		recipient := uuid.New()
 		ctx := utils.SetLog(test.TestContext(), zap.NewNop().Sugar())
 		result, notFound, err := client.SendCloudConnectorRequest(ctx, "1234", recipient, url, satDirective, satMetadata)
@@ -150,8 +142,8 @@ var _ = Describe("Cloud Connector", func() {
 
 		metadata, ok := parsedRequest["metadata"].(map[string]interface{})
 		Expect(ok).To(BeTrue())
-		Expect(metadata["return_url"]).To(Equal(returnUrl))
-		Expect(metadata["response_interval"]).To(Equal(strconv.Itoa(responseInterval)))
+		Expect(metadata["return_url"]).To(Equal("http://example.com/return"))
+		Expect(metadata["response_interval"]).To(Equal(strconv.Itoa(60)))
 
 		Expect(metadata["operation"]).To(Equal("run"))
 		Expect(metadata["correlation_id"]).To(Equal(correlationId.String()))
