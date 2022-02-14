@@ -134,6 +134,8 @@ objects:
 
           - name: RETURN_URL
             value: ${RETURN_URL}
+          - name: WEB_CONSOLE_URL_DEFAULT
+            value: ${WEB_CONSOLE_URL_DEFAULT}
 
           - name: RBAC_IMPL
             value: ${RBAC_IMPL}
@@ -314,6 +316,8 @@ parameters:
 
 - name: RETURN_URL
   value: TBD
+- name: WEB_CONSOLE_URL_DEFAULT
+  value: https://console.redhat.com
 
 - name: CLEANER_SCHEDULE
   value: "*/10 * * * *"

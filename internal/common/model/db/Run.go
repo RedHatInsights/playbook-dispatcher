@@ -30,11 +30,11 @@ type Run struct {
 	Labels Labels
 	Events []byte `gorm:"default:[]"`
 
-	PlaybookName   string
+	PlaybookName   *string
 	PlaybookRunUrl string
-	Principal      string
-	SatId          uuid.UUID
-	SatOrgId       string
+	Principal      *string
+	SatId          *uuid.UUID
+	SatOrgId       *string
 
 	CreatedAt    time.Time
 	UpdatedAt    time.Time

@@ -14,24 +14,23 @@ import (
 )
 
 const (
-	labelParseUuid             = "parse_uuid"
-	labelCorrelationId         = "correlation_id"
-	labelMessageId             = "message_id"
 	labelDb                    = "db"
 	labelPlaybookRunCreate     = "playbook_run_create"
 	labelPlaybookRunHostCreate = "playbook_run_host_create"
 	labelPlaybookRunRead       = "playbook_run_read"
 	labelNoConnection          = "no_connection"
 	labelErrorGeneric          = "error"
-	labelAnsibleRequest        = "ansible"
-	labelSatRequest            = "satellite"
+	labelTenantAnemic          = "anemic-tenant"
+	labelSatellite             = "satellite"
+	LabelAnsibleRequest        = "ansible"
+	LabelSatRequest            = "satellite"
 )
 
 var (
 	validationFailureTotal = promauto.NewCounterVec(prometheus.CounterOpts{
 		Name: "api_validation_failure_total",
 		Help: "The total number of invalid requests",
-	}, []string{"type", "subtype", "request"})
+	}, []string{"type"})
 
 	errorTotal = promauto.NewCounterVec(prometheus.CounterOpts{
 		Name: "api_error_total",
@@ -64,9 +63,14 @@ var (
 	}, []string{"dispatching_service", "request"})
 )
 
-func InvalidRecipientId(ctx echo.Context, value string, err error, requestType string) {
-	utils.GetLogFromEcho(ctx).Errorw("Error parsing recipient id", "error", err, "value", value)
-	validationFailureTotal.WithLabelValues(labelParseUuid, labelCorrelationId, requestType).Inc()
+func TenantAnemic(ctx echo.Context, orgID string) {
+	utils.GetLogFromEcho(ctx).Errorw("Rejecting request for anemic tenant", "org_id", orgID)
+	validationFailureTotal.WithLabelValues(labelTenantAnemic).Inc()
+}
+
+func InvalidSatelliteRequest(ctx echo.Context, err error) {
+	utils.GetLogFromEcho(ctx).Errorw("Invalid Satellite request", "error", err)
+	validationFailureTotal.WithLabelValues(labelSatellite).Inc()
 }
 
 func CloudConnectorRequestError(ctx context.Context, err error, recipient uuid.UUID, requestType string) {
@@ -117,21 +121,19 @@ func RunCreated(ctx context.Context, recipient uuid.UUID, runId uuid.UUID, paylo
 func Start() {
 	// initialize label values
 	// https://www.robustperception.io/existential-issues-with-metrics
-	validationFailureTotal.WithLabelValues(labelParseUuid, labelCorrelationId, labelAnsibleRequest)
-	validationFailureTotal.WithLabelValues(labelParseUuid, labelMessageId, labelAnsibleRequest)
-	validationFailureTotal.WithLabelValues(labelParseUuid, labelCorrelationId, labelSatRequest)
-	validationFailureTotal.WithLabelValues(labelParseUuid, labelMessageId, labelSatRequest)
+	validationFailureTotal.WithLabelValues(labelTenantAnemic)
+	validationFailureTotal.WithLabelValues(labelSatellite)
 
-	errorTotal.WithLabelValues(labelDb, labelPlaybookRunCreate, labelAnsibleRequest)
-	errorTotal.WithLabelValues(labelDb, labelPlaybookRunHostCreate, labelAnsibleRequest)
-	errorTotal.WithLabelValues(labelDb, labelPlaybookRunRead, labelAnsibleRequest)
+	errorTotal.WithLabelValues(labelDb, labelPlaybookRunCreate, LabelAnsibleRequest)
+	errorTotal.WithLabelValues(labelDb, labelPlaybookRunHostCreate, LabelAnsibleRequest)
+	errorTotal.WithLabelValues(labelDb, labelPlaybookRunRead, LabelAnsibleRequest)
 
-	errorTotal.WithLabelValues(labelDb, labelPlaybookRunCreate, labelSatRequest)
-	errorTotal.WithLabelValues(labelDb, labelPlaybookRunHostCreate, labelSatRequest)
-	errorTotal.WithLabelValues(labelDb, labelPlaybookRunRead, labelSatRequest)
+	errorTotal.WithLabelValues(labelDb, labelPlaybookRunCreate, LabelSatRequest)
+	errorTotal.WithLabelValues(labelDb, labelPlaybookRunHostCreate, LabelSatRequest)
+	errorTotal.WithLabelValues(labelDb, labelPlaybookRunRead, LabelSatRequest)
 
-	connectorErrorTotal.WithLabelValues(labelErrorGeneric, labelAnsibleRequest)
-	connectorErrorTotal.WithLabelValues(labelErrorGeneric, labelSatRequest)
-	connectorErrorTotal.WithLabelValues(labelNoConnection, labelAnsibleRequest)
-	connectorErrorTotal.WithLabelValues(labelNoConnection, labelSatRequest)
+	connectorErrorTotal.WithLabelValues(labelErrorGeneric, LabelAnsibleRequest)
+	connectorErrorTotal.WithLabelValues(labelErrorGeneric, LabelSatRequest)
+	connectorErrorTotal.WithLabelValues(labelNoConnection, LabelAnsibleRequest)
+	connectorErrorTotal.WithLabelValues(labelNoConnection, LabelSatRequest)
 }

@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"playbook-dispatcher/internal/common/utils"
-	"strconv"
 
 	"github.com/redhatinsights/platform-go-middlewares/request_id"
 
@@ -45,10 +44,7 @@ type CloudConnectorClient interface {
 }
 
 type cloudConnectorClientImpl struct {
-	returnUrl        string
-	responseInterval int
-	client           ClientWithResponsesInterface
-	responseFull     string
+	client ClientWithResponsesInterface
 }
 
 func NewConnectorClientWithHttpRequestDoer(cfg *viper.Viper, doer HttpRequestDoer) CloudConnectorClient {
@@ -73,10 +69,7 @@ func NewConnectorClientWithHttpRequestDoer(cfg *viper.Viper, doer HttpRequestDoe
 	}
 
 	return &cloudConnectorClientImpl{
-		returnUrl:        cfg.GetString("return.url"),
-		responseInterval: cfg.GetInt("response.interval"),
-		client:           client,
-		responseFull:     strconv.FormatBool(cfg.GetBool("satellite.response.full")),
+		client: client,
 	}
 }
 
@@ -98,10 +91,6 @@ func (this *cloudConnectorClientImpl) SendCloudConnectorRequest(
 ) (id *string, notFound bool, err error) {
 	ctx = context.WithValue(ctx, accountKey, account)
 	recipientString := recipient.String()
-
-	metadata["return_url"] = this.returnUrl
-	metadata["response_interval"] = strconv.Itoa(this.responseInterval)
-	metadata["response_full"] = this.responseFull
 
 	utils.GetLogFromContext(ctx).Debugw("Sending Cloud Connector message",
 		"directive", directive,
