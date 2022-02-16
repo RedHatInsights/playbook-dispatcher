@@ -5,7 +5,6 @@ import (
 	"errors"
 	"playbook-dispatcher/internal/common/ansible"
 	"playbook-dispatcher/internal/common/constants"
-	database "playbook-dispatcher/internal/common/db"
 	kafkaUtils "playbook-dispatcher/internal/common/kafka"
 	"playbook-dispatcher/internal/common/model/db"
 	"playbook-dispatcher/internal/common/model/message"
@@ -75,12 +74,9 @@ func (this *handler) onMessage(ctx context.Context, msg *k.Message) {
 
 	var runsUpdated int64
 
-	database.SetLog(this.db, utils.GetLogFromContext(ctx))
-	defer database.ClearLog(this.db)
-
 	run := db.Run{}
 
-	err = this.db.Transaction(func(tx *gorm.DB) error {
+	err = this.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		baseQuery := tx.Model(db.Run{}).
 			Where("account = ?", value.Account).
 			Where("correlation_id = ?", correlationId)

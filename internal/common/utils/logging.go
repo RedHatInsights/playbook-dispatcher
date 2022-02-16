@@ -95,12 +95,24 @@ func SetLog(ctx context.Context, log *zap.SugaredLogger) context.Context {
 	return context.WithValue(ctx, loggerKey, log)
 }
 
-func GetLogFromContext(ctx context.Context) *zap.SugaredLogger {
-	if log, ok := ctx.Value(loggerKey).(*zap.SugaredLogger); !ok {
-		panic("Logger missing in context")
-	} else {
+func GetLogFromContextIfAvailable(ctx context.Context) *zap.SugaredLogger {
+	if value := ctx.Value(loggerKey); value == nil {
+		return nil
+	} else if log, ok := value.(*zap.SugaredLogger); ok {
 		return log
+	} else {
+		panic("Unexpected logger type in context")
 	}
+}
+
+func GetLogFromContext(ctx context.Context) *zap.SugaredLogger {
+	log := GetLogFromContextIfAvailable(ctx)
+
+	if log == nil {
+		panic("Logger missing in context")
+	}
+
+	return log
 }
 
 func GetLogFromEcho(ctx echo.Context) *zap.SugaredLogger {

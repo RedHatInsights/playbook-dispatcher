@@ -5,7 +5,6 @@ import (
 	"playbook-dispatcher/internal/api/connectors"
 	"playbook-dispatcher/internal/api/dispatch/protocols"
 	"playbook-dispatcher/internal/api/instrumentation"
-	"playbook-dispatcher/internal/common/db"
 	"playbook-dispatcher/internal/common/model/generic"
 	"playbook-dispatcher/internal/common/utils"
 
@@ -51,9 +50,6 @@ func getProtocol(runInput generic.RunInput) protocols.Protocol {
 func (this *dispatchManager) ProcessRun(ctx context.Context, account string, service string, run generic.RunInput) (runID, correlationID uuid.UUID, err error) {
 	correlationID = this.newCorrelationId()
 	ctx = utils.WithCorrelationId(ctx, correlationID.String())
-
-	db.SetLog(this.db, utils.GetLogFromContext(ctx))
-	defer db.ClearLog(this.db)
 
 	this.applyDefaults(&run)
 
