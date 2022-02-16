@@ -6,7 +6,6 @@ import (
 	"playbook-dispatcher/internal/api/instrumentation"
 	"playbook-dispatcher/internal/api/middleware"
 	"playbook-dispatcher/internal/api/rbac"
-	"playbook-dispatcher/internal/common/db"
 	dbModel "playbook-dispatcher/internal/common/model/db"
 	"playbook-dispatcher/internal/common/utils"
 	"strings"
@@ -39,13 +38,11 @@ func mapFieldsToSql(field string) string {
 func (this *controllers) ApiRunsList(ctx echo.Context, params ApiRunsListParams) error {
 	var dbRuns []dbModel.Run
 
-	db.SetLog(this.database, utils.GetLogFromEcho(ctx))
-	defer db.ClearLog(this.database)
-
 	identity := identityMiddleware.Get(ctx.Request().Context())
+	db := this.database.WithContext(ctx.Request().Context())
 
 	// tenant isolation
-	queryBuilder := this.database.Table("runs").Where("account = ?", identity.Identity.AccountNumber)
+	queryBuilder := db.Table("runs").Where("account = ?", identity.Identity.AccountNumber)
 
 	// rbac
 	permissions := middleware.GetPermissions(ctx)

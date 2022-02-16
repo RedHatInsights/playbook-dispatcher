@@ -51,28 +51,29 @@ func Connect(ctx context.Context, cfg *viper.Viper) (*gorm.DB, *sql.DB) {
 }
 
 type zapAdapter struct {
-	log        *zap.SugaredLogger
-	currentLog *zap.SugaredLogger
+	log *zap.SugaredLogger
 }
 
-func (this *zapAdapter) getLog() *zap.SugaredLogger {
-	if this.currentLog != nil {
-		return this.currentLog
+func (this *zapAdapter) getLog(ctx context.Context) *zap.SugaredLogger {
+	log := utils.GetLogFromContextIfAvailable(ctx)
+
+	if log == nil {
+		log = this.log
 	}
 
-	return this.log
+	return log
 }
 
 func (this *zapAdapter) Info(ctx context.Context, msg string, values ...interface{}) {
-	this.getLog().Infow(msg, values...)
+	this.getLog(ctx).Infow(msg, values...)
 }
 
 func (this *zapAdapter) Warn(ctx context.Context, msg string, values ...interface{}) {
-	this.getLog().Warnw(msg, values...)
+	this.getLog(ctx).Warnw(msg, values...)
 }
 
 func (this *zapAdapter) Error(ctx context.Context, msg string, values ...interface{}) {
-	this.getLog().Errorw(msg, values...)
+	this.getLog(ctx).Errorw(msg, values...)
 }
 
 func (this *zapAdapter) LogMode(level logger.LogLevel) logger.Interface {
@@ -82,15 +83,5 @@ func (this *zapAdapter) LogMode(level logger.LogLevel) logger.Interface {
 func (this *zapAdapter) Trace(ctx context.Context, begin time.Time, fc func() (string, int64), err error) {
 	elapsed := time.Since(begin)
 	sql, rows := fc()
-	this.getLog().Debugw("executed query", "sql", sql, "rows", rows, "elapsed", elapsed.Milliseconds())
-}
-
-func SetLog(db *gorm.DB, log *zap.SugaredLogger) {
-	if adapter, ok := db.Logger.(*zapAdapter); ok {
-		adapter.currentLog = log
-	}
-}
-
-func ClearLog(db *gorm.DB) {
-	SetLog(db, nil)
+	this.getLog(ctx).Debugw("executed query", "sql", sql, "rows", rows, "elapsed", elapsed.Milliseconds())
 }
