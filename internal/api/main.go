@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"playbook-dispatcher/internal/api/connectors"
+	"playbook-dispatcher/internal/api/connectors/tenants"
 	"playbook-dispatcher/internal/api/controllers/private"
 	"playbook-dispatcher/internal/api/controllers/public"
 	"playbook-dispatcher/internal/api/instrumentation"
@@ -80,10 +81,22 @@ func Start(
 		log.Warn("Using mock CloudConnectorClient")
 	}
 
+	var translator tenants.TenantIDTranslator
+	if cfg.GetString("tenant.translator.impl") == "impl" {
+		translator = tenants.NewTenantIDTranslatorClient(
+			fmt.Sprintf("%s://%s:%s", cfg.Get("tenant.translator.scheme"), cfg.Get("tenant.translator.host"), cfg.Get("tenant.translator.port")),
+			tenants.WithTimeout(cfg.GetDuration("tenant.translator.timeout")*time.Second),
+			tenants.WithMetrics(),
+		)
+	} else {
+		translator = tenants.NewMockTenantIDTranslator()
+		log.Warn("Using mock TenantIDTranslator")
+	}
+
 	authConfig := middleware.BuildPskAuthConfigFromEnv()
 	log.Infow("Authentication required for internal API", "principals", utils.MapKeysString(authConfig))
 
-	privateController := private.CreateController(db, cloudConnectorClient, cfg)
+	privateController := private.CreateController(db, cloudConnectorClient, cfg, translator)
 	internal := server.Group("/internal")
 	internal.Use(middleware.CheckPskAuth(authConfig))
 	internal.Use(oapiMiddleware.OapiRequestValidator(privateSpec))
