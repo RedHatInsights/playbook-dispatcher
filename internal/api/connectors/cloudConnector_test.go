@@ -111,7 +111,7 @@ var _ = Describe("Cloud Connector", func() {
 	Describe("connection status", func() {
 		DescribeTable("interprets the response correctly",
 			func(status string, expectedStatus ConnectionStatus) {
-				doer := test.MockHttpClient(200, fmt.Sprintf(`{"status": "%s"}`, status))
+				doer := test.MockHttpClient(201, fmt.Sprintf(`{"status": "%s"}`, status))
 
 				client := NewConnectorClientWithHttpRequestDoer(config.Get(), &doer)
 				ctx := utils.SetLog(test.TestContext(), zap.NewNop().Sugar())
@@ -126,7 +126,7 @@ var _ = Describe("Cloud Connector", func() {
 		)
 
 		It("constructs a correct request", func() {
-			doer := test.MockHttpClient(200, `{"status": "connected"}`)
+			doer := test.MockHttpClient(201, `{"status": "connected"}`)
 
 			client := NewConnectorClientWithHttpRequestDoer(config.Get(), &doer)
 			ctx := utils.SetLog(test.TestContext(), zap.NewNop().Sugar())
