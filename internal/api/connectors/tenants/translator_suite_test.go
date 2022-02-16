@@ -30,7 +30,7 @@ var _ = Describe("Tenant Translator implementation", func() {
 		})
 
 		It("handles tenant not found", func() {
-			doer := test.MockHttpClient(404, `{}`)
+			doer := test.MockHttpClient(401, `{}`)
 
 			client := NewTenantIDTranslatorClient(
 				"http://localhost",

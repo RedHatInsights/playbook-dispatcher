@@ -39,7 +39,7 @@ func (this *translatorClientImpl) RHCIDToTenantIDs(ctx context.Context, rhcID st
 
 	defer r.Body.Close()
 
-	if r.StatusCode == 404 {
+	if r.StatusCode == 401 {
 		return "", nil, &TenantNotFoundError{
 			msg: fmt.Sprintf("Tenant not found. RHCID: %s", rhcID),
 		}
