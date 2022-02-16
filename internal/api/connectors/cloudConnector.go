@@ -148,7 +148,7 @@ func (this *cloudConnectorClientImpl) GetConnectionStatus(
 		"recipient", recipient,
 	)
 
-	res, err := this.client.PostConnectionStatusWithResponse(ctx, PostConnectionStatusJSONRequestBody{
+	res, err := this.client.V1ConnectionStatusMultitenantWithResponse(ctx, V1ConnectionStatusMultitenantJSONRequestBody{
 		Account: &account,
 		NodeId:  &recipient,
 	})
@@ -157,9 +157,9 @@ func (this *cloudConnectorClientImpl) GetConnectionStatus(
 		return "", err
 	}
 
-	if res.JSON200 == nil {
+	if res.JSON201 == nil {
 		return "", unexpectedResponse(res.HTTPResponse)
 	}
 
-	return *res.JSON200.Status, nil
+	return *res.JSON201.Status, nil
 }
