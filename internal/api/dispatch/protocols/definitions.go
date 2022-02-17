@@ -1,8 +1,8 @@
 package protocols
 
 const (
-	RunnerDirective    Directive = "playbook"
-	SatelliteDirective Directive = "playbook-sat"
+	RunnerDirective    Directive = "rhc-worker-playbook"
+	SatelliteDirective Directive = "rhc-cloud-connector-worker"
 	LabelRunnerRequest           = "ansible"
 	LabelSatRequest              = "satellite"
 )
