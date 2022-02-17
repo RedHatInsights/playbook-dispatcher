@@ -37,13 +37,18 @@ func (this *mockTenantIDTranslator) EANToOrgID(ctx context.Context, ean string) 
 }
 
 func (this *mockTenantIDTranslator) OrgIDToEAN(ctx context.Context, orgId string) (ean *string, err error) {
-	value, ok := this.orgIDToEAN[orgId]
-
-	if !ok {
-		return nil, nil
+	if orgId == "654321" {
+		return nil, &TenantNotFoundError{msg: "unknown tenant"}
 	}
 
-	return value, nil
+	value, ok := this.orgIDToEAN[orgId]
+
+	if ok {
+		return value, nil
+	}
+
+	return nil, nil // anemic tenant
+
 }
 
 func (this *mockTenantIDTranslator) RHCIDToTenantIDs(ctx context.Context, rhcID string) (orgId string, ean *string, err error) {

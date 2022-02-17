@@ -2,6 +2,7 @@ package private
 
 import (
 	"net/http"
+	"playbook-dispatcher/internal/api/connectors/tenants"
 	"playbook-dispatcher/internal/api/instrumentation"
 	"playbook-dispatcher/internal/api/middleware"
 	"playbook-dispatcher/internal/common/utils"
@@ -33,15 +34,24 @@ func (this *controllers) ApiInternalV2RunsCreate(ctx echo.Context) error {
 		context := utils.WithOrgId(ctx.Request().Context(), string(runInputV2.OrgId))
 		context = utils.WithRequestType(context, getRequestTypeLabel(runInputV2))
 
-		ean, err := this.translator.OrgIDToEAN(context, string(runInputV2.OrgId))
+		recipient := parseValidatedUUID(string(runInputV2.Recipient))
+
+		// translate org_id to EAN
+		// TODO: this will go away in the future
+		ean, err := this.getEAN(ctx.Request().Context(), string(runInputV2.OrgId), string(runInputV2.Recipient))
 		if err != nil {
+			if _, ok := err.(*tenants.TenantNotFoundError); ok {
+				return runCreateError(http.StatusNotFound)
+			}
+
+			utils.GetLogFromEcho(ctx).Error(err)
 			return runCreateError(http.StatusInternalServerError)
-		} else if ean == nil {
-			instrumentation.TenantAnemic(ctx, string(runInputV2.OrgId))
-			return runCreateError(http.StatusBadRequest)
 		}
 
-		recipient := parseValidatedUUID(string(runInputV2.Recipient))
+		if ean == nil {
+			utils.GetLogFromEcho(ctx).Warnw("Anemic tenant not supported", "org_id", string(runInputV2.OrgId))
+			return runCreateError(http.StatusBadRequest)
+		}
 
 		hosts := parseRunHosts(runInputV2.Hosts)
 
