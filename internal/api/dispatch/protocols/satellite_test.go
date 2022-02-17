@@ -12,7 +12,7 @@ import (
 
 var _ = Describe("Satellite Protocol", func() {
 	It("uses the correct directive", func() {
-		Expect(string(SatelliteProtocol.GetDirective())).To(Equal("playbook-sat"))
+		Expect(string(SatelliteProtocol.GetDirective())).To(Equal("rhc-cloud-connector-worker"))
 	})
 
 	Describe("metadata", func() {

@@ -11,7 +11,7 @@ import (
 
 var _ = Describe("Runner Protocol", func() {
 	It("uses the correct directive", func() {
-		Expect(string(RunnerProtocol.GetDirective())).To(Equal("playbook"))
+		Expect(string(RunnerProtocol.GetDirective())).To(Equal("rhc-worker-playbook"))
 	})
 
 	Describe("metadata", func() {

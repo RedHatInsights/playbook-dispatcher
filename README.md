@@ -202,7 +202,7 @@ For each Playbook run request a message with the following format is sent to Clo
 ```javascript
 {
     "account":"540155",
-    "directive":"playbook",
+    "directive":"rhc-worker-playbook",
     "recipient":"869fe355-4b69-43f6-82ff-d151dddee472", // id of the cloud connector client
     "metadata":{
         "crc_dispatcher_correlation_id":"e957564e-b823-4047-9ad7-0277dc61c88f", // see Non-standard event types for more details
@@ -222,7 +222,7 @@ For each Playbook run request a message with the following format is sent to Clo
 
 ```javascript
     "account":"540155",
-    "directive":"playbook-sat",
+    "directive":"rhc-cloud-connector-worker",
     "recipient":"869fe355-4b69-43f6-82ff-d151dddee472", // id of the cloud connector client
     "metadata":{
         "operation": "run",
