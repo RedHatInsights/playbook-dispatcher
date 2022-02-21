@@ -14,6 +14,24 @@ servers:
     description: relative path
 
 paths:
+  /internal/version:
+    get:
+      summary: Get API Version
+      description: >
+        Returns the current API Version
+      operationId: api.version
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Version'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
   /api/playbook-dispatcher/v1/runs:
     get:
       summary: List Playbook runs
@@ -71,6 +89,10 @@ paths:
 
 components:
   schemas:
+    Version:
+      description: The current API version
+      type: string
+      
     RunId:
       description: Unique identifier of a Playbook run
       type: string

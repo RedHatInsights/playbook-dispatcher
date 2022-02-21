@@ -24,6 +24,9 @@ type ServerInterface interface {
 	// List Playbook runs
 	// (GET /api/playbook-dispatcher/v1/runs)
 	ApiRunsList(ctx echo.Context, params ApiRunsListParams) error
+	// Get API version
+	// (GET /internal/version)
+	ApiVersion(ctx echo.Context, params ApiVersionParams) error
 }
 
 // ServerInterfaceWrapper converts echo contexts to parameters.
@@ -116,6 +119,12 @@ func (w *ServerInterfaceWrapper) ApiRunsList(ctx echo.Context) error {
 	return err
 }
 
+func (w *ServerInterfaceWrapper) ApiVersion(ctx echo.Context) error {
+	var params ApiVersionParams
+	err := w.Handler.ApiVersion(ctx, params)
+	return err
+}
+
 // This is a simple interface which specifies echo.Route addition functions which
 // are present on both echo.Echo and echo.Group, since we want to allow using
 // either of them for path registration
@@ -146,6 +155,7 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 
 	router.GET(baseURL+"/api/playbook-dispatcher/v1/run_hosts", wrapper.ApiRunHostsList)
 	router.GET(baseURL+"/api/playbook-dispatcher/v1/runs", wrapper.ApiRunsList)
+	router.GET(baseURL+"/internal/version", wrapper.ApiVersion)
 
 }
 

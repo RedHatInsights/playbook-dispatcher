@@ -119,6 +119,8 @@ func Start(
 	public.GET("/v1/run_hosts", publicController.ApiRunHostsList)
 	public.GET("/v1/runs", publicController.ApiRunsList)
 
+	internal.GET("/version", publicController.ApiVersion)
+
 	wg.Add(1)
 	go func() {
 		errors <- server.Start(fmt.Sprintf("0.0.0.0:%d", cfg.GetInt("web.port")))

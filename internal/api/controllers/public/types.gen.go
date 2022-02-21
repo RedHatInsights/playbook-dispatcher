@@ -271,6 +271,10 @@ type ApiRunsListParams struct {
 	Offset *Offset `json:"offset,omitempty"`
 }
 
+type ApiVersionParams struct {
+	
+}
+
 // Getter for additional properties for Labels. Returns the specified
 // element and whether it was found
 func (a Labels) Get(fieldName string) (value string, found bool) {
