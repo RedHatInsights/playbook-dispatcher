@@ -30,9 +30,16 @@ type Run struct {
 	Labels Labels
 	Events []byte `gorm:"default:[]"`
 
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	Timeout   int
+	PlaybookName   *string
+	PlaybookRunUrl string
+	Principal      *string
+	SatId          *uuid.UUID
+	SatOrgId       *string
+
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
+	Timeout      int
+	ResponseFull bool
 }
 
 type Labels map[string]string

@@ -102,6 +102,7 @@ func Start(
 	internal.Use(oapiMiddleware.OapiRequestValidator(privateSpec))
 	internal.POST("/dispatch", privateController.ApiInternalRunsCreate)
 	internal.POST("/v2/recipients/status", privateController.ApiInternalV2RecipientsStatus)
+	internal.POST("/v2/dispatch", privateController.ApiInternalV2RunsCreate)
 
 	publicController := public.CreateController(db, cloudConnectorClient)
 	public := server.Group("/api/playbook-dispatcher")

@@ -62,6 +62,9 @@ type Meta struct {
 	Total int `json:"total"`
 }
 
+// OrgId defines model for OrgId.
+type OrgId string
+
 // Run defines model for Run.
 type Run struct {
 
@@ -79,6 +82,9 @@ type Run struct {
 
 	// Additional metadata about the Playbook run. Can be used for filtering purposes.
 	Labels *Labels `json:"labels,omitempty"`
+
+	// Identifier of the tenant
+	OrgId *OrgId `json:"org_id,omitempty"`
 
 	// Identifier of the host to which a given Playbook is addressed
 	Recipient *RunRecipient `json:"recipient,omitempty"`

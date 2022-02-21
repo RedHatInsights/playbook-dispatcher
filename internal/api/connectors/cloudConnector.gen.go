@@ -165,8 +165,8 @@ type GetConnectionAccountParams struct {
 	Offset *Offset `json:"offset,omitempty"`
 }
 
-// V1ConnectionStatusMultitenantJSONBody defines parameters for V1ConnectionStatusMultitenant.
-type V1ConnectionStatusMultitenantJSONBody ConnectionStatusRequest
+// V1ConnectionStatusMultiorgJSONBody defines parameters for V1ConnectionStatusMultiorg.
+type V1ConnectionStatusMultiorgJSONBody ConnectionStatusRequest
 
 // PostMessageJSONBody defines parameters for PostMessage.
 type PostMessageJSONBody MessageRequest
@@ -183,8 +183,8 @@ type PostConnectionReconnectJSONRequestBody PostConnectionReconnectJSONBody
 // V1ConnectionStatusRequestBody defines body for V1ConnectionStatus for application/json ContentType.
 type V1ConnectionStatusJSONRequestBody V1ConnectionStatusJSONBody
 
-// V1ConnectionStatusMultitenantRequestBody defines body for V1ConnectionStatusMultitenant for application/json ContentType.
-type V1ConnectionStatusMultitenantJSONRequestBody V1ConnectionStatusMultitenantJSONBody
+// V1ConnectionStatusMultiorgRequestBody defines body for V1ConnectionStatusMultiorg for application/json ContentType.
+type V1ConnectionStatusMultiorgJSONRequestBody V1ConnectionStatusMultiorgJSONBody
 
 // PostMessageRequestBody defines body for PostMessage for application/json ContentType.
 type PostMessageJSONRequestBody PostMessageJSONBody
@@ -341,10 +341,10 @@ type ClientInterface interface {
 	// GetConnectionAccount request
 	GetConnectionAccount(ctx context.Context, account AccountID, params *GetConnectionAccountParams) (*http.Response, error)
 
-	// V1ConnectionStatusMultitenant request  with any body
-	V1ConnectionStatusMultitenantWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error)
+	// V1ConnectionStatusMultiorg request  with any body
+	V1ConnectionStatusMultiorgWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error)
 
-	V1ConnectionStatusMultitenant(ctx context.Context, body V1ConnectionStatusMultitenantJSONRequestBody) (*http.Response, error)
+	V1ConnectionStatusMultiorg(ctx context.Context, body V1ConnectionStatusMultiorgJSONRequestBody) (*http.Response, error)
 
 	// PostMessage request  with any body
 	PostMessageWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error)
@@ -502,8 +502,8 @@ func (c *Client) GetConnectionAccount(ctx context.Context, account AccountID, pa
 	return c.Client.Do(req)
 }
 
-func (c *Client) V1ConnectionStatusMultitenantWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error) {
-	req, err := NewV1ConnectionStatusMultitenantRequestWithBody(c.Server, contentType, body)
+func (c *Client) V1ConnectionStatusMultiorgWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error) {
+	req, err := NewV1ConnectionStatusMultiorgRequestWithBody(c.Server, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -517,8 +517,8 @@ func (c *Client) V1ConnectionStatusMultitenantWithBody(ctx context.Context, cont
 	return c.Client.Do(req)
 }
 
-func (c *Client) V1ConnectionStatusMultitenant(ctx context.Context, body V1ConnectionStatusMultitenantJSONRequestBody) (*http.Response, error) {
-	req, err := NewV1ConnectionStatusMultitenantRequest(c.Server, body)
+func (c *Client) V1ConnectionStatusMultiorg(ctx context.Context, body V1ConnectionStatusMultiorgJSONRequestBody) (*http.Response, error) {
+	req, err := NewV1ConnectionStatusMultiorgRequest(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -851,19 +851,19 @@ func NewGetConnectionAccountRequest(server string, account AccountID, params *Ge
 	return req, nil
 }
 
-// NewV1ConnectionStatusMultitenantRequest calls the generic V1ConnectionStatusMultitenant builder with application/json body
-func NewV1ConnectionStatusMultitenantRequest(server string, body V1ConnectionStatusMultitenantJSONRequestBody) (*http.Request, error) {
+// NewV1ConnectionStatusMultiorgRequest calls the generic V1ConnectionStatusMultiorg builder with application/json body
+func NewV1ConnectionStatusMultiorgRequest(server string, body V1ConnectionStatusMultiorgJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewV1ConnectionStatusMultitenantRequestWithBody(server, "application/json", bodyReader)
+	return NewV1ConnectionStatusMultiorgRequestWithBody(server, "application/json", bodyReader)
 }
 
-// NewV1ConnectionStatusMultitenantRequestWithBody generates requests for V1ConnectionStatusMultitenant with any type of body
-func NewV1ConnectionStatusMultitenantRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+// NewV1ConnectionStatusMultiorgRequestWithBody generates requests for V1ConnectionStatusMultiorg with any type of body
+func NewV1ConnectionStatusMultiorgRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	queryUrl, err := url.Parse(server)
@@ -984,10 +984,10 @@ type ClientWithResponsesInterface interface {
 	// GetConnectionAccount request
 	GetConnectionAccountWithResponse(ctx context.Context, account AccountID, params *GetConnectionAccountParams) (*GetConnectionAccountResponse, error)
 
-	// V1ConnectionStatusMultitenant request  with any body
-	V1ConnectionStatusMultitenantWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*V1ConnectionStatusMultitenantResponse, error)
+	// V1ConnectionStatusMultiorg request  with any body
+	V1ConnectionStatusMultiorgWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*V1ConnectionStatusMultiorgResponse, error)
 
-	V1ConnectionStatusMultitenantWithResponse(ctx context.Context, body V1ConnectionStatusMultitenantJSONRequestBody) (*V1ConnectionStatusMultitenantResponse, error)
+	V1ConnectionStatusMultiorgWithResponse(ctx context.Context, body V1ConnectionStatusMultiorgJSONRequestBody) (*V1ConnectionStatusMultiorgResponse, error)
 
 	// PostMessage request  with any body
 	PostMessageWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*PostMessageResponse, error)
@@ -1125,14 +1125,14 @@ func (r GetConnectionAccountResponse) StatusCode() int {
 	return 0
 }
 
-type V1ConnectionStatusMultitenantResponse struct {
+type V1ConnectionStatusMultiorgResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON201      *ConnectionStatusResponse
+	JSON200      *ConnectionStatusResponse
 }
 
 // Status returns HTTPResponse.Status
-func (r V1ConnectionStatusMultitenantResponse) Status() string {
+func (r V1ConnectionStatusMultiorgResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -1140,7 +1140,7 @@ func (r V1ConnectionStatusMultitenantResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r V1ConnectionStatusMultitenantResponse) StatusCode() int {
+func (r V1ConnectionStatusMultiorgResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -1255,21 +1255,21 @@ func (c *ClientWithResponses) GetConnectionAccountWithResponse(ctx context.Conte
 	return ParseGetConnectionAccountResponse(rsp)
 }
 
-// V1ConnectionStatusMultitenantWithBodyWithResponse request with arbitrary body returning *V1ConnectionStatusMultitenantResponse
-func (c *ClientWithResponses) V1ConnectionStatusMultitenantWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*V1ConnectionStatusMultitenantResponse, error) {
-	rsp, err := c.V1ConnectionStatusMultitenantWithBody(ctx, contentType, body)
+// V1ConnectionStatusMultiorgWithBodyWithResponse request with arbitrary body returning *V1ConnectionStatusMultiorgResponse
+func (c *ClientWithResponses) V1ConnectionStatusMultiorgWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*V1ConnectionStatusMultiorgResponse, error) {
+	rsp, err := c.V1ConnectionStatusMultiorgWithBody(ctx, contentType, body)
 	if err != nil {
 		return nil, err
 	}
-	return ParseV1ConnectionStatusMultitenantResponse(rsp)
+	return ParseV1ConnectionStatusMultiorgResponse(rsp)
 }
 
-func (c *ClientWithResponses) V1ConnectionStatusMultitenantWithResponse(ctx context.Context, body V1ConnectionStatusMultitenantJSONRequestBody) (*V1ConnectionStatusMultitenantResponse, error) {
-	rsp, err := c.V1ConnectionStatusMultitenant(ctx, body)
+func (c *ClientWithResponses) V1ConnectionStatusMultiorgWithResponse(ctx context.Context, body V1ConnectionStatusMultiorgJSONRequestBody) (*V1ConnectionStatusMultiorgResponse, error) {
+	rsp, err := c.V1ConnectionStatusMultiorg(ctx, body)
 	if err != nil {
 		return nil, err
 	}
-	return ParseV1ConnectionStatusMultitenantResponse(rsp)
+	return ParseV1ConnectionStatusMultiorgResponse(rsp)
 }
 
 // PostMessageWithBodyWithResponse request with arbitrary body returning *PostMessageResponse
@@ -1431,26 +1431,26 @@ func ParseGetConnectionAccountResponse(rsp *http.Response) (*GetConnectionAccoun
 	return response, nil
 }
 
-// ParseV1ConnectionStatusMultitenantResponse parses an HTTP response from a V1ConnectionStatusMultitenantWithResponse call
-func ParseV1ConnectionStatusMultitenantResponse(rsp *http.Response) (*V1ConnectionStatusMultitenantResponse, error) {
+// ParseV1ConnectionStatusMultiorgResponse parses an HTTP response from a V1ConnectionStatusMultiorgWithResponse call
+func ParseV1ConnectionStatusMultiorgResponse(rsp *http.Response) (*V1ConnectionStatusMultiorgResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &V1ConnectionStatusMultitenantResponse{
+	response := &V1ConnectionStatusMultiorgResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest ConnectionStatusResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
-		response.JSON201 = &dest
+		response.JSON200 = &dest
 
 	}
 

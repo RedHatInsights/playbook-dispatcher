@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"playbook-dispatcher/internal/common/utils"
-	"strconv"
 
 	"github.com/redhatinsights/platform-go-middlewares/request_id"
 
@@ -17,8 +16,6 @@ import (
 )
 
 const basePath = "/api/cloud-connector/v1/"
-
-var cloudConnectorDirective = "rhc-worker-playbook"
 
 type tenantKeyType int
 
@@ -33,8 +30,9 @@ type CloudConnectorClient interface {
 		ctx context.Context,
 		account string,
 		recipient uuid.UUID,
-		correlationId uuid.UUID,
 		url string,
+		directive string,
+		metadata map[string]string,
 	) (*string, bool, error)
 
 	GetConnectionStatus(
@@ -46,9 +44,7 @@ type CloudConnectorClient interface {
 }
 
 type cloudConnectorClientImpl struct {
-	returnUrl        string
-	responseInterval int
-	client           ClientWithResponsesInterface
+	client ClientWithResponsesInterface
 }
 
 func NewConnectorClientWithHttpRequestDoer(cfg *viper.Viper, doer HttpRequestDoer) CloudConnectorClient {
@@ -73,9 +69,7 @@ func NewConnectorClientWithHttpRequestDoer(cfg *viper.Viper, doer HttpRequestDoe
 	}
 
 	return &cloudConnectorClientImpl{
-		returnUrl:        cfg.GetString("return.url"),
-		responseInterval: cfg.GetInt("response.interval"),
-		client:           client,
+		client: client,
 	}
 }
 
@@ -91,19 +85,15 @@ func (this *cloudConnectorClientImpl) SendCloudConnectorRequest(
 	ctx context.Context,
 	account string,
 	recipient uuid.UUID,
-	correlationId uuid.UUID,
 	url string,
+	directive string,
+	metadata map[string]string,
 ) (id *string, notFound bool, err error) {
 	ctx = context.WithValue(ctx, accountKey, account)
 	recipientString := recipient.String()
-	metadata := map[string]string{
-		"return_url":                    this.returnUrl,
-		"response_interval":             strconv.Itoa(this.responseInterval),
-		"crc_dispatcher_correlation_id": correlationId.String(),
-	}
 
 	utils.GetLogFromContext(ctx).Debugw("Sending Cloud Connector message",
-		"directive", cloudConnectorDirective,
+		"directive", directive,
 		"metadata", metadata,
 		"payload", url,
 		"recipient", recipientString,
@@ -111,7 +101,7 @@ func (this *cloudConnectorClientImpl) SendCloudConnectorRequest(
 
 	res, err := this.client.PostMessageWithResponse(ctx, PostMessageJSONRequestBody{
 		Account:   &account,
-		Directive: &cloudConnectorDirective,
+		Directive: &directive,
 		Metadata: &MessageRequest_Metadata{
 			AdditionalProperties: metadata,
 		},
@@ -148,7 +138,7 @@ func (this *cloudConnectorClientImpl) GetConnectionStatus(
 		"recipient", recipient,
 	)
 
-	res, err := this.client.V1ConnectionStatusMultitenantWithResponse(ctx, V1ConnectionStatusMultitenantJSONRequestBody{
+	res, err := this.client.V1ConnectionStatusMultiorgWithResponse(ctx, V1ConnectionStatusMultiorgJSONRequestBody{
 		Account: &account,
 		NodeId:  &recipient,
 	})
@@ -157,9 +147,9 @@ func (this *cloudConnectorClientImpl) GetConnectionStatus(
 		return "", err
 	}
 
-	if res.JSON201 == nil {
+	if res.JSON200 == nil {
 		return "", unexpectedResponse(res.HTTPResponse)
 	}
 
-	return *res.JSON201.Status, nil
+	return *res.JSON200.Status, nil
 }

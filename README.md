@@ -47,6 +47,37 @@ The keys are configured via environment variables in form of `PSK_AUTH_<service 
 PSK_AUTH_REMEDIATIONS=xwKhCUzgJ8 ./app run
 ```
 
+### Dispatching of playbooks
+
+Use the `/internal/v2/dispatch` operation to dispatch a playbook.
+
+Sample request:
+```
+POST /internal/v2/dispatch
+[
+    {
+        "recipient": "dd018b96-da04-4651-84d1-187fa5c23f6c",
+        "org_id": "5318290",
+        "url": "http://console.redhat.com/api/remediations/v1/remediations/ddf9196f-4df9-4c7d-9443-98a6f328e256/playbook",
+        "name":"Apply fix",
+        "principal": "jharting",
+        "web_console_url": "http://console.redhat.com/insights/remediations/ddf9196f-4df9-4c7d-9443-98a6f328e256"
+    }
+]
+```
+
+Sample response:
+```
+[
+    {
+        "code": 201,
+        "id": "c7450666-5614-4826-9961-26c05968fece"
+    }
+]
+```
+
+See [API schema](./schema/private.openapi.yaml) for more details.
+
 ### Recipient status
 
 One of the operations available in the internal API is the recipient status.
@@ -110,7 +141,11 @@ The event headers make it possible to filter events without the need to parse th
 
 ## Expected input format
 
-The service expects the uploaded file to contain Ansible Runner [job events](https://ansible-runner.readthedocs.io/en/stable/intro.html#runner-artifact-job-events-host-and-playbook-events).
+The service expects the uploaded files to be in one of the two supported formats.
+
+### Ansible Runner events
+
+The uploaded file contains Ansible Runner [job events](https://ansible-runner.readthedocs.io/en/stable/intro.html#runner-artifact-job-events-host-and-playbook-events).
 Job events should be stored in the [newline-delimited JSON](https://jsonlines.org/) format.
 Each line in the file matches one job event.
 
@@ -126,7 +161,7 @@ Note that additional attributes (not defined by the schema) are allowed.
 For plain files, the expected content type of the uploaded file is `application/vnd.redhat.playbook.v1+jsonl`.
 For compressed files, the expected content type of the uploaded file is `application/vnd.redhat.playbook.v1+gzip` for gzip compressed files and `application/vnd.redhat.playbook.v1+xz` for xz compressed files.
 
-### Non-standard event types
+#### Non-standard event types
 
 Besides Ansible Runner event types (`playbook_*` and `runner_*`) the services recognizes two additional event types.
 
@@ -158,12 +193,16 @@ In addition, an error code and detailed information should be provided.
 ## Cloud Connector integration
 
 Playbook Dispatcher uses [Cloud Connector](https://github.com/RedHatInsights/cloud-connector) to invoke Playbooks on connected hosts.
-For each Playbook run request it sents the following message to Cloud Connector:
+Depending on the type of RHC worker used on the recipient, the message will be in one of the following formats.
+
+### rhc-worker-playbook
+
+For each Playbook run request a message with the following format is sent to Cloud Connector:
 
 ```javascript
 {
     "account":"540155",
-    "directive":"playbook",
+    "directive":"rhc-worker-playbook",
     "recipient":"869fe355-4b69-43f6-82ff-d151dddee472", // id of the cloud connector client
     "metadata":{
         "crc_dispatcher_correlation_id":"e957564e-b823-4047-9ad7-0277dc61c88f", // see Non-standard event types for more details
@@ -174,6 +213,45 @@ For each Playbook run request it sents the following message to Cloud Connector:
     "payload": "https://cloud.redhat.com/api/v1/remediations/1234/playbook?hosts=8f876606-5289-47f7-bb65-3966f0ba3ae1"
 }
 ```
+
+See [rhc-worker-playbook](https://github.com/RedHatInsights/rhc-worker-playbook) for details.
+
+### rhc-cloud-connector-worker
+
+For each Playbook run request a message with the following format is sent to Cloud Connector:
+
+```javascript
+    "account":"540155",
+    "directive":"rhc-cloud-connector-worker",
+    "recipient":"869fe355-4b69-43f6-82ff-d151dddee472", // id of the cloud connector client
+    "metadata":{
+        "operation": "run",
+        // URL to post responses to
+        "return_url":"https://cloud.redhat.com/api/ingress/v1/upload"
+        // identifier used to correlate the initial signal with response data messages
+        "correlation_id": "e957564e-b823-4047-9ad7-0277dc61c88f",
+        // human-readable name of the playbook run
+        "playbook_run_name": "Human-readable playbook run name",
+        // URL that the user can be redirected to for more information about the playbook run
+        "playbook_run_url": "https://console.redhat.com/insights/remediations/1234",
+        // identifier of the Satellite instance
+        "sat_id": "aa3b1faa-56f3-4d14-8258-615d11e20060",
+        // identifier of the organization within Satellite
+        "sat_org_id": "12345",
+        // the SHA-256 hash of the username of the user that initiated the playbook run. May be empty string if the playbook is not initiated by a user
+        "initiator_user_id": "4efca34c6d9ae05ef7c3d7a7424e6370d198159a841ae005084888a9a4529e27",
+        // the list of hosts (their host inventory identifiers as defined by host-inventory service) involved in the playbook run
+        "hosts": "4df562cb-596c-4f2b-9ed1-ff2e920706c5,b562a345-dba5-4f77-a7c9-a4e5ddb4a61a",
+        // how often the recipient should send back responses
+        "response_interval": "30",
+        // indicates whether the playbook run update data message should contain the full console output (true) or only the diff relative to the previous playbook run update message sent for the given host (false)
+        "response_full": "false"
+    },
+    // playbook to execute
+    "payload": "https://cloud.redhat.com/api/v1/remediations/1234/playbook"
+```
+
+See [rhc-cloud-connector-worker](https://github.com/ShimShtein/rhc-cloud-connector-worker) for details.
 
 ## Development
 

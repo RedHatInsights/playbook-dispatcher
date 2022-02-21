@@ -60,6 +60,12 @@ test: migrate-db
 sample_request:
 	curl -v -H "content-type: application/json" -H "Authorization: PSK xwKhCUzgJ8" -d "@examples/payload.json" http://localhost:8000/internal/dispatch
 
+sample_request_v2:
+	curl -v -H "content-type: application/json" -H "Authorization: PSK xwKhCUzgJ8" -d "@examples/payload-v2.json" http://localhost:8000/internal/v2/dispatch
+
+sample_request_sat:
+	curl -v -H "content-type: application/json" -H "Authorization: PSK xwKhCUzgJ8" -d "@examples/payload-sat.json" http://localhost:8000/internal/v2/dispatch
+
 sample_recipient_status:
 	curl -v -H "content-type: application/json" -H "Authorization: PSK xwKhCUzgJ8" -d '[{"recipient": "35720ecb-bc23-4b06-a8cd-f0c264edf2c1", "org_id": "5318290"}]' http://localhost:8000/internal/v2/recipients/status
 

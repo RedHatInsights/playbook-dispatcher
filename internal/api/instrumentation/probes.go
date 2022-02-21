@@ -14,32 +14,33 @@ import (
 )
 
 const (
-	labelParseUuid             = "parse_uuid"
-	labelCorrelationId         = "correlation_id"
-	labelMessageId             = "message_id"
 	labelDb                    = "db"
 	labelPlaybookRunCreate     = "playbook_run_create"
 	labelPlaybookRunHostCreate = "playbook_run_host_create"
 	labelPlaybookRunRead       = "playbook_run_read"
 	labelNoConnection          = "no_connection"
 	labelErrorGeneric          = "error"
+	labelTenantAnemic          = "anemic-tenant"
+	labelSatellite             = "satellite"
+	LabelAnsibleRequest        = "ansible"
+	LabelSatRequest            = "satellite"
 )
 
 var (
 	validationFailureTotal = promauto.NewCounterVec(prometheus.CounterOpts{
 		Name: "api_validation_failure_total",
 		Help: "The total number of invalid requests",
-	}, []string{"type", "subtype"})
+	}, []string{"type"})
 
 	errorTotal = promauto.NewCounterVec(prometheus.CounterOpts{
 		Name: "api_error_total",
 		Help: "The total number of errors",
-	}, []string{"type", "subtype"})
+	}, []string{"type", "subtype", "request"})
 
 	connectorErrorTotal = promauto.NewCounterVec(prometheus.CounterOpts{
 		Name: "api_cloud_connector_error_total",
 		Help: "The total number of errors talking to cloud connector",
-	}, []string{"type"})
+	}, []string{"type", "request"})
 
 	connectorSentTotal = promauto.NewCounter(prometheus.CounterOpts{
 		Name: "api_cloud_connector_sent_total",
@@ -59,22 +60,27 @@ var (
 	runCreatedTotal = promauto.NewCounterVec(prometheus.CounterOpts{
 		Name: "api_run_created_total",
 		Help: "The total number of created playbook runs",
-	}, []string{"dispatching_service"})
+	}, []string{"dispatching_service", "request"})
 )
 
-func InvalidRecipientId(ctx echo.Context, value string, err error) {
-	utils.GetLogFromEcho(ctx).Errorw("Error parsing recipient id", "error", err, "value", value)
-	validationFailureTotal.WithLabelValues(labelParseUuid, labelCorrelationId).Inc()
+func TenantAnemic(ctx echo.Context, orgID string) {
+	utils.GetLogFromEcho(ctx).Errorw("Rejecting request for anemic tenant", "org_id", orgID)
+	validationFailureTotal.WithLabelValues(labelTenantAnemic).Inc()
 }
 
-func CloudConnectorRequestError(ctx context.Context, err error, recipient uuid.UUID) {
+func InvalidSatelliteRequest(ctx echo.Context, err error) {
+	utils.GetLogFromEcho(ctx).Errorw("Invalid Satellite request", "error", err)
+	validationFailureTotal.WithLabelValues(labelSatellite).Inc()
+}
+
+func CloudConnectorRequestError(ctx context.Context, err error, recipient uuid.UUID, requestType string) {
 	utils.GetLogFromContext(ctx).Errorw("Error sending message to cloud connector", "error", err, "recipient", recipient)
-	connectorErrorTotal.WithLabelValues(labelErrorGeneric).Inc()
+	connectorErrorTotal.WithLabelValues(labelErrorGeneric, requestType).Inc()
 }
 
-func CloudConnectorNoConnection(ctx context.Context, recipient uuid.UUID) {
+func CloudConnectorNoConnection(ctx context.Context, recipient uuid.UUID, requestType string) {
 	utils.GetLogFromContext(ctx).Errorw("Cloud connector reporting no connection for recipient", "recipient", recipient)
-	connectorErrorTotal.WithLabelValues(labelNoConnection).Inc()
+	connectorErrorTotal.WithLabelValues(labelNoConnection, requestType).Inc()
 }
 
 func CloudConnectorOK(ctx context.Context, recipient uuid.UUID, messageId *string) {
@@ -82,14 +88,14 @@ func CloudConnectorOK(ctx context.Context, recipient uuid.UUID, messageId *strin
 	connectorSentTotal.Inc()
 }
 
-func PlaybookRunCreateError(ctx context.Context, err error, run *dbModel.Run) {
+func PlaybookRunCreateError(ctx context.Context, err error, run *dbModel.Run, requestType string) {
 	utils.GetLogFromContext(ctx).Errorw("Error creating run", "error", err, "run", *run)
-	errorTotal.WithLabelValues(labelDb, labelPlaybookRunCreate).Inc()
+	errorTotal.WithLabelValues(labelDb, labelPlaybookRunCreate, requestType).Inc()
 }
 
-func PlaybookRunHostCreateError(ctx context.Context, err error, data []dbModel.RunHost) {
+func PlaybookRunHostCreateError(ctx context.Context, err error, data []dbModel.RunHost, requestType string) {
 	utils.GetLogFromContext(ctx).Errorw("Error creating run host", "error", err, "data", data)
-	errorTotal.WithLabelValues(labelDb, labelPlaybookRunHostCreate).Inc()
+	errorTotal.WithLabelValues(labelDb, labelPlaybookRunHostCreate, requestType).Inc()
 }
 
 func PlaybookRunReadError(ctx echo.Context, err error) {
@@ -107,17 +113,27 @@ func RbacRejected(ctx echo.Context) {
 	rbacRejectedTotal.Inc()
 }
 
-func RunCreated(ctx context.Context, recipient uuid.UUID, runId uuid.UUID, payload string, service string) {
+func RunCreated(ctx context.Context, recipient uuid.UUID, runId uuid.UUID, payload string, service string, requestType string) {
 	utils.GetLogFromContext(ctx).Infow("Created new playbook run", "recipient", recipient.String(), "run_id", runId.String(), "payload", string(payload), "service", service)
-	runCreatedTotal.WithLabelValues(service).Inc()
+	runCreatedTotal.WithLabelValues(service, requestType).Inc()
 }
 
 func Start() {
 	// initialize label values
 	// https://www.robustperception.io/existential-issues-with-metrics
-	validationFailureTotal.WithLabelValues(labelParseUuid, labelCorrelationId)
-	validationFailureTotal.WithLabelValues(labelParseUuid, labelMessageId)
-	errorTotal.WithLabelValues(labelDb, labelPlaybookRunCreate)
-	errorTotal.WithLabelValues(labelDb, labelPlaybookRunHostCreate)
-	errorTotal.WithLabelValues(labelDb, labelPlaybookRunRead)
+	validationFailureTotal.WithLabelValues(labelTenantAnemic)
+	validationFailureTotal.WithLabelValues(labelSatellite)
+
+	errorTotal.WithLabelValues(labelDb, labelPlaybookRunCreate, LabelAnsibleRequest)
+	errorTotal.WithLabelValues(labelDb, labelPlaybookRunHostCreate, LabelAnsibleRequest)
+	errorTotal.WithLabelValues(labelDb, labelPlaybookRunRead, LabelAnsibleRequest)
+
+	errorTotal.WithLabelValues(labelDb, labelPlaybookRunCreate, LabelSatRequest)
+	errorTotal.WithLabelValues(labelDb, labelPlaybookRunHostCreate, LabelSatRequest)
+	errorTotal.WithLabelValues(labelDb, labelPlaybookRunRead, LabelSatRequest)
+
+	connectorErrorTotal.WithLabelValues(labelErrorGeneric, LabelAnsibleRequest)
+	connectorErrorTotal.WithLabelValues(labelErrorGeneric, LabelSatRequest)
+	connectorErrorTotal.WithLabelValues(labelNoConnection, LabelAnsibleRequest)
+	connectorErrorTotal.WithLabelValues(labelNoConnection, LabelSatRequest)
 }

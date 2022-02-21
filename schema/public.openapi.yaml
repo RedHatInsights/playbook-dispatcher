@@ -120,6 +120,13 @@ components:
       minLength: 1
       maxLength: 10
 
+    OrgId:
+      description: Identifier of the tenant
+      type: string
+      minLength: 1
+      maxLength: 10
+      example: "5318290"
+
     Service:
       description: Service that triggered the given Playbook run
       type: string
@@ -179,6 +186,8 @@ components:
           $ref: '#/components/schemas/RunId'
         account:
           $ref: '#/components/schemas/Account'
+        org_id:
+          $ref: '#/components/schemas/OrgId'
         recipient:
           $ref: '#/components/schemas/RunRecipient'
         correlation_id:

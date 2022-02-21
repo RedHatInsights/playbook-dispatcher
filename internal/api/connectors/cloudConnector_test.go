@@ -20,13 +20,27 @@ import (
 	"go.uber.org/zap"
 )
 
+var (
+	ansibleDirective = "playbook"
+	satDirective     = "playbook-sat"
+)
+
+func ansibleMetadata(correlationId uuid.UUID) map[string]string {
+	return map[string]string{
+		"crc_dispatcher_correlation_id": correlationId.String(),
+		"return_url":                    "http://example.com/return",
+		"response_interval":             "60",
+	}
+}
+
 var _ = Describe("Cloud Connector", func() {
 	It("interprets the response correctly", func() {
 		doer := test.MockHttpClient(201, `{"id": "871e31aa-7d41-43e3-8ef7-05706a0ee34a"}`)
 
 		client := NewConnectorClientWithHttpRequestDoer(config.Get(), &doer)
 		ctx := utils.SetLog(test.TestContext(), zap.NewNop().Sugar())
-		result, notFound, err := client.SendCloudConnectorRequest(ctx, "1234", uuid.New(), uuid.New(), "http://example.com")
+		correlationId := uuid.New()
+		result, notFound, err := client.SendCloudConnectorRequest(ctx, "1234", uuid.New(), "http://example.com", ansibleDirective, ansibleMetadata(correlationId))
 		Expect(notFound).To(BeFalse())
 		Expect(err).ToNot(HaveOccurred())
 		Expect(*result).To(Equal("871e31aa-7d41-43e3-8ef7-05706a0ee34a"))
@@ -37,7 +51,8 @@ var _ = Describe("Cloud Connector", func() {
 
 		client := NewConnectorClientWithHttpRequestDoer(config.Get(), &doer)
 		ctx := utils.SetLog(test.TestContext(), zap.NewNop().Sugar())
-		_, notFound, err := client.SendCloudConnectorRequest(ctx, "1234", uuid.New(), uuid.New(), "http://example.com")
+		correlationId := uuid.New()
+		_, notFound, err := client.SendCloudConnectorRequest(ctx, "1234", uuid.New(), "http://example.com", ansibleDirective, ansibleMetadata(correlationId))
 		Expect(notFound).To(BeFalse())
 		Expect(err).To(HaveOccurred())
 		Expect(err.Error()).To(ContainSubstring(`unexpected status code "400"`))
@@ -48,7 +63,8 @@ var _ = Describe("Cloud Connector", func() {
 
 		client := NewConnectorClientWithHttpRequestDoer(config.Get(), &doer)
 		ctx := utils.SetLog(test.TestContext(), zap.NewNop().Sugar())
-		id, notFound, err := client.SendCloudConnectorRequest(ctx, "1234", uuid.New(), uuid.New(), "http://example.com")
+		correlationId := uuid.New()
+		id, notFound, err := client.SendCloudConnectorRequest(ctx, "1234", uuid.New(), "http://example.com", ansibleDirective, ansibleMetadata(correlationId))
 		Expect(id).To(BeNil())
 		Expect(notFound).To(BeTrue())
 		Expect(err).ToNot(HaveOccurred())
@@ -60,16 +76,10 @@ var _ = Describe("Cloud Connector", func() {
 		url := "http://example.com"
 		correlationId := uuid.New()
 
-		returnUrl := "http://example.com/return"
-		responseInterval := 60
-		cfg := config.Get()
-		cfg.Set("return.url", returnUrl)
-		cfg.Set("response.interval", responseInterval)
-
-		client := NewConnectorClientWithHttpRequestDoer(cfg, &doer)
+		client := NewConnectorClientWithHttpRequestDoer(config.Get(), &doer)
 		recipient := uuid.New()
 		ctx := utils.SetLog(test.TestContext(), zap.NewNop().Sugar())
-		result, notFound, err := client.SendCloudConnectorRequest(ctx, "1234", recipient, correlationId, url)
+		result, notFound, err := client.SendCloudConnectorRequest(ctx, "1234", recipient, url, ansibleDirective, ansibleMetadata(correlationId))
 		Expect(notFound).To(BeFalse())
 		Expect(err).ToNot(HaveOccurred())
 		Expect(*result).To(Equal("871e31aa-7d41-43e3-8ef7-05706a0ee34a"))
@@ -81,15 +91,68 @@ var _ = Describe("Cloud Connector", func() {
 		Expect(err).ToNot(HaveOccurred())
 
 		Expect(parsedRequest["account"]).To(Equal("1234"))
-		Expect(parsedRequest["directive"]).To(Equal("rhc-worker-playbook"))
+		Expect(parsedRequest["directive"]).To(Equal("playbook"))
 		Expect(parsedRequest["recipient"]).To(Equal(recipient.String()))
 		Expect(parsedRequest["payload"]).To(Equal(url))
 
 		metadata, ok := parsedRequest["metadata"].(map[string]interface{})
 		Expect(ok).To(BeTrue())
 		Expect(metadata["crc_dispatcher_correlation_id"]).To(Equal(correlationId.String()))
-		Expect(metadata["return_url"]).To(Equal(returnUrl))
-		Expect(metadata["response_interval"]).To(Equal(strconv.Itoa(responseInterval)))
+		Expect(metadata["return_url"]).To(Equal("http://example.com/return"))
+		Expect(metadata["response_interval"]).To(Equal(strconv.Itoa(60)))
+	})
+
+	It("constructs a correct satellite request", func() {
+		doer := test.MockHttpClient(201, `{"id": "871e31aa-7d41-43e3-8ef7-05706a0ee34a"}`)
+
+		url := "http://example.com"
+		correlationId := uuid.New()
+
+		satMetadata := map[string]string{
+			"operation":         "run",
+			"correlation_id":    correlationId.String(),
+			"playbook_run_name": "test-playbook",
+			"playbook_run_url":  "http://example.com",
+			"sat_id":            "16372e6f-1c18-4cdb-b780-50ab4b88e74b",
+			"sat_org_id":        "123",
+			"initiator_user_id": "test-user",
+			"hosts":             "16372e6f-1c18-4cdb-b780-50ab4b88e74b,baf2bb2f-06a3-42cc-ae7b-68ccc8e2a344",
+			"return_url":        "http://example.com/return",
+			"response_interval": "60",
+		}
+
+		client := NewConnectorClientWithHttpRequestDoer(config.Get(), &doer)
+		recipient := uuid.New()
+		ctx := utils.SetLog(test.TestContext(), zap.NewNop().Sugar())
+		result, notFound, err := client.SendCloudConnectorRequest(ctx, "1234", recipient, url, satDirective, satMetadata)
+		Expect(notFound).To(BeFalse())
+		Expect(err).ToNot(HaveOccurred())
+		Expect(*result).To(Equal("871e31aa-7d41-43e3-8ef7-05706a0ee34a"))
+
+		bytes, err := ioutil.ReadAll(doer.Request.Body)
+		Expect(err).ToNot(HaveOccurred())
+		parsedRequest := make(map[string]interface{})
+		err = json.Unmarshal(bytes, &parsedRequest)
+		Expect(err).ToNot(HaveOccurred())
+
+		Expect(parsedRequest["account"]).To(Equal("1234"))
+		Expect(parsedRequest["directive"]).To(Equal("playbook-sat"))
+		Expect(parsedRequest["recipient"]).To(Equal(recipient.String()))
+		Expect(parsedRequest["payload"]).To(Equal(url))
+
+		metadata, ok := parsedRequest["metadata"].(map[string]interface{})
+		Expect(ok).To(BeTrue())
+		Expect(metadata["return_url"]).To(Equal("http://example.com/return"))
+		Expect(metadata["response_interval"]).To(Equal(strconv.Itoa(60)))
+
+		Expect(metadata["operation"]).To(Equal("run"))
+		Expect(metadata["correlation_id"]).To(Equal(correlationId.String()))
+		Expect(metadata["playbook_run_name"]).To(Equal(satMetadata["playbook_run_name"]))
+		Expect(metadata["playbook_run_url"]).To(Equal(satMetadata["playbook_run_url"]))
+		Expect(metadata["sat_id"]).To(Equal(satMetadata["sat_id"]))
+		Expect(metadata["sat_org_id"]).To(Equal(satMetadata["sat_org_id"]))
+		Expect(metadata["initiator_user_id"]).To(Equal(satMetadata["initiator_user_id"]))
+		Expect(metadata["hosts"]).To(Equal(satMetadata["hosts"]))
 	})
 
 	It("forwards identity header", func() {
@@ -99,7 +162,8 @@ var _ = Describe("Cloud Connector", func() {
 
 		client := NewConnectorClientWithHttpRequestDoer(config.Get(), &doer)
 		recipient := uuid.New()
-		result, notFound, err := client.SendCloudConnectorRequest(ctx, "1234", recipient, uuid.New(), "http://example.com")
+		correlationId := uuid.New()
+		result, notFound, err := client.SendCloudConnectorRequest(ctx, "1234", recipient, "http://example.com", ansibleDirective, ansibleMetadata(correlationId))
 		Expect(err).ToNot(HaveOccurred())
 		Expect(notFound).To(BeFalse())
 		Expect(*result).To(Equal("871e31aa-7d41-43e3-8ef7-05706a0ee34a"))
@@ -111,7 +175,7 @@ var _ = Describe("Cloud Connector", func() {
 	Describe("connection status", func() {
 		DescribeTable("interprets the response correctly",
 			func(status string, expectedStatus ConnectionStatus) {
-				doer := test.MockHttpClient(201, fmt.Sprintf(`{"status": "%s"}`, status))
+				doer := test.MockHttpClient(200, fmt.Sprintf(`{"status": "%s"}`, status))
 
 				client := NewConnectorClientWithHttpRequestDoer(config.Get(), &doer)
 				ctx := utils.SetLog(test.TestContext(), zap.NewNop().Sugar())
@@ -126,7 +190,7 @@ var _ = Describe("Cloud Connector", func() {
 		)
 
 		It("constructs a correct request", func() {
-			doer := test.MockHttpClient(201, `{"status": "connected"}`)
+			doer := test.MockHttpClient(200, `{"status": "connected"}`)
 
 			client := NewConnectorClientWithHttpRequestDoer(config.Get(), &doer)
 			ctx := utils.SetLog(test.TestContext(), zap.NewNop().Sugar())

@@ -16,6 +16,10 @@ import (
 	. "github.com/onsi/gomega"
 )
 
+var (
+	ansibleHost = "localhost"
+)
+
 func dispatch(payload *ApiInternalRunsCreateJSONRequestBody) (*RunsCreated, *ApiInternalRunsCreateResponse) {
 	resp, err := client.ApiInternalRunsCreate(test.TestContext(), *payload)
 	Expect(err).ToNot(HaveOccurred())
@@ -26,18 +30,20 @@ func dispatch(payload *ApiInternalRunsCreateJSONRequestBody) (*RunsCreated, *Api
 	return res.JSON207, res
 }
 
-var _ = Describe("runsCreate", func() {
+var _ = Describe("runsCreate V1", func() {
 	Describe("create run happy path", func() {
 		db := test.WithDatabase()
 
 		It("creates a new playbook run", func() {
 			recipient := uuid.New()
 			url := "http://example.com"
+
 			payload := ApiInternalRunsCreateJSONRequestBody{
 				RunInput{
 					Recipient: public.RunRecipient(recipient.String()),
 					Account:   public.Account(accountNumber()),
 					Url:       public.Url(url),
+					Hosts:     &RunInputHosts{{AnsibleHost: &ansibleHost}},
 				},
 			}
 
@@ -59,6 +65,44 @@ var _ = Describe("runsCreate", func() {
 			Expect(run.Timeout).To(Equal(3600))
 		})
 
+		It("404s if the recipient is not known", func() {
+			recipient := uuid.MustParse("b5fbb740-5590-45a4-8240-89192dc49199")
+			url := "http://example.com"
+
+			payload := ApiInternalRunsCreateJSONRequestBody{
+				RunInput{
+					Recipient: public.RunRecipient(recipient.String()),
+					Account:   public.Account(accountNumber()),
+					Url:       public.Url(url),
+					Hosts:     &RunInputHosts{{AnsibleHost: &ansibleHost}},
+				},
+			}
+
+			runs, _ := dispatch(&payload)
+
+			Expect(*runs).To(HaveLen(1))
+			Expect((*runs)[0].Code).To(Equal(404))
+		})
+
+		It("500s on cloud connector error", func() {
+			recipient := uuid.MustParse("b31955fb-3064-4f56-ae44-a1c488a28587")
+			url := "http://example.com"
+
+			payload := ApiInternalRunsCreateJSONRequestBody{
+				RunInput{
+					Recipient: public.RunRecipient(recipient.String()),
+					Account:   public.Account(accountNumber()),
+					Url:       public.Url(url),
+					Hosts:     &RunInputHosts{{AnsibleHost: &ansibleHost}},
+				},
+			}
+
+			runs, _ := dispatch(&payload)
+
+			Expect(*runs).To(HaveLen(1))
+			Expect((*runs)[0].Code).To(Equal(500))
+		})
+
 		It("stores the principal as owning service", func() {
 			recipient := uuid.New()
 			url := "http://example.com"
@@ -67,6 +111,7 @@ var _ = Describe("runsCreate", func() {
 					Recipient: public.RunRecipient(recipient.String()),
 					Account:   public.Account(accountNumber()),
 					Url:       public.Url(url),
+					Hosts:     &RunInputHosts{{AnsibleHost: &ansibleHost}},
 				},
 			}
 
@@ -96,6 +141,7 @@ var _ = Describe("runsCreate", func() {
 					Recipient: public.RunRecipient(recipient.String()),
 					Account:   public.Account(accountNumber()),
 					Url:       public.Url(url),
+					Hosts:     &RunInputHosts{{AnsibleHost: &ansibleHost}},
 				},
 			}
 
@@ -144,5 +190,4 @@ var _ = Describe("runsCreate", func() {
 			"Number must be most 604800",
 		),
 	)
-
 })
