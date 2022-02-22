@@ -68,26 +68,6 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '403':
           $ref: '#/components/responses/Forbidden'
-  
-  /internal/version:
-    get:
-      summary: Get repo API version
-      description: >
-        Returns 
-      operationId: api.version
-
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Version'
-
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '403':
-          $ref: '#/components/responses/Forbidden'
 
 components:
   schemas:

@@ -105,9 +105,6 @@ func Start(
 	internal.POST("/v2/dispatch", privateController.ApiInternalV2RunsCreate)
 
 	publicController := public.CreateController(db, cloudConnectorClient)
-
-	internal.GET("/version", publicController.ApiVersion)
-
 	public := server.Group("/api/playbook-dispatcher")
 	public.Use(echo.WrapMiddleware(identity.EnforceIdentity))
 	public.Use(echo.WrapMiddleware(middleware.EnforceIdentityType))
