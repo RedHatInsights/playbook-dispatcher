@@ -137,6 +137,9 @@ type RunInputV2 struct {
 // RunsCreated defines model for RunsCreated.
 type RunsCreated []RunCreated
 
+// Version defines model for Version.
+type Version string
+
 // WebConsoleUrl defines model for WebConsoleUrl.
 type WebConsoleUrl string
 

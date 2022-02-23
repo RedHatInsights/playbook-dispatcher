@@ -25,6 +25,9 @@ type ServerInterface interface {
 	// Obtain connection status of recipient(s)
 	// (POST /internal/v2/recipients/status)
 	ApiInternalV2RecipientsStatus(ctx echo.Context) error
+	// Get Version
+	// (GET /internal/version)
+	ApiInternalVersion(ctx echo.Context) error
 }
 
 // ServerInterfaceWrapper converts echo contexts to parameters.
@@ -59,6 +62,15 @@ func (w *ServerInterfaceWrapper) ApiInternalV2RecipientsStatus(ctx echo.Context)
 	return err
 }
 
+// ApiInternalVersion converts echo context to params.
+func (w *ServerInterfaceWrapper) ApiInternalVersion(ctx echo.Context) error {
+	var err error
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.ApiInternalVersion(ctx)
+	return err
+}
+
 // This is a simple interface which specifies echo.Route addition functions which
 // are present on both echo.Echo and echo.Group, since we want to allow using
 // either of them for path registration
@@ -90,39 +102,41 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.POST(baseURL+"/internal/dispatch", wrapper.ApiInternalRunsCreate)
 	router.POST(baseURL+"/internal/v2/dispatch", wrapper.ApiInternalV2RunsCreate)
 	router.POST(baseURL+"/internal/v2/recipients/status", wrapper.ApiInternalV2RecipientsStatus)
+	router.GET(baseURL+"/internal/version", wrapper.ApiInternalVersion)
 
 }
 
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
+	"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",
+	"P6ktCb3kHwcXI36HibPCKIFvh6wmqX7G5Ko+fQ5XQ7D7EauVDbnzEaQ1vW6hBZkz6d2QTNyeW9SG6pF1",
+	"eNfDj+aaP3l+Pbjf+9X5EWHoi/Gk8uJZPemViqR1U10YS2rUDYLvMGHB/67t1NhNNTnJjBVK40RZGY9u",
+	"L3fIckKRuWKhQk1iiStBtN2JAzPVdovGYjYfAJOPyOkW3QNnrpq1AKQ+b7EAEm6mUr9j/jeN2Q7sPFUF",
+	"H037bbX7O5kSbOpaazIMmhGN5Uo7I6Sb35py0BAZpmSoom37zPYE7EqoKmNX9TelnVWWrI/elMBrGQbW",
+	"OtT7JjH4ch7PYw9P9ZXhG34xj+cXLnXB7nwCLihQL7LA0YPxZJVrZZqeDZVxtt1T2VdXY5VGZ5uutzGZ",
+	"O+jaAo2p0plxdjnM99G/zviGPympMaa7MLy+iWjs9yo7fNYG51OvWd3yHv1q4rqmuaw3E+Ftef/+HWuA",
+	"6C2ZVvF3X2271EeLiR3Tzb+crus4/hifVrFFb/Xlt1FVUYA+9GLZRdIf6NJhv/qDZcTt6n+fE7erP1dW",
+	"fHaI27pmFqZdSUzHerxE6C/6AptvzLcMNDLYAwlIBJ6JaCs+LEQeOq7jNcrnxjN+QK2CE45jPR4CAm4S",
+	"CyT781KYP1Q+COj9rOkajy2ezJM6P9zMtSdTr4d9P8LuwLCkImFZrlVx+tYHaf9lHE65vxHxQG7+J1o2",
+	"EOF6A9TG7/x8Y8oXPBrtYAVY2iNzhZof3xz/EwAA//9fuMmJ4RgAAA==",
 }
 
 // GetSwagger returns the Swagger specification corresponding to the generated code
