@@ -379,6 +379,16 @@ var _ = Describe("runsList", func() {
 			Expect(*(*runs).Links.Previous).To(Equal("/api/playbook-dispatcher/v1/runs?limit=1&offset=0"))
 		})
 
+		It("returns links when paginating 2", func() {
+			runs, res := listRuns("limit", 2, "offset", 1)
+			Expect(res.StatusCode()).To(Equal(http.StatusOK))
+
+			Expect((*runs).Links.First).To(Equal("/api/playbook-dispatcher/v1/runs?limit=2&offset=0"))
+			Expect((*runs).Links.Last).To(Equal("/api/playbook-dispatcher/v1/runs?limit=2&offset=4"))
+			Expect(*(*runs).Links.Next).To(Equal("/api/playbook-dispatcher/v1/runs?limit=2&offset=3"))
+			Expect(*(*runs).Links.Previous).To(Equal("/api/playbook-dispatcher/v1/runs?limit=2&offset=0"))
+		})
+
 		It("propagates other query parameters", func() {
 			runs, res := listRuns("limit", 1, "offset", 1, "sort_by", "created_at:desc", "fields[data]", "id", "filter[status]", "running")
 			Expect(res.StatusCode()).To(Equal(http.StatusOK))
