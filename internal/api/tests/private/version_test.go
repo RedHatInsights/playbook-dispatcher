@@ -5,7 +5,6 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"playbook-dispatcher/internal/common/config"
 	"playbook-dispatcher/internal/common/utils/test"
 
 	. "github.com/onsi/ginkgo"
@@ -26,14 +25,11 @@ var _ = Describe("Version", func() {
 			data, err := ioutil.ReadAll(res.Body)
 			Expect(err).ToNot(HaveOccurred())
 
-			cfg := config.Get()
-			version := cfg.GetString("build.commit")
-
 			// Remove quotes and newline from the returned data
 			data = bytes.Replace(data, []byte("\""), []byte(""), 2)
 			data = bytes.Replace(data, []byte("\n"), []byte(""), 1)
 
-			Expect(string(data)).To(BeEquivalentTo(version))
+			Expect(string(data)).To(BeEquivalentTo(buildCommitDefault))
 
 		})
 	})
