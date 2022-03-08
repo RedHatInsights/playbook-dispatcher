@@ -31,7 +31,7 @@ func Max(x, y int) int {
 		return x
 	}
 
-	return x
+	return y
 }
 
 func StringRef(value string) *string {
