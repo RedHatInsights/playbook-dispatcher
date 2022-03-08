@@ -18,7 +18,7 @@ const (
 	pskKey = "pskKey"
 
 	webConsoleUrlDefault = "https://example.com"
-	buildCommitDefault   = "unknown"
+	testBuildCommit      = "testV1"
 )
 
 var (
@@ -46,7 +46,7 @@ func TestConfig(t *testing.T) {
 	cfg.Set("cloud.connector.rps", 5)
 	cfg.Set("cloud.connector.req.bucket", 5)
 
-	cfg.Set("build.commit", buildCommitDefault)
+	cfg.Set("build.commit", testBuildCommit)
 
 	cfg.Set("web.console.url.default", webConsoleUrlDefault)
 

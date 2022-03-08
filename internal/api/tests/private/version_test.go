@@ -29,7 +29,7 @@ var _ = Describe("Version", func() {
 			data = bytes.Replace(data, []byte("\""), []byte(""), 2)
 			data = bytes.Replace(data, []byte("\n"), []byte(""), 1)
 
-			Expect(string(data)).To(BeEquivalentTo(buildCommitDefault))
+			Expect(string(data)).To(BeEquivalentTo(testBuildCommit))
 
 		})
 	})
