@@ -48,8 +48,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Version'
-        '400':
-          $ref: '#/components/responses/BadRequest'
 
   /internal/v2/recipients/status:
     post:
