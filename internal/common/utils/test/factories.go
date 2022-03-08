@@ -87,6 +87,7 @@ func NewRunWithStatus(account string, status string) dbModel.Run {
 		Status:        status,
 		Timeout:       3600,
 		Service:       "test",
+		ResponseFull:  true,
 	}
 }
 

@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strconv"
 	"playbook-dispatcher/internal/common/ansible"
 	"playbook-dispatcher/internal/common/constants"
 	kafkaUtils "playbook-dispatcher/internal/common/kafka"
@@ -13,6 +12,7 @@ import (
 	"playbook-dispatcher/internal/common/satellite"
 	"playbook-dispatcher/internal/common/utils"
 	"playbook-dispatcher/internal/response-consumer/instrumentation"
+	"strconv"
 
 	k "github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/google/uuid"
@@ -83,13 +83,23 @@ func (this *handler) onMessage(ctx context.Context, msg *k.Message) {
 			Where("account = ?", value.Account).
 			Where("correlation_id = ?", correlationId)
 
-		if selectResult := baseQuery.Select("id").First(&run); selectResult.Error != nil {
+		if selectResult := baseQuery.Select("id", "status", "response_full").First(&run); selectResult.Error != nil {
 			if errors.Is(selectResult.Error, gorm.ErrRecordNotFound) {
 				return nil
 			}
 
 			utils.GetLogFromContext(ctx).Errorw("Error fetching run from db", "error", selectResult.Error)
 			return selectResult.Error
+		}
+
+		if requestType == satMessageHeaderValue {
+			if !run.ResponseFull {
+				status = checkSatStatusPartial(value.SatEvents)
+			}
+
+			if run.Status == db.RunStatusFailure || run.Status == db.RunStatusCanceled {
+				status = run.Status
+			}
 		}
 
 		toUpdate := db.Run{
@@ -132,10 +142,11 @@ func (this *handler) onMessage(ctx context.Context, msg *k.Message) {
 
 			toCreate = mapHostsToRunHosts(hosts, func(host string) db.RunHost {
 				satHost := satellite.GetSatHostInfo(*value.SatEvents, &host)
+				inventoryId := uuid.MustParse(host)
 				return db.RunHost{
 					ID:          uuid.New(),
 					RunID:       run.ID,
-					Host:        host,
+					InventoryID: &inventoryId,
 					SatSequence: &satHost.Sequence,
 					Status:      inferSatStatus(value.SatEvents, &host),
 					Log:         satHost.Console,
@@ -156,13 +167,13 @@ func (this *handler) onMessage(ctx context.Context, msg *k.Message) {
 	}
 }
 
-func buildCaseExpr(caseOptions []string) clause.Expr {
+func buildCaseExpr(caseOptions []clause.Expr) clause.Expr {
 	argsLen := len(caseOptions)
 	caseExprStr := "CASE "
 	varsArray := make([]interface{}, argsLen)
 
 	for i, option := range caseOptions {
-		varsArray[i] = clause.Expr{SQL: option}
+		varsArray[i] = option
 
 		if i == argsLen-1 {
 			caseExprStr += fmt.Sprintf("ELSE (?) END")
@@ -180,59 +191,51 @@ func buildCaseExpr(caseOptions []string) clause.Expr {
 
 }
 
-func satAssignmentWithCase(responseFull bool, updateHost db.RunHost) clause.Set {
+func satAssignmentWithCase(responseFull bool, updateHost db.RunHost) map[string]interface{} {
 	satSequence, status, log := *updateHost.SatSequence, updateHost.Status, updateHost.Log
 
-	statusCase := []string{
-		fmt.Sprintf("run_hosts.sat_sequence < %d", satSequence),
-		status,
-		"run_hosts.status",
-	}
-	statusAssign := clause.Assignment{
-		Column: clause.Column{Name: "status"},
-		Value:  []interface{}{buildCaseExpr(statusCase)},
+	satNullClause := "sat_sequence IS NULL"
+
+	statusCase := []clause.Expr{
+		{SQL: fmt.Sprintf("%s OR sat_sequence < ?", satNullClause), Vars: []interface{}{satSequence}},
+		{SQL: "?", Vars: []interface{}{status}},
+		{SQL: "status"},
 	}
 
-	satSeqCase := []string{
-		fmt.Sprintf("run_hosts.sat_sequence < %d", satSequence),
-		strconv.Itoa(satSequence),
-		"run_hosts.sat_sequence",
-	}
-	satSeqAssign := clause.Assignment{
-		Column: clause.Column{Name: "sat_sequence"},
-		Value:  []interface{}{buildCaseExpr(satSeqCase)},
+	satSeqCase := []clause.Expr{
+		{SQL: fmt.Sprintf("%s OR sat_sequence < ?", satNullClause), Vars: []interface{}{satSequence}},
+		{SQL: strconv.Itoa(satSequence)},
+		{SQL: "sat_sequence"},
 	}
 
-	logCase := []string {
-		fmt.Sprintf("run_hosts.sat_sequence < %d", satSequence),
-		log,
-		"run_hosts.log",
+	logCase := []clause.Expr{
+		{SQL: fmt.Sprintf("%s OR sat_sequence < ?", satNullClause), Vars: []interface{}{satSequence}},
+		{SQL: "?", Vars: []interface{}{log}},
+		{SQL: "log"},
 	}
+
 	if !responseFull {
-		logCase = []string{
-			fmt.Sprintf("run_hosts.sat_sequence IS NULL OR run_hosts.sat_sequence < %d+1", satSequence),
-			fmt.Sprintf("run_host.log || '&#8230;' || %s", log),
-			fmt.Sprintf("run_hosts.sat_sequence > %d", satSequence),
-			"run_hosts.log",
-			fmt.Sprintf("run_hosts.log || %s", log),
+		logCase = []clause.Expr{
+			{SQL: fmt.Sprintf("(%s AND ? > 0) OR sat_sequence + 1 < ?", satNullClause), Vars: []interface{}{satSequence, satSequence}},
+			{SQL: "log || '\n\u2026\n' || ?", Vars: []interface{}{log}},
+			{SQL: "sat_sequence > ?", Vars: []interface{}{satSequence}},
+			{SQL: "log"},
+			{SQL: "log || ?", Vars: []interface{}{log}},
 		}
 	}
-	logAssign := clause.Assignment{
-		Column: clause.Column{Name: "log"},
-		Value:  []interface{}{buildCaseExpr(logCase)},
+
+	return map[string]interface{}{
+		"status":       buildCaseExpr(statusCase),
+		"sat_sequence": buildCaseExpr(satSeqCase),
+		"log":          buildCaseExpr(logCase),
 	}
-	return clause.Set{statusAssign, satSeqAssign, logAssign}
 }
 
 func satUpdateRecord(ctx context.Context, tx *gorm.DB, responseFull bool, toUpdate []db.RunHost) error {
 	for _, runHost := range toUpdate {
-		fmt.Println("clause...", satAssignmentWithCase(responseFull, runHost)[0])
-		updateResult := tx.Model(db.RunHost{}).Debug().
-		// Clauses(clause.Set{clause.Assignment{clause.Column{Name: "log"}, "log_modified"}}).
-		Select("status", "sat_sequence", "log").
-		Clauses(satAssignmentWithCase(responseFull, runHost)).
-		Where("run_id = ? AND host = ?", runHost.RunID, runHost.Host).
-		Updates(&runHost)
+		updateResult := tx.Model(db.RunHost{}).
+			Where("run_id = ? AND inventory_id = ?", runHost.RunID, runHost.InventoryID).
+			Updates(satAssignmentWithCase(responseFull, runHost))
 
 		if updateResult.Error != nil {
 			utils.GetLogFromContext(ctx).Errorw("Error updating satellite host in db", "error", updateResult.Error)
@@ -287,6 +290,39 @@ func inferStatus(events *[]message.PlaybookRunResponseMessageYamlEventsElem, hos
 		return db.RunStatusFailure
 	case finished && !failed:
 		return db.RunStatusSuccess
+	default:
+		return db.RunStatusRunning
+	}
+}
+
+func checkSatStatusPartial(events *[]message.PlaybookSatRunResponseMessageYamlEventsElem) string {
+	failed := false
+	canceled := false
+	success := false
+
+	// for response_full = false, set status to "running" unless "playbook_run_completed" signal is received
+	for _, event := range *events {
+		if event.Type != EventSatPlaybookCompleted {
+			continue
+		}
+		if event.Status != nil && *event.Status == EventSatStatusSuccess {
+			success = true
+		}
+		if event.Status != nil && *event.Status == EventSatStatusCanceled {
+			canceled = true
+		}
+		if event.Status != nil && *event.Status == EventSatStatusFailure {
+			failed = true
+		}
+	}
+
+	switch {
+	case success:
+		return db.RunStatusSuccess
+	case failed:
+		return db.RunStatusFailure
+	case canceled:
+		return db.RunStatusCanceled
 	default:
 		return db.RunStatusRunning
 	}
