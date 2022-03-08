@@ -15,7 +15,7 @@ var _ = Describe("Version", func() {
 	Describe("get internal version", func() {
 		It("should return the git revision the API was built from", func() {
 
-			req, err := http.NewRequest(http.MethodGet, "http://localhost:8000/internal/version", nil)
+			req, err := http.NewRequest(http.MethodGet, "http://localhost:9002/internal/version", nil)
 			Expect(err).ToNot(HaveOccurred())
 
 			res, err := test.Client.Do(req)
