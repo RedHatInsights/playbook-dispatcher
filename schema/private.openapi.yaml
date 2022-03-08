@@ -36,6 +36,19 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
+  /internal/version:
+    get:
+      summary: Get Version
+      description: Indicates the git revision the API was built from.
+      operationId: api.internal.version
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Version'
+
   /internal/v2/recipients/status:
     post:
       summary: Obtain connection status of recipient(s)
@@ -232,6 +245,12 @@ components:
       description: URL that points to the section of the web console where the user find more information about the playbook run. The field is optional but highly suggested.
       type: string
       format: url
+      minLength: 1
+
+    Version:
+      description: Version of the API
+      type: string
+      example: v2
       minLength: 1
 
     Error:
