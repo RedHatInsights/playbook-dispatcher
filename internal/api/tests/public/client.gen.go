@@ -65,6 +65,9 @@ type Meta struct {
 // OrgId defines model for OrgId.
 type OrgId string
 
+// PlaybookName defines model for PlaybookName.
+type PlaybookName string
+
 // Run defines model for Run.
 type Run struct {
 
@@ -86,6 +89,9 @@ type Run struct {
 	// Identifier of the tenant
 	OrgId *OrgId `json:"org_id,omitempty"`
 
+	// Human readable name of the playbook run. Used to present the given playbook run in external systems (Satellite).
+	PlaybookName *PlaybookName `json:"playbook_name,omitempty"`
+
 	// Identifier of the host to which a given Playbook is addressed
 	Recipient *RunRecipient `json:"recipient,omitempty"`
 
@@ -103,6 +109,9 @@ type Run struct {
 
 	// URL hosting the Playbook
 	Url *Url `json:"url,omitempty"`
+
+	// URL that points to the section of the web console where the user find more information about the playbook run. The field is optional but highly suggested.
+	WebConsoleUrl *WebConsoleUrl `json:"web_console_url,omitempty"`
 }
 
 // RunCorrelationId defines model for RunCorrelationId.
@@ -196,6 +205,9 @@ type UpdatedAt time.Time
 
 // Url defines model for Url.
 type Url string
+
+// WebConsoleUrl defines model for WebConsoleUrl.
+type WebConsoleUrl string
 
 // Limit defines model for Limit.
 type Limit int

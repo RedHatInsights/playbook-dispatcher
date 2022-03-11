@@ -130,9 +130,9 @@ components:
         url:
           $ref: './public.openapi.yaml#/components/schemas/Url'
         name:
-          $ref: '#/components/schemas/PlaybookName'
+          $ref: './public.openapi.yaml#/components/schemas/PlaybookName'
         web_console_url:
-          $ref: '#/components/schemas/WebConsoleUrl'
+          $ref: './public.openapi.yaml#/components/schemas/WebConsoleUrl'
         labels:
           $ref: './public.openapi.yaml#/components/schemas/Labels'
         timeout:

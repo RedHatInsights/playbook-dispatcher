@@ -315,6 +315,29 @@ var _ = Describe("runsList", func() {
 		})
 	})
 
+	Describe("sparse fieldsets satellite", func() {
+		BeforeEach(func() {
+			run := test.NewRun(accountNumber())
+
+			playbookName := "sparse-playbookName"
+			run.PlaybookName = &playbookName
+			run.PlaybookRunUrl = "https://example.com/"
+
+			Expect(db().Create(&run).Error).ToNot(HaveOccurred())
+		})
+
+		It("returns playbook run name and url", func() {
+			raw := listRunsRaw("fields[data]", "playbook_name,playbook_run_url")
+			Expect(raw.StatusCode).To(Equal(http.StatusOK))
+			res, err := ParseApiRunsListResponse(raw)
+			Expect(err).ToNot(HaveOccurred())
+
+			resData := res.JSON200.Data[0]
+			Expect(string(*resData.PlaybookName)).To(Equal("sparse-playbookName"))
+			Expect(string(*resData.WebConsoleUrl)).To(Equal("https://example.com/"))
+		})
+	})
+
 	Describe("RBAC", func() {
 		var data []dbModel.Run
 
