@@ -11,12 +11,14 @@ import com.redhat.cloud.platform.playbook_dispatcher.types.Payload.Status;
 import com.redhat.cloud.platform.playbook_dispatcher.types.RunEvent.EventType;
 import com.redhat.cloud.platform.playbook_dispatcher.types.Labels;
 import com.redhat.cloud.platform.playbook_dispatcher.types.Payload;
+import com.redhat.cloud.platform.playbook_dispatcher.types.RecipientConfig;
 
 import org.apache.kafka.common.config.AbstractConfig;
 import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.connect.connector.ConnectRecord;
 import org.apache.kafka.connect.data.Struct;
 import org.apache.kafka.connect.errors.ConnectException;
+import org.apache.kafka.connect.errors.DataException;
 import org.apache.kafka.connect.header.ConnectHeaders;
 import org.apache.kafka.connect.header.Headers;
 import org.apache.kafka.connect.transforms.Transformation;
@@ -142,6 +144,31 @@ public class RunEventTransform<T extends ConnectRecord<T>> implements Transforma
         payload.setTimeout(input.getInt32("timeout"));
         payload.setCreatedAt(input.getString("created_at"));
         payload.setUpdatedAt(input.getString("updated_at"));
+
+        // If the option fields do not exist, set them to empty strings
+        try {
+            payload.setName(input.getString("name"));
+        } catch (DataException e) {
+            payload.setName("");
+        }
+
+        try {
+            payload.setWebConsoleUrl(URI.create(input.getString("web_console_url")));
+        } catch (DataException e) {
+            payload.setWebConsoleUrl(URI.create(""));
+        }
+
+        RecipientConfig recipientConfig;
+        try {
+            recipientConfig = this.objectMapper.readValue(input.getString("recipient_config"), RecipientConfig.class);
+        } catch (JsonProcessingException e) {
+            LOG.warn("Ignoring recipient config due to parsing error, id={} recipient_config={}", payload.getId(), input.getString("recipient_config"));
+            recipientConfig = new RecipientConfig();
+        } catch (DataException e) {
+            recipientConfig = new RecipientConfig();
+        }
+
+        payload.setRecipientConfig(recipientConfig);
 
         Labels labels;
         try {
