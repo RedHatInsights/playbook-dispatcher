@@ -235,18 +235,6 @@ components:
       example: jharting
       minLength: 1
 
-    PlaybookName:
-      description: Human readable name of the playbook run. Used to present the given playbook run in external systems (Satellite).
-      type: string
-      example: Fix Critical CVEs
-      minLength: 1
-
-    WebConsoleUrl:
-      description: URL that points to the section of the web console where the user find more information about the playbook run. The field is optional but highly suggested.
-      type: string
-      format: url
-      minLength: 1
-
     Version:
       description: Version of the API
       type: string
