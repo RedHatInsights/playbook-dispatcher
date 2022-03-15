@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
+	"github.com/google/uuid"
 	"github.com/qri-io/jsonschema"
 )
 
@@ -173,6 +174,9 @@ func (this *handler) validateContent(ctx context.Context, requestType string, da
 		}
 		if requestType == playbookSatPayloadHeaderValue {
 			err = validateWithSchema(ctx, this.schemas[1], true, line, events)
+			if e := validateSatHostUUID(line); e != nil {
+				err = e
+			}
 		} else {
 			err = validateWithSchema(ctx, this.schemas[0], false, line, events)
 		}
@@ -188,6 +192,21 @@ func (this *handler) validateContent(ctx context.Context, requestType string, da
 	}
 
 	return events, nil
+}
+
+func validateSatHostUUID(line string) (err error) {
+	event := &messageModel.PlaybookSatRunResponseMessageYamlEventsElem{}
+	err = json.Unmarshal([]byte(line), &event)
+	if err != nil {
+		return err
+	}
+	if event.Host != nil {
+		_, err = uuid.Parse(*event.Host)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func validateWithSchema(ctx context.Context, schema *jsonschema.Schema, rhcsatRequest bool, line string, events *messageModel.ValidatedMessages) (err error) {
