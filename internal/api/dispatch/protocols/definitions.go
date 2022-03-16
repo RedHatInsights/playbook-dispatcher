@@ -2,7 +2,7 @@ package protocols
 
 const (
 	RunnerDirective    Directive = "rhc-worker-playbook"
-	SatelliteDirective Directive = "rhc-cloud-connector-worker"
+	SatelliteDirective Directive = "foreman_rh_cloud"
 	LabelRunnerRequest           = "ansible"
 	LabelSatRequest              = "satellite"
 )
