@@ -80,11 +80,11 @@ type Run struct {
 	// Additional metadata about the Playbook run. Can be used for filtering purposes.
 	Labels *Labels `json:"labels,omitempty"`
 
+	// Human readable name of the playbook run. Used to present the given playbook run in external systems (Satellite).
+	Name *PlaybookName `json:"name,omitempty"`
+
 	// Identifier of the tenant
 	OrgId *OrgId `json:"org_id,omitempty"`
-
-	// Human readable name of the playbook run. Used to present the given playbook run in external systems (Satellite).
-	PlaybookName *PlaybookName `json:"playbook_name,omitempty"`
 
 	// Identifier of the host to which a given Playbook is addressed
 	Recipient *RunRecipient `json:"recipient,omitempty"`

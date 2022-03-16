@@ -327,13 +327,13 @@ var _ = Describe("runsList", func() {
 		})
 
 		It("returns playbook run name and url", func() {
-			raw := listRunsRaw("fields[data]", "playbook_name,playbook_run_url")
+			raw := listRunsRaw("fields[data]", "name,web_console_url")
 			Expect(raw.StatusCode).To(Equal(http.StatusOK))
 			res, err := ParseApiRunsListResponse(raw)
 			Expect(err).ToNot(HaveOccurred())
 
 			resData := res.JSON200.Data[0]
-			Expect(string(*resData.PlaybookName)).To(Equal("sparse-playbookName"))
+			Expect(string(*resData.Name)).To(Equal("sparse-playbookName"))
 			Expect(string(*resData.WebConsoleUrl)).To(Equal("https://example.com/"))
 		})
 	})

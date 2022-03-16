@@ -182,7 +182,7 @@ components:
           $ref: '#/components/schemas/RunRecipient'
         correlation_id:
           $ref: '#/components/schemas/RunCorrelationId'
-        playbook_name:
+        name:
           $ref: '#/components/schemas/PlaybookName'
         web_console_url:
           $ref: '#/components/schemas/WebConsoleUrl'
@@ -406,6 +406,8 @@ components:
                 - timeout
                 - status
                 - service
+                - name
+                - web_console_url
                 - created_at
                 - updated_at
             default:
