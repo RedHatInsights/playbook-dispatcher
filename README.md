@@ -216,13 +216,13 @@ For each Playbook run request a message with the following format is sent to Clo
 
 See [rhc-worker-playbook](https://github.com/RedHatInsights/rhc-worker-playbook) for details.
 
-### rhc-cloud-connector-worker
+### foreman_rh_cloud
 
 For each Playbook run request a message with the following format is sent to Cloud Connector:
 
 ```javascript
     "account":"540155",
-    "directive":"rhc-cloud-connector-worker",
+    "directive":"foreman_rh_cloud",
     "recipient":"869fe355-4b69-43f6-82ff-d151dddee472", // id of the cloud connector client
     "metadata":{
         "operation": "run",
@@ -251,7 +251,7 @@ For each Playbook run request a message with the following format is sent to Clo
     "payload": "https://cloud.redhat.com/api/v1/remediations/1234/playbook"
 ```
 
-See [rhc-cloud-connector-worker](https://github.com/ShimShtein/rhc-cloud-connector-worker) for details.
+See [foreman_rh_cloud](https://github.com/ShimShtein/foreman_rh_cloud) for details.
 
 ## Development
 
