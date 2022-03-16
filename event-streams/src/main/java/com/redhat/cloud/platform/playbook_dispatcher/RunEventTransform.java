@@ -18,7 +18,6 @@ import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.connect.connector.ConnectRecord;
 import org.apache.kafka.connect.data.Struct;
 import org.apache.kafka.connect.errors.ConnectException;
-import org.apache.kafka.connect.errors.DataException;
 import org.apache.kafka.connect.header.ConnectHeaders;
 import org.apache.kafka.connect.header.Headers;
 import org.apache.kafka.connect.transforms.Transformation;
@@ -145,30 +144,27 @@ public class RunEventTransform<T extends ConnectRecord<T>> implements Transforma
         payload.setCreatedAt(input.getString("created_at"));
         payload.setUpdatedAt(input.getString("updated_at"));
 
-        // If the option fields do not exist, set them to empty strings
-        try {
-            payload.setName(input.getString("name"));
-        } catch (DataException e) {
-            payload.setName("");
+        if (input.get("name") != null) {
+            payload.setPlaybookName(input.getString("name"));
         }
-
-        try {
-            payload.setWebConsoleUrl(URI.create(input.getString("web_console_url")));
-        } catch (DataException e) {
-            payload.setWebConsoleUrl(URI.create(""));
+        if (input.get("web_console_url") != null) {
+            payload.setPlaybookRunUrl(URI.create(input.getString("web_console_url")));
         }
 
         RecipientConfig recipientConfig;
         try {
-            recipientConfig = this.objectMapper.readValue(input.getString("recipient_config"), RecipientConfig.class);
+            recipientConfig = objectMapper.readValue(input.getString("recipient_config"), RecipientConfig.class);
         } catch (JsonProcessingException e) {
-            LOG.warn("Ignoring recipient config due to parsing error, id={} recipient_config={}", payload.getId(), input.getString("recipient_config"));
-            recipientConfig = new RecipientConfig();
-        } catch (DataException e) {
+            LOG.warn("Ignoring message recipient_config due to parsing error, id={}, recipient_config={}", input.getString("id"), input.getString("recipient_config"));
             recipientConfig = new RecipientConfig();
         }
 
-        payload.setRecipientConfig(recipientConfig);
+        if (recipientConfig.getSatId() != null) {
+            payload.setSatId(recipientConfig.getSatId());
+        }
+        if (recipientConfig.getSatOrgId() != null) {
+            payload.setSatOrgId(recipientConfig.getSatOrgId());
+        }
 
         Labels labels;
         try {

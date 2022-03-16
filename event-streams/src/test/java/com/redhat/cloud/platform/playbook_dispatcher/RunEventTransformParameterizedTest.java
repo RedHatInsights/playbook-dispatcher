@@ -91,10 +91,10 @@ public class RunEventTransformParameterizedTest {
         assertEquals("97b04495-68f0-4a41-93b9-d239c0a59b4f", value.getPayload().getCorrelationId());
         assertEquals("test", value.getPayload().getService());
         assertEquals("http://example.com", value.getPayload().getUrl().toString());
-        assertEquals("test playbook", value.getPayload().getName());
-        assertEquals("http://example.com", value.getPayload().getWebConsoleUrl().toString());
-        assertEquals("16372e6f-1c18-4cdb-b780-50ab4b88e74b", value.getPayload().getRecipientConfig().getSatId());
-        assertEquals("6826", value.getPayload().getRecipientConfig().getSatOrgId());
+        assertEquals("test playbook", value.getPayload().getPlaybookName());
+        assertEquals("http://example.com", value.getPayload().getPlaybookRunUrl().toString());
+        assertEquals("16372e6f-1c18-4cdb-b780-50ab4b88e74b", value.getPayload().getSatId());
+        assertEquals("6826", value.getPayload().getSatOrgId());
         assertEquals("success", value.getPayload().getStatus().toString());
         assertEquals((Object) 3600, value.getPayload().getTimeout());
         assertEquals("2021-03-10T08:18:12.370585Z", value.getPayload().getCreatedAt());

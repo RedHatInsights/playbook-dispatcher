@@ -30,18 +30,15 @@ properties:
         type: object
         additionalProperties:
           type: string
-      name:
+      playbook_name:
         type: string
-      web_console_url:
+      playbook_run_url:
         type: string
         format: uri
-      recipient_config:
-        type: object
-        properties:
-          sat_id:
-            type: string
-          sat_org_id:
-            type: string
+      sat_id:
+        type: string
+      sat_org_id:
+        type: string
       status:
         type: string
         enum:
