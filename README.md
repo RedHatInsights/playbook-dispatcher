@@ -270,6 +270,16 @@ The API can be accessed at <http://localhost:8000/api/playbook-dispatcher/v1/run
 curl -v -H "x-rh-identity: eyJpZGVudGl0eSI6eyJpbnRlcm5hbCI6eyJvcmdfaWQiOiI1MzE4MjkwIn0sImFjY291bnRfbnVtYmVyIjoiOTAxNTc4IiwidXNlciI6e30sInR5cGUiOiJVc2VyIn19Cg==" http://localhost:8000/api/playbook-dispatcher/v1/runs
 ```
 
+#### Inspecting the event interface
+
+1. Download and unpack [Kafka](https://kafka.apache.org/downloads)
+
+1. Start kafka-console-consumer configured to consume the event interface topic
+
+    `/bin/kafka-console-consumer.sh --bootstrap-server=localhost:29092 --from-beginning --topic platform.playbook-dispatcher.runs`
+
+1. Trigger a state change (e.g. `make sample_request_sat`)
+
 Useful commands:
 
 - `make sample_request` can be used to dispatch a new sample Playbook
@@ -278,14 +288,3 @@ Useful commands:
 ### Running tests
 
 `make test`
-
-### Running Playbooks using the CI environment
-
-1. Log in to insights-dev cluster using `oc` command
-1. Modify `examples/payload.json`
-    - use the correct account (tenant id)
-    - set the recipient to the rhc id of the target host
-    - set the URL of the Playbook to execute
-
-1. Start port forwarding by running `make ci-port-forward`
-1. Dispatch the playbook run by running `PSK=<pre-shared-key> make ci-dispatch` where `<pre-shared-key>` is replaced with the secret token
