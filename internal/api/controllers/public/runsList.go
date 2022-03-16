@@ -32,7 +32,7 @@ func mapFieldsToSql(field string) string {
 		return `CASE WHEN runs.status='running' AND runs.created_at + runs.timeout * interval '1 second' <= NOW() THEN 'timeout' ELSE runs.status END as status`
 	}
 
-	// these column names for these fields are different in the db
+	// column names for these fields are different in the db
 	if field == fieldName {
 		return "playbook_name"
 	}
