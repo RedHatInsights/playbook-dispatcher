@@ -18,7 +18,7 @@ func (this *cloudConnectorClientMock) SendCloudConnectorRequest(
 	ctx context.Context,
 	account string,
 	recipient uuid.UUID,
-	url string,
+	url *string,
 	directive string,
 	metadata map[string]string,
 

@@ -4,7 +4,7 @@ go 1.14
 
 require (
 	github.com/andres-erbsen/clock v0.0.0-20160526145045-9e14626cd129 // indirect
-	github.com/atombender/go-jsonschema v0.8.1-0.20200630165108-d692b4118fc7 // indirect
+	github.com/atombender/go-jsonschema v0.9.1-0.20211020094358-afce1ab0fff4 // indirect
 	github.com/aws/aws-sdk-go v1.36.28
 	github.com/confluentinc/confluent-kafka-go v1.5.2
 	github.com/deepmap/oapi-codegen v1.4.2
@@ -31,6 +31,7 @@ require (
 	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect
 	go.uber.org/atomic v1.7.0 // indirect
 	go.uber.org/zap v1.10.0
+	golang.org/x/sys v0.0.0-20220319134239-a9b59b0215f8 // indirect
 	golang.org/x/time v0.0.0-20210723032227-1f47c861a9ac
 	gorm.io/driver/postgres v1.0.6
 	gorm.io/gorm v1.20.11

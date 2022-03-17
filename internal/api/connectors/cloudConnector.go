@@ -30,7 +30,7 @@ type CloudConnectorClient interface {
 		ctx context.Context,
 		account string,
 		recipient uuid.UUID,
-		url string,
+		url *string,
 		directive string,
 		metadata map[string]string,
 	) (*string, bool, error)
@@ -85,7 +85,7 @@ func (this *cloudConnectorClientImpl) SendCloudConnectorRequest(
 	ctx context.Context,
 	account string,
 	recipient uuid.UUID,
-	url string,
+	url *string,
 	directive string,
 	metadata map[string]string,
 ) (id *string, notFound bool, err error) {
@@ -105,7 +105,7 @@ func (this *cloudConnectorClientImpl) SendCloudConnectorRequest(
 		Metadata: &MessageRequest_Metadata{
 			AdditionalProperties: metadata,
 		},
-		Payload:   &url,
+		Payload:   url,
 		Recipient: &recipientString,
 	})
 

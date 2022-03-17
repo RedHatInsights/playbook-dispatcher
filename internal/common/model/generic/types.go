@@ -17,6 +17,13 @@ type RunInput struct {
 	Principal     *string
 }
 
+type CancelInput struct {
+	Account   string
+	RunId     uuid.UUID
+	OrgId     string
+	Principal string
+}
+
 type RunHostsInput struct {
 	AnsibleHost *string
 	InventoryId *uuid.UUID
