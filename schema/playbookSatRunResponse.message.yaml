@@ -33,6 +33,7 @@ properties:
           minimum: 0
         host:
           type: string
+          format: uuid
         console:
           type: string
         status:
