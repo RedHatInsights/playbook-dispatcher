@@ -144,27 +144,21 @@ public class RunEventTransform<T extends ConnectRecord<T>> implements Transforma
         payload.setCreatedAt(input.getString("created_at"));
         payload.setUpdatedAt(input.getString("updated_at"));
 
-        if (input.get("name") != null) {
-            payload.setPlaybookName(input.getString("name"));
+        if (input.get("playbook_name") != null) {
+            payload.setName(input.getString("playbook_name"));
         }
-        if (input.get("web_console_url") != null) {
-            payload.setPlaybookRunUrl(URI.create(input.getString("web_console_url")));
-        }
-
-        RecipientConfig recipientConfig;
-        try {
-            recipientConfig = objectMapper.readValue(input.getString("recipient_config"), RecipientConfig.class);
-        } catch (JsonProcessingException e) {
-            LOG.warn("Ignoring message recipient_config due to parsing error, id={}, recipient_config={}", input.getString("id"), input.getString("recipient_config"));
-            recipientConfig = new RecipientConfig();
+        if (input.get("playbook_run_url") != null) {
+            payload.setWebConsoleUrl(URI.create(input.getString("playbook_run_url")));
         }
 
-        if (recipientConfig.getSatId() != null) {
-            payload.setSatId(recipientConfig.getSatId());
+        RecipientConfig recipientConfig = new RecipientConfig();
+        if (input.get("sat_id") != null) {
+            recipientConfig.setSatId(input.getString("sat_id"));
         }
-        if (recipientConfig.getSatOrgId() != null) {
-            payload.setSatOrgId(recipientConfig.getSatOrgId());
+        if (input.get("sat_org_id") != null) {
+            recipientConfig.setSatOrgId(input.getString("sat_org_id"));
         }
+        payload.setRecipientConfig(recipientConfig);
 
         Labels labels;
         try {

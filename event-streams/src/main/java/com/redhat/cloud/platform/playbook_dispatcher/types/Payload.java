@@ -22,10 +22,9 @@ import com.fasterxml.jackson.annotation.JsonValue;
     "service",
     "url",
     "labels",
-    "playbook_name",
-    "playbook_run_url",
-    "sat_id",
-    "sat_org_id",
+    "name",
+    "web_console_url",
+    "recipient_config",
     "status",
     "timeout",
     "created_at",
@@ -82,14 +81,12 @@ public class Payload {
      */
     @JsonProperty("labels")
     private Labels labels;
-    @JsonProperty("playbook_name")
-    private String playbookName;
-    @JsonProperty("playbook_run_url")
-    private URI playbookRunUrl;
-    @JsonProperty("sat_id")
-    private String satId;
-    @JsonProperty("sat_org_id")
-    private String satOrgId;
+    @JsonProperty("name")
+    private String name;
+    @JsonProperty("web_console_url")
+    private URI webConsoleUrl;
+    @JsonProperty("recipient_config")
+    private RecipientConfig recipientConfig;
     /**
      * 
      * (Required)
@@ -261,44 +258,34 @@ public class Payload {
         this.labels = labels;
     }
 
-    @JsonProperty("playbook_name")
-    public String getPlaybookName() {
-        return playbookName;
+    @JsonProperty("name")
+    public String getName() {
+        return name;
     }
 
-    @JsonProperty("playbook_name")
-    public void setPlaybookName(String playbookName) {
-        this.playbookName = playbookName;
+    @JsonProperty("name")
+    public void setName(String name) {
+        this.name = name;
     }
 
-    @JsonProperty("playbook_run_url")
-    public URI getPlaybookRunUrl() {
-        return playbookRunUrl;
+    @JsonProperty("web_console_url")
+    public URI getWebConsoleUrl() {
+        return webConsoleUrl;
     }
 
-    @JsonProperty("playbook_run_url")
-    public void setPlaybookRunUrl(URI playbookRunUrl) {
-        this.playbookRunUrl = playbookRunUrl;
+    @JsonProperty("web_console_url")
+    public void setWebConsoleUrl(URI webConsoleUrl) {
+        this.webConsoleUrl = webConsoleUrl;
     }
 
-    @JsonProperty("sat_id")
-    public String getSatId() {
-        return satId;
+    @JsonProperty("recipient_config")
+    public RecipientConfig getRecipientConfig() {
+        return recipientConfig;
     }
 
-    @JsonProperty("sat_id")
-    public void setSatId(String satId) {
-        this.satId = satId;
-    }
-
-    @JsonProperty("sat_org_id")
-    public String getSatOrgId() {
-        return satOrgId;
-    }
-
-    @JsonProperty("sat_org_id")
-    public void setSatOrgId(String satOrgId) {
-        this.satOrgId = satOrgId;
+    @JsonProperty("recipient_config")
+    public void setRecipientConfig(RecipientConfig recipientConfig) {
+        this.recipientConfig = recipientConfig;
     }
 
     /**
@@ -423,21 +410,17 @@ public class Payload {
         sb.append('=');
         sb.append(((this.labels == null)?"<null>":this.labels));
         sb.append(',');
-        sb.append("playbookName");
+        sb.append("name");
         sb.append('=');
-        sb.append(((this.playbookName == null)?"<null>":this.playbookName));
+        sb.append(((this.name == null)?"<null>":this.name));
         sb.append(',');
-        sb.append("playbookRunUrl");
+        sb.append("webConsoleUrl");
         sb.append('=');
-        sb.append(((this.playbookRunUrl == null)?"<null>":this.playbookRunUrl));
+        sb.append(((this.webConsoleUrl == null)?"<null>":this.webConsoleUrl));
         sb.append(',');
-        sb.append("satId");
+        sb.append("recipientConfig");
         sb.append('=');
-        sb.append(((this.satId == null)?"<null>":this.satId));
-        sb.append(',');
-        sb.append("satOrgId");
-        sb.append('=');
-        sb.append(((this.satOrgId == null)?"<null>":this.satOrgId));
+        sb.append(((this.recipientConfig == null)?"<null>":this.recipientConfig));
         sb.append(',');
         sb.append("status");
         sb.append('=');
@@ -470,20 +453,19 @@ public class Payload {
     @Override
     public int hashCode() {
         int result = 1;
-        result = ((result* 31)+((this.satId == null)? 0 :this.satId.hashCode()));
+        result = ((result* 31)+((this.webConsoleUrl == null)? 0 :this.webConsoleUrl.hashCode()));
         result = ((result* 31)+((this.url == null)? 0 :this.url.hashCode()));
-        result = ((result* 31)+((this.playbookRunUrl == null)? 0 :this.playbookRunUrl.hashCode()));
         result = ((result* 31)+((this.timeout == null)? 0 :this.timeout.hashCode()));
         result = ((result* 31)+((this.labels == null)? 0 :this.labels.hashCode()));
-        result = ((result* 31)+((this.playbookName == null)? 0 :this.playbookName.hashCode()));
         result = ((result* 31)+((this.createdAt == null)? 0 :this.createdAt.hashCode()));
         result = ((result* 31)+((this.service == null)? 0 :this.service.hashCode()));
         result = ((result* 31)+((this.recipient == null)? 0 :this.recipient.hashCode()));
+        result = ((result* 31)+((this.name == null)? 0 :this.name.hashCode()));
         result = ((result* 31)+((this.correlationId == null)? 0 :this.correlationId.hashCode()));
         result = ((result* 31)+((this.id == null)? 0 :this.id.hashCode()));
         result = ((result* 31)+((this.additionalProperties == null)? 0 :this.additionalProperties.hashCode()));
-        result = ((result* 31)+((this.satOrgId == null)? 0 :this.satOrgId.hashCode()));
         result = ((result* 31)+((this.account == null)? 0 :this.account.hashCode()));
+        result = ((result* 31)+((this.recipientConfig == null)? 0 :this.recipientConfig.hashCode()));
         result = ((result* 31)+((this.status == null)? 0 :this.status.hashCode()));
         result = ((result* 31)+((this.updatedAt == null)? 0 :this.updatedAt.hashCode()));
         return result;
@@ -498,7 +480,7 @@ public class Payload {
             return false;
         }
         Payload rhs = ((Payload) other);
-        return (((((((((((((((((this.satId == rhs.satId)||((this.satId!= null)&&this.satId.equals(rhs.satId)))&&((this.url == rhs.url)||((this.url!= null)&&this.url.equals(rhs.url))))&&((this.playbookRunUrl == rhs.playbookRunUrl)||((this.playbookRunUrl!= null)&&this.playbookRunUrl.equals(rhs.playbookRunUrl))))&&((this.timeout == rhs.timeout)||((this.timeout!= null)&&this.timeout.equals(rhs.timeout))))&&((this.labels == rhs.labels)||((this.labels!= null)&&this.labels.equals(rhs.labels))))&&((this.playbookName == rhs.playbookName)||((this.playbookName!= null)&&this.playbookName.equals(rhs.playbookName))))&&((this.createdAt == rhs.createdAt)||((this.createdAt!= null)&&this.createdAt.equals(rhs.createdAt))))&&((this.service == rhs.service)||((this.service!= null)&&this.service.equals(rhs.service))))&&((this.recipient == rhs.recipient)||((this.recipient!= null)&&this.recipient.equals(rhs.recipient))))&&((this.correlationId == rhs.correlationId)||((this.correlationId!= null)&&this.correlationId.equals(rhs.correlationId))))&&((this.id == rhs.id)||((this.id!= null)&&this.id.equals(rhs.id))))&&((this.additionalProperties == rhs.additionalProperties)||((this.additionalProperties!= null)&&this.additionalProperties.equals(rhs.additionalProperties))))&&((this.satOrgId == rhs.satOrgId)||((this.satOrgId!= null)&&this.satOrgId.equals(rhs.satOrgId))))&&((this.account == rhs.account)||((this.account!= null)&&this.account.equals(rhs.account))))&&((this.status == rhs.status)||((this.status!= null)&&this.status.equals(rhs.status))))&&((this.updatedAt == rhs.updatedAt)||((this.updatedAt!= null)&&this.updatedAt.equals(rhs.updatedAt))));
+        return ((((((((((((((((this.webConsoleUrl == rhs.webConsoleUrl)||((this.webConsoleUrl!= null)&&this.webConsoleUrl.equals(rhs.webConsoleUrl)))&&((this.url == rhs.url)||((this.url!= null)&&this.url.equals(rhs.url))))&&((this.timeout == rhs.timeout)||((this.timeout!= null)&&this.timeout.equals(rhs.timeout))))&&((this.labels == rhs.labels)||((this.labels!= null)&&this.labels.equals(rhs.labels))))&&((this.createdAt == rhs.createdAt)||((this.createdAt!= null)&&this.createdAt.equals(rhs.createdAt))))&&((this.service == rhs.service)||((this.service!= null)&&this.service.equals(rhs.service))))&&((this.recipient == rhs.recipient)||((this.recipient!= null)&&this.recipient.equals(rhs.recipient))))&&((this.name == rhs.name)||((this.name!= null)&&this.name.equals(rhs.name))))&&((this.correlationId == rhs.correlationId)||((this.correlationId!= null)&&this.correlationId.equals(rhs.correlationId))))&&((this.id == rhs.id)||((this.id!= null)&&this.id.equals(rhs.id))))&&((this.additionalProperties == rhs.additionalProperties)||((this.additionalProperties!= null)&&this.additionalProperties.equals(rhs.additionalProperties))))&&((this.account == rhs.account)||((this.account!= null)&&this.account.equals(rhs.account))))&&((this.recipientConfig == rhs.recipientConfig)||((this.recipientConfig!= null)&&this.recipientConfig.equals(rhs.recipientConfig))))&&((this.status == rhs.status)||((this.status!= null)&&this.status.equals(rhs.status))))&&((this.updatedAt == rhs.updatedAt)||((this.updatedAt!= null)&&this.updatedAt.equals(rhs.updatedAt))));
     }
 
     public enum Status {
