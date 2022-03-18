@@ -175,9 +175,7 @@ func (this *handler) validateContent(ctx context.Context, requestType string, da
 		if requestType == playbookSatPayloadHeaderValue {
 			err = validateWithSchema(ctx, this.schemas[1], true, line, events)
 			if err == nil {
-				if e := validateSatHostUUID(line); e != nil {
-					err = e
-				}
+			    err = validateSatHostUUID(line)
 			}
 		} else {
 			err = validateWithSchema(ctx, this.schemas[0], false, line, events)
