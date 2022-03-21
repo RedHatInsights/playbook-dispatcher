@@ -91,6 +91,8 @@ public class RunEventTransformParameterizedTest {
         assertEquals("97b04495-68f0-4a41-93b9-d239c0a59b4f", value.getPayload().getCorrelationId());
         assertEquals("test", value.getPayload().getService());
         assertEquals("http://example.com", value.getPayload().getUrl().toString());
+        assertEquals("test playbook", value.getPayload().getName());
+        assertEquals("http://example.com", value.getPayload().getWebConsoleUrl().toString());
         assertEquals("success", value.getPayload().getStatus().toString());
         assertEquals((Object) 3600, value.getPayload().getTimeout());
         assertEquals("2021-03-10T08:18:12.370585Z", value.getPayload().getCreatedAt());

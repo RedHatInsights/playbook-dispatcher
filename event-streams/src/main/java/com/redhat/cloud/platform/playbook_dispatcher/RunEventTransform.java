@@ -11,6 +11,7 @@ import com.redhat.cloud.platform.playbook_dispatcher.types.Payload.Status;
 import com.redhat.cloud.platform.playbook_dispatcher.types.RunEvent.EventType;
 import com.redhat.cloud.platform.playbook_dispatcher.types.Labels;
 import com.redhat.cloud.platform.playbook_dispatcher.types.Payload;
+import com.redhat.cloud.platform.playbook_dispatcher.types.RecipientConfig;
 
 import org.apache.kafka.common.config.AbstractConfig;
 import org.apache.kafka.common.config.ConfigDef;
@@ -142,6 +143,22 @@ public class RunEventTransform<T extends ConnectRecord<T>> implements Transforma
         payload.setTimeout(input.getInt32("timeout"));
         payload.setCreatedAt(input.getString("created_at"));
         payload.setUpdatedAt(input.getString("updated_at"));
+
+        if (input.get("playbook_name") != null) {
+            payload.setName(input.getString("playbook_name"));
+        }
+        if (input.get("playbook_run_url") != null) {
+            payload.setWebConsoleUrl(URI.create(input.getString("playbook_run_url")));
+        }
+
+        RecipientConfig recipientConfig = new RecipientConfig();
+        if (input.get("sat_id") != null) {
+            recipientConfig.setSatId(input.getString("sat_id"));
+        }
+        if (input.get("sat_org_id") != null) {
+            recipientConfig.setSatOrgId(input.getString("sat_org_id"));
+        }
+        payload.setRecipientConfig(recipientConfig);
 
         Labels labels;
         try {
