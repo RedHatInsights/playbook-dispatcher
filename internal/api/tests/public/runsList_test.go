@@ -303,7 +303,7 @@ var _ = Describe("runsList", func() {
 		DescribeTable("happy path", fieldTester(listRunsRaw),
 			Entry("single field", "id"),
 			Entry("defaults defined explicitly", "id", "recipient", "url", "labels", "timeout", "status"),
-			Entry("all fields", "id", "recipient", "url", "labels", "timeout", "status", "created_at", "updated_at", "service", "correlation_id"),
+			Entry("all fields", "id", "recipient", "url", "labels", "timeout", "status", "created_at", "updated_at", "service", "correlation_id", "name", "web_console_url"),
 		)
 
 		It("400s on invalid value", func() {

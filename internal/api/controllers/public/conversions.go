@@ -74,7 +74,10 @@ func dbRuntoApiRun(r *dbModel.Run, fields []string) *Run {
 			value := RunStatus(r.Status)
 			run.Status = &value
 		case fieldName:
-			value := PlaybookName(*r.PlaybookName)
+			value := PlaybookName("")
+			if r.PlaybookName != nil {
+				value = PlaybookName(*r.PlaybookName)
+			}
 			run.Name = &value
 		case fieldWebConsoleUrl:
 			value := WebConsoleUrl(r.PlaybookRunUrl)
