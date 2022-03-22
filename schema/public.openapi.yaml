@@ -105,6 +105,18 @@ components:
       maxLength: 10
       example: "5318290"
 
+    PlaybookName:
+      description: Human readable name of the playbook run. Used to present the given playbook run in external systems (Satellite).
+      type: string
+      example: Fix Critical CVEs
+      minLength: 1
+
+    WebConsoleUrl:
+      description: URL that points to the section of the web console where the user find more information about the playbook run. The field is optional but highly suggested.
+      type: string
+      format: url
+      minLength: 1
+
     Service:
       description: Service that triggered the given Playbook run
       type: string
@@ -170,6 +182,10 @@ components:
           $ref: '#/components/schemas/RunRecipient'
         correlation_id:
           $ref: '#/components/schemas/RunCorrelationId'
+        name:
+          $ref: '#/components/schemas/PlaybookName'
+        web_console_url:
+          $ref: '#/components/schemas/WebConsoleUrl'
         service:
           $ref: '#/components/schemas/Service'
         url:
@@ -390,6 +406,8 @@ components:
                 - timeout
                 - status
                 - service
+                - name
+                - web_console_url
                 - created_at
                 - updated_at
             default:

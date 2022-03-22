@@ -17,9 +17,6 @@ type Error struct {
 // OrgId defines model for OrgId.
 type OrgId string
 
-// PlaybookName defines model for PlaybookName.
-type PlaybookName string
-
 // Principal defines model for Principal.
 type Principal string
 
@@ -110,7 +107,7 @@ type RunInputV2 struct {
 	Labels *externalRef0.Labels `json:"labels,omitempty"`
 
 	// Human readable name of the playbook run. Used to present the given playbook run in external systems (Satellite).
-	Name PlaybookName `json:"name"`
+	Name externalRef0.PlaybookName `json:"name"`
 
 	// Identifier of the tenant
 	OrgId externalRef0.OrgId `json:"org_id"`
@@ -131,7 +128,7 @@ type RunInputV2 struct {
 	Url externalRef0.Url `json:"url"`
 
 	// URL that points to the section of the web console where the user find more information about the playbook run. The field is optional but highly suggested.
-	WebConsoleUrl *WebConsoleUrl `json:"web_console_url,omitempty"`
+	WebConsoleUrl *externalRef0.WebConsoleUrl `json:"web_console_url,omitempty"`
 }
 
 // RunsCreated defines model for RunsCreated.
@@ -139,9 +136,6 @@ type RunsCreated []RunCreated
 
 // Version defines model for Version.
 type Version string
-
-// WebConsoleUrl defines model for WebConsoleUrl.
-type WebConsoleUrl string
 
 // BadRequest defines model for BadRequest.
 type BadRequest Error

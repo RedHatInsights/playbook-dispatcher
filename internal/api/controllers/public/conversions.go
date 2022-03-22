@@ -24,10 +24,12 @@ const (
 	fieldCorrelationId = "correlation_id"
 	fieldLinks         = "links"
 	fieldInventoryId   = "inventory_id"
+	fieldName          = "name"
+	fieldWebConsoleUrl = "web_console_url"
 )
 
 var (
-	runFields     = utils.IndexStrings(fieldId, fieldAccount, fieldRecipient, fieldUrl, fieldLabels, fieldTimeout, fieldStatus, fieldCreatedAt, fieldUpdatedAt, fieldService, fieldCorrelationId)
+	runFields     = utils.IndexStrings(fieldId, fieldAccount, fieldRecipient, fieldUrl, fieldLabels, fieldTimeout, fieldStatus, fieldCreatedAt, fieldUpdatedAt, fieldService, fieldCorrelationId, fieldName, fieldWebConsoleUrl)
 	runHostFields = utils.IndexStrings(fieldHost, fieldRun, fieldStatus, fieldStdout, fieldLinks, fieldInventoryId)
 )
 
@@ -71,6 +73,14 @@ func dbRuntoApiRun(r *dbModel.Run, fields []string) *Run {
 		case fieldStatus:
 			value := RunStatus(r.Status)
 			run.Status = &value
+		case fieldName:
+			if r.PlaybookName != nil {
+				value := PlaybookName(*r.PlaybookName)
+				run.Name = &value
+			}
+		case fieldWebConsoleUrl:
+			value := WebConsoleUrl(r.PlaybookRunUrl)
+			run.WebConsoleUrl = &value
 		case fieldCreatedAt:
 			val := CreatedAt(r.CreatedAt)
 			run.CreatedAt = &val

@@ -31,7 +31,7 @@ func minimalV2Payload(recipient uuid.UUID) RunInputV2 {
 		Recipient: public.RunRecipient(recipient.String()),
 		Url:       public.Url("http://example.com"),
 		OrgId:     public.OrgId("5318290"),
-		Name:      PlaybookName("ansible playbook"),
+		Name:      public.PlaybookName("ansible playbook"),
 		Principal: Principal("test_user"),
 	}
 }
@@ -77,8 +77,8 @@ var _ = Describe("runsCreate V2", func() {
 		url := "http://example.com"
 		orgId := "5318290"
 
-		playbookName := PlaybookName("sat-playbook")
-		playbookRunUrl := WebConsoleUrl("http://example.com/webConsoleUrl")
+		playbookName := public.PlaybookName("sat-playbook")
+		playbookRunUrl := public.WebConsoleUrl("http://example.com/webConsoleUrl")
 		principal := Principal("test_user")
 
 		satId := uuid.New()

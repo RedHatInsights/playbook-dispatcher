@@ -130,9 +130,9 @@ components:
         url:
           $ref: './public.openapi.yaml#/components/schemas/Url'
         name:
-          $ref: '#/components/schemas/PlaybookName'
+          $ref: './public.openapi.yaml#/components/schemas/PlaybookName'
         web_console_url:
-          $ref: '#/components/schemas/WebConsoleUrl'
+          $ref: './public.openapi.yaml#/components/schemas/WebConsoleUrl'
         labels:
           $ref: './public.openapi.yaml#/components/schemas/Labels'
         timeout:
@@ -233,18 +233,6 @@ components:
       description: Username of the user interacting with the service
       type: string
       example: jharting
-      minLength: 1
-
-    PlaybookName:
-      description: Human readable name of the playbook run. Used to present the given playbook run in external systems (Satellite).
-      type: string
-      example: Fix Critical CVEs
-      minLength: 1
-
-    WebConsoleUrl:
-      description: URL that points to the section of the web console where the user find more information about the playbook run. The field is optional but highly suggested.
-      type: string
-      format: url
       minLength: 1
 
     Version:

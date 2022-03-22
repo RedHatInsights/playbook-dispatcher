@@ -17,11 +17,15 @@ import (
 	externalRef0 "playbook-dispatcher/internal/api/controllers/public"
 )
 
+// Error defines model for Error.
+type Error struct {
+
+	// Human readable error message
+	Message string `json:"message"`
+}
+
 // OrgId defines model for OrgId.
 type OrgId string
-
-// PlaybookName defines model for PlaybookName.
-type PlaybookName string
 
 // Principal defines model for Principal.
 type Principal string
@@ -113,7 +117,7 @@ type RunInputV2 struct {
 	Labels *externalRef0.Labels `json:"labels,omitempty"`
 
 	// Human readable name of the playbook run. Used to present the given playbook run in external systems (Satellite).
-	Name PlaybookName `json:"name"`
+	Name externalRef0.PlaybookName `json:"name"`
 
 	// Identifier of the tenant
 	OrgId externalRef0.OrgId `json:"org_id"`
@@ -134,14 +138,17 @@ type RunInputV2 struct {
 	Url externalRef0.Url `json:"url"`
 
 	// URL that points to the section of the web console where the user find more information about the playbook run. The field is optional but highly suggested.
-	WebConsoleUrl *WebConsoleUrl `json:"web_console_url,omitempty"`
+	WebConsoleUrl *externalRef0.WebConsoleUrl `json:"web_console_url,omitempty"`
 }
 
 // RunsCreated defines model for RunsCreated.
 type RunsCreated []RunCreated
 
-// WebConsoleUrl defines model for WebConsoleUrl.
-type WebConsoleUrl string
+// Version defines model for Version.
+type Version string
+
+// BadRequest defines model for BadRequest.
+type BadRequest Error
 
 // ApiInternalRunsCreateJSONBody defines parameters for ApiInternalRunsCreate.
 type ApiInternalRunsCreateJSONBody []RunInput
@@ -248,6 +255,9 @@ type ClientInterface interface {
 	ApiInternalV2RecipientsStatusWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error)
 
 	ApiInternalV2RecipientsStatus(ctx context.Context, body ApiInternalV2RecipientsStatusJSONRequestBody) (*http.Response, error)
+
+	// ApiInternalVersion request
+	ApiInternalVersion(ctx context.Context) (*http.Response, error)
 }
 
 func (c *Client) ApiInternalRunsCreateWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error) {
@@ -327,6 +337,21 @@ func (c *Client) ApiInternalV2RecipientsStatusWithBody(ctx context.Context, cont
 
 func (c *Client) ApiInternalV2RecipientsStatus(ctx context.Context, body ApiInternalV2RecipientsStatusJSONRequestBody) (*http.Response, error) {
 	req, err := NewApiInternalV2RecipientsStatusRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if c.RequestEditor != nil {
+		err = c.RequestEditor(ctx, req)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ApiInternalVersion(ctx context.Context) (*http.Response, error) {
+	req, err := NewApiInternalVersionRequest(c.Server)
 	if err != nil {
 		return nil, err
 	}
@@ -457,6 +482,33 @@ func NewApiInternalV2RecipientsStatusRequestWithBody(server string, contentType 
 	return req, nil
 }
 
+// NewApiInternalVersionRequest generates requests for ApiInternalVersion
+func NewApiInternalVersionRequest(server string) (*http.Request, error) {
+	var err error
+
+	queryUrl, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	basePath := fmt.Sprintf("/internal/version")
+	if basePath[0] == '/' {
+		basePath = basePath[1:]
+	}
+
+	queryUrl, err = queryUrl.Parse(basePath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryUrl.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // ClientWithResponses builds on ClientInterface to offer response payloads
 type ClientWithResponses struct {
 	ClientInterface
@@ -500,12 +552,16 @@ type ClientWithResponsesInterface interface {
 	ApiInternalV2RecipientsStatusWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*ApiInternalV2RecipientsStatusResponse, error)
 
 	ApiInternalV2RecipientsStatusWithResponse(ctx context.Context, body ApiInternalV2RecipientsStatusJSONRequestBody) (*ApiInternalV2RecipientsStatusResponse, error)
+
+	// ApiInternalVersion request
+	ApiInternalVersionWithResponse(ctx context.Context) (*ApiInternalVersionResponse, error)
 }
 
 type ApiInternalRunsCreateResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON207      *RunsCreated
+	JSON400      *Error
 }
 
 // Status returns HTTPResponse.Status
@@ -550,6 +606,7 @@ type ApiInternalV2RecipientsStatusResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *[]RecipientStatus
+	JSON400      *Error
 }
 
 // Status returns HTTPResponse.Status
@@ -562,6 +619,28 @@ func (r ApiInternalV2RecipientsStatusResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r ApiInternalV2RecipientsStatusResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type ApiInternalVersionResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *Version
+}
+
+// Status returns HTTPResponse.Status
+func (r ApiInternalVersionResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ApiInternalVersionResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -619,6 +698,15 @@ func (c *ClientWithResponses) ApiInternalV2RecipientsStatusWithResponse(ctx cont
 	return ParseApiInternalV2RecipientsStatusResponse(rsp)
 }
 
+// ApiInternalVersionWithResponse request returning *ApiInternalVersionResponse
+func (c *ClientWithResponses) ApiInternalVersionWithResponse(ctx context.Context) (*ApiInternalVersionResponse, error) {
+	rsp, err := c.ApiInternalVersion(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return ParseApiInternalVersionResponse(rsp)
+}
+
 // ParseApiInternalRunsCreateResponse parses an HTTP response from a ApiInternalRunsCreateWithResponse call
 func ParseApiInternalRunsCreateResponse(rsp *http.Response) (*ApiInternalRunsCreateResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
@@ -639,6 +727,13 @@ func ParseApiInternalRunsCreateResponse(rsp *http.Response) (*ApiInternalRunsCre
 			return nil, err
 		}
 		response.JSON207 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
 
 	}
 
@@ -687,6 +782,39 @@ func ParseApiInternalV2RecipientsStatusResponse(rsp *http.Response) (*ApiInterna
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest []RecipientStatus
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseApiInternalVersionResponse parses an HTTP response from a ApiInternalVersionWithResponse call
+func ParseApiInternalVersionResponse(rsp *http.Response) (*ApiInternalVersionResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ApiInternalVersionResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest Version
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
