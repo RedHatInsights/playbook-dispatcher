@@ -64,6 +64,7 @@ var _ = Describe("Handler", func() {
 			Entry("missing rhc-sat uuid", "playbook-sat", `{"type" : "playbook_run_update", "version": 3}`),
 			Entry("rhc-sat invalid JSON", "playbook-sat", `{"type" : "playbook_run_update", "version": 3, "correlation_id": "0465783c-2e36-4e57-8514-c2cb962d323a"}}`),
 			Entry("rhc-sat invalid type", "playbook-sat", `{"type" : "invalid_type", "version": 3, "correlation_id": "0465783c-2e36-4e57-8514-c2cb962d323a"}`),
+			Entry("rhc-sat invalid host uuid", "playbook-sat", `{"type": "playbook_run_update", "version": 3, "correlation_id": "0465783c-2e36-4e57-8514-c2cb962d323a", "host": "invalid.uuid", "status": "success", "connection_code": 0, "execution_code": 0}`),
 		)
 
 		DescribeTable("Accepts valid runner files",
@@ -90,8 +91,8 @@ var _ = Describe("Handler", func() {
 			},
 
 			Entry("multiple events", "playbook-sat", `
-			{"type": "playbook_run_update", "version": 3, "correlation_id": "0465783c-2e36-4e57-8514-c2cb962d323a", "sequence": 1, "host": "03.example.com", "console": "03.example.com | SUCCESS => {\n    \"changed\": false,\n    \"ping\": \"pong\"\n}"}
-			{"type": "playbook_run_finished", "version": 3, "correlation_id": "0465783c-2e36-4e57-8514-c2cb962d323a", "host": "03.example.com", "status": "success", "connection_code": 0, "execution_code": 0}
+			{"type": "playbook_run_update", "version": 3, "correlation_id": "0465783c-2e36-4e57-8514-c2cb962d323a", "sequence": 1, "host": "b21fa415-083f-4c5a-868e-1d65d9e328a3", "console": "03.example.com | SUCCESS => {\n    \"changed\": false,\n    \"ping\": \"pong\"\n}"}
+			{"type": "playbook_run_finished", "version": 3, "correlation_id": "0465783c-2e36-4e57-8514-c2cb962d323a", "host": "b21fa415-083f-4c5a-868e-1d65d9e328a3", "status": "success", "connection_code": 0, "execution_code": 0}
 			{"type": "playbook_run_completed", "version": 3, "correlation_id": "0465783c-2e36-4e57-8514-c2cb962d323a", "status": "success", "satellite_connection_code": 0, "satellite_infrastructure_code": 0}
 			`),
 		)
