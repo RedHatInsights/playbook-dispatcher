@@ -2,9 +2,10 @@ package private
 
 import (
 	"net/http"
-	"playbook-dispatcher/internal/api/connectors/tenants"
 	"playbook-dispatcher/internal/api/instrumentation"
 	"playbook-dispatcher/internal/common/utils"
+
+	"github.com/RedHatInsights/tenant-utils/pkg/tenantid"
 
 	"github.com/labstack/echo/v4"
 )
@@ -27,7 +28,7 @@ func (this *controllers) ApiInternalV2RunsCancel(ctx echo.Context) error {
 		// TODO: this will go away in the future
 		ean, err := this.translator.OrgIDToEAN(ctx.Request().Context(), string(cancelInputV2.OrgId))
 		if err != nil {
-			if _, ok := err.(*tenants.TenantNotFoundError); ok {
+			if _, ok := err.(*tenantid.TenantNotFoundError); ok {
 				return runCancelError(http.StatusNotFound)
 			}
 

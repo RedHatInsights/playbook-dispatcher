@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"playbook-dispatcher/internal/api/connectors"
-	"playbook-dispatcher/internal/api/connectors/tenants"
 	"playbook-dispatcher/internal/api/controllers/private"
 	"playbook-dispatcher/internal/api/controllers/public"
 	"playbook-dispatcher/internal/api/instrumentation"
@@ -16,6 +15,8 @@ import (
 	"playbook-dispatcher/internal/common/utils"
 	"sync"
 	"time"
+
+	"github.com/RedHatInsights/tenant-utils/pkg/tenantid"
 
 	oapiMiddleware "github.com/deepmap/oapi-codegen/pkg/middleware"
 	"github.com/getkin/kin-openapi/openapi3"
@@ -81,15 +82,15 @@ func Start(
 		log.Warn("Using mock CloudConnectorClient")
 	}
 
-	var translator tenants.TenantIDTranslator
+	var translator tenantid.Translator
 	if cfg.GetString("tenant.translator.impl") == "impl" {
-		translator = tenants.NewTenantIDTranslatorClient(
+		translator = tenantid.NewTranslator(
 			fmt.Sprintf("%s://%s:%s", cfg.Get("tenant.translator.scheme"), cfg.Get("tenant.translator.host"), cfg.Get("tenant.translator.port")),
-			tenants.WithTimeout(cfg.GetDuration("tenant.translator.timeout")*time.Second),
-			tenants.WithMetrics(),
+			tenantid.WithTimeout(cfg.GetDuration("tenant.translator.timeout")*time.Second),
+			tenantid.WithMetrics(),
 		)
 	} else {
-		translator = tenants.NewMockTenantIDTranslator()
+		translator = tenantid.NewTranslatorMock()
 		log.Warn("Using mock TenantIDTranslator")
 	}
 
