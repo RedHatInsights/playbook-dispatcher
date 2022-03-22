@@ -22,6 +22,7 @@ import org.junit.runners.Parameterized.Parameters;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertNull;
 
 public class RunEventTransformTest {
 
@@ -67,5 +68,14 @@ public class RunEventTransformTest {
         final SourceRecord record = new SourceRecord(null, null, null, null, null, null, null, null);
         final SourceRecord result = transform.apply(record);
         assertTrue(record == result);
+    }
+
+    @Test
+    public void testHeartbeatEventSkipped() throws Exception {
+        final Struct key = new StructBuilder().put("id", "98875b33-b37e-4c35-be8b-d74f321bac28").build();
+        final Struct value = new StructBuilder().put("after", Factory.getData()).put("op", "c").put("source", Factory.getSource()).build();
+        final SourceRecord record = new SourceRecord(null, null, "public.runs", null, key.schema(), key, value.schema(), value);
+        final SourceRecord result = transform.apply(record);
+        assertNull(result);
     }
 }
