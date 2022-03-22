@@ -64,14 +64,14 @@ var _ = Describe("runsCancel V2", func() {
 		Expect(err).ToNot(HaveOccurred())
 	})
 
-	It("404s if tenant is not known", func() {
+	It("404s if tenant is anemic/unknown", func() {
 		payload := minimalV2Cancel()
 		payload.OrgId = "654321"
 
 		runs, _ := cancelV2(&ApiInternalV2RunsCancelJSONRequestBody{payload})
 
 		Expect(*runs).To(HaveLen(1))
-		Expect((*runs)[0].Code).To(Equal(404))
+		Expect((*runs)[0].Code).To(Equal(400))
 	})
 
 	It("404s if playbook run is not known", func() {
