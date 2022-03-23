@@ -18,7 +18,7 @@ func NewMockTenantIDTranslator() TenantIDTranslator {
 		"14656001": utils.StringRef("7135271"),
 		"11789772": utils.StringRef("6089719"),
 		"3340851":  utils.StringRef("0369233"),
-        "10001":  utils.StringRef("010101"),
+		"10001":  utils.StringRef("010101"),
 	}
 
 	return &mockTenantIDTranslator{
