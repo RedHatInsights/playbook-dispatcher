@@ -3,7 +3,6 @@ package responseConsumer
 import (
 	"context"
 	"errors"
-	"fmt"
 	"playbook-dispatcher/internal/common/ansible"
 	"playbook-dispatcher/internal/common/constants"
 	kafkaUtils "playbook-dispatcher/internal/common/kafka"
@@ -12,7 +11,6 @@ import (
 	"playbook-dispatcher/internal/common/satellite"
 	"playbook-dispatcher/internal/common/utils"
 	"playbook-dispatcher/internal/response-consumer/instrumentation"
-	"strconv"
 
 	k "github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/google/uuid"
@@ -66,13 +64,6 @@ func (this *handler) onMessage(ctx context.Context, msg *k.Message) {
 
 	var status string
 	var eventsSerialized []byte
-	if requestType == runnerMessageHeaderValue {
-		status = inferStatus(value.RunnerEvents, nil)
-		eventsSerialized = utils.MustMarshal(value.RunnerEvents)
-	} else {
-		status = inferSatStatus(value.SatEvents, nil)
-		eventsSerialized = utils.MustMarshal(value.SatEvents)
-	}
 
 	var runsUpdated int64
 
@@ -83,16 +74,12 @@ func (this *handler) onMessage(ctx context.Context, msg *k.Message) {
 			Where("account = ?", value.Account).
 			Where("correlation_id = ?", correlationId)
 
-		if selectResult := baseQuery.Select("id", "status", "response_full").First(&run); selectResult.Error != nil {
-			if errors.Is(selectResult.Error, gorm.ErrRecordNotFound) {
-				return nil
-			}
-
-			utils.GetLogFromContext(ctx).Errorw("Error fetching run from db", "error", selectResult.Error)
-			return selectResult.Error
-		}
+		selectResult := baseQuery.Select("id", "status", "response_full").First(&run)
 
 		if requestType == satMessageHeaderValue {
+			status = inferSatStatus(value.SatEvents, nil)
+			eventsSerialized = utils.MustMarshal(value.SatEvents)
+
 			if !run.ResponseFull {
 				status = checkSatStatusPartial(value.SatEvents)
 			}
@@ -100,6 +87,18 @@ func (this *handler) onMessage(ctx context.Context, msg *k.Message) {
 			if run.Status == db.RunStatusFailure || run.Status == db.RunStatusCanceled {
 				status = run.Status
 			}
+		} else {
+			status = inferStatus(value.RunnerEvents, nil)
+			eventsSerialized = utils.MustMarshal(value.RunnerEvents)
+		}
+
+		if selectResult.Error != nil {
+			if errors.Is(selectResult.Error, gorm.ErrRecordNotFound) {
+				return nil
+			}
+
+			utils.GetLogFromContext(ctx).Errorw("Error fetching run from db", "error", selectResult.Error)
+			return selectResult.Error
 		}
 
 		toUpdate := db.Run{
@@ -167,67 +166,23 @@ func (this *handler) onMessage(ctx context.Context, msg *k.Message) {
 	}
 }
 
-func buildCaseExpr(caseOptions []clause.Expr) clause.Expr {
-	argsLen := len(caseOptions)
-	caseExprStr := "CASE "
-	varsArray := make([]interface{}, argsLen)
-
-	for i, option := range caseOptions {
-		varsArray[i] = option
-
-		if i == argsLen-1 {
-			caseExprStr += fmt.Sprintf("ELSE (?) END")
-		} else if i%2 == 0 {
-			caseExprStr += fmt.Sprintf("WHEN (?) ")
-		} else {
-			caseExprStr += fmt.Sprintf("THEN (?) ")
-		}
-	}
-
-	return clause.Expr{
-		SQL:  caseExprStr,
-		Vars: varsArray,
-	}
-
-}
-
 func satAssignmentWithCase(responseFull bool, updateHost db.RunHost) map[string]interface{} {
 	satSequence, status, log := *updateHost.SatSequence, updateHost.Status, updateHost.Log
 
-	satNullClause := "sat_sequence IS NULL"
+	statusCase := gorm.Expr(`CASE WHEN sat_sequence IS NULL OR sat_sequence < ? THEN ? ELSE status END`, satSequence, status)
 
-	statusCase := []clause.Expr{
-		{SQL: fmt.Sprintf("%s OR sat_sequence < ?", satNullClause), Vars: []interface{}{satSequence}},
-		{SQL: "?", Vars: []interface{}{status}},
-		{SQL: "status"},
-	}
+	satSeqCase := gorm.Expr(`CASE WHEN sat_sequence IS NULL OR sat_sequence < ? THEN ? ELSE sat_sequence END`, satSequence, satSequence)
 
-	satSeqCase := []clause.Expr{
-		{SQL: fmt.Sprintf("%s OR sat_sequence < ?", satNullClause), Vars: []interface{}{satSequence}},
-		{SQL: strconv.Itoa(satSequence)},
-		{SQL: "sat_sequence"},
-	}
-
-	logCase := []clause.Expr{
-		{SQL: fmt.Sprintf("%s OR sat_sequence < ?", satNullClause), Vars: []interface{}{satSequence}},
-		{SQL: "?", Vars: []interface{}{log}},
-		{SQL: "log"},
-	}
+	logCase := gorm.Expr(`CASE WHEN sat_sequence IS NULL OR sat_sequence < ? THEN ? ELSE log END`, satSequence, log)
 
 	if !responseFull {
-		logCase = []clause.Expr{
-			{SQL: fmt.Sprintf("(%s AND ? > 0) OR sat_sequence + 1 < ?", satNullClause), Vars: []interface{}{satSequence, satSequence}},
-			{SQL: "log || '\n\u2026\n' || ?", Vars: []interface{}{log}},
-			{SQL: "sat_sequence > ?", Vars: []interface{}{satSequence}},
-			{SQL: "log"},
-			{SQL: "log || ?", Vars: []interface{}{log}},
-		}
+		logCase = gorm.Expr(`CASE WHEN (sat_sequence IS NULL AND ? > 0) OR sat_sequence + 1 < ? THEN log || '\n\u2026\n' || ? WHEN sat_sequence > ? THEN log ELSE log || ? END`, satSequence, satSequence, log, satSequence, log)
 	}
 
 	return map[string]interface{}{
-		"status":       buildCaseExpr(statusCase),
-		"sat_sequence": buildCaseExpr(satSeqCase),
-		"log":          buildCaseExpr(logCase),
+		"status":       statusCase,
+		"sat_sequence": satSeqCase,
+		"log":          logCase,
 	}
 }
 
@@ -295,39 +250,6 @@ func inferStatus(events *[]message.PlaybookRunResponseMessageYamlEventsElem, hos
 	}
 }
 
-func checkSatStatusPartial(events *[]message.PlaybookSatRunResponseMessageYamlEventsElem) string {
-	failed := false
-	canceled := false
-	success := false
-
-	// for response_full = false, set status to "running" unless "playbook_run_completed" signal is received
-	for _, event := range *events {
-		if event.Type != EventSatPlaybookCompleted {
-			continue
-		}
-		if event.Status != nil && *event.Status == EventSatStatusSuccess {
-			success = true
-		}
-		if event.Status != nil && *event.Status == EventSatStatusCanceled {
-			canceled = true
-		}
-		if event.Status != nil && *event.Status == EventSatStatusFailure {
-			failed = true
-		}
-	}
-
-	switch {
-	case success:
-		return db.RunStatusSuccess
-	case failed:
-		return db.RunStatusFailure
-	case canceled:
-		return db.RunStatusCanceled
-	default:
-		return db.RunStatusRunning
-	}
-}
-
 func inferSatStatus(events *[]message.PlaybookSatRunResponseMessageYamlEventsElem, host *string) string {
 	finished := false
 	failed := false
@@ -361,6 +283,27 @@ func inferSatStatus(events *[]message.PlaybookSatRunResponseMessageYamlEventsEle
 	default:
 		return db.RunStatusRunning
 	}
+}
+
+func checkSatStatusPartial(events *[]message.PlaybookSatRunResponseMessageYamlEventsElem) string {
+	// for response_full = false, set run status to "running" unless "playbook_run_completed" signal is received
+	for _, event := range *events {
+		if event.Type != EventSatPlaybookCompleted || event.Status == nil {
+			continue
+		}
+
+		if *event.Status == EventSatStatusSuccess {
+			return db.RunStatusSuccess
+		}
+		if *event.Status == EventSatStatusCanceled {
+			return db.RunStatusCanceled
+		}
+		if *event.Status == EventSatStatusFailure {
+			return db.RunStatusFailure
+		}
+	}
+
+	return db.RunStatusRunning
 }
 
 type parsedMessageInfo struct {

@@ -593,7 +593,7 @@ var _ = Describe("handler", func() {
 				run := fetchRun(data.ID)
 
 				Expect(run.Status).To(Equal("success"))
-				checkHost(data.ID, "success", utils.IntRef(6), "first console log\n\n\u2026\nsecond console log", &inventoryId)
+				checkHost(data.ID, "success", utils.IntRef(6), "first console log\n\\n\\u2026\\nsecond console log", &inventoryId)
 			})
 
 			It("event ignored if received out of order", func() {
@@ -634,7 +634,7 @@ var _ = Describe("handler", func() {
 				run := fetchRun(data.ID)
 
 				Expect(run.Status).To(Equal("success"))
-				checkHost(data.ID, "success", utils.IntRef(2), "\n\u2026\nsecond console log\nthird console log", &inventoryId)
+				checkHost(data.ID, "success", utils.IntRef(2), "\\n\\u2026\\nsecond console log\nthird console log", &inventoryId)
 			})
 
 			It("failed status not overridden by out-of-order event", func() {
@@ -780,7 +780,7 @@ var _ = Describe("handler", func() {
 					Expect(hosts[0].InventoryID).To(Equal(&inventoryId1))
 					Expect(hosts[1].InventoryID).To(Equal(&inventoryId2))
 					Expect(hosts[0].Log).To(Equal("abc"))
-					Expect(hosts[1].Log).To(Equal("f\n\u2026\nh"))
+					Expect(hosts[1].Log).To(Equal("f\\n\\u2026\\nh"))
 				})
 			})
 		})
