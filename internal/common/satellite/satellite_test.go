@@ -79,5 +79,13 @@ var _ = Describe("Satellite", func() {
 			Expect(*satHostInfo.Sequence).To(Equal(4))
 			Expect(satHostInfo.Console).To(Equal("host2 | SUCCESS => {\n    \"changed\": false,\n    \"ping\": \"pong\"\n}"))
 		})
+
+		It("determines correct satHostinfo from an out of order multi-host run", func() {
+			events := loadFile("./sat-test-events5.jsonl")
+			host := "03.example.com"
+			satHostInfo := GetSatHostInfo(events, &host)
+			Expect(satHostInfo.Sequence).To(Equal(2))
+			Expect(satHostInfo.Console).To(Equal("03.example.com out of order\n03.example.com-seq-1\n"))
+		})
 	})
 })
