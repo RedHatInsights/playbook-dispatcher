@@ -3,6 +3,7 @@ package tenants
 import (
 	"context"
 	"fmt"
+	"math/rand"
 	"playbook-dispatcher/internal/common/utils"
 )
 
@@ -11,13 +12,19 @@ type mockTenantIDTranslator struct {
 	eanToOrgID map[string]string
 }
 
-func NewMockTenantIDTranslator() TenantIDTranslator {
+func NewMockTenantIDTranslator(accountNumbers ...string) TenantIDTranslator {
 	orgIDToEAN := map[string]*string{
 		"5318290":  utils.StringRef("901578"),
 		"12900172": utils.StringRef("6377882"),
 		"14656001": utils.StringRef("7135271"),
 		"11789772": utils.StringRef("6089719"),
 		"3340851":  utils.StringRef("0369233"),
+	}
+
+	// Optionally generate orgIds for provided account numbers
+	for _, accountNumber := range accountNumbers {
+		randomOrgID := fmt.Sprintf("%07d", rand.Intn(9999999))
+		orgIDToEAN[randomOrgID] = utils.StringRef(accountNumber)
 	}
 
 	return &mockTenantIDTranslator{
