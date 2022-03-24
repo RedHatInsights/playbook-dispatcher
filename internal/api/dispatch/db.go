@@ -47,6 +47,8 @@ func newHostRun(runHosts []generic.RunHostsInput, entityId uuid.UUID) []dbModel.
 
 		if inputHost.AnsibleHost != nil {
 			newHosts[i].Host = *inputHost.AnsibleHost
+		} else {
+			newHosts[i].Host = inputHost.InventoryId.String()
 		}
 	}
 
