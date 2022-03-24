@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"playbook-dispatcher/internal/api/connectors/tenants"
 	"playbook-dispatcher/internal/common/ansible"
 	"playbook-dispatcher/internal/common/constants"
 	kafkaUtils "playbook-dispatcher/internal/common/kafka"
@@ -79,16 +78,6 @@ func (this *handler) onMessage(ctx context.Context, msg *k.Message) {
 	run := db.Run{}
 
 	err = this.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-
-		idTranslator := tenants.NewMockTenantIDTranslator(value.Account)
-		if value.OrgId == "" {
-			orgIdFromEAN, err := idTranslator.EANToOrgID(ctx, value.Account)
-			if err != nil {
-				return err
-			}
-			value.OrgId = orgIdFromEAN
-		}
-
 		// Remove after testing
 		fmt.Printf("Account: %s -> OrgId: %s\n", value.Account, value.OrgId)
 
