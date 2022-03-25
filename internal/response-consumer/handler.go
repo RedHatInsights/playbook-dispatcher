@@ -146,7 +146,7 @@ func (this *handler) onMessage(ctx context.Context, msg *k.Message) {
 					ID:          uuid.New(),
 					RunID:       run.ID,
 					InventoryID: &inventoryId,
-					SatSequence: &satHost.Sequence,
+					SatSequence: satHost.Sequence,
 					Status:      inferSatStatus(value.SatEvents, &host),
 					Log:         satHost.Console,
 				}
@@ -169,28 +169,31 @@ func (this *handler) onMessage(ctx context.Context, msg *k.Message) {
 func satAssignmentWithCase(responseFull bool, updateHost db.RunHost) map[string]interface{} {
 	satSequence, status, log := *updateHost.SatSequence, updateHost.Status, updateHost.Log
 
-	statusCase := gorm.Expr(`CASE WHEN sat_sequence IS NULL OR sat_sequence < ? THEN ? ELSE status END`, satSequence, status)
-
-	satSeqCase := gorm.Expr(`CASE WHEN sat_sequence IS NULL OR sat_sequence < ? THEN ? ELSE sat_sequence END`, satSequence, satSequence)
-
-	logCase := gorm.Expr(`CASE WHEN sat_sequence IS NULL OR sat_sequence < ? THEN ? ELSE log END`, satSequence, log)
+	updateMap := map[string]interface{}{
+		"status":       status,
+		"sat_sequence": satSequence,
+		"log":          log,
+	}
 
 	if !responseFull {
-		logCase = gorm.Expr(`CASE WHEN (sat_sequence IS NULL AND ? > 0) OR sat_sequence + 1 < ? THEN log || '\n\u2026\n' || ? WHEN sat_sequence > ? THEN log ELSE log || ? END`, satSequence, satSequence, log, satSequence, log)
+		updateMap["log"] = gorm.Expr(`CASE WHEN (sat_sequence IS NULL AND ? > 0) OR sat_sequence + 1 < ? THEN log || '\n\u2026\n' || ? ELSE log || ? END`, satSequence, satSequence, log, log)
 	}
 
-	return map[string]interface{}{
-		"status":       statusCase,
-		"sat_sequence": satSeqCase,
-		"log":          logCase,
-	}
+	return updateMap
 }
 
 func satUpdateRecord(ctx context.Context, tx *gorm.DB, responseFull bool, toUpdate []db.RunHost) error {
 	for _, runHost := range toUpdate {
-		updateResult := tx.Model(db.RunHost{}).
-			Where("run_id = ? AND inventory_id = ?", runHost.RunID, runHost.InventoryID).
-			Updates(satAssignmentWithCase(responseFull, runHost))
+		updateResult := tx.Model(db.RunHost{})
+
+		if runHost.SatSequence != nil {
+			updateResult.Where("run_id = ? AND inventory_id = ? AND (sat_sequence IS NULL OR sat_sequence < ?)", runHost.RunID, runHost.InventoryID, *runHost.SatSequence).
+				Updates(satAssignmentWithCase(responseFull, runHost))
+		} else {
+			// only update status when runHost.SatSequence is nil e.g. when runHost finished
+			updateResult.Where("run_id = ? AND inventory_id = ?", runHost.RunID, runHost.InventoryID).
+				Updates(map[string]interface{}{"status": runHost.Status})
+		}
 
 		if updateResult.Error != nil {
 			utils.GetLogFromContext(ctx).Errorw("Error updating satellite host in db", "error", updateResult.Error)
