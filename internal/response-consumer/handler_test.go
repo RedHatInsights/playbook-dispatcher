@@ -670,6 +670,46 @@ var _ = Describe("handler", func() {
 				Expect(run.Status).To(Equal("failure"))
 			})
 
+			It("correctly determines run/host status if the finished/completed events are sent separately", func() {
+				var data = test.NewRun(accountNumber())
+				data.ResponseFull = false
+
+				Expect(db().Create(&data).Error).ToNot(HaveOccurred())
+
+				inventoryId := uuid.New()
+				var hostData = test.NewRunHost(data.ID, "running", &inventoryId)
+				inventoryIdString := inventoryId.String()
+
+				Expect(db().Create(&hostData).Error).ToNot(HaveOccurred())
+
+				events := buildSatEvents(
+					data.CorrelationID,
+					satPlaybookRunUpdateEvent(0, inventoryIdString, "first console log\n"),
+				)
+
+				instance.onMessage(test.TestContext(), newSatResponseMessage(events, data.CorrelationID))
+
+				events = buildSatEvents(
+					data.CorrelationID,
+					satPlaybookRunUpdateEvent(1, inventoryIdString, "second console log"),
+				)
+
+				instance.onMessage(test.TestContext(), newSatResponseMessage(events, data.CorrelationID))
+
+				events = buildSatEvents(
+					data.CorrelationID,
+					satPlaybookRunFinishedEvent(inventoryIdString, "success"),
+					satPlaybookRunCompletedEvent("success"),
+				)
+
+				instance.onMessage(test.TestContext(), newSatResponseMessage(events, data.CorrelationID))
+
+				run := fetchRun(data.ID)
+
+				Expect(run.Status).To(Equal("success"))
+				checkHost(data.ID, "success", utils.IntRef(1), "first console log\nsecond console log", &inventoryId)
+			})
+
 			Context("with multiple hosts", func() {
 				It("infers the run status properly", func() {
 					var data = test.NewRun(accountNumber())
