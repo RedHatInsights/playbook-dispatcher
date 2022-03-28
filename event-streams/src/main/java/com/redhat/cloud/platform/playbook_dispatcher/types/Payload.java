@@ -17,6 +17,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
 @JsonPropertyOrder({
     "id",
     "account",
+    "org_id",
     "recipient",
     "correlation_id",
     "service",
@@ -46,6 +47,8 @@ public class Payload {
      */
     @JsonProperty("account")
     private String account;
+    @JsonProperty("org_id")
+    private String orgId;
     /**
      * 
      * (Required)
@@ -156,6 +159,16 @@ public class Payload {
     @JsonProperty("account")
     public void setAccount(String account) {
         this.account = account;
+    }
+
+    @JsonProperty("org_id")
+    public String getOrgId() {
+        return orgId;
+    }
+
+    @JsonProperty("org_id")
+    public void setOrgId(String orgId) {
+        this.orgId = orgId;
     }
 
     /**
@@ -390,6 +403,10 @@ public class Payload {
         sb.append('=');
         sb.append(((this.account == null)?"<null>":this.account));
         sb.append(',');
+        sb.append("orgId");
+        sb.append('=');
+        sb.append(((this.orgId == null)?"<null>":this.orgId));
+        sb.append(',');
         sb.append("recipient");
         sb.append('=');
         sb.append(((this.recipient == null)?"<null>":this.recipient));
@@ -454,6 +471,7 @@ public class Payload {
     public int hashCode() {
         int result = 1;
         result = ((result* 31)+((this.webConsoleUrl == null)? 0 :this.webConsoleUrl.hashCode()));
+        result = ((result* 31)+((this.orgId == null)? 0 :this.orgId.hashCode()));
         result = ((result* 31)+((this.url == null)? 0 :this.url.hashCode()));
         result = ((result* 31)+((this.timeout == null)? 0 :this.timeout.hashCode()));
         result = ((result* 31)+((this.labels == null)? 0 :this.labels.hashCode()));
@@ -480,7 +498,7 @@ public class Payload {
             return false;
         }
         Payload rhs = ((Payload) other);
-        return ((((((((((((((((this.webConsoleUrl == rhs.webConsoleUrl)||((this.webConsoleUrl!= null)&&this.webConsoleUrl.equals(rhs.webConsoleUrl)))&&((this.url == rhs.url)||((this.url!= null)&&this.url.equals(rhs.url))))&&((this.timeout == rhs.timeout)||((this.timeout!= null)&&this.timeout.equals(rhs.timeout))))&&((this.labels == rhs.labels)||((this.labels!= null)&&this.labels.equals(rhs.labels))))&&((this.createdAt == rhs.createdAt)||((this.createdAt!= null)&&this.createdAt.equals(rhs.createdAt))))&&((this.service == rhs.service)||((this.service!= null)&&this.service.equals(rhs.service))))&&((this.recipient == rhs.recipient)||((this.recipient!= null)&&this.recipient.equals(rhs.recipient))))&&((this.name == rhs.name)||((this.name!= null)&&this.name.equals(rhs.name))))&&((this.correlationId == rhs.correlationId)||((this.correlationId!= null)&&this.correlationId.equals(rhs.correlationId))))&&((this.id == rhs.id)||((this.id!= null)&&this.id.equals(rhs.id))))&&((this.additionalProperties == rhs.additionalProperties)||((this.additionalProperties!= null)&&this.additionalProperties.equals(rhs.additionalProperties))))&&((this.account == rhs.account)||((this.account!= null)&&this.account.equals(rhs.account))))&&((this.recipientConfig == rhs.recipientConfig)||((this.recipientConfig!= null)&&this.recipientConfig.equals(rhs.recipientConfig))))&&((this.status == rhs.status)||((this.status!= null)&&this.status.equals(rhs.status))))&&((this.updatedAt == rhs.updatedAt)||((this.updatedAt!= null)&&this.updatedAt.equals(rhs.updatedAt))));
+        return (((((((((((((((((this.webConsoleUrl == rhs.webConsoleUrl)||((this.webConsoleUrl!= null)&&this.webConsoleUrl.equals(rhs.webConsoleUrl)))&&((this.orgId == rhs.orgId)||((this.orgId!= null)&&this.orgId.equals(rhs.orgId))))&&((this.url == rhs.url)||((this.url!= null)&&this.url.equals(rhs.url))))&&((this.timeout == rhs.timeout)||((this.timeout!= null)&&this.timeout.equals(rhs.timeout))))&&((this.labels == rhs.labels)||((this.labels!= null)&&this.labels.equals(rhs.labels))))&&((this.createdAt == rhs.createdAt)||((this.createdAt!= null)&&this.createdAt.equals(rhs.createdAt))))&&((this.service == rhs.service)||((this.service!= null)&&this.service.equals(rhs.service))))&&((this.recipient == rhs.recipient)||((this.recipient!= null)&&this.recipient.equals(rhs.recipient))))&&((this.name == rhs.name)||((this.name!= null)&&this.name.equals(rhs.name))))&&((this.correlationId == rhs.correlationId)||((this.correlationId!= null)&&this.correlationId.equals(rhs.correlationId))))&&((this.id == rhs.id)||((this.id!= null)&&this.id.equals(rhs.id))))&&((this.additionalProperties == rhs.additionalProperties)||((this.additionalProperties!= null)&&this.additionalProperties.equals(rhs.additionalProperties))))&&((this.account == rhs.account)||((this.account!= null)&&this.account.equals(rhs.account))))&&((this.recipientConfig == rhs.recipientConfig)||((this.recipientConfig!= null)&&this.recipientConfig.equals(rhs.recipientConfig))))&&((this.status == rhs.status)||((this.status!= null)&&this.status.equals(rhs.status))))&&((this.updatedAt == rhs.updatedAt)||((this.updatedAt!= null)&&this.updatedAt.equals(rhs.updatedAt))));
     }
 
     public enum Status {
