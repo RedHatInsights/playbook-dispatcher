@@ -137,7 +137,6 @@ public class RunEventTransform<T extends ConnectRecord<T>> implements Transforma
         final Payload payload = new Payload();
         payload.setId(input.getString("id"));
         payload.setAccount(input.getString("account"));
-        payload.setOrgId(input.getString("org_id"));
         payload.setRecipient(input.getString("recipient"));
         payload.setCorrelationId(input.getString("correlation_id"));
         payload.setService(input.getString("service"));
@@ -146,6 +145,10 @@ public class RunEventTransform<T extends ConnectRecord<T>> implements Transforma
         payload.setTimeout(input.getInt32("timeout"));
         payload.setCreatedAt(input.getString("created_at"));
         payload.setUpdatedAt(input.getString("updated_at"));
+        
+        if (input.get("org_id") != null) {
+            payload.setOrgId(input.getString("org_id"));
+        }
 
         if (input.get("playbook_name") != null) {
             payload.setName(input.getString("playbook_name"));
