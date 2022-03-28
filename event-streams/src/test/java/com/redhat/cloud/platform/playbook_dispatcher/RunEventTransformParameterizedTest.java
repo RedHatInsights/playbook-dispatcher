@@ -76,6 +76,7 @@ public class RunEventTransformParameterizedTest {
         assertEquals(result.headers().lastWithName(RunEventTransform.HEADER_ACCOUNT).value(), "0000001");
         assertEquals(result.headers().lastWithName(RunEventTransform.HEADER_SERVICE).value(), "test");
         assertEquals(result.headers().lastWithName(RunEventTransform.HEADER_STATUS).value(), "success");
+        assertEquals(result.headers().lastWithName(RunEventTransform.HEADER_ORGID).value(), "5318290");
     }
 
     @Test
@@ -87,6 +88,7 @@ public class RunEventTransformParameterizedTest {
         assertEquals(this.eventType, value.getEventType().value());
         assertEquals("b5c80cd3-8849-46a2-97e2-368cf62a1cda", value.getPayload().getId());
         assertEquals("0000001", value.getPayload().getAccount());
+        assertEquals("5318290", value.getPayload().getOrgId());
         assertEquals("dd018b96-da04-4651-84d1-187fa5c23f6c", value.getPayload().getRecipient());
         assertEquals("97b04495-68f0-4a41-93b9-d239c0a59b4f", value.getPayload().getCorrelationId());
         assertEquals("test", value.getPayload().getService());
