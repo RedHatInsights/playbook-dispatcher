@@ -218,6 +218,26 @@ This may happen e.g. if the Playbook signature is not valid, Ansible Runner bina
 Again, the correlation id is defined.
 In addition, an error code and detailed information should be provided.
 
+### Satellite Events
+
+In addition to Ansible Runner events, playbook-dispatcher also supports events produced by satellite. Similar to Ansible Runner events, these events from satellite should be stored in newline-delimited JSON, and should match the Satellite [job events schema](https://github.com/RedHatInsights/playbook-dispatcher/blob/master/schema/rhcsatJobEvent.yaml).
+
+```jsonl
+{"type": "playbook_run_update", "version": 3, "correlation_id": "0465783c-2e36-4e57-8514-c2cb962d323a", "sequence": 0, "host": "0e4eac4a-e303-4c83-9f6b-2152d4cfa242", "console": "host1"}
+{"type": "playbook_run_finished", "version": 3, "correlation_id": "0465783c-2e36-4e57-8514-c2cb962d323a", "host": "0e4eac4a-e303-4c83-9f6b-2152d4cfa242", "status": "success", "connection_code": 0, "execution_code": 0}
+{"type": "playbook_run_update", "version": 3, "correlation_id": "0465783c-2e36-4e57-8514-c2cb962d323a", "sequence": 4, "host": "e8f05d27-5af9-4547-a30c-5be04e099ffe", "console": "host2"}
+{"type": "playbook_run_finished", "version": 3, "correlation_id": "0465783c-2e36-4e57-8514-c2cb962d323a", "host": "e8f05d27-5af9-4547-a30c-5be04e099ffe", "status": "success", "connection_code": 0, "execution_code": 0}
+{"type": "playbook_run_completed", "version": 3, "correlation_id": "0465783c-2e36-4e57-8514-c2cb962d323a", "status": "success", "satellite_connection_code": 0, "satellite_infrastructure_code": 0}
+```
+
+`playbook_run_update` and `playbook_run_finished` events are bound to hosts, while `playbook_run_completed` events are bound to playbook runs and are sent out only once after the playbook run has concluded on all involved hosts. The `sequence` and `console` fields are not mandatory for `playbook_run_finished` and `playbook_run_completed` events.
+
+The content type of plain files of uploads need to be `application/vnd.redhat.playbook-sat.v3+jsonl`. For compressed files, the content type is expected to be either `application/vnd.redhat.playbook-sat.v3+gzip` or `application/vnd.redhat.playbook-sat.v3+xz`.
+
+#### Partial Satellite Response
+
+When playbook-dispatcher is deployed with `response_full` set to `false`, updates from all hosts involved in a playbook run are not expected with each upload. Satellite do not need to provide the entire console log with each update from a host, instead, they can provide the difference relative to the last `playbook_run_update` from a host and playbook-dispatcher will concatenate these logs and record it in the database.
+
 ## Cloud Connector integration
 
 Playbook Dispatcher uses [Cloud Connector](https://github.com/RedHatInsights/cloud-connector) to invoke Playbooks on connected hosts.
