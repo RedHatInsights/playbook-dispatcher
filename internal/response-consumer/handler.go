@@ -80,6 +80,8 @@ func (this *handler) onMessage(ctx context.Context, msg *k.Message) {
 			status = inferSatStatus(value.SatEvents, nil)
 			eventsSerialized = utils.MustMarshal(value.SatEvents)
 
+			satellite.SortSatEvents(value.SatEvents)
+
 			if !run.ResponseFull {
 				status = checkSatStatusPartial(value.SatEvents)
 			}
