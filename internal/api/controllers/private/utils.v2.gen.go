@@ -50,3 +50,21 @@ func (l RunCreatedList) PMapRunInputV2(f func(*RunCreated) RunInputV2) RunInputV
 	wg.Wait()
 	return l2
 }
+
+type CancelationInputV2List []CancelInputV2
+type RunCanceledList [] *RunCanceled
+
+// PMapRunCanceled executes the function on each member in parallel
+func (l CancelationInputV2List) PMapRunCanceled(f func(CancelInputV2) *RunCanceled) RunCanceledList {
+	wg := sync.WaitGroup{}
+	l2 := make(RunCanceledList, len(l))
+	for i, t := range l {
+		wg.Add(1)
+		go func(i int, t CancelInputV2) {
+			l2[i] = f(t)
+			wg.Done()
+		}(i, t)
+	}
+	wg.Wait()
+	return l2
+}
