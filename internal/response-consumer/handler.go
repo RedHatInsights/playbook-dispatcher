@@ -64,13 +64,6 @@ func (this *handler) onMessage(ctx context.Context, msg *k.Message) {
 
 	var status string
 	var eventsSerialized []byte
-	if requestType == runnerMessageHeaderValue {
-		status = inferStatus(value.RunnerEvents, nil)
-		eventsSerialized = utils.MustMarshal(value.RunnerEvents)
-	} else {
-		status = inferSatStatus(value.SatEvents, nil)
-		eventsSerialized = utils.MustMarshal(value.SatEvents)
-	}
 
 	var runsUpdated int64
 
@@ -81,7 +74,25 @@ func (this *handler) onMessage(ctx context.Context, msg *k.Message) {
 			Where("account = ?", value.Account).
 			Where("correlation_id = ?", correlationId)
 
-		if selectResult := baseQuery.Select("id").First(&run); selectResult.Error != nil {
+		selectResult := baseQuery.Select("id", "status", "response_full").First(&run)
+
+		if requestType == satMessageHeaderValue {
+			status = inferSatStatus(value.SatEvents, nil)
+			eventsSerialized = utils.MustMarshal(value.SatEvents)
+
+			if !run.ResponseFull {
+				status = checkSatStatusPartial(value.SatEvents)
+			}
+
+			if run.Status == db.RunStatusFailure || run.Status == db.RunStatusCanceled {
+				status = run.Status
+			}
+		} else {
+			status = inferStatus(value.RunnerEvents, nil)
+			eventsSerialized = utils.MustMarshal(value.RunnerEvents)
+		}
+
+		if selectResult.Error != nil {
 			if errors.Is(selectResult.Error, gorm.ErrRecordNotFound) {
 				return nil
 			}
@@ -120,6 +131,7 @@ func (this *handler) onMessage(ctx context.Context, msg *k.Message) {
 					Log:    ansible.GetStdout(*value.RunnerEvents, nil),
 				}
 			})
+			return createRecord(ctx, tx, toCreate)
 		} else if requestType == satMessageHeaderValue {
 			hosts := satellite.GetSatHosts(*value.SatEvents)
 
@@ -129,27 +141,17 @@ func (this *handler) onMessage(ctx context.Context, msg *k.Message) {
 
 			toCreate = mapHostsToRunHosts(hosts, func(host string) db.RunHost {
 				satHost := satellite.GetSatHostInfo(*value.SatEvents, &host)
+				inventoryId := uuid.MustParse(host)
 				return db.RunHost{
 					ID:          uuid.New(),
 					RunID:       run.ID,
-					Host:        host,
-					SatSequence: &satHost.Sequence,
+					InventoryID: &inventoryId,
+					SatSequence: satHost.Sequence,
 					Status:      inferSatStatus(value.SatEvents, &host),
 					Log:         satHost.Console,
 				}
 			})
-		}
-
-		createResult := tx.Model(db.RunHost{}).
-			Clauses(clause.OnConflict{
-				Columns:   []clause.Column{{Name: "run_id"}, {Name: "host"}},
-				DoUpdates: clause.AssignmentColumns([]string{"status", "log"}),
-			}).
-			Create(&toCreate)
-
-		if createResult.Error != nil {
-			utils.GetLogFromContext(ctx).Errorw("Error upserting run hosts in db", "error", createResult.Error)
-			return createResult.Error
+			return satUpdateRecord(ctx, tx, run.ResponseFull, toCreate)
 		}
 
 		return nil
@@ -162,6 +164,59 @@ func (this *handler) onMessage(ctx context.Context, msg *k.Message) {
 	} else {
 		instrumentation.PlaybookRunUpdateMiss(ctx, status)
 	}
+}
+
+func satAssignmentWithCase(responseFull bool, updateHost db.RunHost) map[string]interface{} {
+	satSequence, status, log := *updateHost.SatSequence, updateHost.Status, updateHost.Log
+
+	updateMap := map[string]interface{}{
+		"status":       status,
+		"sat_sequence": satSequence,
+		"log":          log,
+	}
+
+	if !responseFull {
+		updateMap["log"] = gorm.Expr(`CASE WHEN (sat_sequence IS NULL AND ? > 0) OR sat_sequence + 1 < ? THEN log || '\n\u2026\n' || ? ELSE log || ? END`, satSequence, satSequence, log, log)
+	}
+
+	return updateMap
+}
+
+func satUpdateRecord(ctx context.Context, tx *gorm.DB, responseFull bool, toUpdate []db.RunHost) error {
+	for _, runHost := range toUpdate {
+		updateResult := tx.Model(db.RunHost{})
+
+		if runHost.SatSequence != nil {
+			updateResult.Where("run_id = ? AND inventory_id = ? AND (sat_sequence IS NULL OR sat_sequence < ?)", runHost.RunID, runHost.InventoryID, *runHost.SatSequence).
+				Updates(satAssignmentWithCase(responseFull, runHost))
+		} else {
+			// only update status when runHost.SatSequence is nil e.g. when runHost finished
+			updateResult.Where("run_id = ? AND inventory_id = ?", runHost.RunID, runHost.InventoryID).
+				Updates(map[string]interface{}{"status": runHost.Status})
+		}
+
+		if updateResult.Error != nil {
+			utils.GetLogFromContext(ctx).Errorw("Error updating satellite host in db", "error", updateResult.Error)
+			return updateResult.Error
+		}
+	}
+	return nil
+}
+
+func createRecord(ctx context.Context, tx *gorm.DB, toCreate []db.RunHost) error {
+	createResult := tx.Model(db.RunHost{}).
+		Clauses(clause.OnConflict{
+			Columns:   []clause.Column{{Name: "run_id"}, {Name: "host"}},
+			DoUpdates: clause.AssignmentColumns([]string{"status", "log"}),
+		}).
+		Create(&toCreate)
+
+	if createResult.Error != nil {
+		utils.GetLogFromContext(ctx).Errorw("Error upserting run hosts in db", "error", createResult.Error)
+		return createResult.Error
+	}
+
+	return nil
 }
 
 func inferStatus(events *[]message.PlaybookRunResponseMessageYamlEventsElem, host *string) string {
@@ -231,6 +286,27 @@ func inferSatStatus(events *[]message.PlaybookSatRunResponseMessageYamlEventsEle
 	default:
 		return db.RunStatusRunning
 	}
+}
+
+func checkSatStatusPartial(events *[]message.PlaybookSatRunResponseMessageYamlEventsElem) string {
+	// for response_full = false, set run status to "running" unless "playbook_run_completed" signal is received
+	for _, event := range *events {
+		if event.Type != EventSatPlaybookCompleted || event.Status == nil {
+			continue
+		}
+
+		if *event.Status == EventSatStatusSuccess {
+			return db.RunStatusSuccess
+		}
+		if *event.Status == EventSatStatusCanceled {
+			return db.RunStatusCanceled
+		}
+		if *event.Status == EventSatStatusFailure {
+			return db.RunStatusFailure
+		}
+	}
+
+	return db.RunStatusRunning
 }
 
 type parsedMessageInfo struct {

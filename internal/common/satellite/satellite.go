@@ -21,7 +21,7 @@ func GetSatHosts(events []messageModel.PlaybookSatRunResponseMessageYamlEventsEl
 }
 
 type SatHostInfo struct {
-	Sequence int
+	Sequence *int
 	Console  string
 }
 
@@ -32,7 +32,7 @@ func GetSatHostInfo(events []messageModel.PlaybookSatRunResponseMessageYamlEvent
 			continue
 		}
 		if event.Sequence != nil {
-			hostInfo.Sequence = *event.Sequence
+			hostInfo.Sequence = event.Sequence
 		}
 		if event.Console != nil {
 			hostInfo.Console += *event.Console

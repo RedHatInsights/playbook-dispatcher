@@ -68,7 +68,7 @@ var _ = Describe("Satellite", func() {
 			events := loadFile("./sat-test-events2.jsonl")
 			host := "localhost"
 			satHostInfo := GetSatHostInfo(events, &host)
-			Expect(satHostInfo.Sequence).To(Equal(1))
+			Expect(*satHostInfo.Sequence).To(Equal(1))
 			Expect(satHostInfo.Console).To(Equal("localhost | FAILED => {\n    \"changed\": false,\n    \"ping\": \"runtime_error\"\n}"))
 		})
 
@@ -76,7 +76,7 @@ var _ = Describe("Satellite", func() {
 			events := loadFile("./sat-test-events4.jsonl")
 			host := "host2"
 			satHostInfo := GetSatHostInfo(events, &host)
-			Expect(satHostInfo.Sequence).To(Equal(4))
+			Expect(*satHostInfo.Sequence).To(Equal(4))
 			Expect(satHostInfo.Console).To(Equal("host2 | SUCCESS => {\n    \"changed\": false,\n    \"ping\": \"pong\"\n}"))
 		})
 	})
