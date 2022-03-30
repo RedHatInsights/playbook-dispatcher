@@ -34,7 +34,8 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <java.version>1.8</java.version>
 
-        <version.jackson>2.11.1</version.jackson>
+        <version.jackson>2.12.6</version.jackson>
+        <version.jackson.databind>2.12.6.1</version.jackson.databind>
         <version.junit>4.13.1</version.junit>
         <version.kafka>2.0.0</version.kafka>
 
@@ -75,7 +76,7 @@
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>${version.jackson}</version>
+            <version>${version.jackson.databind}</version>
         </dependency>
 
         <!-- Test dependencies -->
