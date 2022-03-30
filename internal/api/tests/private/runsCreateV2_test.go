@@ -192,14 +192,14 @@ var _ = Describe("runsCreate V2", func() {
 		Expect((*runs)[0].Code).To(Equal(404))
 	})
 
-	It("404s if tenant is not known", func() {
+	It("400s if tenant is not known", func() {
 		payload := minimalV2Payload(uuid.MustParse("b31955fb-3064-4f56-ae44-a1c488a28587"))
 		payload.OrgId = "654321"
 
 		runs, _ := dispatchV2(&ApiInternalV2RunsCreateJSONRequestBody{payload})
 
 		Expect(*runs).To(HaveLen(1))
-		Expect((*runs)[0].Code).To(Equal(404))
+		Expect((*runs)[0].Code).To(Equal(400))
 	})
 
 	It("400s on anemic tenant", func() {

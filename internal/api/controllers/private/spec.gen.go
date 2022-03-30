@@ -19,6 +19,9 @@ type ServerInterface interface {
 	// Dispatch Playbooks
 	// (POST /internal/dispatch)
 	ApiInternalRunsCreate(ctx echo.Context) error
+	// Cancel Playbook Runs
+	// (POST /internal/v2/cancel)
+	ApiInternalV2RunsCancel(ctx echo.Context) error
 	// Dispatch Playbooks
 	// (POST /internal/v2/dispatch)
 	ApiInternalV2RunsCreate(ctx echo.Context) error
@@ -41,6 +44,15 @@ func (w *ServerInterfaceWrapper) ApiInternalRunsCreate(ctx echo.Context) error {
 
 	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.ApiInternalRunsCreate(ctx)
+	return err
+}
+
+// ApiInternalV2RunsCancel converts echo context to params.
+func (w *ServerInterfaceWrapper) ApiInternalV2RunsCancel(ctx echo.Context) error {
+	var err error
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.ApiInternalV2RunsCancel(ctx)
 	return err
 }
 
@@ -100,6 +112,7 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	}
 
 	router.POST(baseURL+"/internal/dispatch", wrapper.ApiInternalRunsCreate)
+	router.POST(baseURL+"/internal/v2/cancel", wrapper.ApiInternalV2RunsCancel)
 	router.POST(baseURL+"/internal/v2/dispatch", wrapper.ApiInternalV2RunsCreate)
 	router.POST(baseURL+"/internal/v2/recipients/status", wrapper.ApiInternalV2RecipientsStatus)
 	router.GET(baseURL+"/internal/version", wrapper.ApiInternalVersion)
@@ -109,32 +122,33 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
-	"yFzX5dv32z8CAAD//4VkCVUgFwAA",
+	"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",
 }
 
 // GetSwagger returns the Swagger specification corresponding to the generated code

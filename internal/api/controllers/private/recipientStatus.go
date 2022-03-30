@@ -3,8 +3,9 @@ package private
 import (
 	"net/http"
 	"playbook-dispatcher/internal/api/connectors"
-	"playbook-dispatcher/internal/api/connectors/tenants"
 	"playbook-dispatcher/internal/common/utils"
+
+	"github.com/RedHatInsights/tenant-utils/pkg/tenantid"
 
 	"github.com/labstack/echo/v4"
 )
@@ -23,10 +24,9 @@ func (this *controllers) ApiInternalV2RecipientsStatus(ctx echo.Context) error {
 	for i, recipient := range input {
 
 		// translate org_id to EAN for Cloud Connector
-		// TODO: this will go away in the future
-		ean, err := this.getEAN(ctx.Request().Context(), string(recipient.OrgId), string(recipient.Recipient))
+		ean, err := this.translator.OrgIDToEAN(ctx.Request().Context(), string(recipient.OrgId))
 		if err != nil {
-			if _, ok := err.(*tenants.TenantNotFoundError); ok {
+			if _, ok := err.(*tenantid.TenantNotFoundError); ok {
 				return ctx.NoContent(http.StatusBadRequest)
 			}
 
