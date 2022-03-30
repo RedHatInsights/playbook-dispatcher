@@ -48,6 +48,8 @@ github.com/RedHatInsights/tenant-utils v0.0.0-20220322183126-b35e454cde42 h1:Bj/
 github.com/RedHatInsights/tenant-utils v0.0.0-20220322183126-b35e454cde42/go.mod h1:wgdbAAraizlXVvWfFd01uoaU+4dC3yaSaFxPzvvffG8=
 github.com/RedHatInsights/tenant-utils v0.0.0-20220322192943-150a1a665a5f h1:bWjJDKfFRaCxcTtEMvogVnPpTMdSWPl78/ZPBhz3PsE=
 github.com/RedHatInsights/tenant-utils v0.0.0-20220322192943-150a1a665a5f/go.mod h1:wgdbAAraizlXVvWfFd01uoaU+4dC3yaSaFxPzvvffG8=
+github.com/RedHatInsights/tenant-utils v0.0.0-20220330120739-9bb3bc4fa190 h1:4rwMvCO7MYzzEdUpahbICRrtxwq5HUHN9gmwplTmNs4=
+github.com/RedHatInsights/tenant-utils v0.0.0-20220330120739-9bb3bc4fa190/go.mod h1:wgdbAAraizlXVvWfFd01uoaU+4dC3yaSaFxPzvvffG8=
 github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=
 github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=
 github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf/go.mod h1:ybxpYRFXyAe+OPACYpWeL0wqObRcbAqCMya13uyzqw0=
