@@ -78,6 +78,34 @@ Sample response:
 
 See [API schema](./schema/private.openapi.yaml) for more details.
 
+### Canceling of playbooks
+
+Use the `/internal/v2/cancel` operation to cancel a playbook.
+
+Sample request:
+```
+POST /internal/v2/cancel
+[
+    {
+        "run_id": "dd018b96-da04-4651-84d1-187fa5c23f6c",
+        "org_id": "5318290",
+        "principal": "jharting"
+    }
+]
+```
+
+Sample response:
+```
+[
+    {
+        "code": 202,
+        "run_id": "dd018b96-da04-4651-84d1-187fa5c23f6c"
+    }
+]
+```
+
+See [API schema](./schema/private.openapi.yaml) for more details.
+
 ### Recipient status
 
 One of the operations available in the internal API is the recipient status.

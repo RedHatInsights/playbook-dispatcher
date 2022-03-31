@@ -7,6 +7,19 @@ import (
 	externalRef0 "playbook-dispatcher/internal/api/controllers/public"
 )
 
+// CancelInputV2 defines model for CancelInputV2.
+type CancelInputV2 struct {
+
+	// Identifies the organization that the given resource belongs to
+	OrgId OrgId `json:"org_id"`
+
+	// Username of the user interacting with the service
+	Principal Principal `json:"principal"`
+
+	// Unique identifier of a Playbook run
+	RunId externalRef0.RunId `json:"run_id"`
+}
+
 // Error defines model for Error.
 type Error struct {
 
@@ -48,6 +61,16 @@ type RecipientWithOrg struct {
 
 	// Identifier of the host to which a given Playbook is addressed
 	Recipient externalRef0.RunRecipient `json:"recipient"`
+}
+
+// RunCanceled defines model for RunCanceled.
+type RunCanceled struct {
+
+	// status code of the request
+	Code int `json:"code"`
+
+	// Unique identifier of a Playbook run
+	RunId externalRef0.RunId `json:"run_id"`
 }
 
 // RunCreated defines model for RunCreated.
@@ -131,6 +154,9 @@ type RunInputV2 struct {
 	WebConsoleUrl *externalRef0.WebConsoleUrl `json:"web_console_url,omitempty"`
 }
 
+// RunsCanceled defines model for RunsCanceled.
+type RunsCanceled []RunCanceled
+
 // RunsCreated defines model for RunsCreated.
 type RunsCreated []RunCreated
 
@@ -143,6 +169,9 @@ type BadRequest Error
 // ApiInternalRunsCreateJSONBody defines parameters for ApiInternalRunsCreate.
 type ApiInternalRunsCreateJSONBody []RunInput
 
+// ApiInternalV2RunsCancelJSONBody defines parameters for ApiInternalV2RunsCancel.
+type ApiInternalV2RunsCancelJSONBody []CancelInputV2
+
 // ApiInternalV2RunsCreateJSONBody defines parameters for ApiInternalV2RunsCreate.
 type ApiInternalV2RunsCreateJSONBody []RunInputV2
 
@@ -151,6 +180,9 @@ type ApiInternalV2RecipientsStatusJSONBody []RecipientWithOrg
 
 // ApiInternalRunsCreateRequestBody defines body for ApiInternalRunsCreate for application/json ContentType.
 type ApiInternalRunsCreateJSONRequestBody ApiInternalRunsCreateJSONBody
+
+// ApiInternalV2RunsCancelRequestBody defines body for ApiInternalV2RunsCancel for application/json ContentType.
+type ApiInternalV2RunsCancelJSONRequestBody ApiInternalV2RunsCancelJSONBody
 
 // ApiInternalV2RunsCreateRequestBody defines body for ApiInternalV2RunsCreate for application/json ContentType.
 type ApiInternalV2RunsCreateJSONRequestBody ApiInternalV2RunsCreateJSONBody

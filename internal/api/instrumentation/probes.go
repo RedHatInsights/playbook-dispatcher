@@ -61,6 +61,16 @@ var (
 		Name: "api_run_created_total",
 		Help: "The total number of created playbook runs",
 	}, []string{"dispatching_service", "request"})
+
+	runCanceledTotal = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "api_run_canceled_total",
+		Help: "The total number of canceled playbook runs",
+	})
+
+	runCanceledErrorTotal = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "app_run_canceled_error_total",
+		Help: "The total number of errors from the run cancel endpoint",
+	})
 )
 
 func TenantAnemic(ctx echo.Context, orgID string) {
@@ -98,6 +108,16 @@ func PlaybookRunHostCreateError(ctx context.Context, err error, data []dbModel.R
 	errorTotal.WithLabelValues(labelDb, labelPlaybookRunHostCreate, requestType).Inc()
 }
 
+func PlaybookRunCancelError(ctx context.Context, err error) {
+	utils.GetLogFromContext(ctx).Errorw("Error canceling run", "error", err)
+	runCanceledErrorTotal.Inc()
+}
+
+func PlaybookRunCancelRunTypeError(ctx context.Context, runId uuid.UUID) {
+	utils.GetLogFromContext(ctx).Errorw("Attempting to cancel run not of type Satellite RHC")
+	runCanceledErrorTotal.Inc()
+}
+
 func PlaybookRunReadError(ctx echo.Context, err error) {
 	utils.GetLogFromEcho(ctx).Errorw("Error reading playbook runs from database", "error", err)
 	errorTotal.WithLabelValues(labelDb, labelPlaybookRunRead).Inc()
@@ -116,6 +136,11 @@ func RbacRejected(ctx echo.Context) {
 func RunCreated(ctx context.Context, recipient uuid.UUID, runId uuid.UUID, payload string, service string, requestType string) {
 	utils.GetLogFromContext(ctx).Infow("Created new playbook run", "recipient", recipient.String(), "run_id", runId.String(), "payload", string(payload), "service", service)
 	runCreatedTotal.WithLabelValues(service, requestType).Inc()
+}
+
+func RunCanceled(ctx context.Context, runId uuid.UUID) {
+	utils.GetLogFromContext(ctx).Infow("Successfully initiated playbook run cancelation", "run_id", runId.String())
+	runCanceledTotal.Inc()
 }
 
 func Start() {
