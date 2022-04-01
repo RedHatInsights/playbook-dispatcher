@@ -16,14 +16,14 @@ type IngressValidationRequest struct {
 	Timestamp   time.Time         `json:"timestamp"`
 }
 
-type IngressValidationResponse struct {
-	IngressValidationRequest
+type IngressValidationDetails struct {
 	Validation string `json:"validation"`
+	Reason string `json:"reason"`
+	Reporter string `json:"reporter"`
 }
 
-func NewResponse(req *IngressValidationRequest, result string) *IngressValidationResponse {
-	return &IngressValidationResponse{
-		IngressValidationRequest: *req,
-		Validation:               result,
-	}
+type IngressValidationResponse struct {
+	IngressValidationRequest
+	IngressValidationDetails
+	SystemID string `json:"system_id"`
 }

@@ -119,9 +119,13 @@ func (this *handler) validationSteps(
 
 	ctx = utils.WithCorrelationId(ctx, correlationId.String())
 
+	validationDetails := &messageModel.IngressValidationDetails{
+		Validation: validationSuccess,
+	}
+
 	ingressResponse := &messageModel.IngressValidationResponse{
 		IngressValidationRequest: *request,
-		Validation:               validationSuccess,
+		IngressValidationDetails: *validationDetails,
 	}
 
 	instrumentation.ValidationSuccess(ctx, requestType)
@@ -237,9 +241,20 @@ func validateWithSchema(ctx context.Context, schema *jsonschema.Schema, rhcsatRe
 }
 
 func (this *handler) validationFailed(ctx context.Context, err error, requestType string, request *messageModel.IngressValidationRequest) {
+	details := &messageModel.IngressValidationDetails{
+		Validation: "failure",
+		Reason: err.Error(),
+		Reporter: "playbook-dispatcher",
+	}
+
 	response := &messageModel.IngressValidationResponse{
 		IngressValidationRequest: *request,
-		Validation:               validationFailure,
+		IngressValidationDetails: *details,
+	}
+
+	value, exists := request.Metadata["system_id"]
+	if exists {
+		response.SystemID = value
 	}
 
 	instrumentation.ValidationFailed(ctx, err, requestType)
