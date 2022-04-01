@@ -77,10 +77,10 @@ func (this *handler) onMessage(ctx context.Context, msg *k.Message) {
 		selectResult := baseQuery.Select("id", "status", "response_full").First(&run)
 
 		if requestType == satMessageHeaderValue {
+			satellite.SortSatEvents(value.SatEvents)
+
 			status = inferSatStatus(value.SatEvents, nil)
 			eventsSerialized = utils.MustMarshal(value.SatEvents)
-
-			satellite.SortSatEvents(value.SatEvents)
 
 			if !run.ResponseFull {
 				status = checkSatStatusPartial(value.SatEvents)
