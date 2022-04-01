@@ -431,6 +431,53 @@ var _ = Describe("handler", func() {
 			Expect(hosts[1].Log).To(Equal("e5f6"))
 		})
 
+		It("correctly updates satellite hosts from an out-of-order multi-host run", func() {
+			var data = test.NewRun(accountNumber())
+			Expect(db().Create(&data).Error).ToNot(HaveOccurred())
+
+			inventoryId := uuid.New()
+			var hostData = test.NewRunHost(data.ID, "running", &inventoryId)
+			inventoryIdString := inventoryId.String()
+
+			Expect(db().Create(&hostData).Error).ToNot(HaveOccurred())
+
+			inventoryId2 := uuid.New()
+			var host2Data = test.NewRunHost(data.ID, "running", &inventoryId2)
+			host2Data.Host = inventoryId2.String()
+			inventoryId2String := inventoryId2.String()
+
+			Expect(db().Create(&host2Data).Error).ToNot(HaveOccurred())
+
+			events := buildSatEvents(
+				data.CorrelationID,
+				satPlaybookRunFinishedEvent(inventoryId2String, "success"),
+				satPlaybookRunUpdateEvent(1, inventoryId2String, "host2-1"),
+				satPlaybookRunUpdateEvent(0, inventoryIdString, "host1-0"),
+				satPlaybookRunUpdateEvent(2, inventoryIdString, "-2"),
+				satPlaybookRunFinishedEvent(inventoryIdString, "success"),
+				satPlaybookRunUpdateEvent(3, inventoryId2String, "-3"),
+				satPlaybookRunUpdateEvent(1, inventoryIdString, "-1"),
+				satPlaybookRunUpdateEvent(2, inventoryId2String, "-2"),
+			)
+
+			instance.onMessage(test.TestContext(), newSatResponseMessage(events, data.CorrelationID))
+
+			run := fetchRun(data.ID)
+			Expect(run.Status).To(Equal("success"))
+			hosts := fetchHosts(data.ID)
+			Expect(hosts).To(HaveLen(2))
+
+			sort.Slice(hosts, func(i, j int) bool {
+				return hosts[i].Host == "localhost"
+			})
+			Expect(hosts[0].Status).To(Equal("success"))
+			Expect(hosts[1].Status).To(Equal("success"))
+			Expect(*hosts[0].SatSequence).To(Equal(2))
+			Expect(*hosts[1].SatSequence).To(Equal(3))
+			Expect(hosts[0].Log).To(Equal("host1-0-1-2"))
+			Expect(hosts[1].Log).To(Equal("host2-1-2-3"))
+		})
+
 		It("copies over satellite_connection_error to console", func() {
 			var data = test.NewRun(accountNumber())
 			Expect(db().Create(&data).Error).ToNot(HaveOccurred())
