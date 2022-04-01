@@ -2,10 +2,11 @@ package private
 
 import (
 	"net/http"
-	"playbook-dispatcher/internal/api/connectors/tenants"
 	"playbook-dispatcher/internal/api/instrumentation"
 	"playbook-dispatcher/internal/api/middleware"
 	"playbook-dispatcher/internal/common/utils"
+
+	"github.com/RedHatInsights/tenant-utils/pkg/tenantid"
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
@@ -37,10 +38,9 @@ func (this *controllers) ApiInternalV2RunsCreate(ctx echo.Context) error {
 		recipient := parseValidatedUUID(string(runInputV2.Recipient))
 
 		// translate org_id to EAN
-		// TODO: this will go away in the future
-		ean, err := this.getEAN(ctx.Request().Context(), string(runInputV2.OrgId), string(runInputV2.Recipient))
+		ean, err := this.translator.OrgIDToEAN(ctx.Request().Context(), string(runInputV2.OrgId))
 		if err != nil {
-			if _, ok := err.(*tenants.TenantNotFoundError); ok {
+			if _, ok := err.(*tenantid.TenantNotFoundError); ok {
 				return runCreateError(http.StatusNotFound)
 			}
 

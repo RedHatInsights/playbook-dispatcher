@@ -3,9 +3,10 @@ package private
 import (
 	"fmt"
 	"playbook-dispatcher/internal/api/connectors"
-	"playbook-dispatcher/internal/api/connectors/tenants"
 	"playbook-dispatcher/internal/api/dispatch"
 	"playbook-dispatcher/internal/common/config"
+
+	"github.com/RedHatInsights/tenant-utils/pkg/tenantid"
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/spf13/viper"
@@ -13,7 +14,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func CreateController(database *gorm.DB, cloudConnectorClient connectors.CloudConnectorClient, config *viper.Viper, translator tenants.TenantIDTranslator) ServerInterfaceWrapper {
+func CreateController(database *gorm.DB, cloudConnectorClient connectors.CloudConnectorClient, config *viper.Viper, translator tenantid.Translator) ServerInterfaceWrapper {
 	rateLimiter := getRateLimiter(config)
 
 	return ServerInterfaceWrapper{
@@ -32,7 +33,7 @@ type controllers struct {
 	cloudConnectorClient connectors.CloudConnectorClient
 	config               *viper.Viper
 	rateLimiter          *rate.Limiter
-	translator           tenants.TenantIDTranslator
+	translator           tenantid.Translator
 	dispatchManager      dispatch.DispatchManager
 }
 

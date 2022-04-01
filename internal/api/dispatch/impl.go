@@ -5,6 +5,7 @@ import (
 	"playbook-dispatcher/internal/api/connectors"
 	"playbook-dispatcher/internal/api/dispatch/protocols"
 	"playbook-dispatcher/internal/api/instrumentation"
+	"playbook-dispatcher/internal/common/model/db"
 	"playbook-dispatcher/internal/common/model/generic"
 	"playbook-dispatcher/internal/common/utils"
 
@@ -64,7 +65,7 @@ func (this *dispatchManager) ProcessRun(ctx context.Context, account string, ser
 		ctx,
 		account,
 		run.Recipient,
-		run.Url,
+		&run.Url,
 		string(protocol.GetDirective()),
 		signalMetadata,
 	)
@@ -105,4 +106,50 @@ func (this *dispatchManager) ProcessRun(ctx context.Context, account string, ser
 
 	instrumentation.RunCreated(ctx, run.Recipient, entity.ID, run.Url, entity.Service, protocol.GetLabel())
 	return entity.ID, correlationID, nil
+}
+
+func (this *dispatchManager) ProcessCancel(ctx context.Context, account string, cancel generic.CancelInput) (runID, correlationID uuid.UUID, err error) {
+	var run db.Run
+
+	if err := this.db.First(&run, cancel.RunId).Error; err != nil {
+		instrumentation.PlaybookRunCancelError(ctx, err)
+		return uuid.UUID{}, run.CorrelationID, &RunNotFoundError{err: err, runID: cancel.RunId}
+	}
+
+	if run.SatId == nil || run.SatOrgId == nil {
+		instrumentation.PlaybookRunCancelRunTypeError(ctx, run.ID)
+		return uuid.UUID{}, run.CorrelationID, &RunCancelTypeError{err, run.ID}
+	}
+
+	if run.Status != db.RunStatusRunning {
+		return uuid.UUID{}, run.CorrelationID, &RunCancelNotCancelableError{run.ID}
+	}
+
+	protocol := *protocols.SatelliteProtocol
+	signalMetadata := protocol.BuildCancelMetadata(cancel, run.CorrelationID, this.config)
+
+	// take from the rate limit bucket
+	this.rateLimiter.Wait(ctx)
+
+	messageId, notFound, err := this.cloudConnector.SendCloudConnectorRequest(
+		ctx,
+		account,
+		run.Recipient,
+		nil,
+		string(protocol.GetDirective()),
+		signalMetadata,
+	)
+
+	if err != nil {
+		instrumentation.CloudConnectorRequestError(ctx, err, run.Recipient, protocol.GetLabel())
+		return uuid.UUID{}, run.CorrelationID, err
+	} else if notFound {
+		instrumentation.CloudConnectorNoConnection(ctx, run.Recipient, protocol.GetLabel())
+		return uuid.UUID{}, run.CorrelationID, &RecipientNotFoundError{recipient: run.Recipient, err: err}
+	}
+
+	instrumentation.CloudConnectorOK(ctx, run.Recipient, messageId)
+	instrumentation.RunCanceled(ctx, run.ID)
+
+	return cancel.RunId, run.CorrelationID, nil
 }

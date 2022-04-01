@@ -37,46 +37,46 @@ var _ = Describe("Satellite", func() {
 			events := loadFile("./sat-test-events1.jsonl")
 			hosts := GetSatHosts(events)
 			Expect(hosts).To(HaveLen(1))
-			Expect(hosts[0]).To(Equal("localhost"))
+			Expect(hosts[0]).To(Equal("2798f2ab-35b2-4d4e-af0c-0478dcb4a324"))
 		})
 
 		It("determines satellite host from a failed run", func() {
 			events := loadFile("./sat-test-events2.jsonl")
 			hosts := GetSatHosts(events)
 			Expect(hosts).To(HaveLen(1))
-			Expect(hosts[0]).To(Equal("localhost"))
+			Expect(hosts[0]).To(Equal("2798f2ab-35b2-4d4e-af0c-0478dcb4a324"))
 		})
 
 		It("determines satellite host from a cancelled run", func() {
 			events := loadFile("./sat-test-events3.jsonl")
 			hosts := GetSatHosts(events)
 			Expect(hosts).To(HaveLen(1))
-			Expect(hosts[0]).To(Equal("localhost"))
+			Expect(hosts[0]).To(Equal("2798f2ab-35b2-4d4e-af0c-0478dcb4a324"))
 		})
 
 		It("determines satellite hosts from a multi-host run", func() {
 			events := loadFile("./sat-test-events4.jsonl")
 			hosts := GetSatHosts(events)
 			Expect(hosts).To(HaveLen(2))
-			Expect(hosts[0]).To(Equal("host1"))
-			Expect(hosts[1]).To(Equal("host2"))
+			Expect(hosts[0]).To(Equal("2798f2ab-35b2-4d4e-af0c-0478dcb4a324"))
+			Expect(hosts[1]).To(Equal("e8f05d27-5af9-4547-a30c-5be04e099ffe"))
 		})
 	})
 
 	Describe("satHostInfo", func() {
 		It("determines satHostinfo from a run", func() {
 			events := loadFile("./sat-test-events2.jsonl")
-			host := "localhost"
+			host := "2798f2ab-35b2-4d4e-af0c-0478dcb4a324"
 			satHostInfo := GetSatHostInfo(events, &host)
-			Expect(satHostInfo.Sequence).To(Equal(1))
+			Expect(*satHostInfo.Sequence).To(Equal(1))
 			Expect(satHostInfo.Console).To(Equal("localhost | FAILED => {\n    \"changed\": false,\n    \"ping\": \"runtime_error\"\n}"))
 		})
 
 		It("determines correct satHostinfo from a multi-host run", func() {
 			events := loadFile("./sat-test-events4.jsonl")
-			host := "host2"
+			host := "e8f05d27-5af9-4547-a30c-5be04e099ffe"
 			satHostInfo := GetSatHostInfo(events, &host)
-			Expect(satHostInfo.Sequence).To(Equal(4))
+			Expect(*satHostInfo.Sequence).To(Equal(4))
 			Expect(satHostInfo.Console).To(Equal("host2 | SUCCESS => {\n    \"changed\": false,\n    \"ping\": \"pong\"\n}"))
 		})
 	})

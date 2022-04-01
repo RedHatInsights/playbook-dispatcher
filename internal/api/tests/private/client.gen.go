@@ -17,6 +17,19 @@ import (
 	externalRef0 "playbook-dispatcher/internal/api/controllers/public"
 )
 
+// CancelInputV2 defines model for CancelInputV2.
+type CancelInputV2 struct {
+
+	// Identifies the organization that the given resource belongs to
+	OrgId OrgId `json:"org_id"`
+
+	// Username of the user interacting with the service
+	Principal Principal `json:"principal"`
+
+	// Unique identifier of a Playbook run
+	RunId externalRef0.RunId `json:"run_id"`
+}
+
 // Error defines model for Error.
 type Error struct {
 
@@ -58,6 +71,16 @@ type RecipientWithOrg struct {
 
 	// Identifier of the host to which a given Playbook is addressed
 	Recipient externalRef0.RunRecipient `json:"recipient"`
+}
+
+// RunCanceled defines model for RunCanceled.
+type RunCanceled struct {
+
+	// status code of the request
+	Code int `json:"code"`
+
+	// Unique identifier of a Playbook run
+	RunId externalRef0.RunId `json:"run_id"`
 }
 
 // RunCreated defines model for RunCreated.
@@ -141,6 +164,9 @@ type RunInputV2 struct {
 	WebConsoleUrl *externalRef0.WebConsoleUrl `json:"web_console_url,omitempty"`
 }
 
+// RunsCanceled defines model for RunsCanceled.
+type RunsCanceled []RunCanceled
+
 // RunsCreated defines model for RunsCreated.
 type RunsCreated []RunCreated
 
@@ -153,6 +179,9 @@ type BadRequest Error
 // ApiInternalRunsCreateJSONBody defines parameters for ApiInternalRunsCreate.
 type ApiInternalRunsCreateJSONBody []RunInput
 
+// ApiInternalV2RunsCancelJSONBody defines parameters for ApiInternalV2RunsCancel.
+type ApiInternalV2RunsCancelJSONBody []CancelInputV2
+
 // ApiInternalV2RunsCreateJSONBody defines parameters for ApiInternalV2RunsCreate.
 type ApiInternalV2RunsCreateJSONBody []RunInputV2
 
@@ -161,6 +190,9 @@ type ApiInternalV2RecipientsStatusJSONBody []RecipientWithOrg
 
 // ApiInternalRunsCreateRequestBody defines body for ApiInternalRunsCreate for application/json ContentType.
 type ApiInternalRunsCreateJSONRequestBody ApiInternalRunsCreateJSONBody
+
+// ApiInternalV2RunsCancelRequestBody defines body for ApiInternalV2RunsCancel for application/json ContentType.
+type ApiInternalV2RunsCancelJSONRequestBody ApiInternalV2RunsCancelJSONBody
 
 // ApiInternalV2RunsCreateRequestBody defines body for ApiInternalV2RunsCreate for application/json ContentType.
 type ApiInternalV2RunsCreateJSONRequestBody ApiInternalV2RunsCreateJSONBody
@@ -246,6 +278,11 @@ type ClientInterface interface {
 
 	ApiInternalRunsCreate(ctx context.Context, body ApiInternalRunsCreateJSONRequestBody) (*http.Response, error)
 
+	// ApiInternalV2RunsCancel request  with any body
+	ApiInternalV2RunsCancelWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error)
+
+	ApiInternalV2RunsCancel(ctx context.Context, body ApiInternalV2RunsCancelJSONRequestBody) (*http.Response, error)
+
 	// ApiInternalV2RunsCreate request  with any body
 	ApiInternalV2RunsCreateWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error)
 
@@ -277,6 +314,36 @@ func (c *Client) ApiInternalRunsCreateWithBody(ctx context.Context, contentType 
 
 func (c *Client) ApiInternalRunsCreate(ctx context.Context, body ApiInternalRunsCreateJSONRequestBody) (*http.Response, error) {
 	req, err := NewApiInternalRunsCreateRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if c.RequestEditor != nil {
+		err = c.RequestEditor(ctx, req)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ApiInternalV2RunsCancelWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error) {
+	req, err := NewApiInternalV2RunsCancelRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if c.RequestEditor != nil {
+		err = c.RequestEditor(ctx, req)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ApiInternalV2RunsCancel(ctx context.Context, body ApiInternalV2RunsCancelJSONRequestBody) (*http.Response, error) {
+	req, err := NewApiInternalV2RunsCancelRequest(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -386,6 +453,45 @@ func NewApiInternalRunsCreateRequestWithBody(server string, contentType string, 
 	}
 
 	basePath := fmt.Sprintf("/internal/dispatch")
+	if basePath[0] == '/' {
+		basePath = basePath[1:]
+	}
+
+	queryUrl, err = queryUrl.Parse(basePath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryUrl.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+	return req, nil
+}
+
+// NewApiInternalV2RunsCancelRequest calls the generic ApiInternalV2RunsCancel builder with application/json body
+func NewApiInternalV2RunsCancelRequest(server string, body ApiInternalV2RunsCancelJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewApiInternalV2RunsCancelRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewApiInternalV2RunsCancelRequestWithBody generates requests for ApiInternalV2RunsCancel with any type of body
+func NewApiInternalV2RunsCancelRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	queryUrl, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	basePath := fmt.Sprintf("/internal/v2/cancel")
 	if basePath[0] == '/' {
 		basePath = basePath[1:]
 	}
@@ -543,6 +649,11 @@ type ClientWithResponsesInterface interface {
 
 	ApiInternalRunsCreateWithResponse(ctx context.Context, body ApiInternalRunsCreateJSONRequestBody) (*ApiInternalRunsCreateResponse, error)
 
+	// ApiInternalV2RunsCancel request  with any body
+	ApiInternalV2RunsCancelWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*ApiInternalV2RunsCancelResponse, error)
+
+	ApiInternalV2RunsCancelWithResponse(ctx context.Context, body ApiInternalV2RunsCancelJSONRequestBody) (*ApiInternalV2RunsCancelResponse, error)
+
 	// ApiInternalV2RunsCreate request  with any body
 	ApiInternalV2RunsCreateWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*ApiInternalV2RunsCreateResponse, error)
 
@@ -574,6 +685,29 @@ func (r ApiInternalRunsCreateResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r ApiInternalRunsCreateResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type ApiInternalV2RunsCancelResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON207      *RunsCanceled
+	JSON400      *Error
+}
+
+// Status returns HTTPResponse.Status
+func (r ApiInternalV2RunsCancelResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ApiInternalV2RunsCancelResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -664,6 +798,23 @@ func (c *ClientWithResponses) ApiInternalRunsCreateWithResponse(ctx context.Cont
 	return ParseApiInternalRunsCreateResponse(rsp)
 }
 
+// ApiInternalV2RunsCancelWithBodyWithResponse request with arbitrary body returning *ApiInternalV2RunsCancelResponse
+func (c *ClientWithResponses) ApiInternalV2RunsCancelWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*ApiInternalV2RunsCancelResponse, error) {
+	rsp, err := c.ApiInternalV2RunsCancelWithBody(ctx, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	return ParseApiInternalV2RunsCancelResponse(rsp)
+}
+
+func (c *ClientWithResponses) ApiInternalV2RunsCancelWithResponse(ctx context.Context, body ApiInternalV2RunsCancelJSONRequestBody) (*ApiInternalV2RunsCancelResponse, error) {
+	rsp, err := c.ApiInternalV2RunsCancel(ctx, body)
+	if err != nil {
+		return nil, err
+	}
+	return ParseApiInternalV2RunsCancelResponse(rsp)
+}
+
 // ApiInternalV2RunsCreateWithBodyWithResponse request with arbitrary body returning *ApiInternalV2RunsCreateResponse
 func (c *ClientWithResponses) ApiInternalV2RunsCreateWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*ApiInternalV2RunsCreateResponse, error) {
 	rsp, err := c.ApiInternalV2RunsCreateWithBody(ctx, contentType, body)
@@ -723,6 +874,39 @@ func ParseApiInternalRunsCreateResponse(rsp *http.Response) (*ApiInternalRunsCre
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 207:
 		var dest RunsCreated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON207 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseApiInternalV2RunsCancelResponse parses an HTTP response from a ApiInternalV2RunsCancelWithResponse call
+func ParseApiInternalV2RunsCancelResponse(rsp *http.Response) (*ApiInternalV2RunsCancelResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ApiInternalV2RunsCancelResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 207:
+		var dest RunsCanceled
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}

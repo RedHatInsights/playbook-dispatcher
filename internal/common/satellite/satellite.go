@@ -21,7 +21,7 @@ func GetSatHosts(events []messageModel.PlaybookSatRunResponseMessageYamlEventsEl
 }
 
 type SatHostInfo struct {
-	Sequence int
+	Sequence *int
 	Console  string
 }
 
@@ -32,7 +32,7 @@ func GetSatHostInfo(events []messageModel.PlaybookSatRunResponseMessageYamlEvent
 			continue
 		}
 		if event.Sequence != nil {
-			hostInfo.Sequence = *event.Sequence
+			hostInfo.Sequence = event.Sequence
 		}
 		if event.Console != nil {
 			hostInfo.Console += *event.Console
@@ -46,4 +46,19 @@ func GetSatHostInfo(events []messageModel.PlaybookSatRunResponseMessageYamlEvent
 		}
 	}
 	return &hostInfo
+}
+
+func SortSatEvents(satEvents *[]messageModel.PlaybookSatRunResponseMessageYamlEventsElem) {
+	vSatEvents := *satEvents
+
+	sort.Slice(vSatEvents, func(i, j int) bool {
+		if vSatEvents[i].Sequence == nil {
+			return false
+		}
+		if vSatEvents[j].Sequence == nil {
+			return true
+		}
+
+		return *vSatEvents[i].Sequence < *vSatEvents[j].Sequence
+	})
 }

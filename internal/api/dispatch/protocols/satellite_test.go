@@ -53,5 +53,27 @@ var _ = Describe("Satellite Protocol", func() {
 			Expect(metadata["response_interval"]).To(Equal("3"))
 			Expect(metadata["response_full"]).To(Equal("true"))
 		})
+
+		It("Produces the correct cancel metadata", func() {
+			cancel := generic.CancelInput{
+				Account:   "12345",
+				OrgId:     "24601",
+				RunId:     uuid.MustParse("b680597e-1a41-46c5-a8d4-12d9e8578023"),
+				Principal: "jharting",
+			}
+
+			correlationID := uuid.New()
+
+			cfg := viper.New()
+			cfg.Set("response.interval", "3")
+			cfg.Set("return.url", "https://example.com")
+			cfg.Set("satellite.response.full", true)
+
+			metadata := SatelliteProtocol.BuildCancelMetadata(cancel, correlationID, cfg)
+			Expect(metadata).To(HaveLen(3))
+			Expect(metadata["operation"]).To(Equal("cancel"))
+			Expect(metadata["correlation_id"]).To(Equal(correlationID.String()))
+			Expect(metadata["initiator_user_id"]).To(Equal("6874f78b19f011c53313a129b5ef6d6991456c0dcee89c8882c862ab7e8ea6dd"))
+		})
 	})
 })

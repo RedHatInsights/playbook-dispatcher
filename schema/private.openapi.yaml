@@ -96,6 +96,30 @@ paths:
               schema:
                 $ref: '#/components/schemas/RunsCreated'
 
+  /internal/v2/cancel:
+    post:
+      summary: Cancel Playbook Runs
+      description: Cancels Playbook Runs using Cloud Connector
+      operationId: api.internal.v2.runs.cancel
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items: 
+                $ref: '#/components/schemas/CancelInputV2'
+              minItems: 1
+              maxItems: 50
+      responses:
+        '207':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RunsCanceled'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
 components:
   schemas:
     RunInput:
@@ -148,6 +172,33 @@ components:
       - url
       - name
 
+    CancelInputV2:
+      type: object
+      properties:
+        run_id:
+          $ref: './public.openapi.yaml#/components/schemas/RunId'
+        org_id:
+          $ref: '#/components/schemas/OrgId'
+        principal:
+          $ref: '#/components/schemas/Principal'
+      required:
+      - run_id
+      - org_id
+      - principal
+    
+    RunCanceled:
+      type: object
+      properties:
+        run_id:
+          $ref: './public.openapi.yaml#/components/schemas/RunId'
+        code:
+          type: integer
+          example: 202
+          description: status code of the request
+      required:
+      - code
+      - run_id
+
     RunInputHosts:
       type: array
       description: |
@@ -195,6 +246,11 @@ components:
           type: string
           example: "12345"
           minLength: 1
+
+    RunsCanceled:
+      type: array
+      items:
+        $ref: '#/components/schemas/RunCanceled'
 
     RunsCreated:
       type: array
