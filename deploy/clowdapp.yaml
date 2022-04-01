@@ -149,6 +149,8 @@ objects:
             value: ${TENANT_TRANSLATOR_IMPL}
           - name: TENANT_TRANSLATOR_HOST
             value: ${TENANT_TRANSLATOR_HOST}
+          - name: TENANT_TRANSLATOR_PORT
+            value: ${TENANT_TRANSLATOR_PORT}
 
         resources:
           limits:
@@ -324,6 +326,8 @@ parameters:
 
 - name: TENANT_TRANSLATOR_HOST
   required: true
+- name: TENANT_TRANSLATOR_PORT
+  value: '8892'
 - name: TENANT_TRANSLATOR_IMPL
   value: impl
 
