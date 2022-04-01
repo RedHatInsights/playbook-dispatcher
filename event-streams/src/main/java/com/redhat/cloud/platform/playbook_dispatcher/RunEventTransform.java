@@ -39,6 +39,7 @@ public class RunEventTransform<T extends ConnectRecord<T>> implements Transforma
     private static final String CONFIG_TABLE = "table";
 
     private static final String HEARTBEAT_TOPIC_PREFIX = "__debezium-heartbeat-pd";
+    private static final String HEARTBEAT_ID = "98875b33-b37e-4c35-be8b-d74f321bac28";
 
     private static final Logger LOG = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
@@ -76,6 +77,13 @@ public class RunEventTransform<T extends ConnectRecord<T>> implements Transforma
             return record;
         }
 
+        final Struct key = Utils.<Struct>cast(record.key());
+        if (HEARTBEAT_ID.equals(key.get("id"))) {
+            LOG.info("Received heartbeat");
+            return null;
+        }
+
+
         final Struct value = Utils.<Struct>cast(record.value());
 
         if (opToEventType(value.getString("op")) == null) {
@@ -86,7 +94,7 @@ public class RunEventTransform<T extends ConnectRecord<T>> implements Transforma
             return record;
         }
 
-        final String newKey = this.transformKey(Utils.<Struct>cast(record.key()));
+        final String newKey = this.transformKey(key);
         final RunEvent event = this.transformValue(value);
         final Headers headers = this.createHeaders(event);
 

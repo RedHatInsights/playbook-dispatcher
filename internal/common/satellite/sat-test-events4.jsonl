@@ -1,4 +1,4 @@
-{"type": "playbook_run_update", "version": 3, "correlation_id": "0465783c-2e36-4e57-8514-c2cb962d323a", "sequence": 0, "host": "host1", "console": "host1 | SUCCESS => {\n    \"changed\": false,\n    \"ping\": \"pong\"\n}"}
-{"type": "playbook_run_finished", "version": 3, "correlation_id": "0465783c-2e36-4e57-8514-c2cb962d323a", "host": "host1", "status": "success", "connection_code": 0, "execution_code": 0}
-{"type": "playbook_run_update", "version": 3, "correlation_id": "0465783c-2e36-4e57-8514-c2cb962d323a", "sequence": 4, "host": "host2", "console": "host2 | SUCCESS => {\n    \"changed\": false,\n    \"ping\": \"pong\"\n}"}
-{"type": "playbook_run_finished", "version": 3, "correlation_id": "0465783c-2e36-4e57-8514-c2cb962d323a", "host": "host2", "status": "success", "connection_code": 0, "execution_code": 0}
+{"type": "playbook_run_update", "version": 3, "correlation_id": "0465783c-2e36-4e57-8514-c2cb962d323a", "sequence": 0, "host": "2798f2ab-35b2-4d4e-af0c-0478dcb4a324", "console": "host1 | SUCCESS => {\n    \"changed\": false,\n    \"ping\": \"pong\"\n}"}
+{"type": "playbook_run_finished", "version": 3, "correlation_id": "0465783c-2e36-4e57-8514-c2cb962d323a", "host": "2798f2ab-35b2-4d4e-af0c-0478dcb4a324", "status": "success", "connection_code": 0, "execution_code": 0}
+{"type": "playbook_run_update", "version": 3, "correlation_id": "0465783c-2e36-4e57-8514-c2cb962d323a", "sequence": 4, "host": "e8f05d27-5af9-4547-a30c-5be04e099ffe", "console": "host2 | SUCCESS => {\n    \"changed\": false,\n    \"ping\": \"pong\"\n}"}
+{"type": "playbook_run_finished", "version": 3, "correlation_id": "0465783c-2e36-4e57-8514-c2cb962d323a", "host": "e8f05d27-5af9-4547-a30c-5be04e099ffe", "status": "success", "connection_code": 0, "execution_code": 0}
