@@ -31,7 +31,7 @@ objects:
   spec:
     optionalDependencies:
     - ingress
-    - cloud-connector
+    - cloud-connector-api
 
     envName: ${ENV_NAME}
 
