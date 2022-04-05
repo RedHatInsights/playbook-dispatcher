@@ -3,9 +3,7 @@ module playbook-dispatcher
 go 1.14
 
 require (
-	github.com/RedHatInsights/tenant-utils v0.0.0-20220330120739-9bb3bc4fa190
-	github.com/andres-erbsen/clock v0.0.0-20160526145045-9e14626cd129 // indirect
-	github.com/atombender/go-jsonschema v0.9.1-0.20211020094358-afce1ab0fff4 // indirect
+	github.com/RedHatInsights/tenant-utils v1.0.0
 	github.com/aws/aws-sdk-go v1.36.28
 	github.com/confluentinc/confluent-kafka-go v1.5.2
 	github.com/deepmap/oapi-codegen v1.4.2
