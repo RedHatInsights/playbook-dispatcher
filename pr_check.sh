@@ -27,8 +27,7 @@ IQE_MARKER_EXPRESSION="smoke"
 source $CICD_ROOT/cji_smoke_test.sh
 
 # Re-deploy Playbook Dispatcher to an ephemeral environment, this time enabling the communication with Cloud Connector
-bonfire deploy \
-    ${APP_NAME} \
+bonfire deploy playbook-dispatcher cloud-connector \
     --source=appsre \
     --ref-env ${REF_ENV} \
     --set-template-ref ${COMPONENT_NAME}=${GIT_COMMIT} \
