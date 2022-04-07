@@ -478,6 +478,48 @@ var _ = Describe("handler", func() {
 			Expect(hosts[1].Log).To(Equal("host2-1-2-3"))
 		})
 
+		It("marks playbook run as running when some hosts are still running", func() {
+			var data = test.NewRun(accountNumber())
+			Expect(db().Create(&data).Error).ToNot(HaveOccurred())
+
+			inventoryId := uuid.New()
+			var hostData = test.NewRunHost(data.ID, "running", &inventoryId)
+			inventoryId1String := inventoryId.String()
+
+			Expect(db().Create(&hostData).Error).ToNot(HaveOccurred())
+
+			inventoryId2 := uuid.New()
+			var host2Data = test.NewRunHost(data.ID, "running", &inventoryId2)
+			host2Data.Host = inventoryId2.String()
+			inventoryId2String := inventoryId2.String()
+
+			Expect(db().Create(&host2Data).Error).ToNot(HaveOccurred())
+
+			events := buildSatEvents(
+				data.CorrelationID,
+				satPlaybookRunUpdateEvent(0, inventoryId1String, ""),
+				satPlaybookRunUpdateEvent(0, inventoryId2String, ""),
+				satPlaybookRunFinishedEvent(inventoryId1String, "success"),
+			)
+
+			instance.onMessage(test.TestContext(), newSatResponseMessage(events, data.CorrelationID))
+
+			run := fetchRun(data.ID)
+			Expect(run.Status).To(Equal("running"))
+
+			events = buildSatEvents(
+				data.CorrelationID,
+				satPlaybookRunUpdateEvent(1, inventoryId2String, ""),
+				satPlaybookRunFinishedEvent(inventoryId1String, "success"),
+				satPlaybookRunFinishedEvent(inventoryId2String, "failure"),
+			)
+
+			instance.onMessage(test.TestContext(), newSatResponseMessage(events, data.CorrelationID))
+
+			run = fetchRun(data.ID)
+			Expect(run.Status).To(Equal("failure"))
+		})
+
 		It("copies over satellite_connection_error to console", func() {
 			var data = test.NewRun(accountNumber())
 			Expect(db().Create(&data).Error).ToNot(HaveOccurred())
