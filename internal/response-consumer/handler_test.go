@@ -499,7 +499,7 @@ var _ = Describe("handler", func() {
 				data.CorrelationID,
 				satPlaybookRunUpdateEvent(0, inventoryId1String, ""),
 				satPlaybookRunUpdateEvent(0, inventoryId2String, ""),
-				satPlaybookRunFinishedEvent(inventoryId1String, "success"),
+				satPlaybookRunFinishedEvent(inventoryId1String, "failure"),
 			)
 
 			instance.onMessage(test.TestContext(), newSatResponseMessage(events, data.CorrelationID))
@@ -510,14 +510,101 @@ var _ = Describe("handler", func() {
 			events = buildSatEvents(
 				data.CorrelationID,
 				satPlaybookRunUpdateEvent(1, inventoryId2String, ""),
-				satPlaybookRunFinishedEvent(inventoryId1String, "success"),
-				satPlaybookRunFinishedEvent(inventoryId2String, "failure"),
+				satPlaybookRunFinishedEvent(inventoryId1String, "failure"),
+				satPlaybookRunFinishedEvent(inventoryId2String, "success"),
 			)
 
 			instance.onMessage(test.TestContext(), newSatResponseMessage(events, data.CorrelationID))
 
 			run = fetchRun(data.ID)
 			Expect(run.Status).To(Equal("failure"))
+		})
+
+		It("correctly determines failure run status when completed event is missing", func() {
+			var data = test.NewRun(accountNumber())
+			Expect(db().Create(&data).Error).ToNot(HaveOccurred())
+
+			inventoryId := uuid.New()
+			var hostData = test.NewRunHost(data.ID, "running", &inventoryId)
+			inventoryId1String := inventoryId.String()
+
+			Expect(db().Create(&hostData).Error).ToNot(HaveOccurred())
+
+			inventoryId2 := uuid.New()
+			var host2Data = test.NewRunHost(data.ID, "running", &inventoryId2)
+			host2Data.Host = inventoryId2.String()
+			inventoryId2String := inventoryId2.String()
+
+			Expect(db().Create(&host2Data).Error).ToNot(HaveOccurred())
+
+			events := buildSatEvents(
+				data.CorrelationID,
+				satPlaybookRunFinishedEvent(inventoryId1String, "failure"),
+				satPlaybookRunFinishedEvent(inventoryId2String, "failure"),
+			)
+
+			instance.onMessage(test.TestContext(), newSatResponseMessage(events, data.CorrelationID))
+
+			run := fetchRun(data.ID)
+			Expect(run.Status).To(Equal("failure"))
+		})
+
+		It("correctly determines canceled run status when completed event is missing", func() {
+			var data = test.NewRun(accountNumber())
+			Expect(db().Create(&data).Error).ToNot(HaveOccurred())
+
+			inventoryId := uuid.New()
+			var hostData = test.NewRunHost(data.ID, "running", &inventoryId)
+			inventoryId1String := inventoryId.String()
+
+			Expect(db().Create(&hostData).Error).ToNot(HaveOccurred())
+
+			inventoryId2 := uuid.New()
+			var host2Data = test.NewRunHost(data.ID, "running", &inventoryId2)
+			host2Data.Host = inventoryId2.String()
+			inventoryId2String := inventoryId2.String()
+
+			Expect(db().Create(&host2Data).Error).ToNot(HaveOccurred())
+
+			events := buildSatEvents(
+				data.CorrelationID,
+				satPlaybookRunFinishedEvent(inventoryId1String, "canceled"),
+				satPlaybookRunFinishedEvent(inventoryId2String, "canceled"),
+			)
+
+			instance.onMessage(test.TestContext(), newSatResponseMessage(events, data.CorrelationID))
+
+			run := fetchRun(data.ID)
+			Expect(run.Status).To(Equal("canceled"))
+		})
+
+		It("correctly determines run status when completed event is missing and both failed and canceled events are present", func() {
+			var data = test.NewRun(accountNumber())
+			Expect(db().Create(&data).Error).ToNot(HaveOccurred())
+
+			inventoryId := uuid.New()
+			var hostData = test.NewRunHost(data.ID, "running", &inventoryId)
+			inventoryId1String := inventoryId.String()
+
+			Expect(db().Create(&hostData).Error).ToNot(HaveOccurred())
+
+			inventoryId2 := uuid.New()
+			var host2Data = test.NewRunHost(data.ID, "running", &inventoryId2)
+			host2Data.Host = inventoryId2.String()
+			inventoryId2String := inventoryId2.String()
+
+			Expect(db().Create(&host2Data).Error).ToNot(HaveOccurred())
+
+			events := buildSatEvents(
+				data.CorrelationID,
+				satPlaybookRunFinishedEvent(inventoryId1String, "failure"),
+				satPlaybookRunFinishedEvent(inventoryId2String, "canceled"),
+			)
+
+			instance.onMessage(test.TestContext(), newSatResponseMessage(events, data.CorrelationID))
+
+			run := fetchRun(data.ID)
+			Expect(run.Status).To(Equal("failure")) // playbook run marked as failure when failure and canceled events are present
 		})
 
 		It("copies over satellite_connection_error to console", func() {

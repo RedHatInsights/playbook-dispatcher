@@ -302,7 +302,7 @@ func inferSatPlaybookStatus(events *[]message.PlaybookSatRunResponseMessageYamlE
 	}
 
 	switch {
-	case failed && canceled || failed:
+	case failed:
 		return db.RunStatusFailure
 	case canceled:
 		return db.RunStatusCanceled
@@ -312,35 +312,16 @@ func inferSatPlaybookStatus(events *[]message.PlaybookSatRunResponseMessageYamlE
 }
 
 func inferSatHostStatus(events *[]message.PlaybookSatRunResponseMessageYamlEventsElem, host string) string {
-	finished := false
-	failed := false
-	canceled := false
-
 	for _, event := range *events {
 		if event.Host != nil && *event.Host != host {
 			continue
 		}
-		if event.Type == EventSatPlaybookFinished {
-			finished = true
-		}
-		if event.Status != nil && *event.Status == EventSatStatusCanceled {
-			canceled = true
-		}
-		if event.Status != nil && *event.Status == EventSatStatusFailure {
-			failed = true
+		if event.Type == EventSatPlaybookFinished && event.Status != nil {
+			return satStatusEventDbMap(*event.Status)
 		}
 	}
 
-	switch {
-	case finished && canceled:
-		return db.RunStatusCanceled
-	case finished && failed:
-		return db.RunStatusFailure
-	case finished && !failed || finished && !canceled:
-		return db.RunStatusSuccess
-	default:
-		return db.RunStatusRunning
-	}
+	return db.RunStatusRunning
 }
 
 func checkSatStatusPartial(events *[]message.PlaybookSatRunResponseMessageYamlEventsElem) string {
