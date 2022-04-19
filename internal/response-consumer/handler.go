@@ -79,7 +79,7 @@ func (this *handler) onMessage(ctx context.Context, msg *k.Message) {
 		if requestType == satMessageHeaderValue {
 			satellite.SortSatEvents(value.SatEvents)
 
-			status = inferSatStatus(value.SatEvents, nil)
+			status = inferSatPlaybookStatus(value.SatEvents)
 			eventsSerialized = utils.MustMarshal(value.SatEvents)
 
 			if !run.ResponseFull {
@@ -149,7 +149,7 @@ func (this *handler) onMessage(ctx context.Context, msg *k.Message) {
 					RunID:       run.ID,
 					InventoryID: &inventoryId,
 					SatSequence: satHost.Sequence,
-					Status:      inferSatStatus(value.SatEvents, &host),
+					Status:      inferSatHostStatus(value.SatEvents, host),
 					Log:         satHost.Console,
 				}
 			})
@@ -255,39 +255,73 @@ func inferStatus(events *[]message.PlaybookRunResponseMessageYamlEventsElem, hos
 	}
 }
 
-func inferSatStatus(events *[]message.PlaybookSatRunResponseMessageYamlEventsElem, host *string) string {
-	finished := false
-	failed := false
-	canceled := false
+func satStatusEventDbMap(status message.PlaybookSatRunResponseMessageYamlEventsElemStatus) string {
+	switch {
+	case status == EventSatStatusSuccess:
+		return db.RunStatusSuccess
+	case status == EventSatStatusFailure:
+		return db.RunStatusFailure
+	case status == EventSatStatusCanceled:
+		return db.RunStatusCanceled
+	default:
+		return db.RunStatusRunning
+	}
+}
+
+func inferSatPlaybookStatus(events *[]message.PlaybookSatRunResponseMessageYamlEventsElem) string {
+	hostStatusMap := make(map[string]string)
 
 	for _, event := range *events {
 		if event.Type == EventSatPlaybookCompleted {
-			finished = true
+			return satStatusEventDbMap(*event.Status)
 		}
-		if host != nil && event.Host != nil && *event.Host != *host {
-			continue
+
+		if event.Host != nil {
+			if _, ok := hostStatusMap[*event.Host]; !ok {
+				hostStatusMap[*event.Host] = db.RunStatusRunning
+			}
+			if event.Status != nil {
+				hostStatusMap[*event.Host] = satStatusEventDbMap(*event.Status)
+			}
 		}
-		if event.Type == EventSatPlaybookFinished {
-			finished = true
+	}
+
+	failed := false
+	canceled := false
+
+	for _, status := range hostStatusMap {
+		if status == db.RunStatusRunning {
+			return status
 		}
-		if event.Status != nil && *event.Status == EventSatStatusCanceled {
-			canceled = true
-		}
-		if event.Status != nil && *event.Status == EventSatStatusFailure {
+		if status == db.RunStatusFailure {
 			failed = true
+		}
+		if status == db.RunStatusCanceled {
+			canceled = true
 		}
 	}
 
 	switch {
-	case finished && canceled:
-		return db.RunStatusCanceled
-	case finished && failed:
+	case failed:
 		return db.RunStatusFailure
-	case finished && !failed || finished && !canceled:
-		return db.RunStatusSuccess
+	case canceled:
+		return db.RunStatusCanceled
 	default:
-		return db.RunStatusRunning
+		return db.RunStatusSuccess
 	}
+}
+
+func inferSatHostStatus(events *[]message.PlaybookSatRunResponseMessageYamlEventsElem, host string) string {
+	for _, event := range *events {
+		if event.Host != nil && *event.Host != host {
+			continue
+		}
+		if event.Type == EventSatPlaybookFinished && event.Status != nil {
+			return satStatusEventDbMap(*event.Status)
+		}
+	}
+
+	return db.RunStatusRunning
 }
 
 func checkSatStatusPartial(events *[]message.PlaybookSatRunResponseMessageYamlEventsElem) string {
@@ -297,15 +331,7 @@ func checkSatStatusPartial(events *[]message.PlaybookSatRunResponseMessageYamlEv
 			continue
 		}
 
-		if *event.Status == EventSatStatusSuccess {
-			return db.RunStatusSuccess
-		}
-		if *event.Status == EventSatStatusCanceled {
-			return db.RunStatusCanceled
-		}
-		if *event.Status == EventSatStatusFailure {
-			return db.RunStatusFailure
-		}
+		return satStatusEventDbMap(*event.Status)
 	}
 
 	return db.RunStatusRunning
