@@ -275,9 +275,8 @@ objects:
             cpu: 100m
             memory: 64Mi
     - name: org-id-populator
+      restartPolicy: OnFailure
       podSpec:
-        name: org-id-populator
-        restartPolicy: OnFailure
         image: quay.io/dehort/tenant-utils:5228ba1e3680
         command:
           - ./org-id-column-populator
