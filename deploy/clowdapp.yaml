@@ -274,6 +274,27 @@ objects:
           requests:
             cpu: 100m
             memory: 64Mi
+    - name: org-id-populator
+      podSpec:
+        name: org-id-populator
+        restartPolicy: OnFailure
+        image: quay.io/dehort/tenant-utils:5228ba1e3680
+        command:
+          - ./org-id-column-populator
+          - -C
+          - -a
+          - account
+          - -o
+          - org_id
+          - -t
+          - runs
+        resources:
+          limits:
+            cpu: 300m
+            memory: 1Gi
+          requests:
+            cpu: 50m
+            memory: 512Mi
 
 parameters:
 - name: IMAGE_TAG
