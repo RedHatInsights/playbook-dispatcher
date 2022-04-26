@@ -41,3 +41,4 @@ COMPONENT_NAME="cloud-connector"
 IQE_PLUGINS="rhc-contract"
 IQE_IMAGE_TAG="rhc-contract"
 source $CICD_ROOT/cji_smoke_test.sh
+source $CICD_ROOT/post_test_results.sh
