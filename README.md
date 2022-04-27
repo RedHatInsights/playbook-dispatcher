@@ -197,7 +197,7 @@ The value of each event is described by [a JSON schema](./schema/run.event.yaml)
       "service": "remediations",
       "url": "http://example.com",
       "labels": {
-        "remediation_id": "1234",
+        "remediation_id": "1234"
       },
       "name": "Apply fix",
       "web_console_url": "http://example.com/remediations/1234",
