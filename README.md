@@ -61,10 +61,44 @@ POST /internal/v2/dispatch
         "url": "http://console.redhat.com/api/remediations/v1/remediations/ddf9196f-4df9-4c7d-9443-98a6f328e256/playbook",
         "name":"Apply fix",
         "principal": "jharting",
+        "web_console_url": "http://console.redhat.com/insights/remediations/ddf9196f-4df9-4c7d-9443-98a6f328e256",
+        "recipient_config": {
+            "sat_id":"16372e6f-1c18-4cdb-b780-50ab4b88e74b",
+            "sat_org_id":"6826"
+        },
+        "hosts": [
+            {
+                "inventory_id": "16372e6f-1c18-4cdb-b780-50ab4b88e74b",
+                "ansible_host": "01.example.com"
+            },
+            {
+                "inventory_id": "ed36792e-241d-4c12-a74a-a5adffbb436b",
+                "ansible_host": "02.example.com"
+            }
+        ]
+    }
+]
+```
+
+In case of a recipient that's using `rhc-worker-playbook` (also known as "directly connected host") this can be reduced to:
+
+```
+POST /internal/v2/dispatch
+[
+    {
+        "recipient": "dd018b96-da04-4651-84d1-187fa5c23f6c",
+        "org_id": "5318290",
+        "url": "http://console.redhat.com/api/remediations/v1/remediations/ddf9196f-4df9-4c7d-9443-98a6f328e256/playbook",
+        "name":"Apply fix",
+        "principal": "jharting",
         "web_console_url": "http://console.redhat.com/insights/remediations/ddf9196f-4df9-4c7d-9443-98a6f328e256"
     }
 ]
 ```
+
+as the host is assumed implicitly and recipient config is not needed.
+
+Both types of recipients can be used in a single dispatch operation.
 
 Sample response:
 ```
@@ -151,6 +185,35 @@ These events are produced to `platform.playbook-dispatcher.runs` topic in Kafka 
 The key of each event is the id of the given playbook run.
 
 The value of each event is described by [a JSON schema](./schema/run.event.yaml).
+
+```json
+{
+    "event_type": "create",
+    "payload": {
+      "id": "6555d6f7-8dc1-4dec-9d1e-0ef8a02d7d43",
+      "account": "901578",
+      "recipient": "dd018b96-da04-4651-84d1-187fa5c23f6c",
+      "correlation_id": "fbf49ad9-ea79-41fb-9f6c-cb13307e993d",
+      "service": "remediations",
+      "url": "http://example.com",
+      "labels": {
+        "remediation_id": "1234"
+      },
+      "name": "Apply fix",
+      "web_console_url": "http://example.com/remediations/1234",
+      "recipient_config": {
+        "sat_id": "16372e6f-1c18-4cdb-b780-50ab4b88e74b",
+        "sat_org_id": "6826"
+      },
+      "status": "running",
+      "timeout": 3600,
+      "created_at": "2022-04-22T11:15:45.429294Z",
+      "updated_at": "2022-04-22T11:15:45.429294Z"
+    }
+}
+```
+
+
 An event can be of type:
 
 - create - when a new playbook run is created
