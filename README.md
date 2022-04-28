@@ -98,7 +98,12 @@ POST /internal/v2/dispatch
 
 as the host is assumed implicitly and recipient config is not needed.
 
+The `recipient` field contains the identifier that [Cloud Connector](https://github.com/RedHatInsights/cloud-connector) uses to route the signal.
+Hosts that are using `rhc-worker-playbook` have their recipient identifier stored as [rhc_client_id in the system profile](https://github.com/RedHatInsights/inventory-schemas/blob/8000191d960da05c4ebf7960f4af8f7cf68bf616/schemas/system_profile/v1.yaml#L197). The recipient id of Satellite hosts can be obtained from [Sources](https://github.com/RedHatInsights/sources-api-go).
+
 Both types of recipients can be used in a single dispatch operation.
+
+See [API schema](./schema/private.openapi.yaml) for more details.
 
 Sample response:
 ```
@@ -109,8 +114,6 @@ Sample response:
     }
 ]
 ```
-
-See [API schema](./schema/private.openapi.yaml) for more details.
 
 ### Canceling of playbooks
 
