@@ -97,6 +97,9 @@ type RunInput struct {
 	// Additional metadata about the Playbook run. Can be used for filtering purposes.
 	Labels *externalRef0.Labels `json:"labels,omitempty"`
 
+	// Identifier of the tenant
+	OrgId *externalRef0.OrgId `json:"org_id,omitempty"`
+
 	// Identifier of the host to which a given Playbook is addressed
 	Recipient externalRef0.RunRecipient `json:"recipient"`
 
