@@ -2,6 +2,7 @@ package utils
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/RedHatInsights/tenant-utils/pkg/tenantid"
 )
@@ -17,7 +18,7 @@ func NewDynamicMockTranslator() tenantid.Translator {
 }
 
 func (this *dynamicMockTranslator) OrgIDToEAN(ctx context.Context, orgId string) (ean *string, err error) {
-	mockAccount := orgId[:5] + "-test"
+	mockAccount := fmt.Sprintf("%05s", orgId)[:5] + "-test"
 	return &mockAccount, nil
 }
 
