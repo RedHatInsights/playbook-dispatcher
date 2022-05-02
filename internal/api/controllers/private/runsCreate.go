@@ -2,6 +2,7 @@ package private
 
 import (
 	"net/http"
+	"playbook-dispatcher/internal/api/controllers/public"
 	"playbook-dispatcher/internal/api/instrumentation"
 	"playbook-dispatcher/internal/api/middleware"
 	"playbook-dispatcher/internal/common/utils"
@@ -25,6 +26,15 @@ func (this *controllers) ApiInternalRunsCreate(ctx echo.Context) error {
 		context = utils.WithRequestType(context, instrumentation.LabelAnsibleRequest)
 
 		recipient := parseValidatedUUID(string(runInputV1.Recipient))
+
+		orgIdString, err := this.translator.EANToOrgID(context, string(runInputV1.Account))
+		if err != nil {
+			utils.GetLogFromEcho(ctx).Error(err)
+			return runCreateError(http.StatusInternalServerError)
+		}
+		orgIdFromEAN := public.OrgId(orgIdString)
+		runInputV1.OrgId = &orgIdFromEAN
+
 		hosts := parseRunHosts(runInputV1.Hosts)
 
 		runInput := RunInputV1GenericMap(runInputV1, recipient, hosts, this.config)

@@ -90,8 +90,7 @@ func Start(
 			tenantid.WithMetrics(),
 		)
 	} else {
-		//translator = utils.NewDynamicMockTranslator()
-		translator = tenantid.NewTranslatorMock()
+		translator = utils.NewDynamicMockTranslator()
 		log.Warn("Using mock TenantIDTranslator")
 	}
 

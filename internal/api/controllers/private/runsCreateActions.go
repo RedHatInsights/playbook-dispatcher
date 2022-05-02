@@ -59,6 +59,7 @@ func parseRunHosts(input *RunInputHosts) []generic.RunHostsInput {
 func RunInputV1GenericMap(runInput RunInput, parsedRecipient uuid.UUID, parsedHosts []generic.RunHostsInput, cfg *viper.Viper) generic.RunInput {
 	return generic.RunInput{
 		Recipient: parsedRecipient,
+		OrgId:     (*string)(runInput.OrgId),
 		Account:   string(runInput.Account),
 		Url:       string(runInput.Url),
 		Labels:    getLabels(runInput.Labels),
