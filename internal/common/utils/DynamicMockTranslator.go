@@ -19,10 +19,26 @@ func NewDynamicMockTranslator() tenantid.Translator {
 
 func (this *dynamicMockTranslator) OrgIDToEAN(ctx context.Context, orgId string) (ean *string, err error) {
 	mockAccount := fmt.Sprintf("%05s", orgId)[:5] + "-test"
+
+	orgIdsWithNoAccount := []string{"1234", "abcd", "654321", "654322"}
+	for _, orgIdWithNoAccount := range orgIdsWithNoAccount {
+		if orgId == orgIdWithNoAccount {
+			return nil, nil
+		}
+	}
+
 	return &mockAccount, nil
 }
 
 func (this *dynamicMockTranslator) EANToOrgID(ctx context.Context, ean string) (orgId string, err error) {
+
+	eanWithNoOrgId := []string{"1234", "abcd"}
+	for _, eanWithNoOrgId := range eanWithNoOrgId {
+		if ean == eanWithNoOrgId {
+			return "", &tenantid.TenantNotFoundError{}
+		}
+	}
+
 	return ean + "-test", nil
 }
 
@@ -37,6 +53,13 @@ func (this *dynamicMockTranslator) EANsToOrgIDs(ctx context.Context, eans []stri
 				OrgID: orgId,
 				EAN:   &ean,
 				Err:   nil,
+			}
+			results = append(results, r)
+		} else {
+			r := tenantid.TranslationResult{
+				OrgID: "",
+				EAN:   &ean,
+				Err:   err,
 			}
 			results = append(results, r)
 		}
@@ -56,6 +79,13 @@ func (this *dynamicMockTranslator) OrgIDsToEANs(ctx context.Context, orgIDs []st
 				OrgID: orgID,
 				EAN:   ean,
 				Err:   nil,
+			}
+			results = append(results, r)
+		} else {
+			r := tenantid.TranslationResult{
+				OrgID: orgID,
+				EAN:   nil,
+				Err:   err,
 			}
 			results = append(results, r)
 		}

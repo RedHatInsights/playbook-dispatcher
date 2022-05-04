@@ -27,13 +27,15 @@ func (this *controllers) ApiInternalRunsCreate(ctx echo.Context) error {
 
 		recipient := parseValidatedUUID(string(runInputV1.Recipient))
 
-		orgIdString, err := this.translator.EANToOrgID(context, string(runInputV1.Account))
-		if err != nil {
-			utils.GetLogFromEcho(ctx).Error(err)
-			return runCreateError(http.StatusInternalServerError)
+		if runInputV1.OrgId == nil || *runInputV1.OrgId == "" {
+			orgIdString, err := this.translator.EANToOrgID(context, string(runInputV1.Account))
+			if err != nil {
+				utils.GetLogFromEcho(ctx).Error(err)
+				return handleRunCreateError(err)
+			}
+			orgIdFromEAN := public.OrgId(orgIdString)
+			runInputV1.OrgId = &orgIdFromEAN
 		}
-		orgIdFromEAN := public.OrgId(orgIdString)
-		runInputV1.OrgId = &orgIdFromEAN
 
 		hosts := parseRunHosts(runInputV1.Hosts)
 
