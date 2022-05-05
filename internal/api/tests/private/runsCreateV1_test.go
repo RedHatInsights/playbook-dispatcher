@@ -84,6 +84,56 @@ var _ = Describe("runsCreate V1", func() {
 			Expect((*runs)[0].Code).To(Equal(404))
 		})
 
+		It("Populates missing OrgID for incoming runs", func() {
+			recipient := uuid.New()
+			url := "http://example.com"
+
+			payload := ApiInternalRunsCreateJSONRequestBody{
+				RunInput{
+					Recipient: public.RunRecipient(recipient.String()),
+					Account:   public.Account("10000"),
+					Url:       public.Url(url),
+					Hosts:     &RunInputHosts{{AnsibleHost: &ansibleHost}},
+				},
+			}
+
+			runs, _ := dispatch(&payload)
+
+			Expect(*runs).To(HaveLen(1))
+			Expect((*runs)[0].Code).To(Equal(201))
+
+			var run dbModel.Run
+			result := db().Where("id = ?", string(*(*runs)[0].Id)).First(&run)
+			Expect(result.Error).ToNot(HaveOccurred())
+			Expect(run.OrgID).To(Equal("10000-test"))
+			Expect(run.Account).To(Equal("10000"))
+			Expect(run.Recipient).To(Equal(recipient))
+			Expect(run.URL).To(Equal(url))
+			Expect(run.Status).To(Equal("running"))
+			Expect(run.Labels).To(BeEmpty())
+			Expect(run.Timeout).To(Equal(3600))
+
+		})
+
+		It("500s if the OrgID is not found", func() {
+			recipient := uuid.New()
+			url := "http://example.com"
+
+			payload := ApiInternalRunsCreateJSONRequestBody{
+				RunInput{
+					Recipient: public.RunRecipient(recipient.String()),
+					Account:   public.Account("1234"),
+					Url:       public.Url(url),
+					Hosts:     &RunInputHosts{{AnsibleHost: &ansibleHost}},
+				},
+			}
+
+			runs, _ := dispatch(&payload)
+
+			Expect(*runs).To(HaveLen(1))
+			Expect((*runs)[0].Code).To(Equal(500))
+		})
+
 		It("500s on cloud connector error", func() {
 			recipient := uuid.MustParse("b31955fb-3064-4f56-ae44-a1c488a28587")
 			url := "http://example.com"
