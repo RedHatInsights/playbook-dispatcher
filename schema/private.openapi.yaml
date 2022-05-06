@@ -127,8 +127,6 @@ components:
       properties:
         recipient:
           $ref: './public.openapi.yaml#/components/schemas/RunRecipient'
-        org_id:
-          $ref: './public.openapi.yaml#/components/schemas/OrgId'
         account:
           $ref: './public.openapi.yaml#/components/schemas/Account'
         url:

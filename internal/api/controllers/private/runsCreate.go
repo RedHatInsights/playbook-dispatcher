@@ -2,7 +2,6 @@ package private
 
 import (
 	"net/http"
-	"playbook-dispatcher/internal/api/controllers/public"
 	"playbook-dispatcher/internal/api/instrumentation"
 	"playbook-dispatcher/internal/api/middleware"
 	"playbook-dispatcher/internal/common/utils"
@@ -27,19 +26,15 @@ func (this *controllers) ApiInternalRunsCreate(ctx echo.Context) error {
 
 		recipient := parseValidatedUUID(string(runInputV1.Recipient))
 
-		if runInputV1.OrgId == nil || *runInputV1.OrgId == "" {
-			orgIdString, err := this.translator.EANToOrgID(context, string(runInputV1.Account))
-			if err != nil {
-				utils.GetLogFromEcho(ctx).Error(err)
-				return handleRunCreateError(err)
-			}
-			orgIdFromEAN := public.OrgId(orgIdString)
-			runInputV1.OrgId = &orgIdFromEAN
+		orgIdString, err := this.translator.EANToOrgID(context, string(runInputV1.Account))
+		if err != nil {
+			utils.GetLogFromEcho(ctx).Error(err)
+			return handleRunCreateError(err)
 		}
 
 		hosts := parseRunHosts(runInputV1.Hosts)
 
-		runInput := RunInputV1GenericMap(runInputV1, recipient, hosts, this.config)
+		runInput := RunInputV1GenericMap(runInputV1, &orgIdString, recipient, hosts, this.config)
 
 		runID, _, err := this.dispatchManager.ProcessRun(context, string(runInputV1.Account), middleware.GetPSKPrincipal(context), runInput)
 

@@ -115,7 +115,7 @@ var _ = Describe("runsCreate V1", func() {
 
 		})
 
-		It("500s if the OrgID is not found", func() {
+		It("404s if the OrgID is not found", func() {
 			recipient := uuid.New()
 			url := "http://example.com"
 
@@ -131,7 +131,7 @@ var _ = Describe("runsCreate V1", func() {
 			runs, _ := dispatch(&payload)
 
 			Expect(*runs).To(HaveLen(1))
-			Expect((*runs)[0].Code).To(Equal(500))
+			Expect((*runs)[0].Code).To(Equal(404))
 		})
 
 		It("500s on cloud connector error", func() {

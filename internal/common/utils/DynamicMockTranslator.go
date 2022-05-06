@@ -48,21 +48,13 @@ func (this *dynamicMockTranslator) EANsToOrgIDs(ctx context.Context, eans []stri
 	for _, ean := range eans {
 		orgId, err := this.EANToOrgID(ctx, ean)
 
-		if err == nil {
-			r := tenantid.TranslationResult{
-				OrgID: orgId,
-				EAN:   &ean,
-				Err:   nil,
-			}
-			results = append(results, r)
-		} else {
-			r := tenantid.TranslationResult{
-				OrgID: "",
-				EAN:   &ean,
-				Err:   err,
-			}
-			results = append(results, r)
+		r := tenantid.TranslationResult{
+			OrgID: orgId,
+			EAN:   &ean,
+			Err:   err,
 		}
+
+		results = append(results, r)
 	}
 
 	return results, nil
@@ -74,21 +66,13 @@ func (this *dynamicMockTranslator) OrgIDsToEANs(ctx context.Context, orgIDs []st
 	for _, orgID := range orgIDs {
 		ean, err := this.OrgIDToEAN(ctx, orgID)
 
-		if err == nil && ean != nil {
-			r := tenantid.TranslationResult{
-				OrgID: orgID,
-				EAN:   ean,
-				Err:   nil,
-			}
-			results = append(results, r)
-		} else {
-			r := tenantid.TranslationResult{
-				OrgID: orgID,
-				EAN:   nil,
-				Err:   err,
-			}
-			results = append(results, r)
+		r := tenantid.TranslationResult{
+			OrgID: orgID,
+			EAN:   ean,
+			Err:   err,
 		}
+
+		results = append(results, r)
 	}
 
 	return results, nil
