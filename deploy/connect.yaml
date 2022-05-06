@@ -11,6 +11,12 @@ parameters:
   value: platform-mq-kafka-bootstrap.platform-mq.svc.cluster.local
 - name: KAFKA_BOOTSTRAP_PORT
   value: '9092'
+- name: KAFKA_REPLICATION_FACTOR
+  value: '3'
+- name: DB_HOSTNAME
+  value: '${file:/opt/kafka/external-configuration/playbook-dispatcher-db/db.host}'
+- name: DB_SSLMODE
+  value: verify-full
 - name: NUM_REPLICAS
   value: '1'
 - name: VERSION
@@ -177,11 +183,14 @@ objects:
       offset.storage.topic: playbook-dispatcher-connect-config
       status.storage.topic: playbook-dispatcher-connect-status
       config.storage.topic: playbook-dispatcher-connect-offsets
+      offset.storage.replication.factor: ${KAFKA_REPLICATION_FACTOR}
+      status.storage.replication.factor: ${KAFKA_REPLICATION_FACTOR}
+      config.storage.replication.factor: ${KAFKA_REPLICATION_FACTOR}
     externalConfiguration:
       volumes:
-        - name: rds-client-ca
-          secret:
-            secretName: rds-client-ca
+        # - name: rds-client-ca
+        #   secret:
+        #     secretName: rds-client-ca
         # https://developers.redhat.com/blog/2020/02/14/using-secrets-in-apache-kafka-connect-configuration/
         - name: playbook-dispatcher-db
           secret:
@@ -229,12 +238,12 @@ objects:
     tasksMax: 1
     pause: ${{CONNECTOR_PAUSE}}
     config:
-        database.hostname: "${file:/opt/kafka/external-configuration/playbook-dispatcher-db/db.host}"
+        database.hostname: ${DB_HOSTNAME}
         database.port: "${file:/opt/kafka/external-configuration/playbook-dispatcher-db/db.port}"
         database.user: "${file:/opt/kafka/external-configuration/playbook-dispatcher-db/db.user}"
         database.password: "${file:/opt/kafka/external-configuration/playbook-dispatcher-db/db.password}"
         database.dbname: "${file:/opt/kafka/external-configuration/playbook-dispatcher-db/db.name}"
-        database.sslmode: verify-full
+        database.sslmode: ${DB_SSLMODE}
         database.sslrootcert: /opt/kafka/external-configuration/rds-client-ca/rds-cacert
 
         slot.name: debezium
