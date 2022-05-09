@@ -15,6 +15,14 @@ parameters:
   value: '3'
 - name: DB_HOSTNAME
   value: '${file:/opt/kafka/external-configuration/playbook-dispatcher-db/db.host}'
+- name: DB_PORT
+  value: "${file:/opt/kafka/external-configuration/playbook-dispatcher-db/db.port}"
+- name: DB_USER
+  value: "${file:/opt/kafka/external-configuration/playbook-dispatcher-db/db.user}"
+- name: DB_PASSWORD
+  value: "${file:/opt/kafka/external-configuration/playbook-dispatcher-db/db.password}"
+- name: DB_NAME
+  value: "${file:/opt/kafka/external-configuration/playbook-dispatcher-db/db.name}"
 - name: DB_SSLMODE
   value: verify-full
 - name: NUM_REPLICAS
@@ -188,9 +196,9 @@ objects:
       config.storage.replication.factor: ${KAFKA_REPLICATION_FACTOR}
     externalConfiguration:
       volumes:
-        # - name: rds-client-ca
-        #   secret:
-        #     secretName: rds-client-ca
+        - name: rds-client-ca
+          secret:
+            secretName: rds-client-ca
         # https://developers.redhat.com/blog/2020/02/14/using-secrets-in-apache-kafka-connect-configuration/
         - name: playbook-dispatcher-db
           secret:
@@ -239,10 +247,10 @@ objects:
     pause: ${{CONNECTOR_PAUSE}}
     config:
         database.hostname: ${DB_HOSTNAME}
-        database.port: "${file:/opt/kafka/external-configuration/playbook-dispatcher-db/db.port}"
-        database.user: "${file:/opt/kafka/external-configuration/playbook-dispatcher-db/db.user}"
-        database.password: "${file:/opt/kafka/external-configuration/playbook-dispatcher-db/db.password}"
-        database.dbname: "${file:/opt/kafka/external-configuration/playbook-dispatcher-db/db.name}"
+        database.port: ${DB_PORT}
+        database.user: ${DB_USER}
+        database.password: ${DB_PASSWORD}
+        database.dbname: ${DB_NAME}
         database.sslmode: ${DB_SSLMODE}
         database.sslrootcert: /opt/kafka/external-configuration/rds-client-ca/rds-cacert
 
