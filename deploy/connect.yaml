@@ -320,6 +320,24 @@ objects:
               cpu: 200m
               memory: 256Mi
 
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: ephemeral-kafka-bootstrap
+  spec:
+    ports:
+    - name: tcp-replication
+      port: 9091
+      protocol: TCP
+      targetPort: 9091
+    - name: tcp-tcp
+      port: 9092
+      protocol: TCP
+      targetPort: 9092
+    selector:
+      strimzi.io/kind: Kafka
+    type: ClusterIP
+
 # this secrect is only used in ephemeral for testing
 - apiVersion: v1
   kind: Secret
