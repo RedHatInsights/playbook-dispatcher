@@ -49,6 +49,8 @@ parameters:
   value: playbook-dispatcher-event-consumer
 - name: CONNECTOR_PAUSE
   value: "false"
+- name: RDS_CACERT
+  value: rdscacert
 
 objects:
 - apiVersion: v1
@@ -317,3 +319,11 @@ objects:
             limits:
               cpu: 200m
               memory: 256Mi
+
+# this secrect is only used in ephemeral for testing
+- apiVersion: v1
+  kind: Secret
+  metadata:
+    name: rds-client-ca
+  stringData:
+    rds-cacert: ${RDS_CACERT}

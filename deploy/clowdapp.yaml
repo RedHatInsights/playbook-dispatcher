@@ -23,12 +23,6 @@ objects:
   stringData:
     client-id: ${ID_CLOUD_CONNECTOR}
     client-psk: ${KEY_CLOUD_CONNECTOR}
-- apiVersion: v1
-  kind: Secret
-  metadata:
-    name: rds-client-ca
-  stringData:
-    rds-cacert: ${RDS_CACERT}
 
 - apiVersion: cloud.redhat.com/v1alpha1
   kind: ClowdApp
@@ -349,5 +343,3 @@ parameters:
   value: playbook-dispatcher
 - name: KEY_CLOUD_CONNECTOR
   value: cloud_connector
-- name: RDS_CACERT
-  value: rdscacert
