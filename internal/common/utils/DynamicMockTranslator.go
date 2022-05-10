@@ -8,13 +8,10 @@ import (
 )
 
 type dynamicMockTranslator struct {
-	tenantid.BatchTranslator
 }
 
 func NewDynamicMockTranslator() tenantid.Translator {
-	return &dynamicMockTranslator{
-		BatchTranslator: &dynamicMockTranslator{},
-	}
+	return &dynamicMockTranslator{}
 }
 
 func (this *dynamicMockTranslator) OrgIDToEAN(ctx context.Context, orgId string) (ean *string, err error) {
