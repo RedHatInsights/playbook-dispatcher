@@ -9,6 +9,7 @@ import (
 	"playbook-dispatcher/internal/common/model/generic"
 	"playbook-dispatcher/internal/common/utils"
 
+	"github.com/RedHatInsights/tenant-utils/pkg/tenantid"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/spf13/viper"
@@ -56,9 +57,10 @@ func parseRunHosts(input *RunInputHosts) []generic.RunHostsInput {
 	return result
 }
 
-func RunInputV1GenericMap(runInput RunInput, parsedRecipient uuid.UUID, parsedHosts []generic.RunHostsInput, cfg *viper.Viper) generic.RunInput {
+func RunInputV1GenericMap(runInput RunInput, orgId *string, parsedRecipient uuid.UUID, parsedHosts []generic.RunHostsInput, cfg *viper.Viper) generic.RunInput {
 	return generic.RunInput{
 		Recipient: parsedRecipient,
+		OrgId:     orgId,
 		Account:   string(runInput.Account),
 		Url:       string(runInput.Url),
 		Labels:    getLabels(runInput.Labels),
@@ -135,6 +137,10 @@ func runCreateError(code int) *RunCreated {
 
 func handleRunCreateError(err error) *RunCreated {
 	if _, ok := err.(*dispatch.RecipientNotFoundError); ok {
+		return runCreateError(http.StatusNotFound)
+	}
+
+	if _, ok := err.(*tenantid.TenantNotFoundError); ok {
 		return runCreateError(http.StatusNotFound)
 	}
 
