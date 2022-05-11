@@ -25,9 +25,18 @@ func (this *controllers) ApiInternalRunsCreate(ctx echo.Context) error {
 		context = utils.WithRequestType(context, instrumentation.LabelAnsibleRequest)
 
 		recipient := parseValidatedUUID(string(runInputV1.Recipient))
+
+		orgIdString, err := this.translator.EANToOrgID(context, string(runInputV1.Account))
+		if err != nil {
+			utils.GetLogFromEcho(ctx).Error(err)
+			return handleRunCreateError(err)
+		}
+
 		hosts := parseRunHosts(runInputV1.Hosts)
 
-		runInput := RunInputV1GenericMap(runInputV1, recipient, hosts, this.config)
+		context = utils.WithOrgId(context, orgIdString)
+
+		runInput := RunInputV1GenericMap(runInputV1, &orgIdString, recipient, hosts, this.config)
 
 		runID, _, err := this.dispatchManager.ProcessRun(context, string(runInputV1.Account), middleware.GetPSKPrincipal(context), runInput)
 

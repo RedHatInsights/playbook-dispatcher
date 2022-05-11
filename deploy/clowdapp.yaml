@@ -106,6 +106,12 @@ objects:
                 key: key
                 name: auth-psk-edge
                 optional: true
+          - name: PSK_AUTH_TASKS
+            valueFrom:
+              secretKeyRef:
+                key: key
+                name: auth-psk-tasks
+                optional: true
           - name: PSK_AUTH_TEST
             value: ${PSK_AUTH_TEST}
 
