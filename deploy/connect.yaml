@@ -320,6 +320,7 @@ objects:
               cpu: 200m
               memory: 256Mi
 
+# this service is only used in ephemeral to give the ephemeral kafka a stable address
 - apiVersion: v1
   kind: Service
   metadata:
