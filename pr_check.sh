@@ -21,17 +21,28 @@ source $CICD_ROOT/build.sh
 # Deploy the new image to an ephemeral environment
 source $CICD_ROOT/deploy_ephemeral_env.sh
 
+
+# Build and Deploy Playbook Dispatcher Connect image
+IMAGE="quay.io/cloudservices/playbook-dispatcher-connect"
+DOCKERFILE="event-streams/Dockerfile"
+
+source $CICD_ROOT/build.sh
+
 # Run Playbook Dispatcher isolated tests
 IQE_PLUGINS="playbook-dispatcher"
 IQE_MARKER_EXPRESSION="smoke"
 source $CICD_ROOT/cji_smoke_test.sh
+
+IMAGE_DISPATCHER="quay.io/cloudservices/playbook-dispatcher"
+IMAGE_CONNECT="quay.io/cloudservices/playbook-dispatcher-connect"
 
 # Re-deploy Playbook Dispatcher to an ephemeral environment, this time enabling the communication with Cloud Connector
 bonfire deploy playbook-dispatcher cloud-connector \
     --source=appsre \
     --ref-env ${REF_ENV} \
     --set-template-ref ${COMPONENT_NAME}=${GIT_COMMIT} \
-    --set-image-tag ${IMAGE}=${IMAGE_TAG} \
+    --set-image-tag ${IMAGE_DISPATCHER}=${IMAGE_TAG} \
+    --set-image-tag ${IMAGE_CONNECT}=${IMAGE_TAG} \
     --namespace ${NAMESPACE} \
     --timeout ${DEPLOY_TIMEOUT} \
     --set-parameter playbook-dispatcher/CLOUD_CONNECTOR_IMPL=impl
