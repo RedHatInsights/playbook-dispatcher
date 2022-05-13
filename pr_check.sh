@@ -18,7 +18,19 @@ source $CICD_ROOT/build.sh
 # Execute unit tests
 #source $APP_ROOT/unit_test.sh
 
-# Deploy the new image to an ephemeral environment
+# Build and Deploy Playbook Dispatcher Connect image
+IMAGE="quay.io/cloudservices/playbook-dispatcher-connect"
+DOCKERFILE="event-streams/Dockerfile"
+
+IMAGE_DISPATCHER="quay.io/cloudservices/playbook-dispatcher"
+IMAGE_CONNECT="quay.io/cloudservices/playbook-dispatcher-connect"
+
+source $CICD_ROOT/build.sh
+
+# IMAGE is set to the Connect image, setting dispatcher image as an extra arg
+EXTRA_DEPLOY_ARGS="--set-image-tag ${IMAGE_DISPATCHER}=${IMAGE_TAG}"
+
+# Deploy to an ephemeral environment
 source $CICD_ROOT/deploy_ephemeral_env.sh
 
 # Run Playbook Dispatcher isolated tests
@@ -31,7 +43,8 @@ bonfire deploy playbook-dispatcher cloud-connector \
     --source=appsre \
     --ref-env ${REF_ENV} \
     --set-template-ref ${COMPONENT_NAME}=${GIT_COMMIT} \
-    --set-image-tag ${IMAGE}=${IMAGE_TAG} \
+    --set-image-tag ${IMAGE_DISPATCHER}=${IMAGE_TAG} \
+    --set-image-tag ${IMAGE_CONNECT}=${IMAGE_TAG} \
     --namespace ${NAMESPACE} \
     --timeout ${DEPLOY_TIMEOUT} \
     --set-parameter playbook-dispatcher/CLOUD_CONNECTOR_IMPL=impl
