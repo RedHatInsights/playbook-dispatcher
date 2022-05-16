@@ -52,6 +52,15 @@ objects:
       partitions: 16
       topicName: platform.upload.validation
 
+  - apiVersion: cloud.redhat.com/v1alpha1
+    kind: ClowdJobInvocation
+    metadata:
+      name: populate-org-id-column
+    spec:
+      appName: playbook-dispatcher
+      jobs:
+        - org-id-populator
+
     deployments:
     - name: api
       minReplicas: ${{REPLICAS_API}}
@@ -277,7 +286,7 @@ objects:
     - name: org-id-populator
       restartPolicy: OnFailure
       podSpec:
-        image: quay.io/dehort/tenant-utils:5228ba1e3680
+        image: ${POPULATOR_IMAGE}:${POPULATOR_IMAGE_TAG}
         command:
           - ./org-id-column-populator
           - -C
@@ -289,6 +298,17 @@ objects:
           - runs
           - --db-null-org-id-place-holder
           - unknown
+          - --ean-translator-addr
+          - http://${TENANT_TRANSLATOR_HOST}:${TENANT_TRANSLATOR_PORT}
+        env:
+          - name: TENANT_TRANSLATOR_HOST
+            value: ${TENANT_TRANSLATOR_HOST}
+          - name: TENANT_TRANSLATOR_PORT
+            value: ${TENANT_TRANSLATOR_PORT}
+          - name: LOG_FORMAT
+            value: ${LOG_FORMAT}
+          - name: LOG_BATCH_FREQUENCY
+            value: '1'
         resources:
           limits:
             cpu: 300m
@@ -358,6 +378,12 @@ parameters:
   value: '8892'
 - name: TENANT_TRANSLATOR_IMPL
   value: impl
+- name: LOG_FORMAT
+  value: logstash
+- name: POPULATOR_IMAGE
+  value: quay.io/cloudservices/tenant-utils
+- name: POPULATOR_IMAGE_TAG
+  value: latest
 
 
 # Used for testing in ephemeral environments only.
