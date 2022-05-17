@@ -291,6 +291,8 @@ objects:
           - unknown
           - --ean-translator-addr
           - http://${TENANT_TRANSLATOR_HOST}:${TENANT_TRANSLATOR_PORT}
+          - --prometheus-push-addr
+          - ${PROMETHEUS_PUSHGATEWAY}
         env:
           - name: LOG_FORMAT
             value: ${POPULATOR_LOG_FORMAT}
@@ -382,6 +384,8 @@ parameters:
   value: latest
 - name: POPULATOR_RUN_NUMBER
   value: "1"
+- name: PROMETHEUS_PUSHGATEWAY
+  value: "localhost"
 
 
 # Used for testing in ephemeral environments only.
