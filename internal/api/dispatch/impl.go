@@ -48,7 +48,7 @@ func getProtocol(runInput generic.RunInput) protocols.Protocol {
 	}
 }
 
-func (this *dispatchManager) ProcessRun(ctx context.Context, account string, service string, run generic.RunInput) (runID, correlationID uuid.UUID, err error) {
+func (this *dispatchManager) ProcessRun(ctx context.Context, account string, service string, run generic.RunInput, api_version string) (runID, correlationID uuid.UUID, err error) {
 	correlationID = this.newCorrelationId()
 	ctx = utils.WithCorrelationId(ctx, correlationID.String())
 
@@ -84,7 +84,7 @@ func (this *dispatchManager) ProcessRun(ctx context.Context, account string, ser
 
 	err = this.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if dbResult := tx.Create(&entity); dbResult.Error != nil {
-			instrumentation.PlaybookRunCreateError(ctx, dbResult.Error, &entity, protocol.GetLabel())
+			instrumentation.PlaybookRunCreateError(ctx, dbResult.Error, &entity, protocol.GetLabel(), api_version)
 			return dbResult.Error
 		}
 
@@ -92,7 +92,7 @@ func (this *dispatchManager) ProcessRun(ctx context.Context, account string, ser
 			newHosts := newHostRun(run.Hosts, entity.ID)
 
 			if dbResult := tx.Create(newHosts); dbResult.Error != nil {
-				instrumentation.PlaybookRunHostCreateError(ctx, dbResult.Error, newHosts, protocol.GetLabel())
+				instrumentation.PlaybookRunHostCreateError(ctx, dbResult.Error, newHosts, protocol.GetLabel(), api_version)
 				return dbResult.Error
 			}
 		}
@@ -104,7 +104,7 @@ func (this *dispatchManager) ProcessRun(ctx context.Context, account string, ser
 		return entity.ID, correlationID, err
 	}
 
-	instrumentation.RunCreated(ctx, run.Recipient, entity.ID, run.Url, entity.Service, protocol.GetLabel())
+	instrumentation.RunCreated(ctx, run.Recipient, entity.ID, run.Url, entity.Service, protocol.GetLabel(), api_version)
 	return entity.ID, correlationID, nil
 }
 
