@@ -292,14 +292,10 @@ objects:
           - --ean-translator-addr
           - http://${TENANT_TRANSLATOR_HOST}:${TENANT_TRANSLATOR_PORT}
         env:
-          - name: TENANT_TRANSLATOR_HOST
-            value: ${TENANT_TRANSLATOR_HOST}
-          - name: TENANT_TRANSLATOR_PORT
-            value: ${TENANT_TRANSLATOR_PORT}
           - name: LOG_FORMAT
-            value: ${LOG_FORMAT}
+            value: ${POPULATOR_LOG_FORMAT}
           - name: LOG_BATCH_FREQUENCY
-            value: '1'
+            value: '1s'
         resources:
           limits:
             cpu: 300m
@@ -378,8 +374,8 @@ parameters:
   value: '8892'
 - name: TENANT_TRANSLATOR_IMPL
   value: impl
-- name: LOG_FORMAT
-  value: logstash
+- name: POPULATOR_LOG_FORMAT
+  value: cloudwatch
 - name: POPULATOR_IMAGE
   value: quay.io/cloudservices/tenant-utils
 - name: POPULATOR_IMAGE_TAG
