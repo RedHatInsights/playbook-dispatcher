@@ -311,7 +311,7 @@ objects:
 - apiVersion: cloud.redhat.com/v1alpha1
   kind: ClowdJobInvocation
   metadata:
-    name: populate-org-id-column
+    name: populate-org-id-column-${POPULATOR_RUN_NUMBER}
   spec:
     appName: playbook-dispatcher
     jobs:
@@ -384,6 +384,8 @@ parameters:
   value: quay.io/cloudservices/tenant-utils
 - name: POPULATOR_IMAGE_TAG
   value: latest
+- name: POPULATOR_RUN_NUMBER
+  value: "1"
 
 
 # Used for testing in ephemeral environments only.
