@@ -382,7 +382,7 @@ parameters:
   value: quay.io/cloudservices/tenant-utils
 - name: POPULATOR_IMAGE_TAG
   value: latest
-- name: POPULATOR_RUN_NUMBER
+- name: POPULATOR_RUN_NUMBER # in case we need to run populator again, just increment this
   value: "1"
 - name: PROMETHEUS_PUSHGATEWAY
   value: "localhost"
