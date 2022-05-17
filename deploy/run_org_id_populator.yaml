@@ -1,9 +1,0 @@
----
-apiVersion: cloud.redhat.com/v1alpha1
-kind: ClowdJobInvocation
-metadata:
-  name: populate-org-id-column-01
-spec:
-  appName: playbook-dispatcher
-  jobs:
-    - org-id-populator
