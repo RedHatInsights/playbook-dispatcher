@@ -11,6 +11,20 @@ parameters:
   value: platform-mq-kafka-bootstrap.platform-mq.svc.cluster.local
 - name: KAFKA_BOOTSTRAP_PORT
   value: '9092'
+- name: KAFKA_REPLICATION_FACTOR
+  value: '3'
+- name: DB_HOSTNAME
+  value: '${file:/opt/kafka/external-configuration/playbook-dispatcher-db/db.host}'
+- name: DB_PORT
+  value: "${file:/opt/kafka/external-configuration/playbook-dispatcher-db/db.port}"
+- name: DB_USER
+  value: "${file:/opt/kafka/external-configuration/playbook-dispatcher-db/db.user}"
+- name: DB_PASSWORD
+  value: "${file:/opt/kafka/external-configuration/playbook-dispatcher-db/db.password}"
+- name: DB_NAME
+  value: "${file:/opt/kafka/external-configuration/playbook-dispatcher-db/db.name}"
+- name: DB_SSLMODE
+  value: verify-full
 - name: NUM_REPLICAS
   value: '1'
 - name: VERSION
@@ -35,6 +49,8 @@ parameters:
   value: playbook-dispatcher-event-consumer
 - name: CONNECTOR_PAUSE
   value: "false"
+- name: RDS_CACERT
+  value: rdscacert
 
 objects:
 - apiVersion: v1
@@ -177,6 +193,9 @@ objects:
       offset.storage.topic: playbook-dispatcher-connect-config
       status.storage.topic: playbook-dispatcher-connect-status
       config.storage.topic: playbook-dispatcher-connect-offsets
+      offset.storage.replication.factor: ${KAFKA_REPLICATION_FACTOR}
+      status.storage.replication.factor: ${KAFKA_REPLICATION_FACTOR}
+      config.storage.replication.factor: ${KAFKA_REPLICATION_FACTOR}
     externalConfiguration:
       volumes:
         - name: rds-client-ca
@@ -229,12 +248,12 @@ objects:
     tasksMax: 1
     pause: ${{CONNECTOR_PAUSE}}
     config:
-        database.hostname: "${file:/opt/kafka/external-configuration/playbook-dispatcher-db/db.host}"
-        database.port: "${file:/opt/kafka/external-configuration/playbook-dispatcher-db/db.port}"
-        database.user: "${file:/opt/kafka/external-configuration/playbook-dispatcher-db/db.user}"
-        database.password: "${file:/opt/kafka/external-configuration/playbook-dispatcher-db/db.password}"
-        database.dbname: "${file:/opt/kafka/external-configuration/playbook-dispatcher-db/db.name}"
-        database.sslmode: verify-full
+        database.hostname: ${DB_HOSTNAME}
+        database.port: ${DB_PORT}
+        database.user: ${DB_USER}
+        database.password: ${DB_PASSWORD}
+        database.dbname: ${DB_NAME}
+        database.sslmode: ${DB_SSLMODE}
         database.sslrootcert: /opt/kafka/external-configuration/rds-client-ca/rds-cacert
 
         slot.name: debezium
@@ -300,3 +319,30 @@ objects:
             limits:
               cpu: 200m
               memory: 256Mi
+
+# this service is only used in ephemeral to give the ephemeral kafka a stable address
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: ephemeral-kafka-bootstrap
+  spec:
+    ports:
+    - name: tcp-replication
+      port: 9091
+      protocol: TCP
+      targetPort: 9091
+    - name: tcp-tcp
+      port: 9092
+      protocol: TCP
+      targetPort: 9092
+    selector:
+      strimzi.io/kind: Kafka
+    type: ClusterIP
+
+# this secrect is only used in ephemeral for testing
+- apiVersion: v1
+  kind: Secret
+  metadata:
+    name: rds-client-ca
+  stringData:
+    rds-cacert: ${RDS_CACERT}
