@@ -8,6 +8,7 @@ type IngressValidationRequest struct {
 	Metadata    map[string]string `json:"metadata"`
 	RequestID   string            `json:"request_id"`
 	Principal   string            `json:"principal"`
+	OrgID       string            `json:"org_id"`
 	Service     string            `json:"service"`
 	Size        int64             `json:"size"`
 	URL         string            `json:"url"`
