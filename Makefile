@@ -10,33 +10,72 @@ init:
 	go get github.com/kulshekhar/fungen
 	go install github.com/kulshekhar/fungen
 
-generate-api:
-	# public API
+clean:
+	rm -f internal/api/controllers/public/spec.gen.go \
+		internal/api/controllers/public/types.gen.go \
+		internal/api/controllers/private/spec.gen.go \
+		internal/api/controllers/private/types.gen.go
+	rm -f internal/api/tests/public/client.gen.go internal/api/tests/private/client.gen.go
+	rm -f internal/api/connectors/cloudConnector.gen.go cloud-connector.yaml
+	rm -f internal/api/rbac/rbac.gen.go rbac.yaml
+
+generate-api: \
+ internal/api/controllers/public/spec.gen.go \
+ internal/api/controllers/public/types.gen.go \
+ internal/api/controllers/private/spec.gen.go \
+ internal/api/controllers/private/types.gen.go
+
+# public API
+internal/api/controllers/public/spec.gen.go: schema/public.openapi.yaml
 	~/go/bin/oapi-codegen -generate server,spec -package public -o internal/api/controllers/public/spec.gen.go schema/public.openapi.yaml
+
+internal/api/controllers/public/types.gen.go: schema/public.openapi.yaml
 	~/go/bin/oapi-codegen -generate types -package public -o internal/api/controllers/public/types.gen.go schema/public.openapi.yaml
-	# internal API
+
+# internal API
+internal/api/controllers/private/spec.gen.go: schema/private.openapi.yaml
 	~/go/bin/oapi-codegen -generate server,spec -package private -o internal/api/controllers/private/spec.gen.go -import-mapping=./public.openapi.yaml:playbook-dispatcher/internal/api/controllers/public schema/private.openapi.yaml
+
+internal/api/controllers/private/types.gen.go: schema/private.openapi.yaml
 	~/go/bin/oapi-codegen -generate types -package private -o internal/api/controllers/private/types.gen.go -import-mapping=./public.openapi.yaml:playbook-dispatcher/internal/api/controllers/public schema/private.openapi.yaml
 
-generate-clients:
+generate-clients: internal/api/tests/public/client.gen.go internal/api/tests/private/client.gen.go
+
+internal/api/tests/public/client.gen.go: schema/public.openapi.yaml
 	~/go/bin/oapi-codegen -generate client,types -package public -o internal/api/tests/public/client.gen.go schema/public.openapi.yaml
+
+internal/api/tests/private/client.gen.go: schema/private.openapi.yaml
 	~/go/bin/oapi-codegen -generate client,types -package private -o internal/api/tests/private/client.gen.go -import-mapping=./public.openapi.yaml:playbook-dispatcher/internal/api/controllers/public schema/private.openapi.yaml
 
-generate-messages:
+generate-messages: \
+  ./internal/common/model/message/runner.types.gen.go \
+  ./internal/common/model/message/rhcsat.types.gen.go
+
+./internal/common/model/message/runner.types.gen.go: schema/playbookRunResponse.message.yaml
 	~/go/bin/gojsonschema --yaml-extension yaml -p message schema/playbookRunResponse.message.yaml > ./internal/common/model/message/runner.types.gen.go
+
+./internal/common/model/message/rhcsat.types.gen.go: schema/playbookSatRunResponse.message.yaml
 	~/go/bin/gojsonschema --yaml-extension yaml -p message schema/playbookSatRunResponse.message.yaml > ./internal/common/model/message/rhcsat.types.gen.go
 
-generate-cloud-connector:
+generate-cloud-connector: internal/api/connectors/cloudConnector.gen.go
+
+internal/api/connectors/cloudConnector.gen.go: cloud-connector.yaml
+	~/go/bin/oapi-codegen -generate client,types -package connectors -o internal/api/connectors/cloudConnector.gen.go cloud-connector.yaml
+	rm cloud-connector.json
+
+cloud-connector.yaml:
 	curl -s ${CLOUD_CONNECTOR_SCHEMA} -o cloud-connector.json
 	json2yaml cloud-connector.json cloud-connector.yaml
-	~/go/bin/oapi-codegen -generate client,types -package connectors -o internal/api/connectors/cloudConnector.gen.go cloud-connector.yaml
-	rm cloud-connector.json cloud-connector.yaml
 
-generate-rbac:
+generate-rbac: internal/api/rbac/rbac.gen.go
+
+internal/api/rbac/rbac.gen.go: rbac.yaml
+	~/go/bin/oapi-codegen -generate client,types -package rbac -include-tags Access -o internal/api/rbac/rbac.gen.go rbac.yaml
+	rm rbac.json
+
+rbac.yaml:
 	curl -s ${RBAC_CONNECTOR_SCHEMA} -o rbac.json
 	json2yaml rbac.json rbac.yaml
-	~/go/bin/oapi-codegen -generate client,types -package rbac -include-tags Access -o internal/api/rbac/rbac.gen.go rbac.yaml
-	rm rbac.json rbac.yaml
 
 generate-utils:
 	go generate ./...
