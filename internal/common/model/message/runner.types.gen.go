@@ -7,48 +7,48 @@ import "encoding/json"
 
 type PlaybookRunResponseMessageYamlEventsElem struct {
 	// Counter corresponds to the JSON schema field "counter".
-	Counter int `json:"counter"`
+	Counter int `json:"counter" yaml:"counter"`
 
 	// EndLine corresponds to the JSON schema field "end_line".
-	EndLine int `json:"end_line"`
+	EndLine int `json:"end_line" yaml:"end_line"`
 
 	// Event corresponds to the JSON schema field "event".
-	Event string `json:"event"`
+	Event string `json:"event" yaml:"event"`
 
 	// EventData corresponds to the JSON schema field "event_data".
-	EventData *PlaybookRunResponseMessageYamlEventsElemEventData `json:"event_data,omitempty"`
+	EventData *PlaybookRunResponseMessageYamlEventsElemEventData `json:"event_data,omitempty" yaml:"event_data,omitempty"`
 
 	// StartLine corresponds to the JSON schema field "start_line".
-	StartLine int `json:"start_line"`
+	StartLine int `json:"start_line" yaml:"start_line"`
 
 	// Stdout corresponds to the JSON schema field "stdout".
-	Stdout *string `json:"stdout,omitempty"`
+	Stdout *string `json:"stdout,omitempty" yaml:"stdout,omitempty"`
 
 	// Uuid corresponds to the JSON schema field "uuid".
-	Uuid string `json:"uuid"`
+	Uuid string `json:"uuid" yaml:"uuid"`
 }
 
 type PlaybookRunResponseMessageYamlEventsElemEventData struct {
 	// CrcDispatcherCorrelationId corresponds to the JSON schema field
 	// "crc_dispatcher_correlation_id".
-	CrcDispatcherCorrelationId *string `json:"crc_dispatcher_correlation_id,omitempty"`
+	CrcDispatcherCorrelationId *string `json:"crc_dispatcher_correlation_id,omitempty" yaml:"crc_dispatcher_correlation_id,omitempty"`
 
 	// CrcDispatcherErrorCode corresponds to the JSON schema field
 	// "crc_dispatcher_error_code".
-	CrcDispatcherErrorCode *string `json:"crc_dispatcher_error_code,omitempty"`
+	CrcDispatcherErrorCode *string `json:"crc_dispatcher_error_code,omitempty" yaml:"crc_dispatcher_error_code,omitempty"`
 
 	// CrcDispatcherErrorDetails corresponds to the JSON schema field
 	// "crc_dispatcher_error_details".
-	CrcDispatcherErrorDetails *string `json:"crc_dispatcher_error_details,omitempty"`
+	CrcDispatcherErrorDetails *string `json:"crc_dispatcher_error_details,omitempty" yaml:"crc_dispatcher_error_details,omitempty"`
 
 	// Host corresponds to the JSON schema field "host".
-	Host *string `json:"host,omitempty"`
+	Host *string `json:"host,omitempty" yaml:"host,omitempty"`
 
 	// Playbook corresponds to the JSON schema field "playbook".
-	Playbook *string `json:"playbook,omitempty"`
+	Playbook *string `json:"playbook,omitempty" yaml:"playbook,omitempty"`
 
 	// PlaybookUuid corresponds to the JSON schema field "playbook_uuid".
-	PlaybookUuid *string `json:"playbook_uuid,omitempty"`
+	PlaybookUuid *string `json:"playbook_uuid,omitempty" yaml:"playbook_uuid,omitempty"`
 }
 
 // UnmarshalJSON implements json.Unmarshaler.
@@ -58,19 +58,19 @@ func (j *PlaybookRunResponseMessageYamlEventsElem) UnmarshalJSON(b []byte) error
 		return err
 	}
 	if v, ok := raw["counter"]; !ok || v == nil {
-		return fmt.Errorf("field counter: required")
+		return fmt.Errorf("field counter in PlaybookRunResponseMessageYamlEventsElem: required")
 	}
 	if v, ok := raw["end_line"]; !ok || v == nil {
-		return fmt.Errorf("field end_line: required")
+		return fmt.Errorf("field end_line in PlaybookRunResponseMessageYamlEventsElem: required")
 	}
 	if v, ok := raw["event"]; !ok || v == nil {
-		return fmt.Errorf("field event: required")
+		return fmt.Errorf("field event in PlaybookRunResponseMessageYamlEventsElem: required")
 	}
 	if v, ok := raw["start_line"]; !ok || v == nil {
-		return fmt.Errorf("field start_line: required")
+		return fmt.Errorf("field start_line in PlaybookRunResponseMessageYamlEventsElem: required")
 	}
 	if v, ok := raw["uuid"]; !ok || v == nil {
-		return fmt.Errorf("field uuid: required")
+		return fmt.Errorf("field uuid in PlaybookRunResponseMessageYamlEventsElem: required")
 	}
 	type Plain PlaybookRunResponseMessageYamlEventsElem
 	var plain Plain
@@ -83,22 +83,22 @@ func (j *PlaybookRunResponseMessageYamlEventsElem) UnmarshalJSON(b []byte) error
 
 type PlaybookRunResponseMessageYaml struct {
 	// Account corresponds to the JSON schema field "account".
-	Account string `json:"account"`
+	Account string `json:"account" yaml:"account"`
 
 	// B64Identity corresponds to the JSON schema field "b64_identity".
-	B64Identity string `json:"b64_identity"`
+	B64Identity string `json:"b64_identity" yaml:"b64_identity"`
 
 	// Events corresponds to the JSON schema field "events".
-	Events []PlaybookRunResponseMessageYamlEventsElem `json:"events"`
+	Events []PlaybookRunResponseMessageYamlEventsElem `json:"events" yaml:"events"`
 
 	// OrgId corresponds to the JSON schema field "org_id".
-	OrgId string `json:"org_id"`
+	OrgId string `json:"org_id" yaml:"org_id"`
 
 	// RequestId corresponds to the JSON schema field "request_id".
-	RequestId string `json:"request_id"`
+	RequestId string `json:"request_id" yaml:"request_id"`
 
 	// UploadTimestamp corresponds to the JSON schema field "upload_timestamp".
-	UploadTimestamp string `json:"upload_timestamp"`
+	UploadTimestamp string `json:"upload_timestamp" yaml:"upload_timestamp"`
 }
 
 // UnmarshalJSON implements json.Unmarshaler.
@@ -108,22 +108,22 @@ func (j *PlaybookRunResponseMessageYaml) UnmarshalJSON(b []byte) error {
 		return err
 	}
 	if v, ok := raw["account"]; !ok || v == nil {
-		return fmt.Errorf("field account: required")
+		return fmt.Errorf("field account in PlaybookRunResponseMessageYaml: required")
 	}
 	if v, ok := raw["b64_identity"]; !ok || v == nil {
-		return fmt.Errorf("field b64_identity: required")
+		return fmt.Errorf("field b64_identity in PlaybookRunResponseMessageYaml: required")
 	}
 	if v, ok := raw["events"]; !ok || v == nil {
-		return fmt.Errorf("field events: required")
+		return fmt.Errorf("field events in PlaybookRunResponseMessageYaml: required")
 	}
 	if v, ok := raw["org_id"]; !ok || v == nil {
-		return fmt.Errorf("field org_id: required")
+		return fmt.Errorf("field org_id in PlaybookRunResponseMessageYaml: required")
 	}
 	if v, ok := raw["request_id"]; !ok || v == nil {
-		return fmt.Errorf("field request_id: required")
+		return fmt.Errorf("field request_id in PlaybookRunResponseMessageYaml: required")
 	}
 	if v, ok := raw["upload_timestamp"]; !ok || v == nil {
-		return fmt.Errorf("field upload_timestamp: required")
+		return fmt.Errorf("field upload_timestamp in PlaybookRunResponseMessageYaml: required")
 	}
 	type Plain PlaybookRunResponseMessageYaml
 	var plain Plain

@@ -83,6 +83,9 @@ type GetPrincipalAccessParams struct {
 	// Unique username of the principal to obtain access for (only available for admins, and if supplied, takes precedence over the identity header).
 	Username *string `json:"username,omitempty"`
 
+	// Parameter for ordering roles by value. For inverse ordering, supply '-' before the param value, such as: ?order_by=-application
+	OrderBy *string `json:"order_by,omitempty"`
+
 	// Parameter for selecting the amount of data returned.
 	Limit *QueryLimit `json:"limit,omitempty"`
 
@@ -218,6 +221,22 @@ func NewGetPrincipalAccessRequest(server string, params *GetPrincipalAccessParam
 	if params.Username != nil {
 
 		if queryFrag, err := runtime.StyleParam("form", true, "username", *params.Username); err != nil {
+			return nil, err
+		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+			return nil, err
+		} else {
+			for k, v := range parsed {
+				for _, v2 := range v {
+					queryValues.Add(k, v2)
+				}
+			}
+		}
+
+	}
+
+	if params.OrderBy != nil {
+
+		if queryFrag, err := runtime.StyleParam("form", true, "order_by", *params.OrderBy); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
 			return nil, err
