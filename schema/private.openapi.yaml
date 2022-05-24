@@ -96,6 +96,28 @@ paths:
               schema:
                 $ref: '#/components/schemas/RunsCreated'
 
+  /internal/v3/dispatch:
+    post:
+      summary: Dispatch Playbooks
+      description: Dispatches Playbooks using all available means and stores corresponding run records.
+      operationId: api.internal.v3.runs.create
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/RunInputV3'
+              minItems: 1
+              maxItems: 50
+      responses:
+        '207':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RunsCreated'
+
   /internal/v2/cancel:
     post:
       summary: Cancel Playbook Runs
@@ -106,7 +128,7 @@ paths:
           application/json:
             schema:
               type: array
-              items: 
+              items:
                 $ref: '#/components/schemas/CancelInputV2'
               minItems: 1
               maxItems: 50
@@ -172,6 +194,32 @@ components:
       - url
       - name
 
+    RunInputV3:
+      type: object
+      properties:
+        org_id:
+          $ref: './public.openapi.yaml#/components/schemas/OrgId'
+        principal:
+          $ref: '#/components/schemas/Principal'
+        url:
+          $ref: './public.openapi.yaml#/components/schemas/Url'
+        name:
+          $ref: './public.openapi.yaml#/components/schemas/PlaybookName'
+        web_console_url:
+          $ref: './public.openapi.yaml#/components/schemas/WebConsoleUrl'
+        labels:
+          $ref: './public.openapi.yaml#/components/schemas/Labels'
+        timeout:
+          $ref: './public.openapi.yaml#/components/schemas/RunTimeout'
+        hosts:
+          $ref: '#/components/schemas/RunInputHosts'
+      required:
+      - org_id
+      - principal
+      - url
+      - name
+      - hosts
+
     CancelInputV2:
       type: object
       properties:
@@ -185,7 +233,7 @@ components:
       - run_id
       - org_id
       - principal
-    
+
     RunCanceled:
       type: object
       properties:
