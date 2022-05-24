@@ -154,6 +154,36 @@ type RunInputV2 struct {
 	WebConsoleUrl *externalRef0.WebConsoleUrl `json:"web_console_url,omitempty"`
 }
 
+// RunInputV3 defines model for RunInputV3.
+type RunInputV3 struct {
+
+	// Optionally, information about hosts involved in the Playbook run can be provided.
+	// This information is used to pre-allocate run_host resources.
+	// Moreover, it can be used to create a connection between a run_host resource and host inventory.
+	Hosts RunInputHosts `json:"hosts"`
+
+	// Additional metadata about the Playbook run. Can be used for filtering purposes.
+	Labels *externalRef0.Labels `json:"labels,omitempty"`
+
+	// Human readable name of the playbook run. Used to present the given playbook run in external systems (Satellite).
+	Name externalRef0.PlaybookName `json:"name"`
+
+	// Identifier of the tenant
+	OrgId externalRef0.OrgId `json:"org_id"`
+
+	// Username of the user interacting with the service
+	Principal Principal `json:"principal"`
+
+	// Amount of seconds after which the run is considered failed due to timeout
+	Timeout *externalRef0.RunTimeout `json:"timeout,omitempty"`
+
+	// URL hosting the Playbook
+	Url externalRef0.Url `json:"url"`
+
+	// URL that points to the section of the web console where the user find more information about the playbook run. The field is optional but highly suggested.
+	WebConsoleUrl *externalRef0.WebConsoleUrl `json:"web_console_url,omitempty"`
+}
+
 // RunsCanceled defines model for RunsCanceled.
 type RunsCanceled []RunCanceled
 
@@ -178,6 +208,9 @@ type ApiInternalV2RunsCreateJSONBody []RunInputV2
 // ApiInternalV2RecipientsStatusJSONBody defines parameters for ApiInternalV2RecipientsStatus.
 type ApiInternalV2RecipientsStatusJSONBody []RecipientWithOrg
 
+// ApiInternalV3RunsCreateJSONBody defines parameters for ApiInternalV3RunsCreate.
+type ApiInternalV3RunsCreateJSONBody []RunInputV3
+
 // ApiInternalRunsCreateRequestBody defines body for ApiInternalRunsCreate for application/json ContentType.
 type ApiInternalRunsCreateJSONRequestBody ApiInternalRunsCreateJSONBody
 
@@ -189,3 +222,6 @@ type ApiInternalV2RunsCreateJSONRequestBody ApiInternalV2RunsCreateJSONBody
 
 // ApiInternalV2RecipientsStatusRequestBody defines body for ApiInternalV2RecipientsStatus for application/json ContentType.
 type ApiInternalV2RecipientsStatusJSONRequestBody ApiInternalV2RecipientsStatusJSONBody
+
+// ApiInternalV3RunsCreateRequestBody defines body for ApiInternalV3RunsCreate for application/json ContentType.
+type ApiInternalV3RunsCreateJSONRequestBody ApiInternalV3RunsCreateJSONBody

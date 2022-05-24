@@ -6,10 +6,10 @@ import "sync"
 // RunInputList is the type for a list that holds members of type RunInput
 type RunInputList []RunInput
 
-// PMapRunCreated is similar to MapRunCreated except that it executes the function on each member in parallel.
-func (l RunInputList) PMapRunCreated(f func(RunInput) *RunCreated) RunCreatedList {
+// PMap is similar to Map except that it executes the function on each member in parallel.
+func (l RunInputList) PMap(f func(RunInput) RunInput) RunInputList {
 	wg := sync.WaitGroup{}
-	l2 := make(RunCreatedList, len(l))
+	l2 := make(RunInputList, len(l))
 	for i, t := range l {
 		wg.Add(1)
 		go func(i int, t RunInput) {
@@ -21,10 +21,10 @@ func (l RunInputList) PMapRunCreated(f func(RunInput) *RunCreated) RunCreatedLis
 	return l2
 }
 
-// PMap is similar to Map except that it executes the function on each member in parallel.
-func (l RunInputList) PMap(f func(RunInput) RunInput) RunInputList {
+// PMapRunCreated is similar to MapRunCreated except that it executes the function on each member in parallel.
+func (l RunInputList) PMapRunCreated(f func(RunInput) *RunCreated) RunCreatedList {
 	wg := sync.WaitGroup{}
-	l2 := make(RunInputList, len(l))
+	l2 := make(RunCreatedList, len(l))
 	for i, t := range l {
 		wg.Add(1)
 		go func(i int, t RunInput) {
