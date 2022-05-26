@@ -167,7 +167,7 @@ var _ = Describe("runsCreate V2", func() {
 	})
 
 	It("creates a new satellite playbook run with a uuidv5 as the sat_id", func() {
-		recipient := uuid.New()
+		recipient := uuid.MustParse("9200e4a3-c97c-4021-9856-82fa4673e8d2")  // uuid gets used by cloud connector client mock
 		url := "http://example.com"
 		orgId := "5318290"
 
@@ -380,7 +380,7 @@ var _ = Describe("runsCreate V2", func() {
 		Entry(
 			"invalid Sattelite id",
 			`[{"recipient": "3831fec2-1875-432a-bb58-08e71908f0e6", "org_id": "5318290", "principal": "test-user", "url": "http://example.com", "name": "Red Hat Playbook", "recipient_config": {"sat_id": "abc", "sat_org_id": "1"}}]`,
-			`JSON string doesn't match the format \"uuid\"`,
+			`JSON string doesn't match the format \"sat-id-uuid\"`,
 		),
 		Entry(
 			"invalid Sattelite org id",

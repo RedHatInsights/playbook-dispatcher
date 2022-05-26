@@ -32,6 +32,11 @@ func (this *cloudConnectorClientMock) SendCloudConnectorRequest(
 	}
 
 	id := uuid.New().String()
+
+	if recipient.String() == "9200e4a3-c97c-4021-9856-82fa4673e8d2" {
+		return &id, false, nil
+	}
+
 	return &id, false, nil
 }
 
