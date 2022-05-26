@@ -166,6 +166,47 @@ var _ = Describe("runsCreate V2", func() {
 		Expect(runHost.InventoryID.String()).To(Equal(inventoryId))
 	})
 
+	It("creates a new satellite playbook run with a uuidv5 as the sat_id", func() {
+		recipient := uuid.New()
+		url := "http://example.com"
+		orgId := "5318290"
+
+		playbookName := public.PlaybookName("sat-playbook")
+		playbookRunUrl := public.WebConsoleUrl("http://example.com/webConsoleUrl")
+		principal := Principal("test_user")
+
+		satOrgId := "123"
+		satIdStringV5 := "9274c274-a258-5d00-91fe-dbe0f7849cef"
+
+		inventoryId := uuid.New().String()
+
+		payload := ApiInternalV2RunsCreateJSONRequestBody{
+			RunInputV2{
+				Recipient:       public.RunRecipient(recipient.String()),
+				OrgId:           public.OrgId(orgId),
+				Url:             public.Url(url),
+				Hosts:           &RunInputHosts{{InventoryId: &inventoryId}},
+				Name:            playbookName,
+				WebConsoleUrl:   &playbookRunUrl,
+				Principal:       principal,
+				RecipientConfig: &RecipientConfig{SatId: &satIdStringV5, SatOrgId: &satOrgId},
+			},
+		}
+
+		runs, _ := dispatchV2(&payload)
+
+		Expect(*runs).To(HaveLen(1))
+		Expect((*runs)[0].Code).To(Equal(201))
+		_, err := uuid.Parse(string(*(*runs)[0].Id))
+		Expect(err).ToNot(HaveOccurred())
+
+		var run dbModel.Run
+		result := db().Where("id = ?", string(*(*runs)[0].Id)).First(&run)
+		Expect(result.Error).ToNot(HaveOccurred())
+		Expect((*run.SatId).String()).To(Equal(satIdStringV5))
+		Expect(*run.SatOrgId).To(Equal(satOrgId))
+	})
+
 	It("sets default for webConsoleUrl", func() {
 		payload := minimalV2Payload(uuid.New())
 
