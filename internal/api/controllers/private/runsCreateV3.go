@@ -83,15 +83,15 @@ type InventoryHostResponse struct {
 	//    }
 	//  ]
 	//}
-	Results [struct {
+	Results [] struct {
 		Id string `json:"id"`
-		Facts [struct{
+		Facts [] struct {
 			Namespace string `json:"namespace"`
-			NamespaceFacts [struct {
-				SatelliteInstanceId string `json: "satellite_instance_id"`
-			}] `json: "facts"`
-		}] `json:"facts"`
-	}] `json:"results"`
+			NamespaceFacts [] struct {
+				SatelliteInstanceId string `json:"satellite_instance_id"`
+			} `json:"facts"`
+		} `json:"facts"`
+	} `json:"results"`
 }
 
 type InventorySystemProfileResponse struct{
@@ -105,13 +105,13 @@ type InventorySystemProfileResponse struct{
 	//??        "rhc_config_state": "481c0739-0cfc-4e73-bc62-60d240343839",
 	//      }
 	//    },
-	Results [struct {
+	Results [] struct {
 		Id string `json:"id"`
 		SystemProfile struct {
 			RhcClientId string `json:"rhc_client_id"`
 			// RhcConfigState string `json:"rhc_config_state"`
 		} `json:"system_profile"`
-	}] `json:"results"`
+	} `json:"results"`
 }
 
 
@@ -132,7 +132,7 @@ func resolveRecipientIds(hosts RunInputHosts) map[generic.RunHostsInput]string {
 	//    the Inventory UUID to the recipient UUID.
 	recipientForHost := make(map[RunHostsInput]string)
 	// temporary stuff for now
-	for _, host in range(hosts) {
+	for _, host := range(hosts) {
 		recipientForHost[host.InventoryId] = "Foo"
 	}
 	// real algorithm would be something like:
