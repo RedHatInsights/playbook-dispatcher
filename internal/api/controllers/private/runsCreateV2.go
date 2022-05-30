@@ -33,7 +33,7 @@ func (this *controllers) ApiInternalV2RunsCreate(ctx echo.Context) error {
 	// process individual requests concurrently
 	result := input.PMapRunCreated(func(runInputV2 RunInputV2) *RunCreated {
 		context := utils.WithOrgId(ctx.Request().Context(), string(runInputV2.OrgId))
-		context = utils.WithRequestType(context, getRequestTypeLabel(runInputV2))
+		context = utils.WithRequestType(context, getRequestTypeLabelV2(runInputV2))
 
 		recipient := parseValidatedUUID(string(runInputV2.Recipient))
 
@@ -74,7 +74,7 @@ func (this *controllers) ApiInternalV2RunsCreate(ctx echo.Context) error {
 	return ctx.JSON(http.StatusMultiStatus, result)
 }
 
-func getRequestTypeLabel(run RunInputV2) string {
+func getRequestTypeLabelV2(run RunInputV2) string {
 	result := instrumentation.LabelAnsibleRequest
 
 	if run.RecipientConfig != nil && run.RecipientConfig.SatId != nil {
