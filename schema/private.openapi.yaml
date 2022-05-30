@@ -254,6 +254,9 @@ components:
         This information is used to pre-allocate run_host resources.
         Moreover, it can be used to create a connection between a run_host resource and host inventory.
       items:
+        $ref: '#/components/schemas/RunInputHost'
+
+    RunInputHost:
         type: object
         properties:
           ansible_host:
