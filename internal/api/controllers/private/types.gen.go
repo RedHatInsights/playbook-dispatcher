@@ -107,8 +107,8 @@ type RunInput struct {
 	Url externalRef0.Url `json:"url"`
 }
 
-// RunInputHosts defines model for RunInputHosts.
-type RunInputHosts []struct {
+// RunInputHost defines model for RunInputHost.
+type RunInputHost struct {
 
 	// Host name as known to Ansible inventory.
 	// Used to identify the host in status reports.
@@ -117,6 +117,9 @@ type RunInputHosts []struct {
 	// Inventory id of the given host
 	InventoryId *string `json:"inventory_id,omitempty"`
 }
+
+// RunInputHosts defines model for RunInputHosts.
+type RunInputHosts []RunInputHost
 
 // RunInputV2 defines model for RunInputV2.
 type RunInputV2 struct {
