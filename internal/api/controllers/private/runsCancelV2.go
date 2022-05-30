@@ -10,8 +10,9 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+//go:generate fungen -types CancelInputV2,*RunCanceled -methods PMap -package private -filename utils.del.v2.gen.go
 func (this *controllers) ApiInternalV2RunsCancel(ctx echo.Context) error {
-	var input CancelationInputV2List
+	var input CancelInputV2List
 
 	err := utils.ReadRequestBody(ctx, &input)
 	if err != nil {
