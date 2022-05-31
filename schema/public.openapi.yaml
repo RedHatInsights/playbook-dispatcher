@@ -127,6 +127,13 @@ components:
       type: string
       format: url
 
+    InventoryId:
+      description: Inventory id of the given host
+      example: ffb47020-a6fd-484d-80b5-da00a4a30bf2
+      type: string
+      format: uuid
+
+
     Labels:
       description: Additional metadata about the Playbook run. Can be used for filtering purposes.
       type: object
@@ -231,8 +238,7 @@ components:
         run:
           $ref: '#/components/schemas/Run'
         inventory_id:
-          type: string
-          format: uuid
+          $ref: '#/components/schemas/InventoryId'
         links:
           $ref: '#/components/schemas/RunHostLinks'
 

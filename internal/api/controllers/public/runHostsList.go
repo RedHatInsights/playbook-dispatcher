@@ -125,7 +125,7 @@ func (this *controllers) ApiRunHostsList(ctx echo.Context, params ApiRunHostsLis
 				}
 			case fieldInventoryId:
 				if host.InventoryID != nil {
-					inventoryID := host.InventoryID.String()
+					inventoryID := InventoryId(host.InventoryID.String())
 					runHost.InventoryId = &inventoryID
 				}
 			}

@@ -116,7 +116,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RunsCreated'
+                $ref: '#/components/schemas/RunsCreatedV3'
 
   /internal/v2/cancel:
     post:
@@ -266,10 +266,7 @@ components:
               Used to identify the host in status reports.
             example: localhost
           inventory_id:
-            type: string
-            format: uuid
-            description: Inventory id of the given host
-            example: ffb47020-a6fd-484d-80b5-da00a4a30bf2
+            $ref: './public.openapi.yaml#/components/schemas/InventoryId'
 
     RunCreated:
       type: object
@@ -279,6 +276,20 @@ components:
           example: 201
           description: status code of the request
         id:
+          $ref: './public.openapi.yaml#/components/schemas/RunId'
+      required:
+      - code
+
+    RunCreatedV3:
+      type: object
+      properties:
+        code:
+          type: integer
+          example: 201
+          description: status code of the request
+        inventory_id:
+          $ref: './public.openapi.yaml#/components/schemas/InventoryId'
+        run_id:
           $ref: './public.openapi.yaml#/components/schemas/RunId'
       required:
       - code
@@ -307,6 +318,11 @@ components:
       type: array
       items:
         $ref: '#/components/schemas/RunCreated'
+
+    RunsCreatedV3:
+      type: array
+      items:
+        $ref: '#/components/schemas/RunCreatedV3'
 
     RecipientWithOrg:
       type: object

@@ -28,6 +28,9 @@ type Error struct {
 	Message string `json:"message"`
 }
 
+// InventoryId defines model for InventoryId.
+type InventoryId string
+
 // InventoryIdNullable defines model for InventoryIdNullable.
 type InventoryIdNullable string
 
@@ -121,8 +124,10 @@ type RunCorrelationId string
 type RunHost struct {
 
 	// Name used to identify a host within Ansible inventory
-	Host        *string       `json:"host,omitempty"`
-	InventoryId *string       `json:"inventory_id,omitempty"`
+	Host *string `json:"host,omitempty"`
+
+	// Inventory id of the given host
+	InventoryId *InventoryId  `json:"inventory_id,omitempty"`
 	Links       *RunHostLinks `json:"links,omitempty"`
 	Run         *Run          `json:"run,omitempty"`
 

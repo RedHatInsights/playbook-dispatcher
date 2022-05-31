@@ -83,6 +83,19 @@ type RunCreated struct {
 	Id *externalRef0.RunId `json:"id,omitempty"`
 }
 
+// RunCreatedV3 defines model for RunCreatedV3.
+type RunCreatedV3 struct {
+
+	// status code of the request
+	Code int `json:"code"`
+
+	// Inventory id of the given host
+	InventoryId externalRef0.InventoryId `json:"inventory_id"`
+
+	// Unique identifier of a Playbook run
+	RunId externalRef0.RunId `json:"run_id"`
+}
+
 // RunInput defines model for RunInput.
 type RunInput struct {
 
@@ -115,7 +128,7 @@ type RunInputHost struct {
 	AnsibleHost *string `json:"ansible_host,omitempty"`
 
 	// Inventory id of the given host
-	InventoryId *string `json:"inventory_id,omitempty"`
+	InventoryId *externalRef0.InventoryId `json:"inventory_id,omitempty"`
 }
 
 // RunInputHosts defines model for RunInputHosts.
@@ -192,6 +205,9 @@ type RunsCanceled []RunCanceled
 
 // RunsCreated defines model for RunsCreated.
 type RunsCreated []RunCreated
+
+// RunsCreatedV3 defines model for RunsCreatedV3.
+type RunsCreatedV3 []RunCreatedV3
 
 // Version defines model for Version.
 type Version string

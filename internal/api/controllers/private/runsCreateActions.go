@@ -49,7 +49,7 @@ func parseRunHosts(input *RunInputHosts) []generic.RunHostsInput {
 		}
 
 		if host.InventoryId != nil {
-			result[i].InventoryId = utils.UUIDRef(parseValidatedUUID(*host.InventoryId))
+			result[i].InventoryId = utils.UUIDRef(parseValidatedUUID(string(*host.InventoryId)))
 		}
 
 	}
@@ -110,7 +110,6 @@ func RunInputV3GenericMap(
 	runInput RunInputV3,
 	parsedRecipient uuid.UUID,
 	parsedHosts []generic.RunHostsInput,
-	parsedSatID *uuid.UUID,
 	cfg *viper.Viper,
 ) generic.RunInput {
 	orgIdString := string(runInput.OrgId)
@@ -120,7 +119,6 @@ func RunInputV3GenericMap(
 	result := generic.RunInput{
 		Recipient:     parsedRecipient,
 		OrgId:         &orgIdString,
-		Account:       account,
 		Url:           string(runInput.Url),
 		Labels:        getLabels(runInput.Labels),
 		Timeout:       (*int)(runInput.Timeout),
@@ -128,11 +126,6 @@ func RunInputV3GenericMap(
 		Name:          &playbookName,
 		WebConsoleUrl: (*string)(runInput.WebConsoleUrl),
 		Principal:     &principal,
-		SatId:         parsedSatID,
-	}
-
-	if runInput.RecipientConfig != nil {
-		result.SatOrgId = runInput.RecipientConfig.SatOrgId
 	}
 
 	return result
@@ -185,6 +178,13 @@ func handleRunCreateError(err error) *RunCreated {
 
 func runCreated(runID uuid.UUID) *RunCreated {
 	return &RunCreated{
+		Code: http.StatusCreated,
+		Id:   (*public.RunId)(utils.StringRef(runID.String())),
+	}
+}
+
+func runCreatedV3(runID uuid.UUID) *RunCreatedV3 {
+	return &RunCreatedV3{
 		Code: http.StatusCreated,
 		Id:   (*public.RunId)(utils.StringRef(runID.String())),
 	}

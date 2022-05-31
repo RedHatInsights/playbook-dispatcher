@@ -6,21 +6,6 @@ import "sync"
 // RunInputV3List is the type for a list that holds members of type RunInputV3
 type RunInputV3List []RunInputV3
 
-// PMapRunCreated is similar to MapRunCreated except that it executes the function on each member in parallel.
-func (l RunInputV3List) PMapRunCreated(f func(RunInputV3) *RunCreated) RunCreatedList {
-	wg := sync.WaitGroup{}
-	l2 := make(RunCreatedList, len(l))
-	for i, t := range l {
-		wg.Add(1)
-		go func(i int, t RunInputV3) {
-			l2[i] = f(t)
-			wg.Done()
-		}(i, t)
-	}
-	wg.Wait()
-	return l2
-}
-
 // PMap is similar to Map except that it executes the function on each member in parallel.
 func (l RunInputV3List) PMap(f func(RunInputV3) RunInputV3) RunInputV3List {
 	wg := sync.WaitGroup{}
@@ -36,16 +21,13 @@ func (l RunInputV3List) PMap(f func(RunInputV3) RunInputV3) RunInputV3List {
 	return l2
 }
 
-// RunCreatedList is the type for a list that holds members of type *RunCreated
-type RunCreatedList []*RunCreated
-
-// PMapRunInputV3 is similar to MapRunInputV3 except that it executes the function on each member in parallel.
-func (l RunCreatedList) PMapRunInputV3(f func(*RunCreated) RunInputV3) RunInputV3List {
+// PMapRunsCreatedV3 is similar to MapRunsCreatedV3 except that it executes the function on each member in parallel.
+func (l RunInputV3List) PMapRunsCreatedV3(f func(RunInputV3) RunsCreatedV3) RunsCreatedV3List {
 	wg := sync.WaitGroup{}
-	l2 := make(RunInputV3List, len(l))
+	l2 := make(RunsCreatedV3List, len(l))
 	for i, t := range l {
 		wg.Add(1)
-		go func(i int, t *RunCreated) {
+		go func(i int, t RunInputV3) {
 			l2[i] = f(t)
 			wg.Done()
 		}(i, t)
@@ -54,13 +36,31 @@ func (l RunCreatedList) PMapRunInputV3(f func(*RunCreated) RunInputV3) RunInputV
 	return l2
 }
 
+// RunsCreatedV3List is the type for a list that holds members of type RunsCreatedV3
+type RunsCreatedV3List []RunsCreatedV3
+
 // PMap is similar to Map except that it executes the function on each member in parallel.
-func (l RunCreatedList) PMap(f func(*RunCreated) *RunCreated) RunCreatedList {
+func (l RunsCreatedV3List) PMap(f func(RunsCreatedV3) RunsCreatedV3) RunsCreatedV3List {
 	wg := sync.WaitGroup{}
-	l2 := make(RunCreatedList, len(l))
+	l2 := make(RunsCreatedV3List, len(l))
 	for i, t := range l {
 		wg.Add(1)
-		go func(i int, t *RunCreated) {
+		go func(i int, t RunsCreatedV3) {
+			l2[i] = f(t)
+			wg.Done()
+		}(i, t)
+	}
+	wg.Wait()
+	return l2
+}
+
+// PMapRunInputV3 is similar to MapRunInputV3 except that it executes the function on each member in parallel.
+func (l RunsCreatedV3List) PMapRunInputV3(f func(RunsCreatedV3) RunInputV3) RunInputV3List {
+	wg := sync.WaitGroup{}
+	l2 := make(RunInputV3List, len(l))
+	for i, t := range l {
+		wg.Add(1)
+		go func(i int, t RunsCreatedV3) {
 			l2[i] = f(t)
 			wg.Done()
 		}(i, t)

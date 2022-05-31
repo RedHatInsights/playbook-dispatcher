@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"playbook-dispatcher/internal/api/instrumentation"
 	"playbook-dispatcher/internal/api/middleware"
+	"playbook-dispatcher/internal/common/model/generic"
 	"playbook-dispatcher/internal/common/utils"
 
 	"github.com/RedHatInsights/tenant-utils/pkg/tenantid"
@@ -11,7 +12,7 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-//go:generate fungen -types RunInputV3,*RunCreated -methods PMap -package private -filename utils.v3.gen.go
+//go:generate fungen -types RunInputV3,RunsCreatedV3 -methods PMap -package private -filename utils.v3.gen.go
 func (this *controllers) ApiInternalV3RunsCreate(ctx echo.Context) error {
 	var input RunInputV3List
 
@@ -22,7 +23,8 @@ func (this *controllers) ApiInternalV3RunsCreate(ctx echo.Context) error {
 	}
 
 	// process individual requests concurrently
-	result := input.PMapRunCreated(func(runInputV3 RunInputV3) *RunCreated {
+	result := input.PMapRunsCreatedV3(func(runInputV3 RunInputV3) RunsCreatedV3 {
+		runsCreated := make(RunsCreatedV3, len(runInputV3.Hosts))
 		context := utils.WithOrgId(ctx.Request().Context(), string(runInputV3.OrgId))
 		context = utils.WithRequestType(context, getRequestTypeLabelV3(runInputV3))
 
@@ -42,22 +44,24 @@ func (this *controllers) ApiInternalV3RunsCreate(ctx echo.Context) error {
 			return runCreateError(http.StatusBadRequest)
 		}
 
-		hosts := parseRunHosts(&runInputV3.Hosts)
+		hosts := parseRunHosts(&runInputV3.Hosts)  // database model generic.RunHostsInput
 
 		// request the Inventory details for each of these hosts.
 		recipientForHost := resolveRecipientIds(hosts)
 		// now dispatch a run for each of the hosts in this batch
-		for _, host := range(hosts) {
-			recipient := recipientForHost[host]
-			runInput := RunInputV3GenericMap(runInputV3, *ean, recipient, RunInputHosts{host}, parsedSatID, this.config)
+		for i, host := range(hosts) {
+			recipientUUID := parseValidatedUUID(recipientForHost[host])
+			var thisHost = []generic.RunHostsInput{host}  // single host in list
+			runInput := RunInputV3GenericMap(runInputV3, recipientUUID, thisHost, this.config)
 			runID, _, err := this.dispatchManager.ProcessRun(context, *ean, middleware.GetPSKPrincipal(context), runInput, "v3")
+			runsCreated[i] = RunCreatedV3{
+				Code: err.code,
+				InventoryId: host.InventoryId,
+				RunId: runID,
+			}
 		}
 
-		if err != nil {
-			return handleRunCreateError(err)
-		}
-
-		return runCreated(runID)
+		return runsCreated
 	})
 
 	return ctx.JSON(http.StatusMultiStatus, result)
@@ -65,7 +69,6 @@ func (this *controllers) ApiInternalV3RunsCreate(ctx echo.Context) error {
 
 // the structure returned from Inventory
 type InventoryHostResponse struct {
-
 	// the fields we have to parse and that we care about:
 	// /hosts/{host_id_list} :
 	// {
@@ -115,16 +118,12 @@ type InventorySystemProfileResponse struct{
 }
 
 
-func recipientIdForInventoryHost(host RunInputHost) string {
-
-}
-
-func resolveRecipientIds(hosts RunInputHosts) map[generic.RunHostsInput]string {
+func resolveRecipientIds([]generic.RunHostsInput) map[generic.RunHostsInput]string {
 	// This creates a mapping from Inventory host UUID to Recipient ID:
 	//   * if the host is self-managed, the recipient is the `rhc_client_id`
 	//     in the `system_profile`
 	//   * if the host is managed by a Satellite, the recipient is the
-	//     `satellite_id`
+	//     `satellite_instance_id` in the `satellite` fact namespace.
 	// a. it'd be good if we could just use the syndicated Inventory
 	//    table here, but we don't have that available.
 	// b. so instead we're going to have to use the Inventory API, which
@@ -133,13 +132,26 @@ func resolveRecipientIds(hosts RunInputHosts) map[generic.RunHostsInput]string {
 	recipientForHost := make(map[RunHostsInput]string)
 	// temporary stuff for now
 	for _, host := range(hosts) {
-		recipientForHost[host.InventoryId] = "Foo"
+		recipientForHost[host] = "Foo"
 	}
 	// real algorithm would be something like:
 	// 1. split hosts up into batches of ~50 or 100, due to host UUIDs
 	//    being specified on the URL path
-	// 2. request each batch
+	// 2. request each batch from both hosts and system_profile endpoints
+	//   a. hosts that have rhc_client_id defined in their system_profile
+	//      get that set as their recipient ID
+	//   b. hosts that have the satellite_instance_id set in the 'satellite'
+	//      namespace get that set as their recipient ID
+	// 3. If the host doesn't occur in either, we can't dispatch to it, so
+	//    it doesn't appear in the map
 	return recipientForHost
+}
+
+func runCreateError(code int) *RunCreated {
+	return &RunCreatedV3{
+		Code: code,
+		// TODO report error
+	}
 }
 
 func getRequestTypeLabelV3(run RunInputV3) string {
