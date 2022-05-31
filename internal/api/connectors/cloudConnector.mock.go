@@ -31,11 +31,11 @@ func (this *cloudConnectorClientMock) SendCloudConnectorRequest(
 		return nil, false, fmt.Errorf("timeout")
 	}
 
-	id := uuid.New().String()
-
-	if recipient.String() == "9200e4a3-c97c-4021-9856-82fa4673e8d2" {
-		return &id, false, nil
+	if recipient.String() == "9200e4a3-c97c-4021-9856-82fa4673e8d2" && metadata["sat_id"] != "9274c274-a258-5d00-91fe-dbe0f7849cef" {
+		return nil, false, fmt.Errorf("sat_id mismatch")
 	}
+
+	id := uuid.New().String()
 
 	return &id, false, nil
 }
