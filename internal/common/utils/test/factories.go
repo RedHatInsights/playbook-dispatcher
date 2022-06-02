@@ -81,6 +81,7 @@ func NewRunWithStatus(account string, status string) dbModel.Run {
 	return dbModel.Run{
 		ID:            uuid.New(),
 		Account:       account,
+		OrgID:         account + "-test",
 		Recipient:     uuid.New(),
 		CorrelationID: uuid.New(),
 		URL:           "http://example.com",
