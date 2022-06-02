@@ -62,7 +62,7 @@ func (this *controllers) ApiInternalV2RunsCreate(ctx echo.Context) error {
 
 		runInput := RunInputV2GenericMap(runInputV2, *ean, recipient, hosts, parsedSatID, this.config)
 
-		runID, _, err := this.dispatchManager.ProcessRun(context, *ean, middleware.GetPSKPrincipal(context), runInput, "v2")
+		runID, _, err := this.dispatchManager.ProcessRun(context, *ean, middleware.GetPSKPrincipal(context), runInput)
 
 		if err != nil {
 			return handleRunCreateError(err)

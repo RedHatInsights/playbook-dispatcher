@@ -38,7 +38,7 @@ func (this *controllers) ApiInternalRunsCreate(ctx echo.Context) error {
 
 		runInput := RunInputV1GenericMap(runInputV1, &orgIdString, recipient, hosts, this.config)
 
-		runID, _, err := this.dispatchManager.ProcessRun(context, string(runInputV1.Account), middleware.GetPSKPrincipal(context), runInput, "v1")
+		runID, _, err := this.dispatchManager.ProcessRun(context, string(runInputV1.Account), middleware.GetPSKPrincipal(context), runInput)
 
 		if err != nil {
 			return handleRunCreateError(err)
