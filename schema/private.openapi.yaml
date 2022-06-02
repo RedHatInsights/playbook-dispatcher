@@ -237,9 +237,9 @@ components:
       type: object
       properties:
         sat_id:
-          description: Identifier of the Satellite instance
+          description: Identifier of the Satellite instance in the uuid v4/v5 format
           type: string
-          format: uuid
+          format: sat-id-uuid
           example: aa3b1faa-56f3-4d14-8258-615d11e20060
         sat_org_id:
           description: Identifier of the organization within Satellite

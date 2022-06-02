@@ -166,6 +166,80 @@ var _ = Describe("runsCreate V2", func() {
 		Expect(runHost.InventoryID.String()).To(Equal(inventoryId))
 	})
 
+	It("creates a new satellite playbook run with a uuidv5 as the sat_id", func() {
+		recipient := uuid.MustParse("9200e4a3-c97c-4021-9856-82fa4673e8d2") // gets checked my cloud connector mock
+		url := "http://example.com"
+		orgId := "5318290"
+
+		playbookName := public.PlaybookName("sat-playbook")
+		playbookRunUrl := public.WebConsoleUrl("http://example.com/webConsoleUrl")
+		principal := Principal("test_user")
+
+		satOrgId := "123"
+		satIdStringV5 := "9274c274-a258-5d00-91fe-dbe0f7849cef"
+
+		inventoryId := uuid.New().String()
+
+		payload := ApiInternalV2RunsCreateJSONRequestBody{
+			RunInputV2{
+				Recipient:       public.RunRecipient(recipient.String()),
+				OrgId:           public.OrgId(orgId),
+				Url:             public.Url(url),
+				Hosts:           &RunInputHosts{{InventoryId: &inventoryId}},
+				Name:            playbookName,
+				WebConsoleUrl:   &playbookRunUrl,
+				Principal:       principal,
+				RecipientConfig: &RecipientConfig{SatId: &satIdStringV5, SatOrgId: &satOrgId},
+			},
+		}
+
+		runs, _ := dispatchV2(&payload)
+
+		Expect(*runs).To(HaveLen(1))
+		Expect((*runs)[0].Code).To(Equal(201))
+		_, err := uuid.Parse(string(*(*runs)[0].Id))
+		Expect(err).ToNot(HaveOccurred())
+
+		var run dbModel.Run
+		result := db().Where("id = ?", string(*(*runs)[0].Id)).First(&run)
+		Expect(result.Error).ToNot(HaveOccurred())
+		Expect((*run.SatId).String()).To(Equal(satIdStringV5))
+		Expect(*run.SatOrgId).To(Equal(satOrgId))
+	})
+
+	It("fails on sat_id mismatch in cloud connector", func() {
+		recipient := uuid.MustParse("9200e4a3-c97c-4021-9856-82fa4673e8d2")
+		url := "http://example.com"
+		orgId := "5318290"
+
+		playbookName := public.PlaybookName("sat-playbook")
+		playbookRunUrl := public.WebConsoleUrl("http://example.com/webConsoleUrl")
+		principal := Principal("test_user")
+
+		satOrgId := "123"
+		satIdStringV5 := "562daa36-b5d8-5511-8bb2-18095e477978" // mismached sat_id recipient combo
+
+		inventoryId := uuid.New().String()
+
+		payload := ApiInternalV2RunsCreateJSONRequestBody{
+			RunInputV2{
+				Recipient:       public.RunRecipient(recipient.String()),
+				OrgId:           public.OrgId(orgId),
+				Url:             public.Url(url),
+				Hosts:           &RunInputHosts{{InventoryId: &inventoryId}},
+				Name:            playbookName,
+				WebConsoleUrl:   &playbookRunUrl,
+				Principal:       principal,
+				RecipientConfig: &RecipientConfig{SatId: &satIdStringV5, SatOrgId: &satOrgId},
+			},
+		}
+
+		runs, _ := dispatchV2(&payload)
+
+		Expect(*runs).To(HaveLen(1))
+		Expect((*runs)[0].Code).To(Equal(500))
+	})
+
 	It("sets default for webConsoleUrl", func() {
 		payload := minimalV2Payload(uuid.New())
 
@@ -339,7 +413,7 @@ var _ = Describe("runsCreate V2", func() {
 		Entry(
 			"invalid Sattelite id",
 			`[{"recipient": "3831fec2-1875-432a-bb58-08e71908f0e6", "org_id": "5318290", "principal": "test-user", "url": "http://example.com", "name": "Red Hat Playbook", "recipient_config": {"sat_id": "abc", "sat_org_id": "1"}}]`,
-			`JSON string doesn't match the format \"uuid\"`,
+			`JSON string doesn't match the format \"sat-id-uuid\"`,
 		),
 		Entry(
 			"invalid Sattelite org id",
