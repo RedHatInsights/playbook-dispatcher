@@ -51,7 +51,7 @@ func (this *controllers) ApiRunsList(ctx echo.Context, params ApiRunsListParams)
 	db := this.database.WithContext(ctx.Request().Context())
 
 	// tenant isolation
-	queryBuilder := db.Table("runs").Where("account = ?", identity.Identity.AccountNumber)
+	queryBuilder := db.Table("runs").Where("org_id = ?", identity.Identity.OrgID)
 
 	// rbac
 	permissions := middleware.GetPermissions(ctx)
