@@ -64,7 +64,7 @@ func (this *handler) onMessage(ctx context.Context, msg *kafka.Message) {
 
 	ctx = utils.WithRequestId(ctx, request.RequestID)
 	ctx = utils.WithAccount(ctx, request.Account)
-	ctx = utils.WithOrgId(ctx, request.Principal)
+	ctx = utils.WithOrgId(ctx, request.OrgID)
 
 	ctx = utils.SetLog(ctx, utils.GetLogFromContext(ctx).With("url", request.URL))
 	utils.GetLogFromContext(ctx).Debugw("Processing request",
@@ -132,7 +132,7 @@ func (this *handler) validationSteps(
 	if requestType == playbookSatPayloadHeaderValue {
 		dispatcherResponse := &messageModel.PlaybookSatRunResponseMessageYaml{
 			Account:         request.Account,
-			OrgId:           request.Principal,
+			OrgId:           request.OrgID,
 			B64Identity:     request.B64Identity,
 			RequestId:       request.RequestID,
 			UploadTimestamp: request.Timestamp.Format(time.RFC3339),
@@ -144,7 +144,7 @@ func (this *handler) validationSteps(
 
 	dispatcherResponse := &messageModel.PlaybookRunResponseMessageYaml{
 		Account:         request.Account,
-		OrgId:           request.Principal,
+		OrgId:           request.OrgID,
 		B64Identity:     request.B64Identity,
 		RequestId:       request.RequestID,
 		UploadTimestamp: request.Timestamp.Format(time.RFC3339),
@@ -175,7 +175,7 @@ func (this *handler) validateContent(ctx context.Context, requestType string, da
 		if requestType == playbookSatPayloadHeaderValue {
 			err = validateWithSchema(ctx, this.schemas[1], true, line, events)
 			if err == nil {
-			    err = validateSatHostUUID(line)
+				err = validateSatHostUUID(line)
 			}
 		} else {
 			err = validateWithSchema(ctx, this.schemas[0], false, line, events)
