@@ -34,6 +34,7 @@ public class RunEventTransform<T extends ConnectRecord<T>> implements Transforma
     static final String HEADER_SERVICE = "service";
     static final String HEADER_STATUS = "status";
     static final String HEADER_ACCOUNT = "account";
+    static final String HEADER_ORG_ID = "org_id";
 
     private static final String CONFIG_TOPIC = "topic";
     private static final String CONFIG_TABLE = "table";
@@ -113,7 +114,8 @@ public class RunEventTransform<T extends ConnectRecord<T>> implements Transforma
             .addString(HEADER_EVENT_TYPE, event.getEventType().value())
             .addString(HEADER_SERVICE, event.getPayload().getService())
             .addString(HEADER_STATUS, event.getPayload().getStatus().value())
-            .addString(HEADER_ACCOUNT, event.getPayload().getAccount());
+            .addString(HEADER_ACCOUNT, event.getPayload().getAccount())
+            .addString(HEADER_ORG_ID, event.getPayload().getOrgId());
     }
 
     private String transformKey(Struct key) {
@@ -143,6 +145,7 @@ public class RunEventTransform<T extends ConnectRecord<T>> implements Transforma
         final Payload payload = new Payload();
         payload.setId(input.getString("id"));
         payload.setAccount(input.getString("account"));
+        payload.setOrgId(input.getString("org_id"));
         payload.setRecipient(input.getString("recipient"));
         payload.setCorrelationId(input.getString("correlation_id"));
         payload.setService(input.getString("service"));
