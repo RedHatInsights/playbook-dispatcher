@@ -10,6 +10,7 @@ import (
 const (
 	fieldId            = "id"
 	fieldAccount       = "account"
+	fieldOrgId         = "org_id"
 	fieldRecipient     = "recipient"
 	fieldUrl           = "url"
 	fieldLabels        = "labels"
@@ -29,12 +30,13 @@ const (
 )
 
 var (
-	runFields     = utils.IndexStrings(fieldId, fieldAccount, fieldRecipient, fieldUrl, fieldLabels, fieldTimeout, fieldStatus, fieldCreatedAt, fieldUpdatedAt, fieldService, fieldCorrelationId, fieldName, fieldWebConsoleUrl)
+	runFields     = utils.IndexStrings(fieldId, fieldAccount, fieldOrgId, fieldRecipient, fieldUrl, fieldLabels, fieldTimeout, fieldStatus, fieldCreatedAt, fieldUpdatedAt, fieldService, fieldCorrelationId, fieldName, fieldWebConsoleUrl)
 	runHostFields = utils.IndexStrings(fieldHost, fieldRun, fieldStatus, fieldStdout, fieldLinks, fieldInventoryId)
 )
 
 var defaultRunFields = []string{
 	fieldId,
+	fieldOrgId,
 	fieldRecipient,
 	fieldUrl,
 	fieldLabels,
@@ -58,6 +60,9 @@ func dbRuntoApiRun(r *dbModel.Run, fields []string) *Run {
 		case fieldAccount:
 			value := Account(r.Account)
 			run.Account = &value
+		case fieldOrgId:
+			value := OrgId(r.OrgID)
+			run.OrgId = &value
 		case fieldRecipient:
 			run.Recipient = (*RunRecipient)(convertUuid(r.Recipient))
 		case fieldUrl:
