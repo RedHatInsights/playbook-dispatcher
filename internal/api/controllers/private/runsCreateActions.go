@@ -15,13 +15,6 @@ import (
 	"github.com/spf13/viper"
 )
 
-func getCorrelationId(cfg *viper.Viper) uuid.UUID {
-	if cfg.GetBool("demo.mode") {
-		return uuid.UUID{}
-	}
-	return uuid.New()
-}
-
 func getLabels(input *public.Labels) map[string]string {
 	if input == nil {
 		return map[string]string{}

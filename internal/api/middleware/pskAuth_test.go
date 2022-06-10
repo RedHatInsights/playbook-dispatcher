@@ -77,6 +77,7 @@ var _ = Describe("PSK auth middleware", func() {
 		Expect(err).ToNot(HaveOccurred())
 		Expect(res.Result().StatusCode).To(Equal(200))
 		body, err := ioutil.ReadAll(res.Result().Body)
+		Expect(err).ToNot(HaveOccurred())
 		Expect(body).To(BeEquivalentTo("principal1"))
 	})
 })

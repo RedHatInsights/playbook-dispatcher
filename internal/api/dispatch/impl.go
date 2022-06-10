@@ -59,7 +59,11 @@ func (this *dispatchManager) ProcessRun(ctx context.Context, account string, ser
 	signalMetadata := protocol.BuildMedatada(run, correlationID, this.config)
 
 	// take from the rate limit bucket
-	this.rateLimiter.Wait(ctx)
+	rateErr := this.rateLimiter.Wait(ctx)
+
+	if rateErr != nil {
+		return uuid.UUID{}, correlationID, rateErr
+	}
 
 	messageId, notFound, err := this.cloudConnector.SendCloudConnectorRequest(
 		ctx,
@@ -129,7 +133,11 @@ func (this *dispatchManager) ProcessCancel(ctx context.Context, account string, 
 	signalMetadata := protocol.BuildCancelMetadata(cancel, run.CorrelationID, this.config)
 
 	// take from the rate limit bucket
-	this.rateLimiter.Wait(ctx)
+	rateErr := this.rateLimiter.Wait(ctx)
+
+	if rateErr != nil {
+		return uuid.UUID{}, correlationID, rateErr
+	}
 
 	messageId, notFound, err := this.cloudConnector.SendCloudConnectorRequest(
 		ctx,

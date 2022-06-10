@@ -45,7 +45,7 @@ func (this *storageConnector) initiateFetchWorkers(workers int, input <-chan mes
 		go func() {
 			defer workersWg.Done()
 
-			for {
+			for { //nolint:gosimple
 				select {
 				case msg, open := <-input:
 					if !open {

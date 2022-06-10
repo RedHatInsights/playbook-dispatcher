@@ -93,7 +93,7 @@ func Get() *viper.Viper {
 	options.SetDefault("db.sslmode", "disable")
 
 	if clowderEnabled() {
-		options.SetDefault("web.port", clowder.LoadedConfig.WebPort)
+		options.SetDefault("web.port", clowder.LoadedConfig.PublicPort)
 		options.SetDefault("metrics.port", clowder.LoadedConfig.MetricsPort)
 		options.SetDefault("metrics.path", clowder.LoadedConfig.MetricsPath)
 

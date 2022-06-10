@@ -41,7 +41,12 @@ func (this *controllers) ApiInternalV2RecipientsStatus(ctx echo.Context) error {
 
 		// take from the rate limit bucket
 		// TODO: consider moving this to the httpClient level (e.g. as an HttpRequestDoer decorator)
-		this.rateLimiter.Wait(ctx.Request().Context())
+		err = this.rateLimiter.Wait(ctx.Request().Context())
+
+		if err != nil {
+			utils.GetLogFromEcho(ctx).Error(err)
+			return ctx.NoContent(http.StatusInternalServerError)
+		}
 
 		// TODO: parallelize this
 		status, err := this.cloudConnectorClient.GetConnectionStatus(ctx.Request().Context(), *ean, string(recipient.OrgId), string(recipient.Recipient))

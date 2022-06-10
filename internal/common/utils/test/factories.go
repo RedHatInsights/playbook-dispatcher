@@ -144,7 +144,7 @@ func FlatMapRunToHost(runs []dbModel.Run, fn func(run dbModel.Run) []dbModel.Run
 	result := []dbModel.RunHost{}
 
 	for _, run := range runs {
-		for _, host := range fn(run) {
+		for _, host := range fn(run) { //nolint:gosimple
 			result = append(result, host)
 		}
 	}
