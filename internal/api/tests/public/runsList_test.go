@@ -203,6 +203,7 @@ var _ = Describe("runsList", func() {
 
 				data[3].Recipient = uuid.MustParse("64aeb237-d46d-494e-98e3-b48fc5c78bf1")
 				data[3].Account = "9999999999"
+				data[3].OrgID = "9999999999-test"
 
 				Expect(db().Create(&data).Error).ToNot(HaveOccurred())
 			})

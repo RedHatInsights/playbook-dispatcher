@@ -15,6 +15,7 @@ class Factory {
         return new StructBuilder()
         .put("id", "b5c80cd3-8849-46a2-97e2-368cf62a1cda")
         .put("account", "0000001")
+        .put("org_id", "0000001-test")
         .put("recipient", "dd018b96-da04-4651-84d1-187fa5c23f6c")
         .put("correlation_id", "97b04495-68f0-4a41-93b9-d239c0a59b4f")
         .put("url", "http://example.com")

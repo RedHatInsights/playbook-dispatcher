@@ -84,14 +84,18 @@ func Start(
 	}
 
 	var translator tenantid.Translator
-	if cfg.GetString("tenant.translator.impl") == "impl" {
+	switch cfg.GetString("tenant.translator.impl") {
+	case "impl":
 		translator = tenantid.NewTranslator(
 			fmt.Sprintf("%s://%s:%s", cfg.Get("tenant.translator.scheme"), cfg.Get("tenant.translator.host"), cfg.Get("tenant.translator.port")),
 			tenantid.WithTimeout(cfg.GetDuration("tenant.translator.timeout")*time.Second),
 			tenantid.WithMetrics(),
 		)
-	} else {
+	case "dynamic-mock":
 		translator = utils.NewDynamicMockTranslator()
+		log.Warn("Using dynamic mock TenantIDTranslator")
+	default:
+		translator = tenantid.NewTranslatorMock()
 		log.Warn("Using mock TenantIDTranslator")
 	}
 

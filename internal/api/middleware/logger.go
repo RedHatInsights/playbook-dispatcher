@@ -28,7 +28,7 @@ func RequestLogger(next echo.HandlerFunc) echo.HandlerFunc {
 		if identity, ok := c.Request().Context().Value(identityMiddleware.Key).(identityMiddleware.XRHID); ok {
 			log = log.With(
 				"account", identity.Identity.AccountNumber,
-				"org_id", identity.Identity.Internal.OrgID,
+				"org_id", identity.Identity.OrgID,
 			)
 		}
 

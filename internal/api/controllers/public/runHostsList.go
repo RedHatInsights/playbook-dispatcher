@@ -29,7 +29,7 @@ func (this *controllers) ApiRunHostsList(ctx echo.Context, params ApiRunHostsLis
 		WithContext(ctx.Request().Context()).
 		Table("run_hosts").
 		Joins("INNER JOIN runs on runs.id = run_hosts.run_id").
-		Where("runs.account = ?", identity.Identity.AccountNumber)
+		Where("runs.org_id = ?", identity.Identity.OrgID)
 
 	permissions := middleware.GetPermissions(ctx)
 	if allowedServices := rbac.GetPredicateValues(permissions, "service"); len(allowedServices) > 0 {
