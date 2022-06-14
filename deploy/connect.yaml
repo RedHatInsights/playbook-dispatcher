@@ -52,6 +52,11 @@ parameters:
 - name: RDS_CACERT
   value: rdscacert
 
+- name: CONNECTOR_CHECK_SCHEDULE
+  value: "0 * * * *"
+- name: CONNECTOR_CHECK_SUSPEND
+  value: 'false'
+
 objects:
 - apiVersion: v1
   kind: ConfigMap
@@ -338,6 +343,47 @@ objects:
     selector:
       strimzi.io/kind: Kafka
     type: ClusterIP
+
+- apiVersion: batch/v1
+  kind: CronJob
+  metadata:
+    labels:
+      app: playbook-dispatcher
+    name: playbook-dispatcher-connector-check
+  spec:
+    schedule: ${CONNECTOR_CHECK_SCHEDULE}
+    concurrencyPolicy: Replace
+    failedJobsHistoryLimit: 1
+    successfulJobsHistoryLimit: 1
+    suspend: ${{CONNECTOR_CHECK_SUSPEND}}
+    jobTemplate:
+      spec:
+        template:
+          metadata:
+            labels:
+              app: playbook-dispatcher
+              pod: playbook-dispatcher-connector-check
+          spec:
+            restartPolicy: OnFailure
+            containers:
+            - command:
+              - /bin/sh
+              - /check-connectors.sh
+              env:
+              - name: CONNECT_HOST
+                value: playbook-dispatcher-connect-connect-api
+              - name: CONNECT_PORT
+                value: "8083"
+              image: ${KAFKA_CONNECT_IMAGE}:${IMAGE_TAG}
+              name: playbook-dispatcher-connector-check
+              resources:
+                limits:
+                  cpu: 100m
+                  memory: 64Mi
+                requests:
+                  cpu: 100m
+                  memory: 64Mi
+
 
 # this secrect is only used in ephemeral for testing
 - apiVersion: v1
