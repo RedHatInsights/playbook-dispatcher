@@ -49,16 +49,14 @@ func NewConsumer(ctx context.Context, config *viper.Viper, topic string) (*kafka
 	go func() {
 		log := utils.GetLogFromContext(ctx).Named("kafka")
 
-		for { //nolint:gosimple
-			select {
-			case entry, ok := <-consumer.Logs():
+		for {
+			entry, ok := <-consumer.Logs()
 
-				if !ok {
-					return
-				}
-
-				log.Debug(entry)
+			if !ok {
+				return
 			}
+
+			log.Debug(entry)
 		}
 	}()
 

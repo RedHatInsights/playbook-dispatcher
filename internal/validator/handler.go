@@ -87,14 +87,13 @@ func (this *handler) initiateValidationWorker(
 ) {
 	defer validateWg.Done()
 
-	for { //nolint:gosimple
-		select {
-		case msg, open := <-this.validateChan:
-			if !open {
-				return
-			}
-			this.validationSteps(msg)
+	for {
+		msg, open := <-this.validateChan
+
+		if !open {
+			return
 		}
+		this.validationSteps(msg)
 	}
 }
 

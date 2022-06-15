@@ -45,18 +45,17 @@ func (this *storageConnector) initiateFetchWorkers(workers int, input <-chan mes
 		go func() {
 			defer workersWg.Done()
 
-			for { //nolint:gosimple
-				select {
-				case msg, open := <-input:
-					if !open {
-						return
-					}
+			for {
+				msg, open := <-input
 
-					if payload, err := this.fetchPayload(msg.request.URL); err != nil {
-						instrumentation.FetchArchiveError(msg.ctx, err, msg.requestType)
-					} else {
-						output <- enrichedMessageContext{messageContext: msg, data: payload}
-					}
+				if !open {
+					return
+				}
+
+				if payload, err := this.fetchPayload(msg.request.URL); err != nil {
+					instrumentation.FetchArchiveError(msg.ctx, err, msg.requestType)
+				} else {
+					output <- enrichedMessageContext{messageContext: msg, data: payload}
 				}
 			}
 		}()
