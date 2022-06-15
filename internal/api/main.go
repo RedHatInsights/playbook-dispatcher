@@ -108,6 +108,7 @@ func Start(
 	// Authorization header not required for GET /internal/version
 	internal.GET("/version", privateController.ApiInternalVersion)
 	internal.Use(middleware.CheckPskAuth(authConfig))
+	internal.Use(echo.WrapMiddleware(middleware.StoreAPIVersion))
 	internal.POST("/dispatch", privateController.ApiInternalRunsCreate)
 	internal.POST("/v2/recipients/status", privateController.ApiInternalV2RecipientsStatus)
 	internal.POST("/v2/dispatch", privateController.ApiInternalV2RunsCreate)

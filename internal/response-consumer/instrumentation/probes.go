@@ -20,6 +20,11 @@ var (
 		Help: "The total number of run updates that did not match any known playbook run",
 	})
 
+	playbookSequenceOutOfOrder = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "response_consumer_playbook_run_sequence_out_of_order_total",
+		Help: "The total number of run updates that are consumed out of order",
+	})
+
 	errorTotal = promauto.NewCounterVec(prometheus.CounterOpts{
 		Name: "response_consumer_error_total",
 		Help: "The total number of errors during payloads processing",
@@ -60,6 +65,11 @@ func UnmarshallIncomingMessageError(ctx context.Context, err error) {
 func CannotReadHeaders(ctx context.Context, err error) {
 	utils.GetLogFromContext(ctx).Errorw("Error parsing correlation id", "error", err)
 	errorTotal.WithLabelValues(labelHeaderMissing).Inc()
+}
+
+func PlaybookRunUpdateSequenceOrder(ctx context.Context) {
+	utils.GetLogFromContext(ctx).Errorw("Run update is out of order")
+	playbookSequenceOutOfOrder.Inc()
 }
 
 func Start() {
