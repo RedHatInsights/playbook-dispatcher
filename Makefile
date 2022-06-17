@@ -102,3 +102,15 @@ ci-port-forward:
 
 ci-dispatch:
 	curl -v -H "content-type: application/json" -H "Authorization: PSK ${PSK}" -d "@examples/payload.json" http://localhost:8000/internal/dispatch
+
+golangci-lint:
+ifeq (, $(shell which $(LOCAL_BIN_PATH)/golangci-lint 2> /dev/null))
+	@{ \
+	set -e ;\
+	VERSION="v1.43.0" ;\
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/$${VERSION}/install.sh | sh -s -- -b ${LOCAL_BIN_PATH} $${VERSION} ;\
+	}
+endif
+
+run-lint:
+	golangci-lint run

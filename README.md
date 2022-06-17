@@ -409,11 +409,7 @@ Useful commands:
 ### Running linter
 
 install golangci-lint:
-
-1. Linux
-- `curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.46.2`
-2. MacOS
-- `brew install golangci-lint`
+`make golangci-lint`
 
 run linter:
-`golangci-lint run`
+`make run-lint`
