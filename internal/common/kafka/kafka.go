@@ -27,17 +27,17 @@ func NewProducer(config *viper.Viper) (*kafka.Producer, error) {
 			"request.required.acks":    config.GetInt("kafka.request.required.acks"),
 			"message.send.max.retries": config.GetInt("kafka.message.send.max.retries"),
 			"retry.backoff.ms":         config.GetInt("kafka.retry.backoff.ms"),
-			"sasl.username":			config.GetString("kafka.sasl.username"),
-			"sasl.password":			config.GetString("kafka.sasl.password"),
-			"sasl.mechanism":			config.GetString("kafka.sasl.mechanism"),
-			"security.protocol":		config.GetString("kafka.sasl.protocol"),
-			"ssl.ca.location":     		config.GetString("kafka.capath"),
+			"sasl.username":            config.GetString("kafka.sasl.username"),
+			"sasl.password":            config.GetString("kafka.sasl.password"),
+			"sasl.mechanism":           config.GetString("kafka.sasl.mechanism"),
+			"security.protocol":        config.GetString("kafka.sasl.protocol"),
+			"ssl.ca.location":          config.GetString("kafka.capath"),
 		})
 		if err != nil {
 			return nil, err
 		}
 	} else {
-		producer, err =  kafka.NewProducer(&kafka.ConfigMap{
+		producer, err = kafka.NewProducer(&kafka.ConfigMap{
 			"bootstrap.servers":        config.GetString("kafka.bootstrap.servers"),
 			"request.required.acks":    config.GetInt("kafka.request.required.acks"),
 			"message.send.max.retries": config.GetInt("kafka.message.send.max.retries"),
@@ -58,11 +58,11 @@ func NewConsumer(ctx context.Context, config *viper.Viper, topic string) (*kafka
 	if config.Get("kafka.sasl.username") != nil {
 		consumer, err = kafka.NewConsumer(&kafka.ConfigMap{
 			"bootstrap.servers":        config.GetString("kafka.bootstrap.servers"),
-			"sasl.username":			config.GetString("kafka.sasl.username"),
-			"sasl.password":			config.GetString("kafka.sasl.password"),
-			"sasl.mechanism":			config.GetString("kafka.sasl.mechanism"),
-			"security.protocol":		config.GetString("kafka.sasl.protocol"),
-			"ssl.ca.location":     		config.GetString("kafka.capath"),
+			"sasl.username":            config.GetString("kafka.sasl.username"),
+			"sasl.password":            config.GetString("kafka.sasl.password"),
+			"sasl.mechanism":           config.GetString("kafka.sasl.mechanism"),
+			"security.protocol":        config.GetString("kafka.sasl.protocol"),
+			"ssl.ca.location":          config.GetString("kafka.capath"),
 			"group.id":                 config.GetString("kafka.group.id"),
 			"auto.offset.reset":        config.GetString("kafka.auto.offset.reset"),
 			"auto.commit.interval.ms":  config.GetInt("kafka.auto.commit.interval.ms"),
