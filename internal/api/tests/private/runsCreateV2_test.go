@@ -300,7 +300,7 @@ var _ = Describe("runsCreate V2", func() {
 			minimalV2Payload(uuid.New()),
 		}
 
-		ctx := context.WithValue(test.TestContext(), pskKey, "9yh9WuXWDj")
+		ctx := context.WithValue(test.TestContext(), pskKey, "9yh9WuXWDj") //nolint:staticcheck
 		resp, err := client.ApiInternalV2RunsCreate(ctx, payload)
 		Expect(err).ToNot(HaveOccurred())
 		res, err := ParseApiInternalRunsCreateResponse(resp)

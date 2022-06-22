@@ -374,6 +374,7 @@ See [foreman_rh_cloud](https://github.com/ShimShtein/foreman_rh_cloud) for detai
 ### Prerequisities
 
 - Golang >= 1.14
+- golangci-lint
 - docker-compose
 
 ### Running the service
@@ -404,3 +405,8 @@ Useful commands:
 ### Running tests
 
 `make test`
+
+### Running linter
+
+install and run linter
+`make run-lint`

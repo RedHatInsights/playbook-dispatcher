@@ -99,7 +99,12 @@ func run(cmd *cobra.Command, args []string) error {
 }
 
 func shutdown(server *echo.Echo, log *zap.SugaredLogger, wg *sync.WaitGroup) {
-	defer log.Sync()
+	defer func() {
+		if err := log.Sync(); err != nil {
+			log.Error(err)
+		}
+	}()
+
 	defer log.Info("Shutdown complete")
 
 	if err := utils.WgWaitFor(wg, shutdownTimeout); err != nil {

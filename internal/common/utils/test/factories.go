@@ -144,9 +144,7 @@ func FlatMapRunToHost(runs []dbModel.Run, fn func(run dbModel.Run) []dbModel.Run
 	result := []dbModel.RunHost{}
 
 	for _, run := range runs {
-		for _, host := range fn(run) {
-			result = append(result, host)
-		}
+		result = append(result, fn(run)...)
 	}
 
 	return result

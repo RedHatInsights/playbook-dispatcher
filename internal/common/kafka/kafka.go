@@ -40,20 +40,23 @@ func NewConsumer(ctx context.Context, config *viper.Viper, topic string) (*kafka
 		return nil, err
 	}
 
-	consumer.SubscribeTopics([]string{topic}, nil)
+	err = consumer.SubscribeTopics([]string{topic}, nil)
+
+	if err != nil {
+		return nil, err
+	}
 
 	go func() {
 		log := utils.GetLogFromContext(ctx).Named("kafka")
 
 		for {
-			select {
-			case entry, ok := <-consumer.Logs():
-				if !ok {
-					return
-				}
+			entry, ok := <-consumer.Logs()
 
-				log.Debug(entry)
+			if !ok {
+				return
 			}
+
+			log.Debug(entry)
 		}
 	}()
 

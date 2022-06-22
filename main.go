@@ -1,9 +1,12 @@
 package main
 
 import (
+	"log"
 	"playbook-dispatcher/cmd"
 )
 
 func main() {
-	cmd.Execute()
+	if err := cmd.Execute(); err != nil {
+		log.Fatal(err)
+	}
 }

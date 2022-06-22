@@ -16,7 +16,7 @@ func ExtractHeaders(headers ...string) echo.MiddlewareFunc {
 			ctx := req.Context()
 
 			for _, header := range headers {
-				ctx = context.WithValue(ctx, header, req.Header.Get(header))
+				ctx = context.WithValue(ctx, header, req.Header.Get(header)) //nolint:staticcheck
 			}
 
 			c.SetRequest(req.WithContext(ctx))

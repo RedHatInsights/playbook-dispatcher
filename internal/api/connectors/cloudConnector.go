@@ -17,12 +17,12 @@ import (
 
 const basePath = "/api/cloud-connector/v1/"
 
-type tenantKeyType int
-
 // used to pass account, org_id down to request editor (to set headers)
+type key int
+
 const (
-	accountKey = iota
-	orgIDKey   = iota
+	accountKey key = iota
+	orgIDKey   key = iota
 )
 
 type CloudConnectorClient interface {

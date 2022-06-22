@@ -165,7 +165,7 @@ var _ = Describe("runsCreate V1", func() {
 				},
 			}
 
-			ctx := context.WithValue(test.TestContext(), pskKey, "9yh9WuXWDj")
+			ctx := context.WithValue(test.TestContext(), pskKey, "9yh9WuXWDj") //nolint:staticcheck
 			resp, err := client.ApiInternalRunsCreate(ctx, payload)
 			Expect(err).ToNot(HaveOccurred())
 			res, err := ParseApiInternalRunsCreateResponse(resp)
@@ -195,7 +195,7 @@ var _ = Describe("runsCreate V1", func() {
 				},
 			}
 
-			ctx := context.WithValue(test.TestContext(), pskKey, "9yh9WuXWDj")
+			ctx := context.WithValue(test.TestContext(), pskKey, "9yh9WuXWDj") //nolint:staticcheck
 			start := time.Now()
 			// send 10 requests
 			for i := 0; i < 10; i++ {

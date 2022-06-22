@@ -1,5 +1,13 @@
 CLOUD_CONNECTOR_SCHEMA ?= https://raw.githubusercontent.com/RedHatInsights/cloud-connector/master/internal/controller/api/api.spec.json
 RBAC_CONNECTOR_SCHEMA ?= https://cloud.redhat.com/api/rbac/v1/openapi.json
+
+MKFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
+PROJECT_PATH := $(patsubst %/,%,$(dir $(MKFILE_PATH)))
+LOCAL_BIN_PATH := ${PROJECT_PATH}/bin
+
+export PATH := ${LOCAL_BIN_PATH}:${PATH}
+
+
 PSK ?= secret
 
 init:
@@ -102,3 +110,15 @@ ci-port-forward:
 
 ci-dispatch:
 	curl -v -H "content-type: application/json" -H "Authorization: PSK ${PSK}" -d "@examples/payload.json" http://localhost:8000/internal/dispatch
+
+golangci-lint:
+ifeq (, $(shell which $(LOCAL_BIN_PATH)/golangci-lint 2> /dev/null))
+	@{ \
+	set -e ;\
+	VERSION="v1.43.0" ;\
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/$${VERSION}/install.sh | sh -s -- -b ${LOCAL_BIN_PATH} $${VERSION} ;\
+	}
+endif
+
+run-lint: golangci-lint
+	$(LOCAL_BIN_PATH)/golangci-lint run

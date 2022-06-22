@@ -21,7 +21,8 @@ func fieldTester(fn func(params ...interface{}) *http.Response) func(...string) 
 		defer res.Body.Close()
 
 		representation := make(map[string]interface{})
-		json.Unmarshal(bodyBytes, &representation)
+		err = json.Unmarshal(bodyBytes, &representation)
+		Expect(err).ToNot(HaveOccurred())
 
 		runs := representation["data"].([]interface{})
 		Expect(runs[0]).To(HaveLen(len(fields)))
