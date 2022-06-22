@@ -4,6 +4,7 @@ go 1.16
 
 require (
 	github.com/RedHatInsights/tenant-utils v1.0.0
+	github.com/atombender/go-jsonschema v0.9.1-0.20220615213626-45dcfa31db10 // indirect
 	github.com/aws/aws-sdk-go v1.38.51
 	github.com/confluentinc/confluent-kafka-go v1.5.2
 	github.com/deepmap/oapi-codegen v1.4.2
@@ -12,6 +13,7 @@ require (
 	github.com/globocom/echo-prometheus v0.1.2
 	github.com/golang-migrate/migrate/v4 v4.15.1
 	github.com/google/uuid v1.3.0
+	github.com/kulshekhar/fungen v0.0.0-20180224173454-7ed9e430524b // indirect
 	github.com/labstack/echo/v4 v4.1.17
 	github.com/mec07/cloudwatchwriter v0.2.4
 	github.com/onsi/ginkgo v1.16.4
