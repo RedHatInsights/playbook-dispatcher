@@ -408,8 +408,5 @@ Useful commands:
 
 ### Running linter
 
-install golangci-lint:
-`make golangci-lint`
-
-run linter:
+install and run linter
 `make run-lint`
