@@ -1,0 +1,412 @@
+apiVersion: v1
+kind: Template
+metadata:
+  name: playbook-dispatcher-connect
+parameters:
+- name: KAFKA_CONNECT_IMAGE
+  value: quay.io/cloudservices/playbook-dispatcher-connect
+- name: IMAGE_TAG
+  value: latest
+- name: KAFKA_BOOTSTRAP_HOST
+  value: platform-mq-kafka-bootstrap.platform-mq.svc.cluster.local
+- name: KAFKA_BOOTSTRAP_PORT
+  value: '9092'
+- name: KAFKA_REPLICATION_FACTOR
+  value: '3'
+- name: KAFKA_CLIENT_ID
+  value: '${file:/opt/kafka/external-configuration/app-oauth/client_id}'
+- name: DB_HOSTNAME
+  value: '${file:/opt/kafka/external-configuration/playbook-dispatcher-db/db.host}'
+- name: DB_PORT
+  value: "${file:/opt/kafka/external-configuration/playbook-dispatcher-db/db.port}"
+- name: DB_USER
+  value: "${file:/opt/kafka/external-configuration/playbook-dispatcher-db/db.user}"
+- name: DB_PASSWORD
+  value: "${file:/opt/kafka/external-configuration/playbook-dispatcher-db/db.password}"
+- name: DB_NAME
+  value: "${file:/opt/kafka/external-configuration/playbook-dispatcher-db/db.name}"
+- name: DB_SSLMODE
+  value: verify-full
+- name: NUM_REPLICAS
+  value: '1'
+- name: VERSION
+  value: '2.7.1'
+- name: CPU_REQUESTS
+  value: 500m
+- name: CPU_LIMITS
+  value: '1'
+- name: MEMORY_REQUESTS
+  value: 2Gi
+- name: MEMORY_LIMITS
+  value: 4Gi
+- name: XMX
+  value: 4G
+- name: XMS
+  value: 4G
+- name: EVENT_CONSUMER_TOPIC
+  value: platform.playbook-dispatcher.runs
+- name: EVENT_CONSUMER_REPLICAS
+  value: '1'
+- name: EVENT_CONSUMER_GROUP
+  value: playbook-dispatcher-event-consumer
+- name: CONNECTOR_PAUSE
+  value: "false"
+- name: RDS_CACERT
+  value: rdscacert
+
+- name: CONNECTOR_CHECK_SCHEDULE
+  value: "0 * * * *"
+- name: CONNECTOR_CHECK_SUSPEND
+  value: 'false'
+
+objects:
+- apiVersion: v1
+  kind: ConfigMap
+  metadata:
+    name: playbook-dispatcher-connect-metrics
+    labels:
+      app: playbook-dispatcher
+  data:
+    metrics-config.yml: |
+      # Inspired by kafka-connect rules
+      # https://github.com/prometheus/jmx_exporter/blob/master/example_configs/kafka-connect.yml
+      lowercaseOutputName: true
+      lowercaseOutputLabelNames: true
+      rules:
+        #kafka.connect:type=app-info,client-id="{clientid}"
+        #kafka.consumer:type=app-info,client-id="{clientid}"
+        #kafka.producer:type=app-info,client-id="{clientid}"
+        - pattern: 'kafka.(.+)<type=app-info, client-id=(.+)><>start-time-ms'
+          name: kafka_$1_start_time_seconds
+          labels:
+            clientId: "$2"
+          help: "Kafka $1 JMX metric start time seconds"
+          type: GAUGE
+          valueFactor: 0.001
+        - pattern: 'kafka.(.+)<type=app-info, client-id=(.+)><>(commit-id|version): (.+)'
+          name: kafka_$1_$3_info
+          value: 1
+          labels:
+            clientId: "$2"
+            $3: "$4"
+          help: "Kafka $1 JMX metric info version and commit-id"
+          type: GAUGE
+        #kafka.producer:type=producer-topic-metrics,client-id="{clientid}",topic="{topic}"", partition="{partition}"
+        #kafka.consumer:type=consumer-fetch-manager-metrics,client-id="{clientid}",topic="{topic}"", partition="{partition}"
+        - pattern: kafka.(.+)<type=(.+)-metrics, client-id=(.+), topic=(.+), partition=(.+)><>(.+-total|compression-rate|.+-avg|.+-replica|.+-lag|.+-lead)
+          name: kafka_$2_$6
+          labels:
+            clientId: "$3"
+            topic: "$4"
+            partition: "$5"
+          help: "Kafka $1 JMX metric type $2"
+          type: GAUGE
+        #kafka.producer:type=producer-topic-metrics,client-id="{clientid}",topic="{topic}"
+        #kafka.consumer:type=consumer-fetch-manager-metrics,client-id="{clientid}",topic="{topic}"", partition="{partition}"
+        - pattern: kafka.(.+)<type=(.+)-metrics, client-id=(.+), topic=(.+)><>(.+-total|compression-rate|.+-avg)
+          name: kafka_$2_$5
+          labels:
+            clientId: "$3"
+            topic: "$4"
+          help: "Kafka $1 JMX metric type $2"
+          type: GAUGE
+        #kafka.connect:type=connect-node-metrics,client-id="{clientid}",node-id="{nodeid}"
+        #kafka.consumer:type=consumer-node-metrics,client-id=consumer-1,node-id="{nodeid}"
+        - pattern: kafka.(.+)<type=(.+)-metrics, client-id=(.+), node-id=(.+)><>(.+-total|.+-avg)
+          name: kafka_$2_$5
+          labels:
+            clientId: "$3"
+            nodeId: "$4"
+          help: "Kafka $1 JMX metric type $2"
+          type: UNTYPED
+        #kafka.connect:type=kafka-metrics-count,client-id="{clientid}"
+        #kafka.consumer:type=consumer-fetch-manager-metrics,client-id="{clientid}"
+        #kafka.consumer:type=consumer-coordinator-metrics,client-id="{clientid}"
+        #kafka.consumer:type=consumer-metrics,client-id="{clientid}"
+        - pattern: kafka.(.+)<type=(.+)-metrics, client-id=(.*)><>(.+-total|.+-avg|.+-bytes|.+-count|.+-ratio|.+-age|.+-flight|.+-threads|.+-connectors|.+-tasks|.+-ago)
+          name: kafka_$2_$4
+          labels:
+            clientId: "$3"
+          help: "Kafka $1 JMX metric type $2"
+          type: GAUGE
+        #kafka.connect:type=connector-task-metrics,connector="{connector}",task="{task}<> status"
+        - pattern: 'kafka.connect<type=connector-task-metrics, connector=(.+), task=(.+)><>status: ([a-z-]+)'
+          name: kafka_connect_connector_status
+          value: 1
+          labels:
+            connector: "$1"
+            task: "$2"
+            status: "$3"
+          help: "Kafka Connect JMX Connector status"
+          type: GAUGE
+        #kafka.connect:type=task-error-metrics,connector="{connector}",task="{task}"
+        #kafka.connect:type=source-task-metrics,connector="{connector}",task="{task}"
+        #kafka.connect:type=sink-task-metrics,connector="{connector}",task="{task}"
+        #kafka.connect:type=connector-task-metrics,connector="{connector}",task="{task}"
+        - pattern: kafka.connect<type=(.+)-metrics, connector=(.+), task=(.+)><>(.+-total|.+-count|.+-ms|.+-ratio|.+-avg|.+-failures|.+-requests|.+-timestamp|.+-logged|.+-errors|.+-retries|.+-skipped)
+          name: kafka_connect_$1_$4
+          labels:
+            connector: "$2"
+            task: "$3"
+          help: "Kafka Connect JMX metric type $1"
+          type: GAUGE
+        #kafka.connect:type=connector-metrics,connector="{connector}"
+        #kafka.connect:type=connect-worker-metrics,connector="{connector}"
+        - pattern: kafka.connect<type=connect-worker-metrics, connector=(.+)><>([a-z-]+)
+          name: kafka_connect_worker_$2
+          labels:
+            connector: "$1"
+          help: "Kafka Connect JMX metric $1"
+          type: GAUGE
+        #kafka.connect:type=connect-worker-metrics
+        - pattern: kafka.connect<type=connect-worker-metrics><>([a-z-]+)
+          name: kafka_connect_worker_$1
+          help: "Kafka Connect JMX metric worker"
+          type: GAUGE
+        #kafka.connect:type=connect-worker-rebalance-metrics
+        - pattern: kafka.connect<type=connect-worker-rebalance-metrics><>([a-z-]+)
+          name: kafka_connect_worker_rebalance_$1
+          help: "Kafka Connect JMX metric rebalance information"
+          type: GAUGE
+
+- apiVersion: kafka.strimzi.io/v1beta2
+  kind: KafkaConnect
+  metadata:
+    name: playbook-dispatcher-connect
+    labels:
+      app: playbook-dispatcher
+    annotations:
+      strimzi.io/use-connector-resources: "true"
+  spec:
+    image: ${KAFKA_CONNECT_IMAGE}:${IMAGE_TAG}
+    version: ${VERSION}
+    replicas: ${{NUM_REPLICAS}}
+    resources:
+      limits:
+        cpu: ${CPU_LIMITS}
+        memory: ${MEMORY_LIMITS}
+      requests:
+        cpu: ${CPU_REQUESTS}
+        memory: ${MEMORY_REQUESTS}
+    jvmOptions:
+      "-Xmx": ${XMX}
+      "-Xms": ${XMS}
+
+    bootstrapServers: ${KAFKA_BOOTSTRAP_HOST}:${KAFKA_BOOTSTRAP_PORT}
+    config:
+      group.id: playbook-dispatcher-connect
+      config.providers: file
+      config.providers.file.class: com.redhat.insights.kafka.config.providers.PlainFileConfigProvider
+      offset.storage.topic: playbook-dispatcher-connect-config
+      status.storage.topic: playbook-dispatcher-connect-status
+      config.storage.topic: playbook-dispatcher-connect-offsets
+      offset.storage.replication.factor: ${KAFKA_REPLICATION_FACTOR}
+      status.storage.replication.factor: ${KAFKA_REPLICATION_FACTOR}
+      config.storage.replication.factor: ${KAFKA_REPLICATION_FACTOR}
+    authentication:
+      type: scram-sha-512
+      username: ${KAFKA_CLIENT_ID}
+      passwordSecret:
+        - secretName: app-oauth
+          password: client_secret
+    tls:
+      trustedCertificates:
+        - secretName: kafka-ca
+          certificate: kafka-cacert
+    externalConfiguration:
+      volumes:
+        - name: rds-client-ca
+          secret:
+            secretName: rds-client-ca
+        # https://developers.redhat.com/blog/2020/02/14/using-secrets-in-apache-kafka-connect-configuration/
+        - name: playbook-dispatcher-db
+          secret:
+            secretName: playbook-dispatcher-db
+        - name: app-oauth
+          secret:
+            secretName: app-oauth
+        - name: kafka-ca
+          secret:
+            secertName: kafka-ca
+    template:
+      pod:
+        imagePullSecrets:
+          - name: quay-cloudservices-pull
+          - name: rh-registry-pull
+
+    metricsConfig:
+      type: jmxPrometheusExporter
+      valueFrom:
+        configMapKeyRef:
+          key: metrics-config.yml
+          name: playbook-dispatcher-connect-metrics
+
+- apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      app: playbook-dispatcher
+      component: playbook-dispatcher-connect
+    name: playbook-dispatcher-connect-connect-metrics
+  spec:
+    ports:
+    - name: tcp-prometheus
+      port: 9404
+      protocol: TCP
+      targetPort: 9404
+    selector:
+      app: playbook-dispatcher
+      strimzi.io/kind: KafkaConnect
+    type: ClusterIP
+
+- apiVersion: kafka.strimzi.io/v1beta2
+  kind: KafkaConnector
+  metadata:
+    name: playbook-dispatcher-event-interface
+    labels:
+      app: playbook-dispatcher
+      strimzi.io/cluster: playbook-dispatcher-connect
+  spec:
+    class: io.debezium.connector.postgresql.PostgresConnector
+    tasksMax: 1
+    pause: ${{CONNECTOR_PAUSE}}
+    config:
+        database.hostname: ${DB_HOSTNAME}
+        database.port: ${DB_PORT}
+        database.user: ${DB_USER}
+        database.password: ${DB_PASSWORD}
+        database.dbname: ${DB_NAME}
+        database.sslmode: ${DB_SSLMODE}
+        database.sslrootcert: /opt/kafka/external-configuration/rds-client-ca/rds-cacert
+
+        slot.name: debezium
+        plugin.name: pgoutput
+        slot.max.retries: 999999999
+        database.server.name: playbook-dispatcher
+        table.include.list: public.runs
+        tombstones.on.delete: false
+
+        key.converter: org.apache.kafka.connect.storage.StringConverter
+        value.converter: org.apache.kafka.connect.storage.StringConverter
+
+        transforms: transformRunEvent
+        transforms.transformRunEvent.type: com.redhat.cloud.platform.playbook_dispatcher.RunEventTransform
+        transforms.transformRunEvent.table: runs
+        transforms.transformRunEvent.topic: platform.playbook-dispatcher.runs
+
+        errors.tolerance: all
+        errors.retry.delay.max.ms: 30000
+        errors.retry.timeout: -1
+        errors.log.enable: "true"
+        errors.log.include.messages: "true"
+
+        heartbeat.interval.ms: 600000
+        heartbeat.topics.prefix: "__debezium-heartbeat-pd"
+        heartbeat.action.query: "INSERT INTO public.runs (id, account, org_id, recipient, correlation_id, url, service, timeout, created_at, updated_at) VALUES ('98875b33-b37e-4c35-be8b-d74f321bac28', '901578', '5318290', '00000000-0000-0000-0000-000000000000', '00000000-0000-0000-0000-000000000000', 'https://redhat.com', 'heartbeat', 3600, NOW(), NOW()) ON CONFLICT(id) DO UPDATE SET updated_at=NOW();"
+
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    labels:
+      app: playbook-dispatcher
+    name: playbook-dispatcher-event-consumer
+  spec:
+    replicas: ${{EVENT_CONSUMER_REPLICAS}}
+    selector:
+      matchLabels:
+        pod: playbook-dispatcher-event-consumer
+    strategy:
+      type: Recreate
+    template:
+      metadata:
+        labels:
+          app: playbook-dispatcher
+          pod: playbook-dispatcher-event-consumer
+      spec:
+        containers:
+        - command:
+          - /opt/kafka/bin/kafka-console-consumer.sh
+          - --bootstrap-server
+          - ${KAFKA_BOOTSTRAP_HOST}:${KAFKA_BOOTSTRAP_PORT}
+          - --from-beginning
+          - --group
+          - ${EVENT_CONSUMER_GROUP}
+          - --topic
+          - ${EVENT_CONSUMER_TOPIC}
+          image: ${KAFKA_CONNECT_IMAGE}:${IMAGE_TAG}
+          name: playbook-dispatcher-event-consumer
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi
+
+# this service is only used in ephemeral to give the ephemeral kafka a stable address
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: ephemeral-kafka-bootstrap
+  spec:
+    ports:
+    - name: tcp-replication
+      port: 9091
+      protocol: TCP
+      targetPort: 9091
+    - name: tcp-tcp
+      port: 9092
+      protocol: TCP
+      targetPort: 9092
+    selector:
+      strimzi.io/kind: Kafka
+    type: ClusterIP
+
+- apiVersion: batch/v1
+  kind: CronJob
+  metadata:
+    labels:
+      app: playbook-dispatcher
+    name: playbook-dispatcher-connector-check
+  spec:
+    schedule: ${CONNECTOR_CHECK_SCHEDULE}
+    concurrencyPolicy: Replace
+    failedJobsHistoryLimit: 1
+    successfulJobsHistoryLimit: 1
+    suspend: ${{CONNECTOR_CHECK_SUSPEND}}
+    jobTemplate:
+      spec:
+        template:
+          metadata:
+            labels:
+              app: playbook-dispatcher
+              pod: playbook-dispatcher-connector-check
+          spec:
+            restartPolicy: OnFailure
+            containers:
+            - command:
+              - /bin/sh
+              - /check-connectors.sh
+              env:
+              - name: CONNECT_HOST
+                value: playbook-dispatcher-connect-connect-api
+              - name: CONNECT_PORT
+                value: "8083"
+              image: ${KAFKA_CONNECT_IMAGE}:${IMAGE_TAG}
+              name: playbook-dispatcher-connector-check
+              resources:
+                limits:
+                  cpu: 100m
+                  memory: 64Mi
+                requests:
+                  cpu: 100m
+                  memory: 64Mi
+
+
+# this secrect is only used in ephemeral for testing
+- apiVersion: v1
+  kind: Secret
+  metadata:
+    name: rds-client-ca
+  stringData:
+    rds-cacert: ${RDS_CACERT}
