@@ -63,6 +63,9 @@ func NewConnectorClientWithHttpRequestDoer(cfg *viper.Viper, doer HttpRequestDoe
 					req.Header.Set(constants.HeaderCloudConnectorOrgID, ctx.Value(orgIDKey).(string))
 				}
 
+				// hotfix for the generated code escaping ampersands in string
+				req.Body = utils.ReplaceAmpersand(req.Body)
+
 				return nil
 			},
 		},

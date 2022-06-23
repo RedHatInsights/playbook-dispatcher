@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/url"
 	"strings"
@@ -108,4 +109,16 @@ func LoadSchemas(cfg *viper.Viper, schemaNames []string) (schemas []*jsonschema.
 		schemas = append(schemas, &schema)
 	}
 	return
+}
+
+func ReplaceAmpersand(body io.Reader) io.ReadCloser {
+	bodyBytes, err := io.ReadAll(body)
+	DieOnError(err)
+
+	bodyString := string(bodyBytes)
+
+	bodyString = strings.Replace(bodyString, "\\u0026", "&", -1) //Replace all the ampersand unicode in the body
+	stringReader := strings.NewReader(bodyString)
+
+	return io.NopCloser(stringReader)
 }

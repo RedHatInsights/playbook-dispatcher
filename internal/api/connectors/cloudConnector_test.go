@@ -214,6 +214,27 @@ var _ = Describe("Cloud Connector", func() {
 		Expect(idHeader).To(Equal(requestId))
 	})
 
+	It("does not escape ampersands with unicode", func() {
+		doer := test.MockHttpClient(201, `{"id": "871e31aa-7d41-43e3-8ef7-05706a0ee34a"}`)
+
+		url := "http://example.com/?field1=test&field2=test2&field3"
+		correlationId := uuid.New()
+
+		client := NewConnectorClientWithHttpRequestDoer(config.Get(), &doer)
+		recipient := uuid.New()
+		ctx := utils.SetLog(test.TestContext(), zap.NewNop().Sugar())
+		result, notFound, err := client.SendCloudConnectorRequest(ctx, "1234", recipient, &url, ansibleDirective, ansibleMetadata(correlationId))
+		Expect(notFound).To(BeFalse())
+		Expect(err).ToNot(HaveOccurred())
+		Expect(*result).To(Equal("871e31aa-7d41-43e3-8ef7-05706a0ee34a"))
+
+		bytes, err := ioutil.ReadAll(doer.Request.Body)
+		Expect(err).ToNot(HaveOccurred())
+
+		expectedRequestBody := fmt.Sprintf(`{"account":"1234","directive":"playbook","metadata":{"crc_dispatcher_correlation_id":"%s","response_interval":"60","return_url":"http://example.com/return"},"payload":"http://example.com/?field1=test&field2=test2&field3","recipient":"%s"}`, correlationId.String(), recipient.String())
+		Expect(string(bytes)).To(Equal(expectedRequestBody))
+	})
+
 	Describe("connection status", func() {
 		DescribeTable("interprets the response correctly",
 			func(status string, expectedStatus ConnectionStatus) {
