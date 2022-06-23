@@ -85,15 +85,13 @@ func NewConnectorClient(cfg *viper.Viper) CloudConnectorClient {
 }
 
 func encodedBody(body PostMessageJSONRequestBody) (io.Reader, error) {
-	var bodyReader io.Reader
 	buf := &bytes.Buffer{}
 	encoder := json.NewEncoder(buf)
 	encoder.SetEscapeHTML(false)
 	if err := encoder.Encode(body); err != nil {
 		return nil, err
 	}
-	bodyReader = bytes.NewReader(buf.Bytes())
-	return bodyReader, nil
+	return buf, nil
 }
 
 func (this *cloudConnectorClientImpl) SendCloudConnectorRequest(
