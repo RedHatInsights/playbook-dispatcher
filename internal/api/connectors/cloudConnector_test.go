@@ -25,6 +25,10 @@ var (
 	satDirective     = "playbook-sat"
 )
 
+type CustomUrlType struct {
+	Payload json.RawMessage
+}
+
 func ansibleMetadata(correlationId uuid.UUID) map[string]string {
 	return map[string]string{
 		"crc_dispatcher_correlation_id": correlationId.String(),
@@ -212,6 +216,29 @@ var _ = Describe("Cloud Connector", func() {
 
 		idHeader := doer.Request.Header.Get(constants.HeaderRequestId)
 		Expect(idHeader).To(Equal(requestId))
+	})
+
+	It("does not escape ampersands with unicode", func() {
+		doer := test.MockHttpClient(201, `{"id": "871e31aa-7d41-43e3-8ef7-05706a0ee34a"}`)
+
+		url := "http://example.com/?field1=test&field2=test2&field3"
+		correlationId := uuid.New()
+
+		client := NewConnectorClientWithHttpRequestDoer(config.Get(), &doer)
+		recipient := uuid.New()
+		ctx := utils.SetLog(test.TestContext(), zap.NewNop().Sugar())
+		result, notFound, err := client.SendCloudConnectorRequest(ctx, "1234", recipient, &url, ansibleDirective, ansibleMetadata(correlationId))
+		Expect(notFound).To(BeFalse())
+		Expect(err).ToNot(HaveOccurred())
+		Expect(*result).To(Equal("871e31aa-7d41-43e3-8ef7-05706a0ee34a"))
+
+		bytes, err := ioutil.ReadAll(doer.Request.Body)
+		Expect(err).ToNot(HaveOccurred())
+		parsedRequest := &CustomUrlType{}
+		err = json.Unmarshal(bytes, parsedRequest)
+		Expect(err).ToNot(HaveOccurred())
+
+		Expect(string(parsedRequest.Payload)).To(Equal("\"http://example.com/?field1=test&field2=test2&field3\""))
 	})
 
 	Describe("connection status", func() {
