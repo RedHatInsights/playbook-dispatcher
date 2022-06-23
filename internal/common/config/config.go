@@ -11,7 +11,7 @@ import (
 var rdsCaPath *string
 
 func init() {
-	if clowder.IsClowderEnabled() || clowder.LoadedConfig.Database.RdsCa == nil {
+	if !clowder.IsClowderEnabled() || clowder.LoadedConfig.Database.RdsCa == nil {
 		return
 	}
 

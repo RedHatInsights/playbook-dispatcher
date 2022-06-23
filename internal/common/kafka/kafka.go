@@ -19,33 +19,22 @@ var defaultTopic = "__consumer_offsets"
 
 func NewProducer(config *viper.Viper) (*kafka.Producer, error) {
 
-	var producer *kafka.Producer
-	var err error
+	kafkaConfigMap := &kafka.ConfigMap{
+		"bootstrap.servers":        config.GetString("kafka.bootstrap.servers"),
+		"request.required.acks":    config.GetInt("kafka.request.required.acks"),
+		"message.send.max.retries": config.GetInt("kafka.message.send.max.retries"),
+		"retry.backoff.ms":         config.GetInt("kafka.retry.backoff.ms"),
+	}
 	if config.Get("kafka.sasl.username") != nil {
-		producer, err = kafka.NewProducer(&kafka.ConfigMap{
-			"bootstrap.servers":        config.GetString("kafka.bootstrap.servers"),
-			"request.required.acks":    config.GetInt("kafka.request.required.acks"),
-			"message.send.max.retries": config.GetInt("kafka.message.send.max.retries"),
-			"retry.backoff.ms":         config.GetInt("kafka.retry.backoff.ms"),
-			"sasl.username":            config.GetString("kafka.sasl.username"),
-			"sasl.password":            config.GetString("kafka.sasl.password"),
-			"sasl.mechanism":           config.GetString("kafka.sasl.mechanism"),
-			"security.protocol":        config.GetString("kafka.sasl.protocol"),
-			"ssl.ca.location":          config.GetString("kafka.capath"),
-		})
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		producer, err = kafka.NewProducer(&kafka.ConfigMap{
-			"bootstrap.servers":        config.GetString("kafka.bootstrap.servers"),
-			"request.required.acks":    config.GetInt("kafka.request.required.acks"),
-			"message.send.max.retries": config.GetInt("kafka.message.send.max.retries"),
-			"retry.backoff.ms":         config.GetInt("kafka.retry.backoff.ms"),
-		})
-		if err != nil {
-			return nil, err
-		}
+		kafkaConfigMap.SetKey("sasl.username", config.GetString("kafka.sasl.username"))
+		kafkaConfigMap.SetKey("sasl.password", config.GetString("kafka.sasl.password"))
+		kafkaConfigMap.SetKey("sasl.mechanism", config.GetString("kafka.sasl.mechanism"))
+		kafkaConfigMap.SetKey("security.protocol", config.GetString("kafka.sasl.protocol"))
+		kafkaConfigMap.SetKey("ssl.ca.location", config.GetString("kafka.capath"))
+	}
+	producer, err := kafka.NewProducer(kafkaConfigMap)
+	if err != nil {
+		return nil, err
 	}
 
 	return producer, nil
@@ -53,39 +42,26 @@ func NewProducer(config *viper.Viper) (*kafka.Producer, error) {
 
 func NewConsumer(ctx context.Context, config *viper.Viper, topic string) (*kafka.Consumer, error) {
 
-	var consumer *kafka.Consumer
-	var err error
+	kafkaConfigMap := &kafka.ConfigMap{
+		"bootstrap.servers":        config.GetString("kafka.bootstrap.servers"),
+		"group.id":                 config.GetString("kafka.group.id"),
+		"auto.offset.reset":        config.GetString("kafka.auto.offset.reset"),
+		"auto.commit.interval.ms":  config.GetInt("kafka.auto.commit.interval.ms"),
+		"go.logs.channel.enable":   true,
+		"allow.auto.create.topics": true,
+	}
+
 	if config.Get("kafka.sasl.username") != nil {
-		consumer, err = kafka.NewConsumer(&kafka.ConfigMap{
-			"bootstrap.servers":        config.GetString("kafka.bootstrap.servers"),
-			"sasl.username":            config.GetString("kafka.sasl.username"),
-			"sasl.password":            config.GetString("kafka.sasl.password"),
-			"sasl.mechanism":           config.GetString("kafka.sasl.mechanism"),
-			"security.protocol":        config.GetString("kafka.sasl.protocol"),
-			"ssl.ca.location":          config.GetString("kafka.capath"),
-			"group.id":                 config.GetString("kafka.group.id"),
-			"auto.offset.reset":        config.GetString("kafka.auto.offset.reset"),
-			"auto.commit.interval.ms":  config.GetInt("kafka.auto.commit.interval.ms"),
-			"go.logs.channel.enable":   true,
-			"allow.auto.create.topics": true,
-		})
+		kafkaConfigMap.SetKey("sasl.username", config.GetString("kafka.sasl.username"))
+		kafkaConfigMap.SetKey("sasl.password", config.GetString("kafka.sasl.password"))
+		kafkaConfigMap.SetKey("sasl.mechanism", config.GetString("kafka.sasl.mechanism"))
+		kafkaConfigMap.SetKey("security.protocol", config.GetString("kafka.sasl.protocol"))
+		kafkaConfigMap.SetKey("ssl.ca.location", config.GetString("kafka.capath"))
+	}
 
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		consumer, err = kafka.NewConsumer(&kafka.ConfigMap{
-			"bootstrap.servers":        config.GetString("kafka.bootstrap.servers"),
-			"group.id":                 config.GetString("kafka.group.id"),
-			"auto.offset.reset":        config.GetString("kafka.auto.offset.reset"),
-			"auto.commit.interval.ms":  config.GetInt("kafka.auto.commit.interval.ms"),
-			"go.logs.channel.enable":   true,
-			"allow.auto.create.topics": true,
-		})
-
-		if err != nil {
-			return nil, err
-		}
+	consumer, err := kafka.NewConsumer(kafkaConfigMap)
+	if err != nil {
+		return nil, err
 	}
 
 	err = consumer.SubscribeTopics([]string{topic}, nil)
