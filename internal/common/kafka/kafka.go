@@ -26,11 +26,11 @@ func NewProducer(config *viper.Viper) (*kafka.Producer, error) {
 		"retry.backoff.ms":         config.GetInt("kafka.retry.backoff.ms"),
 	}
 	if config.Get("kafka.sasl.username") != nil {
-		kafkaConfigMap.SetKey("sasl.username", config.GetString("kafka.sasl.username"))
-		kafkaConfigMap.SetKey("sasl.password", config.GetString("kafka.sasl.password"))
-		kafkaConfigMap.SetKey("sasl.mechanism", config.GetString("kafka.sasl.mechanism"))
-		kafkaConfigMap.SetKey("security.protocol", config.GetString("kafka.sasl.protocol"))
-		kafkaConfigMap.SetKey("ssl.ca.location", config.GetString("kafka.capath"))
+		_ = kafkaConfigMap.SetKey("sasl.username", config.GetString("kafka.sasl.username"))
+		_ = kafkaConfigMap.SetKey("sasl.password", config.GetString("kafka.sasl.password"))
+		_ = kafkaConfigMap.SetKey("sasl.mechanism", config.GetString("kafka.sasl.mechanism"))
+		_ = kafkaConfigMap.SetKey("security.protocol", config.GetString("kafka.sasl.protocol"))
+		_ = kafkaConfigMap.SetKey("ssl.ca.location", config.GetString("kafka.capath"))
 	}
 	producer, err := kafka.NewProducer(kafkaConfigMap)
 	if err != nil {
@@ -52,11 +52,11 @@ func NewConsumer(ctx context.Context, config *viper.Viper, topic string) (*kafka
 	}
 
 	if config.Get("kafka.sasl.username") != nil {
-		kafkaConfigMap.SetKey("sasl.username", config.GetString("kafka.sasl.username"))
-		kafkaConfigMap.SetKey("sasl.password", config.GetString("kafka.sasl.password"))
-		kafkaConfigMap.SetKey("sasl.mechanism", config.GetString("kafka.sasl.mechanism"))
-		kafkaConfigMap.SetKey("security.protocol", config.GetString("kafka.sasl.protocol"))
-		kafkaConfigMap.SetKey("ssl.ca.location", config.GetString("kafka.capath"))
+		_ = kafkaConfigMap.SetKey("sasl.username", config.GetString("kafka.sasl.username"))
+		_ = kafkaConfigMap.SetKey("sasl.password", config.GetString("kafka.sasl.password"))
+		_ = kafkaConfigMap.SetKey("sasl.mechanism", config.GetString("kafka.sasl.mechanism"))
+		_ = kafkaConfigMap.SetKey("security.protocol", config.GetString("kafka.sasl.protocol"))
+		_ = kafkaConfigMap.SetKey("ssl.ca.location", config.GetString("kafka.capath"))
 	}
 
 	consumer, err := kafka.NewConsumer(kafkaConfigMap)
