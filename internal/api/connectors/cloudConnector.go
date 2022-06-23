@@ -1,8 +1,11 @@
 package connectors
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"playbook-dispatcher/internal/common/constants"
 	"time"
@@ -63,9 +66,6 @@ func NewConnectorClientWithHttpRequestDoer(cfg *viper.Viper, doer HttpRequestDoe
 					req.Header.Set(constants.HeaderCloudConnectorOrgID, ctx.Value(orgIDKey).(string))
 				}
 
-				// hotfix for the generated code escaping ampersands in string
-				req.Body = utils.ReplaceAmpersand(req.Body)
-
 				return nil
 			},
 		},
@@ -82,6 +82,18 @@ func NewConnectorClient(cfg *viper.Viper) CloudConnectorClient {
 	}
 
 	return NewConnectorClientWithHttpRequestDoer(cfg, &httpClient)
+}
+
+func encodedBody(body PostMessageJSONRequestBody) (io.Reader, error) {
+	var bodyReader io.Reader
+	buf := &bytes.Buffer{}
+	encoder := json.NewEncoder(buf)
+	encoder.SetEscapeHTML(false)
+	if err := encoder.Encode(body); err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf.Bytes())
+	return bodyReader, nil
 }
 
 func (this *cloudConnectorClientImpl) SendCloudConnectorRequest(
@@ -102,7 +114,7 @@ func (this *cloudConnectorClientImpl) SendCloudConnectorRequest(
 		"recipient", recipientString,
 	)
 
-	res, err := this.client.PostMessageWithResponse(ctx, PostMessageJSONRequestBody{
+	body, err := encodedBody(PostMessageJSONRequestBody{
 		Account:   &account,
 		Directive: &directive,
 		Metadata: &MessageRequest_Metadata{
@@ -111,6 +123,12 @@ func (this *cloudConnectorClientImpl) SendCloudConnectorRequest(
 		Payload:   url,
 		Recipient: &recipientString,
 	})
+
+	if err != nil {
+		return nil, false, err
+	}
+
+	res, err := this.client.PostMessageWithBodyWithResponse(ctx, "application/json", body)
 
 	if err != nil {
 		return nil, false, err

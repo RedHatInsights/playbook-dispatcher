@@ -25,6 +25,10 @@ var (
 	satDirective     = "playbook-sat"
 )
 
+type CustomUrlType struct {
+	Payload json.RawMessage
+}
+
 func ansibleMetadata(correlationId uuid.UUID) map[string]string {
 	return map[string]string{
 		"crc_dispatcher_correlation_id": correlationId.String(),
@@ -230,9 +234,11 @@ var _ = Describe("Cloud Connector", func() {
 
 		bytes, err := ioutil.ReadAll(doer.Request.Body)
 		Expect(err).ToNot(HaveOccurred())
+		parsedRequest := &CustomUrlType{}
+		err = json.Unmarshal(bytes, parsedRequest)
+		Expect(err).ToNot(HaveOccurred())
 
-		expectedRequestBody := fmt.Sprintf(`{"account":"1234","directive":"playbook","metadata":{"crc_dispatcher_correlation_id":"%s","response_interval":"60","return_url":"http://example.com/return"},"payload":"http://example.com/?field1=test&field2=test2&field3","recipient":"%s"}`, correlationId.String(), recipient.String())
-		Expect(string(bytes)).To(Equal(expectedRequestBody))
+		Expect(string(parsedRequest.Payload)).To(Equal("\"http://example.com/?field1=test&field2=test2&field3\""))
 	})
 
 	Describe("connection status", func() {
