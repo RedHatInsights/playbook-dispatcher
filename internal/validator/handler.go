@@ -72,6 +72,7 @@ func (this *handler) onMessage(ctx context.Context, msg *kafka.Message) {
 		"topic", *msg.TopicPartition.Topic,
 		"partition", msg.TopicPartition.Partition,
 		"offset", msg.TopicPartition.Offset.String(),
+		"size", request.Size,
 	)
 
 	if err := this.validateRequest(&request); err != nil {
