@@ -1,6 +1,8 @@
 ## Onboarding guide
 
-If you are an application trying to integrate with playbook dispatcher, we hope you find the following information helpful.
+Playbook dispatcher can help you a great deal when you have to keep track of multiple playbook runs across multiple hosts. When you dispatch playbooks using Playbook Dispatcher, you do not need to worry about constructing cloud connector requests or keeping track of playbook run statuses. Playbook Dispatcher will manage all these things for you.
+
+If you want to integrate your application with playbook dispatcher, we hope you find the following information helpful.
 
 ### Dispatching playbooks
 
@@ -82,9 +84,9 @@ Then, when fetching playbook run information through dispatcher's Public API, yo
 
 ### Fetching information
 
-Playbook dispatcher provides an event interface on the `platform.playbook-dispatcher.runs` kafka topic which can be used to listen for state changes. Please refer to [this section of the docs](https://github.com/RedHatInsights/playbook-dispatcher#event-interface) to learn more about the event interface.
+Playbook dispatcher provides an event interface on the `platform.playbook-dispatcher.runs` kafka topic which can be used to listen for state changes of playbooks. All the playbook information provided by the event interface is described in [this JSON schema](https://github.com/RedHatInsights/playbook-dispatcher/blob/master/schema/run.event.yaml). Currently, the event interface only provides information on the playbook level. Host level information, such as console logs, are not available through this interface. Please refer to [this section of the docs](https://github.com/RedHatInsights/playbook-dispatcher#event-interface) to learn more about the event interface.
 
-You can also use playbook dispatcher's public API to fetch playbook run or host information on demand.
+You can also use playbook dispatcher's public API to fetch playbook run or host information on demand. Please refer to the following schema definitions for the details:
 
 * Public API endpoint to fetch playbook run information: [here](https://github.com/RedHatInsights/playbook-dispatcher/blob/master/schema/public.openapi.yaml#L17).
 * Public API endpoint to fetch host information: [here](https://github.com/RedHatInsights/playbook-dispatcher/blob/master/schema/public.openapi.yaml#L44).
