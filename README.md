@@ -19,15 +19,86 @@ Playbook Dispatcher consists of 3 parts:
 
 ## Public REST interface
 
-Information about Playbook runs can be queried using the REST API.
+Information about Playbook runs can be queried using the [REST API](./schema/public.openapi.yaml).
+
+### Filtering
+
+The API offers rich filtering capabilities that enable resources to be filtered by their primary attributes as well as user-defined labels.
+
+Examples:
+
+- `/api/playbook-dispatcher/v1/runs?filter[status]=timeout` - filter runs based on the built-in `status` field
+- `/api/playbook-dispatcher/v1/runs?filter[labels][state_id]=0fdeeaa3-44e7-459b-9c14-cee42ec39287` - filter runs based on a service-specific `state_id` label
+- `/api/playbook-dispatcher/v1/run_hosts?filter[inventory_id]=e72d440b-0128-48fa-9bcc-b964eb8edab0` filter run hosts based on the given host inventory id
+
+More information about supported filters can be found in the [API schema](https://github.com/RedHatInsights/playbook-dispatcher/blob/master/schema/public.openapi.yaml)
+
+### Representations
+
+The API supports client-specific representations using [sparse fieldsets](https://jsonapi.org/format/#fetching-sparse-fieldsets).
+This allows the client to control which fields are returned in the response.
+For example, the shape of the representation of the `/api/playbook-dispatcher/v1/runs` resource can be defined using:
+
+```
+/api/playbook-dispatcher/v1/runs?fields[data]=id,url,name
+```
+
+which yields
+
+```json
+{
+  "data": [
+    {
+      "id": "5a9d54f5-06c2-46fe-a85e-dcc278cdce44",
+      "url": "https://cert.cloud.redhat.com/api/config-manager/v1/states/99d4ff95-b2de-41c2-b717-f6261cc5e51b/playbook",
+      "name": "Sample Playbook"
+    }
+
+// left out for brevity
+```
+
+More examples:
+
+- `/api/playbook-dispatcher/v1/runs?fields[data]=id,labels,name,service`
+- `/api/playbook-dispatcher/v1/run_hosts?fields[data]=host,status,stdout,links`
+
+Default and available fields for each resource can be found in the [API schema](https://github.com/RedHatInsights/playbook-dispatcher/blob/master/schema/public.openapi.yaml)
+
+### Authentication
 
 The API is placed behind a [web gateway (3scale)](https://internal.cloud.redhat.com/docs/services/3scale/).
 Authentication with the web gateway (basic auth, jwt cookie) is required to access the API.
 The API is only accessible to principals of type User (i.e. cert auth is not sufficient).
-In addition, the API resources are subject [role based access control](https://internal.cloud.redhat.com/docs/services/rbac/).
 
-The API has rich filtering capabilities and supports client-specific representations using sparse fieldsets.
-See [API schema](./schema/public.openapi.yaml) for more details.
+For in-cluster access, a valid `x-rh-identity` header is required.
+
+### Authorization
+
+The API resources are subject to [role based access control](https://consoledot.pages.redhat.com/docs/dev/services/rbac.html).
+
+The `playbook-dispatcher:run:read` permission is required to access the API.
+The permission always defines an attribute filter which specifies which playbook runs the given principal is authorized to access.
+
+For example, a principal granted the following permission:
+
+```json
+{
+    "permission": "playbook-dispatcher:run:read",
+    "resourceDefinitions": [
+        {
+            "attributeFilter": {
+                "key": "service",
+                "operation": "equal",
+                "value": "remediations"
+            }
+        }
+    ]
+}
+```
+
+will have access to information about playbook runs initiated by the remediations service.
+
+Information about playbook runs initiated by services for which the principal does not have the corresponding permission will be filtered out of API responses.
 
 ## Internal REST interface
 
