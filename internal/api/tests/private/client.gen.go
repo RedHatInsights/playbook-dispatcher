@@ -46,7 +46,7 @@ type Principal string
 // RecipientConfig defines model for RecipientConfig.
 type RecipientConfig struct {
 
-	// Identifier of the Satellite instance
+	// Identifier of the Satellite instance in the uuid v4/v5 format
 	SatId *string `json:"sat_id,omitempty"`
 
 	// Identifier of the organization within Satellite
