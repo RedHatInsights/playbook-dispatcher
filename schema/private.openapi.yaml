@@ -214,6 +214,7 @@ components:
               Host name as known to Ansible inventory.
               Used to identify the host in status reports.
             example: localhost
+            minLength: 1
           inventory_id:
             type: string
             format: uuid
