@@ -46,6 +46,10 @@ jobs:
     - name: test down migrations
       run: make migrate-db-undo-all
 
+    # Check that the code generated from the OpenAPI schema is up-to-date (i.e.  make generate-api has been run after changing the openapi schema)
+    - name: test openapi schema up to date
+      run: make init && cp internal/api/controllers/private/spec.gen.go internal/api/controllers/private/spec.gen.go.bak && make generate-api && diff internal/api/controllers/private/spec.gen.go internal/api/controllers/private/spec.gen.go.bak
+
   java:
     runs-on: ubuntu-latest
     steps:
