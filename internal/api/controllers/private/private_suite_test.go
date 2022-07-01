@@ -49,5 +49,9 @@ var _ = Describe("Validation", func() {
 			`{"org_id": "123","recipient": "dd018b96-da04-4651-84d1-187fa5c23f6c","url": "http://example.com","playbook_name":"test-playbook","playbook_run_url": "http://example.com","recipient_config": {"sat_id":"16372e6f-1c18-4cdb-b780-50ab4b88e74b","sat_org_id":"456"},"principal": "test-user"}`,
 			false,
 		),
+		Entry("satellite - hosts empty",
+			`{"org_id": "123","recipient": "dd018b96-da04-4651-84d1-187fa5c23f6c","url": "http://example.com","playbook_name":"test-playbook","playbook_run_url": "http://example.com","recipient_config": {"sat_id":"16372e6f-1c18-4cdb-b780-50ab4b88e74b","sat_org_id":"456"},"principal": "test-user", "hosts": []}`,
+			false,
+		),
 	)
 })

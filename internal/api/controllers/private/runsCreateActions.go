@@ -112,6 +112,10 @@ func validateSatelliteFields(runInput RunInputV2) error {
 		return fmt.Errorf("Hosts need to be defined")
 	}
 
+	if len(*runInput.Hosts) == 0 {
+		return fmt.Errorf("Hosts cannot be empty")
+	}
+
 	for _, host := range *runInput.Hosts {
 		if host.InventoryId == nil {
 			return fmt.Errorf("Inventory ID needs to be defined")
