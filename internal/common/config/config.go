@@ -89,6 +89,12 @@ func Get() *viper.Viper {
 	options.SetDefault("inventory.connector.offset", 0)
 	options.SetDefault("inventory.connector.timeout", 10)
 
+	options.SetDefault("sources.impl", "mock")
+	options.SetDefault("sources.host", "sources")
+	options.SetDefault("sources.port", "8080")
+	options.SetDefault("sources.scheme", "http")
+	options.SetDefault("sources.timeout", 10)
+
 	options.SetDefault("tenant.translator.impl", "dynamic-mock")
 	options.SetDefault("tenant.translator.host", "localhost")
 	options.SetDefault("tenant.translator.scheme", "http")

@@ -17,7 +17,7 @@ require (
 	github.com/labstack/echo/v4 v4.1.17
 	github.com/mec07/cloudwatchwriter v0.2.4
 	github.com/onsi/ginkgo v1.16.4
-	github.com/onsi/gomega v1.18.1
+	github.com/onsi/gomega v1.19.0
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.12.1
 	github.com/qri-io/jsonschema v0.2.0
