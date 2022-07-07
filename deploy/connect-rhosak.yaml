@@ -14,9 +14,9 @@ parameters:
 - name: KAFKA_REPLICATION_FACTOR
   value: '3'
 - name: KAFKA_USERNAME
-  value: '${file:/opt/kafka/external-configuration/clowder-oauth/username}'
+  value: kafkauser
 - name: KAFKA_SASL_MECHANISM
-  value: '${file:/opt/kafka/external-configuration/client-config/sasl_mechanism}'
+  value: sasl_mechanism 
 - name: KAFKA_SECURITY_PROTOCOL
   value: '${file:/opt/kafka/external-configuration/client-config/security_protocol}'
 - name: DB_HOSTNAME
@@ -213,10 +213,6 @@ objects:
       passwordSecret:
         - secretName: clowder-oauth
           password: password 
-    tls:
-      trustedCertificates:
-        - secretName: kafka-ca
-          certificate: ca.crt 
     externalConfiguration:
       volumes:
         - name: rds-client-ca
@@ -226,12 +222,6 @@ objects:
         - name: playbook-dispatcher-db
           secret:
             secretName: playbook-dispatcher-db
-        - name: clowder-oauth
-          secret:
-            secretName: clowder-oauth
-        - name: kafka-ca
-          secret:
-            secertName: kafka-ca
     template:
       pod:
         imagePullSecrets:
