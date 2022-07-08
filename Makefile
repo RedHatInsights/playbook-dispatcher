@@ -63,6 +63,9 @@ migrate-db-undo-all:
 run: migrate-db
 	ACG_CONFIG=$(shell pwd)/cdappconfig.json PSK_AUTH_TEST=xwKhCUzgJ8 go run . run
 
+run-sasl: migrate-db
+	ACG_CONFIG=$(shell pwd)/cdappconfig-sasl.json PSK_AUTH_TEST=xwKhCUzgj8 go run . run
+
 test: migrate-db
 	SCHEMA_API_PRIVATE=$(shell pwd)/schema/private.openapi.yaml ACG_CONFIG=$(shell pwd)/cdappconfig.json PSK_AUTH_TEST=xwKhCUzgJ8 PSK_AUTH_TEST02=9yh9WuXWDj go test -p 1 -v ./...
 

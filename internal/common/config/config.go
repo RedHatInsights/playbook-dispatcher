@@ -1,7 +1,6 @@
 package config
 
 import (
-	"os"
 	"strings"
 
 	"github.com/spf13/viper"
@@ -11,12 +10,8 @@ import (
 
 var rdsCaPath *string
 
-func clowderEnabled() bool {
-	return strings.ToLower(os.Getenv("CLOWDER_ENABLED")) != "false"
-}
-
 func init() {
-	if !clowderEnabled() || clowder.LoadedConfig.Database.RdsCa == nil {
+	if !clowder.IsClowderEnabled() || clowder.LoadedConfig.Database.RdsCa == nil {
 		return
 	}
 
@@ -92,26 +87,42 @@ func Get() *viper.Viper {
 
 	options.SetDefault("db.sslmode", "disable")
 
-	if clowderEnabled() {
-		options.SetDefault("web.port", clowder.LoadedConfig.PublicPort)
-		options.SetDefault("metrics.port", clowder.LoadedConfig.MetricsPort)
-		options.SetDefault("metrics.path", clowder.LoadedConfig.MetricsPath)
+	if clowder.IsClowderEnabled() {
+
+		cfg := clowder.LoadedConfig
+		broker := cfg.Kafka.Brokers[0]
+
+		options.SetDefault("web.port", cfg.PublicPort)
+		options.SetDefault("metrics.port", cfg.MetricsPort)
+		options.SetDefault("metrics.path", cfg.MetricsPath)
 
 		options.SetDefault("kafka.bootstrap.servers", strings.Join(clowder.KafkaServers, ","))
 		options.SetDefault("topic.updates", clowder.KafkaTopics["platform.playbook-dispatcher.runner-updates"].Name)
 		options.SetDefault("topic.validation.request", clowder.KafkaTopics["platform.upload.announce"].Name)
 		options.SetDefault("topic.validation.response", clowder.KafkaTopics["platform.upload.validation"].Name)
 
-		options.SetDefault("log.cw.accessKeyId", clowder.LoadedConfig.Logging.Cloudwatch.AccessKeyId)
-		options.SetDefault("log.cw.secretAccessKey", clowder.LoadedConfig.Logging.Cloudwatch.SecretAccessKey)
-		options.SetDefault("log.cw.region", clowder.LoadedConfig.Logging.Cloudwatch.Region)
-		options.SetDefault("log.cw.group", clowder.LoadedConfig.Logging.Cloudwatch.LogGroup)
+		if broker.Authtype != nil {
+			options.Set("kafka.sasl.username", *broker.Sasl.Username)
+			options.Set("kafka.sasl.password", *broker.Sasl.Password)
+			options.Set("kafka.sasl.mechanism", *broker.Sasl.SaslMechanism)
+			options.Set("kafka.sasl.protocol", *broker.Sasl.SecurityProtocol)
+			caPath, err := cfg.KafkaCa(broker)
+			if err != nil {
+				panic("Kafka CA failed to write")
+			}
+			options.Set("kafka.capath", caPath)
+		}
 
-		options.SetDefault("db.host", clowder.LoadedConfig.Database.Hostname)
-		options.SetDefault("db.port", clowder.LoadedConfig.Database.Port)
-		options.SetDefault("db.name", clowder.LoadedConfig.Database.Name)
-		options.SetDefault("db.username", clowder.LoadedConfig.Database.Username)
-		options.SetDefault("db.password", clowder.LoadedConfig.Database.Password)
+		options.SetDefault("log.cw.accessKeyId", cfg.Logging.Cloudwatch.AccessKeyId)
+		options.SetDefault("log.cw.secretAccessKey", cfg.Logging.Cloudwatch.SecretAccessKey)
+		options.SetDefault("log.cw.region", cfg.Logging.Cloudwatch.Region)
+		options.SetDefault("log.cw.group", cfg.Logging.Cloudwatch.LogGroup)
+
+		options.SetDefault("db.host", cfg.Database.Hostname)
+		options.SetDefault("db.port", cfg.Database.Port)
+		options.SetDefault("db.name", cfg.Database.Name)
+		options.SetDefault("db.username", cfg.Database.Username)
+		options.SetDefault("db.password", cfg.Database.Password)
 
 		if rdsCaPath != nil {
 			options.SetDefault("db.ca", *rdsCaPath)

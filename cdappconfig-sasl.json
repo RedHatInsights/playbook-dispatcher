@@ -14,8 +14,16 @@
     "kafka": {
         "brokers": [
             {
-              "hostname": "kafka",
-              "port": 29092
+                "hostname": "kafka",
+                "port": 29092,
+                "authtype": "sasl",
+                "cacert": "-----BEGIN CERTIFICATE-----\nMIIDLTCCAhWgAwIBAgIJAPOWU.........",
+                "sasl":{
+                  "username": "kafkausername",
+                  "password": "kafkapassword",
+                  "saslMechanism": "SCRAM-SHA-256",
+                  "securityProtocol": "sasl_ssl"
+              }
             }
         ],
         "topics": [
@@ -34,7 +42,7 @@
         ]
     },
     "database": {
-        "sslMode": "disable",
+        "sslMode": "no-verify",
         "hostname": "localhost",
         "port": 5432,
         "name": "insights",

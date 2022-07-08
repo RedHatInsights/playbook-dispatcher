@@ -1,0 +1,89 @@
+# TEST CONFIG
+# This only contains kafkaConnect for testing against managed-kafka
+apiVersion: v1
+kind: Template
+metadata:
+  name: playbook-dispatcher-connect-rhosak
+parameters:
+- name: KAFKA_CONNECT_IMAGE
+  value: quay.io/cloudservices/playbook-dispatcher-connect
+- name: IMAGE_TAG
+  value: latest
+- name: KAFKA_BOOTSTRAP_HOST
+  value: platform-mq-kafka-bootstrap.platform-mq.svc.cluster.local
+- name: KAFKA_BOOTSTRAP_PORT
+  value: '9092'
+- name: KAFKA_REPLICATION_FACTOR
+  value: '3'
+- name: KAFKA_USERNAME
+  value: kafkauser
+- name: KAFKA_SASL_MECHANISM
+  value: sasl_mechanism 
+- name: CPU_REQUESTS
+  value: 500m
+- name: CPU_LIMITS
+  value: '1'
+- name: MEMORY_REQUESTS
+  value: 2Gi
+- name: MEMORY_LIMITS
+  value: 4Gi
+- name: XMX
+  value: 4G
+- name: XMS
+  value: 4G
+
+objects:
+- apiVersion: kafka.strimzi.io/v1beta2
+  kind: KafkaConnect
+  metadata:
+    name: playbook-dispatcher-connect-rhosak
+    labels:
+      app: playbook-dispatcher
+    annotations:
+      strimzi.io/use-connector-resources: "true"
+  spec:
+    image: ${KAFKA_CONNECT_IMAGE}:${IMAGE_TAG}
+    version: ${VERSION}
+    replicas: ${{NUM_REPLICAS}}
+    resources:
+      limits:
+        cpu: ${CPU_LIMITS}
+        memory: ${MEMORY_LIMITS}
+      requests:
+        cpu: ${CPU_REQUESTS}
+        memory: ${MEMORY_REQUESTS}
+    jvmOptions:
+      "-Xmx": ${XMX}
+      "-Xms": ${XMS}
+
+    bootstrapServers: ${KAFKA_BOOTSTRAP_HOST}:${KAFKA_BOOTSTRAP_PORT}
+    config:
+      group.id: playbook-dispatcher-connect
+      config.providers: file
+      config.providers.file.class: com.redhat.insights.kafka.config.providers.PlainFileConfigProvider
+      offset.storage.topic: playbook-dispatcher-connect-config
+      status.storage.topic: playbook-dispatcher-connect-status
+      config.storage.topic: playbook-dispatcher-connect-offsets
+      offset.storage.replication.factor: ${KAFKA_REPLICATION_FACTOR}
+      status.storage.replication.factor: ${KAFKA_REPLICATION_FACTOR}
+      config.storage.replication.factor: ${KAFKA_REPLICATION_FACTOR}
+    authentication:
+      # this config is specific to PLAIN sasl mechanism
+      type: ${KAFKA_SASL_MECHANISM}
+      username: ${KAFKA_USERNAME}
+      passwordSecret:
+        - secretName: clowder-oauth
+          password: password 
+    template:
+      pod:
+        imagePullSecrets:
+          - name: quay-cloudservices-pull
+          - name: rh-registry-pull
+
+    metricsConfig:
+      type: jmxPrometheusExporter
+      valueFrom:
+        configMapKeyRef:
+          key: metrics-config.yml
+          name: playbook-dispatcher-connect-metrics
+
