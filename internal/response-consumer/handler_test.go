@@ -37,8 +37,11 @@ func newResponseMessage(value interface{}, correlationId uuid.UUID, requestType 
 }
 
 func newSatResponseMessage(satEvents *[]messageModel.PlaybookSatRunResponseMessageYamlEventsElem, correlationId uuid.UUID) *k.Message {
+	accountNumber := accountNumber()
+
 	data := messageModel.PlaybookSatRunResponseMessageYaml{
-		Account:   accountNumber(),
+		Account:   accountNumber,
+		OrgId:     accountNumber + "-test",
 		RequestId: uuid.New().String(),
 		Events:    *satEvents,
 	}
@@ -47,8 +50,11 @@ func newSatResponseMessage(satEvents *[]messageModel.PlaybookSatRunResponseMessa
 }
 
 func newRunnerResponseMessage(runnerEvents *[]messageModel.PlaybookRunResponseMessageYamlEventsElem, correlationId uuid.UUID) *k.Message {
+	accountNumber := accountNumber()
+
 	data := messageModel.PlaybookRunResponseMessageYaml{
-		Account:   accountNumber(),
+		Account:   accountNumber,
+		OrgId:     accountNumber + "-test",
 		RequestId: uuid.New().String(),
 		Events:    *runnerEvents,
 	}
