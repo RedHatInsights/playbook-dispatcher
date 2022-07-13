@@ -19,6 +19,10 @@ parameters:
   value: kafkauser
 - name: KAFKA_SASL_MECHANISM
   value: sasl_mechanism 
+- name: VERSION
+  value: '2.7.1'
+- name: NUM_REPLICAS
+  value: '1'
 - name: CPU_REQUESTS
   value: 500m
 - name: CPU_LIMITS
@@ -72,8 +76,8 @@ objects:
       type: ${KAFKA_SASL_MECHANISM}
       username: ${KAFKA_USERNAME}
       passwordSecret:
-        - secretName: clowder-oauth
-          password: password 
+        secretName: clowder-oauth
+        password: password 
     template:
       pod:
         imagePullSecrets:
