@@ -106,11 +106,13 @@ func Get() *viper.Viper {
 			options.Set("kafka.sasl.password", *broker.Sasl.Password)
 			options.Set("kafka.sasl.mechanism", *broker.Sasl.SaslMechanism)
 			options.Set("kafka.sasl.protocol", *broker.Sasl.SecurityProtocol)
+		}
+		if broker.Cacert != nil {
 			caPath, err := cfg.KafkaCa(broker)
 			if err != nil {
 				panic("Kafka CA failed to write")
 			}
-			options.Set("kafka.capath", caPath)
+			options.Set("KafkaCA", caPath)
 		}
 
 		options.SetDefault("log.cw.accessKeyId", cfg.Logging.Cloudwatch.AccessKeyId)
