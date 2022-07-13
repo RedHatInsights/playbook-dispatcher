@@ -18,11 +18,11 @@ parameters:
 - name: KAFKA_USERNAME
   value: kafkauser
 - name: KAFKA_SASL_MECHANISM
-  value: sasl_mechanism 
+  value: plain 
 - name: VERSION
   value: '2.7.1'
 - name: NUM_REPLICAS
-  value: '1'
+  value: "1"
 - name: CPU_REQUESTS
   value: 500m
 - name: CPU_LIMITS
