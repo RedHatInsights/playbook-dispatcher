@@ -18,7 +18,9 @@ parameters:
 - name: KAFKA_USERNAME
   value: kafkauser
 - name: KAFKA_SASL_MECHANISM
-  value: plain 
+  value: plain
+- name: KAFKA_SASL_SECURITY_PROTOCOL
+  value: sasl_ssl
 - name: VERSION
   value: '2.7.1'
 - name: NUM_REPLICAS
@@ -71,8 +73,10 @@ objects:
       offset.storage.replication.factor: ${KAFKA_REPLICATION_FACTOR}
       status.storage.replication.factor: ${KAFKA_REPLICATION_FACTOR}
       config.storage.replication.factor: ${KAFKA_REPLICATION_FACTOR}
-    tls:
-      trustedCertificates: []
+      security.protocol: ${KAFKA_SASL_SECURITY_PROTOCOL}
+      producer.security.protocol: ${KAFKA_SASL_SECURITY_PROTOCOL}
+      consumer.security.protocol: ${KAFKA_SASL_SECURITY_PROTOCOL}
+      admin.security.protocol: ${KAFKA_SASL_SECURITY_PROTOCOL}
     authentication:
       # this config is specific to PLAIN sasl mechanism
       type: ${KAFKA_SASL_MECHANISM}
