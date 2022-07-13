@@ -28,7 +28,7 @@ func clean(cmd *cobra.Command, args []string) error {
 		result := tx.Model(&dbModel.Run{}).
 			Where("runs.status", "running").
 			Where("runs.created_at + runs.timeout * interval '1 second' <= NOW()").
-			Select("id", "account", "org_id", "correlation_id", "recipient").
+			Select("id", "org_id", "correlation_id", "recipient").
 			Find(&dbRuns)
 
 		if result.Error != nil {
@@ -42,7 +42,7 @@ func clean(cmd *cobra.Command, args []string) error {
 
 		ids := make([]string, len(dbRuns))
 		for i, run := range dbRuns {
-			log.Infow("Updating timed-out run", "run_id", run.ID.String(), "account", run.Account, "org_id", run.OrgID, "correlation_id", run.CorrelationID.String(), "recipient", run.Recipient.String())
+			log.Infow("Updating timed-out run", "run_id", run.ID.String(), "org_id", run.OrgID, "correlation_id", run.CorrelationID.String(), "recipient", run.Recipient.String())
 			ids[i] = run.ID.String()
 		}
 
