@@ -112,7 +112,7 @@ func Get() *viper.Viper {
 			if err != nil {
 				panic("Kafka CA failed to write")
 			}
-			options.Set("KafkaCA", caPath)
+			options.Set("kafka.capath", caPath)
 		}
 
 		options.SetDefault("log.cw.accessKeyId", cfg.Logging.Cloudwatch.AccessKeyId)
