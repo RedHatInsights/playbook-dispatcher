@@ -71,6 +71,8 @@ objects:
       offset.storage.replication.factor: ${KAFKA_REPLICATION_FACTOR}
       status.storage.replication.factor: ${KAFKA_REPLICATION_FACTOR}
       config.storage.replication.factor: ${KAFKA_REPLICATION_FACTOR}
+    tls:
+      trustedCertificates: []
     authentication:
       # this config is specific to PLAIN sasl mechanism
       type: ${KAFKA_SASL_MECHANISM}
