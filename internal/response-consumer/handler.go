@@ -71,7 +71,7 @@ func (this *handler) onMessage(ctx context.Context, msg *k.Message) {
 
 	err = this.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		baseQuery := tx.Model(db.Run{}).
-			Where("account = ?", value.Account).
+			Where("org_id = ?", value.OrgId).
 			Where("correlation_id = ?", correlationId)
 
 		selectResult := baseQuery.Select("id", "status", "response_full").First(&run)
