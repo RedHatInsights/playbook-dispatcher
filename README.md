@@ -265,7 +265,6 @@ The value of each event is described by [a JSON schema](./schema/run.event.yaml)
     "event_type": "create",
     "payload": {
       "id": "6555d6f7-8dc1-4dec-9d1e-0ef8a02d7d43",
-      "account": "901578",
       "org_id": "5318290",
       "recipient": "dd018b96-da04-4651-84d1-187fa5c23f6c",
       "correlation_id": "fbf49ad9-ea79-41fb-9f6c-cb13307e993d",
@@ -301,7 +300,7 @@ In addition, each event contains the following headers:
 - `event_type` - the type of the event (see above)
 - `service` - the service that created the given playbook run
 - `status` - current of the playbook run
-- `account` - a legacy identifier for the account (tenant) the given playbook run belong to (replaced by `org_id`)
+- `account`* - a legacy identifier for the account (tenant) the given playbook run belongs to **(replaced by `org_id`, so this field may be null or absent)**
 - `org_id` - the account (tenant) the given playbook run belong to
 
 The event headers make it possible to filter events without the need to parse the value of each event.
