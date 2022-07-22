@@ -61,7 +61,6 @@ var _ = Describe("runsCreate V2", func() {
 		var run dbModel.Run
 		result := db().Where("id = ?", string(*(*runs)[0].Id)).First(&run)
 		Expect(result.Error).ToNot(HaveOccurred())
-		Expect(run.Account).To(Equal("12900-test"))
 		Expect(run.OrgID).To(Equal(string(payload.OrgId)))
 		Expect(run.Recipient.String()).To(Equal(string(payload.Recipient)))
 		Expect(run.URL).To(Equal(string(payload.Url)))
@@ -109,7 +108,6 @@ var _ = Describe("runsCreate V2", func() {
 		var run dbModel.Run
 		result := db().Where("id = ?", string(*(*runs)[0].Id)).First(&run)
 		Expect(result.Error).ToNot(HaveOccurred())
-		Expect(run.Account).To(Equal("53182-test"))
 		Expect(run.OrgID).To(Equal(orgId))
 		Expect(run.Recipient).To(Equal(recipient))
 		Expect(run.URL).To(Equal(url))

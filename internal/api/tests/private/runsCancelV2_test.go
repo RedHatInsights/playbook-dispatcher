@@ -44,7 +44,7 @@ var _ = Describe("runsCancel V2", func() {
 		satId := uuid.MustParse("95cbea43-bb85-4153-96c2-eb2474b3e2b3")
 		satOrgId := "2"
 
-		var data = test.NewRun(accountNumber())
+		var data = test.NewRun(orgId())
 		data.Labels = dbModel.Labels{"foo": "bar"}
 		data.Timeout = 600
 		data.SatId = &satId
@@ -95,7 +95,7 @@ var _ = Describe("runsCancel V2", func() {
 	})
 
 	It("400s if run is not of type satellite RHC", func() {
-		var data = test.NewRun(accountNumber())
+		var data = test.NewRun(orgId())
 		data.Labels = dbModel.Labels{"foo": "bar"}
 		data.Timeout = 600
 		Expect(db().Create(&data).Error).ToNot(HaveOccurred())
@@ -114,7 +114,7 @@ var _ = Describe("runsCancel V2", func() {
 		satId, _ := uuid.Parse("95cbea43-bb85-4153-96c2-eb2474b3e2b3")
 		satOrgId := "2"
 
-		var data = test.NewRun(accountNumber())
+		var data = test.NewRun(orgId())
 		data.Labels = dbModel.Labels{"foo": "bar"}
 		data.Timeout = 600
 		data.SatId = &satId
@@ -133,7 +133,7 @@ var _ = Describe("runsCancel V2", func() {
 	})
 
 	It("500s on cloud connector error", func() {
-		var data = test.NewRun(accountNumber())
+		var data = test.NewRun(orgId())
 		var newRecipient, _ = uuid.Parse("b31955fb-3064-4f56-ae44-a1c488a28587")
 		satId, _ := uuid.Parse("95cbea43-bb85-4153-96c2-eb2474b3e2b3")
 		satOrgId := "2"

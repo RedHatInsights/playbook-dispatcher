@@ -11,8 +11,8 @@ import (
 	"go.uber.org/zap"
 )
 
-func IdentityHeaderMinimal(account string) string {
-	data := fmt.Sprintf(`{"identity":{"internal":{"org_id":"%s"},"account_number":"%s","user":{},"type":"User"}}`, account+"-test", account)
+func IdentityHeaderMinimal(org_id string) string {
+	data := fmt.Sprintf(`{"identity":{"internal":{"org_id":"%s"},"org_id":"%s","user":{},"type":"User"}}`, org_id, org_id)
 	return base64.StdEncoding.EncodeToString([]byte(data))
 }
 

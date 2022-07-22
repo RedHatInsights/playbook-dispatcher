@@ -57,9 +57,6 @@ func dbRuntoApiRun(r *dbModel.Run, fields []string) *Run {
 		switch field {
 		case fieldId:
 			run.Id = (*RunId)(convertUuid(r.ID))
-		case fieldAccount:
-			value := Account(r.Account)
-			run.Account = &value
 		case fieldOrgId:
 			value := OrgId(r.OrgID)
 			run.OrgId = &value

@@ -130,7 +130,6 @@ func (this *handler) validationSteps(
 
 	if requestType == playbookSatPayloadHeaderValue {
 		dispatcherResponse := &messageModel.PlaybookSatRunResponseMessageYaml{
-			Account:         request.Account,
 			OrgId:           request.OrgID,
 			B64Identity:     request.B64Identity,
 			RequestId:       request.RequestID,
@@ -142,7 +141,6 @@ func (this *handler) validationSteps(
 	}
 
 	dispatcherResponse := &messageModel.PlaybookRunResponseMessageYaml{
-		Account:         request.Account,
 		OrgId:           request.OrgID,
 		B64Identity:     request.B64Identity,
 		RequestId:       request.RequestID,

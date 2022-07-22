@@ -29,7 +29,7 @@ var _ = Describe("runsList", func() {
 
 	Describe("list runs", func() {
 		It("by default returns a list of existing runs", func() {
-			var data = test.NewRunWithStatus(accountNumber(), "success")
+			var data = test.NewRunWithStatus(orgId(), "success")
 			data.Labels = dbModel.Labels{"foo": "bar"}
 			data.Timeout = 600
 			Expect(db().Create(&data).Error).ToNot(HaveOccurred())
@@ -48,10 +48,10 @@ var _ = Describe("runsList", func() {
 
 		It("properly infers run status", func() {
 			var data = []dbModel.Run{
-				test.NewRunWithStatus(accountNumber(), "running"),
-				test.NewRunWithStatus(accountNumber(), "success"),
-				test.NewRunWithStatus(accountNumber(), "failure"),
-				test.NewRunWithStatus(accountNumber(), "running"),
+				test.NewRunWithStatus(orgId(), "running"),
+				test.NewRunWithStatus(orgId(), "success"),
+				test.NewRunWithStatus(orgId(), "failure"),
+				test.NewRunWithStatus(orgId(), "running"),
 			}
 
 			data[1].CreatedAt = time.Date(2020, time.January, 2, 12, 45, 3, 0, time.UTC)
@@ -72,8 +72,8 @@ var _ = Describe("runsList", func() {
 	Describe("sorting", func() {
 		BeforeEach(func() {
 			var runs = []dbModel.Run{
-				test.NewRunWithStatus(accountNumber(), "success"),
-				test.NewRunWithStatus(accountNumber(), "failure"),
+				test.NewRunWithStatus(orgId(), "success"),
+				test.NewRunWithStatus(orgId(), "failure"),
 			}
 
 			runs[0].CreatedAt = time.Date(2020, time.January, 21, 8, 45, 3, 0, time.UTC)
@@ -108,11 +108,11 @@ var _ = Describe("runsList", func() {
 	Describe("pagination", func() {
 		BeforeEach(func() {
 			var runs = []dbModel.Run{
-				test.NewRun(accountNumber()),
-				test.NewRun(accountNumber()),
-				test.NewRun(accountNumber()),
-				test.NewRun(accountNumber()),
-				test.NewRun(accountNumber()),
+				test.NewRun(orgId()),
+				test.NewRun(orgId()),
+				test.NewRun(orgId()),
+				test.NewRun(orgId()),
+				test.NewRun(orgId()),
 			}
 
 			Expect(db().Create(&runs).Error).ToNot(HaveOccurred())
@@ -164,10 +164,10 @@ var _ = Describe("runsList", func() {
 
 			BeforeEach(func() {
 				data = []dbModel.Run{
-					test.NewRunWithStatus(accountNumber(), "success"),
-					test.NewRunWithStatus(accountNumber(), "failure"),
-					test.NewRunWithStatus(accountNumber(), "running"),
-					test.NewRunWithStatus(accountNumber(), "running"),
+					test.NewRunWithStatus(orgId(), "success"),
+					test.NewRunWithStatus(orgId(), "failure"),
+					test.NewRunWithStatus(orgId(), "running"),
+					test.NewRunWithStatus(orgId(), "running"),
 				}
 
 				data[3].CreatedAt = time.Now().Add(-6 * time.Hour)
@@ -195,14 +195,13 @@ var _ = Describe("runsList", func() {
 
 			BeforeEach(func() {
 				data = []dbModel.Run{
-					test.NewRun(accountNumber()),
-					test.NewRun(accountNumber()),
-					test.NewRun(accountNumber()),
-					test.NewRun(accountNumber()),
+					test.NewRun(orgId()),
+					test.NewRun(orgId()),
+					test.NewRun(orgId()),
+					test.NewRun(orgId()),
 				}
 
 				data[3].Recipient = uuid.MustParse("64aeb237-d46d-494e-98e3-b48fc5c78bf1")
-				data[3].Account = "9999999999"
 				data[3].OrgID = "9999999999-test"
 
 				Expect(db().Create(&data).Error).ToNot(HaveOccurred())
@@ -233,9 +232,9 @@ var _ = Describe("runsList", func() {
 
 			BeforeEach(func() {
 				data = []dbModel.Run{
-					test.NewRun(accountNumber()),
-					test.NewRun(accountNumber()),
-					test.NewRun(accountNumber()),
+					test.NewRun(orgId()),
+					test.NewRun(orgId()),
+					test.NewRun(orgId()),
 				}
 
 				data[1].Labels = map[string]string{
@@ -276,7 +275,7 @@ var _ = Describe("runsList", func() {
 			var data dbModel.Run
 
 			BeforeEach(func() {
-				data = test.NewRun(accountNumber())
+				data = test.NewRun(orgId())
 				Expect(db().Create(&data).Error).ToNot(HaveOccurred())
 			})
 
@@ -297,7 +296,7 @@ var _ = Describe("runsList", func() {
 
 	Describe("sparse fieldsets", func() {
 		BeforeEach(func() {
-			run := test.NewRun(accountNumber())
+			run := test.NewRun(orgId())
 			Expect(db().Create(&run).Error).ToNot(HaveOccurred())
 		})
 
@@ -318,7 +317,7 @@ var _ = Describe("runsList", func() {
 
 	Describe("sparse fieldsets satellite", func() {
 		BeforeEach(func() {
-			run := test.NewRun(accountNumber())
+			run := test.NewRun(orgId())
 
 			playbookName := "sparse-playbookName"
 			run.PlaybookName = &playbookName
@@ -344,10 +343,10 @@ var _ = Describe("runsList", func() {
 
 		BeforeEach(func() {
 			data = []dbModel.Run{
-				test.NewRun(accountNumber()),
-				test.NewRun(accountNumber()),
-				test.NewRun(accountNumber()),
-				test.NewRun(accountNumber()),
+				test.NewRun(orgId()),
+				test.NewRun(orgId()),
+				test.NewRun(orgId()),
+				test.NewRun(orgId()),
 			}
 
 			data[0].Service = "test"
@@ -373,11 +372,11 @@ var _ = Describe("runsList", func() {
 	Describe("links", func() {
 		BeforeEach(func() {
 			var runs = []dbModel.Run{
-				test.NewRun(accountNumber()),
-				test.NewRun(accountNumber()),
-				test.NewRun(accountNumber()),
-				test.NewRun(accountNumber()),
-				test.NewRun(accountNumber()),
+				test.NewRun(orgId()),
+				test.NewRun(orgId()),
+				test.NewRun(orgId()),
+				test.NewRun(orgId()),
+				test.NewRun(orgId()),
 			}
 
 			Expect(db().Create(&runs).Error).ToNot(HaveOccurred())

@@ -77,11 +77,10 @@ func EventSequenceOk(correlationId, host string) []messageModel.PlaybookRunRespo
 	}
 }
 
-func NewRunWithStatus(account string, status string) dbModel.Run {
+func NewRunWithStatus(orgId string, status string) dbModel.Run {
 	return dbModel.Run{
 		ID:            uuid.New(),
-		Account:       account,
-		OrgID:         account + "-test",
+		OrgID:         orgId,
 		Recipient:     uuid.New(),
 		CorrelationID: uuid.New(),
 		URL:           "http://example.com",
@@ -92,15 +91,15 @@ func NewRunWithStatus(account string, status string) dbModel.Run {
 	}
 }
 
-func NewRun(account string) dbModel.Run {
-	return NewRunWithStatus(account, "running")
+func NewRun(orgId string) dbModel.Run {
+	return NewRunWithStatus(orgId, "running")
 }
 
-func NewRunsWithLocalhost(accountNumber string, n int) []dbModel.Run {
+func NewRunsWithLocalhost(org_id string, n int) []dbModel.Run {
 	runs := make([]dbModel.Run, n)
 
 	for i := 0; i < n; i++ {
-		run := NewRun(accountNumber)
+		run := NewRun(org_id)
 		run.Events = utils.MustMarshal(EventSequenceOk(uuid.New().String(), "localhost"))
 		runs[i] = run
 	}

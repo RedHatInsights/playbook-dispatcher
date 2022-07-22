@@ -11,7 +11,6 @@ import (
 func newRun(input *generic.RunInput, correlationId uuid.UUID, responseFull bool, service string, cfg *viper.Viper) dbModel.Run {
 	run := dbModel.Run{
 		ID:             uuid.New(),
-		Account:        input.Account,
 		CorrelationID:  correlationId,
 		URL:            input.Url,
 		Status:         dbModel.RunStatusRunning,

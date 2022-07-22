@@ -64,7 +64,6 @@ properties:
         - correlation_id
 
 required:
-  - account
   - org_id
   - request_id
   - b64_identity
