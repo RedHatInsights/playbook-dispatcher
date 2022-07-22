@@ -45,7 +45,7 @@ func (this *controllers) ApiInternalV2RunsCancel(ctx echo.Context) error {
 
 		cancelInput := CancelInputV2GenericMap(cancelInputV2, *ean, parsedRunId)
 
-		runID, _, err := this.dispatchManager.ProcessCancel(context, *ean, cancelInput)
+		runID, _, err := this.dispatchManager.ProcessCancel(context, cancelInput.OrgId, cancelInput)
 		if err != nil {
 			return handleRunCancelError(err)
 		}

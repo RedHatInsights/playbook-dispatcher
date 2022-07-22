@@ -16,7 +16,7 @@ func NewConnectorClientMock() CloudConnectorClient {
 
 func (this *cloudConnectorClientMock) SendCloudConnectorRequest(
 	ctx context.Context,
-	account string,
+	orgID string,
 	recipient uuid.UUID,
 	url *string,
 	directive string,

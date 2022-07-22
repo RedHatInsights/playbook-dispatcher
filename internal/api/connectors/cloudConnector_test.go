@@ -97,9 +97,7 @@ var _ = Describe("Cloud Connector", func() {
 		err = json.Unmarshal(bytes, &parsedRequest)
 		Expect(err).ToNot(HaveOccurred())
 
-		Expect(parsedRequest["account"]).To(Equal("1234"))
 		Expect(parsedRequest["directive"]).To(Equal("playbook"))
-		Expect(parsedRequest["recipient"]).To(Equal(recipient.String()))
 		Expect(parsedRequest["payload"]).To(Equal(url))
 
 		metadata, ok := parsedRequest["metadata"].(map[string]interface{})
@@ -142,9 +140,7 @@ var _ = Describe("Cloud Connector", func() {
 		err = json.Unmarshal(bytes, &parsedRequest)
 		Expect(err).ToNot(HaveOccurred())
 
-		Expect(parsedRequest["account"]).To(Equal("1234"))
 		Expect(parsedRequest["directive"]).To(Equal("playbook-sat"))
-		Expect(parsedRequest["recipient"]).To(Equal(recipient.String()))
 		Expect(parsedRequest["payload"]).To(Equal(url))
 
 		metadata, ok := parsedRequest["metadata"].(map[string]interface{})
@@ -187,10 +183,8 @@ var _ = Describe("Cloud Connector", func() {
 		err = json.Unmarshal(bytes, &parsedRequest)
 		Expect(err).ToNot(HaveOccurred())
 
-		Expect(parsedRequest).To(HaveLen(4))
-		Expect(parsedRequest["account"]).To(Equal("1234"))
+		Expect(parsedRequest).To(HaveLen(2))
 		Expect(parsedRequest["directive"]).To(Equal("playbook-sat"))
-		Expect(parsedRequest["recipient"]).To(Equal(recipient.String()))
 
 		metadata, ok := parsedRequest["metadata"].(map[string]interface{})
 		Expect(ok).To(BeTrue())
@@ -244,7 +238,14 @@ var _ = Describe("Cloud Connector", func() {
 	Describe("connection status", func() {
 		DescribeTable("interprets the response correctly",
 			func(status string, expectedStatus ConnectionStatus) {
-				doer := test.MockHttpClient(200, fmt.Sprintf(`{"status": "%s"}`, status))
+				doer := test.MockHttpClient(200, fmt.Sprintf(
+					`{"account": "1234",
+					"org_id": "1234",
+					"client_id": "1234",
+					"canonical_facts": null,
+					"dispatchers": null,
+					"tags": null,
+					"status": "%s"}`, status))
 
 				client := NewConnectorClientWithHttpRequestDoer(config.Get(), &doer)
 				ctx := utils.SetLog(test.TestContext(), zap.NewNop().Sugar())
@@ -266,16 +267,6 @@ var _ = Describe("Cloud Connector", func() {
 			_, err := client.GetConnectionStatus(ctx, "901578", "5318290", "be175f04-4634-49f2-a292-b4ad7107af78")
 			Expect(err).ToNot(HaveOccurred())
 
-			bytes, err := ioutil.ReadAll(doer.Request.Body)
-			Expect(err).ToNot(HaveOccurred())
-			parsedRequest := make(map[string]interface{})
-			err = json.Unmarshal(bytes, &parsedRequest)
-			Expect(err).ToNot(HaveOccurred())
-
-			Expect(parsedRequest["account"]).To(Equal("901578"))
-			Expect(parsedRequest["node_id"]).To(Equal("be175f04-4634-49f2-a292-b4ad7107af78"))
-
-			Expect(doer.Request.Header.Get(constants.HeaderCloudConnectorAccount)).To(Equal("901578"))
 			Expect(doer.Request.Header.Get(constants.HeaderCloudConnectorOrgID)).To(Equal("5318290"))
 		})
 	})

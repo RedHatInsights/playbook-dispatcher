@@ -18,7 +18,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-const basePath = "/api/cloud-connector/v1/"
+const basePath = "/api/cloud-connector/"
 
 // used to pass account, org_id down to request editor (to set headers)
 type key int
@@ -31,7 +31,7 @@ const (
 type CloudConnectorClient interface {
 	SendCloudConnectorRequest(
 		ctx context.Context,
-		account string,
+		orgID string,
 		recipient uuid.UUID,
 		url *string,
 		directive string,
@@ -60,11 +60,7 @@ func NewConnectorClientWithHttpRequestDoer(cfg *viper.Viper, doer HttpRequestDoe
 
 				req.Header.Set(constants.HeaderCloudConnectorClientID, cfg.GetString("cloud.connector.client.id"))
 				req.Header.Set(constants.HeaderCloudConnectorPSK, cfg.GetString("cloud.connector.psk"))
-				req.Header.Set(constants.HeaderCloudConnectorAccount, ctx.Value(accountKey).(string))
-
-				if orgID := ctx.Value(orgIDKey); orgID != nil {
-					req.Header.Set(constants.HeaderCloudConnectorOrgID, ctx.Value(orgIDKey).(string))
-				}
+				req.Header.Set(constants.HeaderCloudConnectorOrgID, ctx.Value(orgIDKey).(string))
 
 				return nil
 			},
@@ -84,7 +80,7 @@ func NewConnectorClient(cfg *viper.Viper) CloudConnectorClient {
 	return NewConnectorClientWithHttpRequestDoer(cfg, &httpClient)
 }
 
-func encodedBody(body PostMessageJSONRequestBody) (io.Reader, error) {
+func encodedBody(body PostV2ConnectionsClientIdMessageJSONRequestBody) (io.Reader, error) {
 	buf := &bytes.Buffer{}
 	encoder := json.NewEncoder(buf)
 	encoder.SetEscapeHTML(false)
@@ -96,14 +92,15 @@ func encodedBody(body PostMessageJSONRequestBody) (io.Reader, error) {
 
 func (this *cloudConnectorClientImpl) SendCloudConnectorRequest(
 	ctx context.Context,
-	account string,
+	orgID string,
 	recipient uuid.UUID,
 	url *string,
 	directive string,
 	metadata map[string]string,
 ) (id *string, notFound bool, err error) {
-	ctx = context.WithValue(ctx, accountKey, account)
 	recipientString := recipient.String()
+
+	ctx = context.WithValue(ctx, orgIDKey, orgID)
 
 	utils.GetLogFromContext(ctx).Debugw("Sending Cloud Connector message",
 		"directive", directive,
@@ -112,21 +109,19 @@ func (this *cloudConnectorClientImpl) SendCloudConnectorRequest(
 		"recipient", recipientString,
 	)
 
-	body, err := encodedBody(PostMessageJSONRequestBody{
-		Account:   &account,
+	body, err := encodedBody(PostV2ConnectionsClientIdMessageJSONRequestBody{
 		Directive: &directive,
-		Metadata: &MessageRequest_Metadata{
+		Metadata: &MessageRequestV2_Metadata{
 			AdditionalProperties: metadata,
 		},
-		Payload:   url,
-		Recipient: &recipientString,
+		Payload: url,
 	})
 
 	if err != nil {
 		return nil, false, err
 	}
 
-	res, err := this.client.PostMessageWithBodyWithResponse(ctx, "application/json", body)
+	res, err := this.client.PostV2ConnectionsClientIdMessageWithBodyWithResponse(ctx, ClientID(recipientString), "application/json", body)
 
 	if err != nil {
 		return nil, false, err
@@ -149,26 +144,25 @@ func (this *cloudConnectorClientImpl) GetConnectionStatus(
 	orgID string,
 	recipient string,
 ) (status ConnectionStatus, err error) {
-	ctx = context.WithValue(ctx, accountKey, account)
 	ctx = context.WithValue(ctx, orgIDKey, orgID)
+	ctx = context.WithValue(ctx, accountKey, account)
 
 	utils.GetLogFromContext(ctx).Debugw("Sending Cloud Connector status request",
+		"org_id", orgID,
 		"account", account,
 		"recipient", recipient,
 	)
 
-	res, err := this.client.V1ConnectionStatusMultiorgWithResponse(ctx, V1ConnectionStatusMultiorgJSONRequestBody{
-		Account: &account,
-		NodeId:  &recipient,
-	})
+	res, err := this.client.V2ConnectionStatusMultiorgWithResponse(ctx, ClientID(recipient))
 
 	if err != nil {
 		return "", err
 	}
 
-	if res.JSON200 == nil {
-		return "", unexpectedResponse(res.HTTPResponse)
+	connectionStatusResponse := ConnectionStatusResponse{}
+	if err := json.Unmarshal(res.Body, &connectionStatusResponse); err != nil {
+		return "", err
 	}
 
-	return *res.JSON200.Status, nil
+	return *connectionStatusResponse.Status, nil
 }
