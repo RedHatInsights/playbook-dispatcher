@@ -54,7 +54,7 @@ func RunInputV1GenericMap(runInput RunInput, orgId *string, parsedRecipient uuid
 	return generic.RunInput{
 		Recipient: parsedRecipient,
 		OrgId:     orgId,
-		Account:   string(runInput.Account),
+		Account:   (*string)(&runInput.Account),
 		Url:       string(runInput.Url),
 		Labels:    getLabels(runInput.Labels),
 		Timeout:   (*int)(runInput.Timeout),
@@ -64,7 +64,6 @@ func RunInputV1GenericMap(runInput RunInput, orgId *string, parsedRecipient uuid
 
 func RunInputV2GenericMap(
 	runInput RunInputV2,
-	account string,
 	parsedRecipient uuid.UUID,
 	parsedHosts []generic.RunHostsInput,
 	parsedSatID *uuid.UUID,
@@ -77,7 +76,6 @@ func RunInputV2GenericMap(
 	result := generic.RunInput{
 		Recipient:     parsedRecipient,
 		OrgId:         &orgIdString,
-		Account:       account,
 		Url:           string(runInput.Url),
 		Labels:        getLabels(runInput.Labels),
 		Timeout:       (*int)(runInput.Timeout),

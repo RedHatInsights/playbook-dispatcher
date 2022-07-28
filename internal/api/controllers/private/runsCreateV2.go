@@ -6,8 +6,6 @@ import (
 	"playbook-dispatcher/internal/api/middleware"
 	"playbook-dispatcher/internal/common/utils"
 
-	"github.com/RedHatInsights/tenant-utils/pkg/tenantid"
-
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 )
@@ -37,22 +35,6 @@ func (this *controllers) ApiInternalV2RunsCreate(ctx echo.Context) error {
 
 		recipient := parseValidatedUUID(string(runInputV2.Recipient))
 
-		// translate org_id to EAN
-		ean, err := this.translator.OrgIDToEAN(ctx.Request().Context(), string(runInputV2.OrgId))
-		if err != nil {
-			if _, ok := err.(*tenantid.TenantNotFoundError); ok {
-				return runCreateError(http.StatusNotFound)
-			}
-
-			utils.GetLogFromEcho(ctx).Error(err)
-			return runCreateError(http.StatusInternalServerError)
-		}
-
-		if ean == nil {
-			utils.GetLogFromEcho(ctx).Warnw("Anemic tenant not supported", "org_id", string(runInputV2.OrgId))
-			return runCreateError(http.StatusBadRequest)
-		}
-
 		hosts := parseRunHosts(runInputV2.Hosts)
 
 		var parsedSatID *uuid.UUID
@@ -60,7 +42,7 @@ func (this *controllers) ApiInternalV2RunsCreate(ctx echo.Context) error {
 			parsedSatID = utils.UUIDRef(parseValidatedUUID(string(*runInputV2.RecipientConfig.SatId)))
 		}
 
-		runInput := RunInputV2GenericMap(runInputV2, *ean, recipient, hosts, parsedSatID, this.config)
+		runInput := RunInputV2GenericMap(runInputV2, recipient, hosts, parsedSatID, this.config)
 
 		runID, _, err := this.dispatchManager.ProcessRun(context, *runInput.OrgId, middleware.GetPSKPrincipal(context), runInput)
 

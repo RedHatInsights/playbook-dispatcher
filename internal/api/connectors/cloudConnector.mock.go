@@ -42,7 +42,7 @@ func (this *cloudConnectorClientMock) SendCloudConnectorRequest(
 
 func (this *cloudConnectorClientMock) GetConnectionStatus(
 	ctx context.Context,
-	account string,
+	account *string,
 	orgID string,
 	recipient string,
 ) (ConnectionStatus, error) {

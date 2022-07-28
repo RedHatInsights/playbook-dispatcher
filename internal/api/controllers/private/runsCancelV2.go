@@ -5,8 +5,6 @@ import (
 	"playbook-dispatcher/internal/api/instrumentation"
 	"playbook-dispatcher/internal/common/utils"
 
-	"github.com/RedHatInsights/tenant-utils/pkg/tenantid"
-
 	"github.com/labstack/echo/v4"
 )
 
@@ -24,26 +22,9 @@ func (this *controllers) ApiInternalV2RunsCancel(ctx echo.Context) error {
 		context := utils.WithOrgId(ctx.Request().Context(), string(cancelInputV2.OrgId))
 		context = utils.WithRequestType(context, instrumentation.LabelAnsibleRequest)
 
-		// translate org_id to EAN
-		// TODO: this will go away in the future
-		ean, err := this.translator.OrgIDToEAN(ctx.Request().Context(), string(cancelInputV2.OrgId))
-		if err != nil {
-			if _, ok := err.(*tenantid.TenantNotFoundError); ok {
-				return runCancelError(http.StatusNotFound)
-			}
-
-			utils.GetLogFromEcho(ctx).Error(err)
-			return runCancelError(http.StatusInternalServerError)
-		}
-
-		if ean == nil {
-			utils.GetLogFromEcho(ctx).Warnw("Anemic tenant not supported", "org_id", string(cancelInputV2.OrgId))
-			return runCancelError(http.StatusBadRequest)
-		}
-
 		parsedRunId := parseValidatedUUID(string(cancelInputV2.RunId))
 
-		cancelInput := CancelInputV2GenericMap(cancelInputV2, *ean, parsedRunId)
+		cancelInput := CancelInputV2GenericMap(cancelInputV2, parsedRunId)
 
 		runID, _, err := this.dispatchManager.ProcessCancel(context, cancelInput.OrgId, cancelInput)
 		if err != nil {

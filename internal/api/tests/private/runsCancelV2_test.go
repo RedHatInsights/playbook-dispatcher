@@ -32,14 +32,6 @@ func minimalV2Cancel() CancelInputV2 {
 var _ = Describe("runsCancel V2", func() {
 	db := test.WithDatabase()
 
-	It("sends 400 for invalid orgId", func() {
-		payload := minimalV2Cancel()
-		payload.OrgId = "1234"
-
-		runs, _ := cancelV2(&ApiInternalV2RunsCancelJSONRequestBody{payload})
-		Expect((*runs)[0].Code).To(Equal(400))
-	})
-
 	It("creates cancelation message on successful operation", func() {
 		satId := uuid.MustParse("95cbea43-bb85-4153-96c2-eb2474b3e2b3")
 		satOrgId := "2"
@@ -64,16 +56,6 @@ var _ = Describe("runsCancel V2", func() {
 		Expect(err).ToNot(HaveOccurred())
 	})
 
-	It("404s if tenant is anemic/unknown", func() {
-		payload := minimalV2Cancel()
-		payload.OrgId = "654321"
-
-		runs, _ := cancelV2(&ApiInternalV2RunsCancelJSONRequestBody{payload})
-
-		Expect(*runs).To(HaveLen(1))
-		Expect((*runs)[0].Code).To(Equal(400))
-	})
-
 	It("404s if playbook run is not known", func() {
 		payload := minimalV2Cancel()
 		payload.OrgId = "12900172"
@@ -84,14 +66,28 @@ var _ = Describe("runsCancel V2", func() {
 		Expect((*runs)[0].Code).To(Equal(404))
 	})
 
-	It("400s on anemic tenant", func() {
+	It("Successfully handles an anemic tenant", func() {
+		satId := uuid.New()
+		satOrgId := "2"
+
+		var data = test.NewRun(orgId())
+		data.Labels = dbModel.Labels{"foo": "bar"}
+		data.Timeout = 600
+		data.SatId = &satId
+		data.SatOrgId = &satOrgId
+		Expect(db().Create(&data).Error).ToNot(HaveOccurred())
+
 		payload := minimalV2Cancel()
+		payload.RunId = public.RunId(data.ID.String())
 		payload.OrgId = "654322"
 
 		runs, _ := cancelV2(&ApiInternalV2RunsCancelJSONRequestBody{payload})
 
 		Expect(*runs).To(HaveLen(1))
-		Expect((*runs)[0].Code).To(Equal(400))
+		Expect((*runs)[0].Code).To(Equal(202))
+		parsedRunID, err := uuid.Parse(string((*runs)[0].RunId))
+		Expect(parsedRunID).To(BeEquivalentTo(data.ID))
+		Expect(err).ToNot(HaveOccurred())
 	})
 
 	It("400s if run is not of type satellite RHC", func() {

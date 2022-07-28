@@ -11,14 +11,12 @@ import (
 
 func CancelInputV2GenericMap(
 	cancelInput CancelInputV2,
-	account string,
 	runId uuid.UUID,
 ) generic.CancelInput {
 	orgIdString := string(cancelInput.OrgId)
 	principal := string(cancelInput.Principal)
 
 	result := generic.CancelInput{
-		Account:   account,
 		RunId:     runId,
 		OrgId:     orgIdString,
 		Principal: principal,

@@ -239,8 +239,8 @@ var _ = Describe("Cloud Connector", func() {
 		DescribeTable("interprets the response correctly",
 			func(status string, expectedStatus ConnectionStatus) {
 				doer := test.MockHttpClient(200, fmt.Sprintf(
-					`{"account": "1234",
-					"org_id": "1234",
+					`{"org_id": "1234",
+					"internal":{"org_id":"1234"},
 					"client_id": "1234",
 					"canonical_facts": null,
 					"dispatchers": null,
@@ -250,7 +250,7 @@ var _ = Describe("Cloud Connector", func() {
 				client := NewConnectorClientWithHttpRequestDoer(config.Get(), &doer)
 				ctx := utils.SetLog(test.TestContext(), zap.NewNop().Sugar())
 
-				result, err := client.GetConnectionStatus(ctx, "901578", "5318290", "be175f04-4634-49f2-a292-b4ad7107af78")
+				result, err := client.GetConnectionStatus(ctx, nil, "5318290", "be175f04-4634-49f2-a292-b4ad7107af78")
 				Expect(err).ToNot(HaveOccurred())
 				Expect(result).To(Equal(expectedStatus))
 			},
@@ -264,7 +264,7 @@ var _ = Describe("Cloud Connector", func() {
 
 			client := NewConnectorClientWithHttpRequestDoer(config.Get(), &doer)
 			ctx := utils.SetLog(test.TestContext(), zap.NewNop().Sugar())
-			_, err := client.GetConnectionStatus(ctx, "901578", "5318290", "be175f04-4634-49f2-a292-b4ad7107af78")
+			_, err := client.GetConnectionStatus(ctx, nil, "5318290", "be175f04-4634-49f2-a292-b4ad7107af78")
 			Expect(err).ToNot(HaveOccurred())
 
 			Expect(doer.Request.Header.Get(constants.HeaderCloudConnectorOrgID)).To(Equal("5318290"))

@@ -40,7 +40,7 @@ type CloudConnectorClient interface {
 
 	GetConnectionStatus(
 		ctx context.Context,
-		account string,
+		account *string,
 		orgID string,
 		recipient string,
 	) (ConnectionStatus, error)
@@ -140,7 +140,7 @@ func (this *cloudConnectorClientImpl) SendCloudConnectorRequest(
 
 func (this *cloudConnectorClientImpl) GetConnectionStatus(
 	ctx context.Context,
-	account string,
+	account *string,
 	orgID string,
 	recipient string,
 ) (status ConnectionStatus, err error) {
