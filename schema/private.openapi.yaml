@@ -165,6 +165,8 @@ components:
           $ref: '#/components/schemas/RunInputHosts'
         recipient_config:
           $ref: '#/components/schemas/RecipientConfig'
+        account:
+          $ref: './public.openapi.yaml#/components/schemas/Account'
       required:
       - recipient
       - org_id
@@ -181,6 +183,8 @@ components:
           $ref: '#/components/schemas/OrgId'
         principal:
           $ref: '#/components/schemas/Principal'
+        account:
+          $ref: './public.openapi.yaml#/components/schemas/Account'
       required:
       - run_id
       - org_id
