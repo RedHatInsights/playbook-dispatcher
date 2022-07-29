@@ -21,6 +21,9 @@ func (this *controllers) ApiInternalV2RunsCancel(ctx echo.Context) error {
 	result := input.PMapRunCanceled(func(cancelInputV2 CancelInputV2) *RunCanceled {
 		context := utils.WithOrgId(ctx.Request().Context(), string(cancelInputV2.OrgId))
 		context = utils.WithRequestType(context, instrumentation.LabelAnsibleRequest)
+		if cancelInputV2.Account != nil {
+			context = utils.WithAccount(context, string(*cancelInputV2.Account))
+		}
 
 		parsedRunId := parseValidatedUUID(string(cancelInputV2.RunId))
 
