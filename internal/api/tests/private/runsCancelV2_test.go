@@ -32,6 +32,25 @@ func minimalV2Cancel() CancelInputV2 {
 var _ = Describe("runsCancel V2", func() {
 	db := test.WithDatabase()
 
+	It("Sends 400 for invalid orgId", func() {
+		satId := uuid.MustParse("95cbea43-bb85-4153-96c2-eb2474b3e2b3")
+		satOrgId := "2"
+
+		var data = test.NewRun(orgId())
+		data.Labels = dbModel.Labels{"foo": "bar"}
+		data.Timeout = 600
+		data.SatId = &satId
+		data.SatOrgId = &satOrgId
+		Expect(db().Create(&data).Error).ToNot(HaveOccurred())
+
+		payload := minimalV2Cancel()
+		payload.RunId = public.RunId(data.ID.String())
+		payload.OrgId = OrgId("1234")
+
+		runs, _ := cancelV2(&ApiInternalV2RunsCancelJSONRequestBody{payload})
+		Expect((*runs)[0].Code).To(Equal(400))
+	})
+
 	It("creates cancelation message on successful operation", func() {
 		satId := uuid.MustParse("95cbea43-bb85-4153-96c2-eb2474b3e2b3")
 		satOrgId := "2"
@@ -45,7 +64,7 @@ var _ = Describe("runsCancel V2", func() {
 
 		payload := minimalV2Cancel()
 		payload.RunId = public.RunId(data.ID.String())
-		payload.OrgId = "12900172"
+		payload.OrgId = OrgId(data.OrgID)
 
 		runs, _ := cancelV2(&ApiInternalV2RunsCancelJSONRequestBody{payload})
 
@@ -79,7 +98,7 @@ var _ = Describe("runsCancel V2", func() {
 
 		payload := minimalV2Cancel()
 		payload.RunId = public.RunId(data.ID.String())
-		payload.OrgId = "654322"
+		payload.OrgId = OrgId(data.OrgID)
 
 		runs, _ := cancelV2(&ApiInternalV2RunsCancelJSONRequestBody{payload})
 
@@ -98,7 +117,7 @@ var _ = Describe("runsCancel V2", func() {
 
 		payload := minimalV2Cancel()
 		payload.RunId = public.RunId(data.ID.String())
-		payload.OrgId = "12900172"
+		payload.OrgId = OrgId(data.OrgID)
 
 		runs, _ := cancelV2(&ApiInternalV2RunsCancelJSONRequestBody{payload})
 
@@ -120,7 +139,7 @@ var _ = Describe("runsCancel V2", func() {
 
 		payload := minimalV2Cancel()
 		payload.RunId = public.RunId(data.ID.String())
-		payload.OrgId = "12900172"
+		payload.OrgId = OrgId(data.OrgID)
 
 		runs, _ := cancelV2(&ApiInternalV2RunsCancelJSONRequestBody{payload})
 
@@ -143,7 +162,7 @@ var _ = Describe("runsCancel V2", func() {
 
 		payload := minimalV2Cancel()
 		payload.RunId = public.RunId(data.ID.String())
-		payload.OrgId = "12900172"
+		payload.OrgId = OrgId(data.OrgID)
 
 		runs, _ := cancelV2(&ApiInternalV2RunsCancelJSONRequestBody{payload})
 

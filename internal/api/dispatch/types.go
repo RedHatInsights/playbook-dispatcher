@@ -25,6 +25,11 @@ type RunNotFoundError struct {
 	runID uuid.UUID
 }
 
+type RunOrgIdMismatchError struct {
+	err   error
+	runID uuid.UUID
+}
+
 type RunCancelTypeError struct {
 	err   error
 	runID uuid.UUID
@@ -39,6 +44,10 @@ func (this *RecipientNotFoundError) Error() string {
 
 func (this *RunNotFoundError) Error() string {
 	return fmt.Sprintf("Run not found: %s", this.runID)
+}
+
+func (this *RunOrgIdMismatchError) Error() string {
+	return fmt.Sprintf("Invalid org_id for cancel request: %s", this.runID)
 }
 
 func (this *RunCancelTypeError) Error() string {

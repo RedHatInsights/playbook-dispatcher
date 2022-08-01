@@ -37,6 +37,10 @@ func handleRunCancelError(err error) *RunCanceled {
 		return runCancelError(http.StatusNotFound)
 	}
 
+	if _, ok := err.(*dispatch.RunOrgIdMismatchError); ok {
+		return runCancelError(http.StatusBadRequest)
+	}
+
 	if _, ok := err.(*dispatch.RecipientNotFoundError); ok {
 		return runCancelError(http.StatusConflict)
 	}

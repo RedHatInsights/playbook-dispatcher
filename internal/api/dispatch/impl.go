@@ -120,6 +120,11 @@ func (this *dispatchManager) ProcessCancel(ctx context.Context, orgID string, ca
 		return uuid.UUID{}, run.CorrelationID, &RunNotFoundError{err: err, runID: cancel.RunId}
 	}
 
+	if err := this.db.Where("id = ? AND org_id = ?", cancel.RunId, orgID).First(&run).Error; err != nil {
+		instrumentation.PlaybookRunCancelError(ctx, err)
+		return uuid.UUID{}, run.CorrelationID, &RunOrgIdMismatchError{err: err, runID: cancel.RunId}
+	}
+
 	if run.SatId == nil || run.SatOrgId == nil {
 		instrumentation.PlaybookRunCancelRunTypeError(ctx, run.ID)
 		return uuid.UUID{}, run.CorrelationID, &RunCancelTypeError{err, run.ID}
