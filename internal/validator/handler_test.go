@@ -45,6 +45,15 @@ var _ = Describe("Handler", func() {
 			err := instance.validateRequest(req)
 			Expect(err).To(HaveOccurred())
 		})
+
+		It("Rejects empty archives", func() {
+			req := &messageModel.IngressValidationRequest{
+				Size: 0,
+			}
+
+			err := instance.validateRequest(req)
+			Expect(err).To(HaveOccurred())
+		})
 	})
 
 	Describe("Validation", func() {
