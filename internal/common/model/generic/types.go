@@ -9,7 +9,7 @@ type RunInput struct {
 	Hosts         []RunHostsInput
 	Labels        map[string]string
 	Timeout       *int
-	OrgId         *string
+	OrgId         string
 	SatId         *uuid.UUID
 	SatOrgId      *string
 	Name          *string

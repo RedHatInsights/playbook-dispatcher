@@ -10,9 +10,6 @@ import (
 // CancelInputV2 defines model for CancelInputV2.
 type CancelInputV2 struct {
 
-	// Identifier of the tenant
-	Account *externalRef0.Account `json:"account,omitempty"`
-
 	// Identifies the organization that the given resource belongs to
 	OrgId OrgId `json:"org_id"`
 
@@ -123,9 +120,6 @@ type RunInputHosts []struct {
 
 // RunInputV2 defines model for RunInputV2.
 type RunInputV2 struct {
-
-	// Identifier of the tenant
-	Account *externalRef0.Account `json:"account,omitempty"`
 
 	// Optionally, information about hosts involved in the Playbook run can be provided.
 	// This information is used to pre-allocate run_host resources.

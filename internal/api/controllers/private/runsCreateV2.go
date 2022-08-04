@@ -32,9 +32,6 @@ func (this *controllers) ApiInternalV2RunsCreate(ctx echo.Context) error {
 	result := input.PMapRunCreated(func(runInputV2 RunInputV2) *RunCreated {
 		context := utils.WithOrgId(ctx.Request().Context(), string(runInputV2.OrgId))
 		context = utils.WithRequestType(context, getRequestTypeLabel(runInputV2))
-		if runInputV2.Account != nil {
-			context = utils.WithAccount(context, string(*runInputV2.Account))
-		}
 
 		recipient := parseValidatedUUID(string(runInputV2.Recipient))
 
@@ -47,7 +44,7 @@ func (this *controllers) ApiInternalV2RunsCreate(ctx echo.Context) error {
 
 		runInput := RunInputV2GenericMap(runInputV2, recipient, hosts, parsedSatID, this.config)
 
-		runID, _, err := this.dispatchManager.ProcessRun(context, *runInput.OrgId, middleware.GetPSKPrincipal(context), runInput)
+		runID, _, err := this.dispatchManager.ProcessRun(context, runInput.OrgId, middleware.GetPSKPrincipal(context), runInput)
 
 		if err != nil {
 			return handleRunCreateError(err)
