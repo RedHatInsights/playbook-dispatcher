@@ -1,0 +1,10 @@
+make --dry-run --always-make --keep-going --print-directory
+make: Entering directory '/home/aleccohan/Documents/InsightsRepos/playbook-dispatcher'
+go install github.com/deepmap/oapi-codegen/cmd/oapi-codegen
+go get github.com/atombender/go-jsonschema/...@main
+go install github.com/atombender/go-jsonschema/cmd/gojsonschema
+pip install json2yaml
+go get github.com/kulshekhar/fungen
+go install github.com/kulshekhar/fungen
+make: Leaving directory '/home/aleccohan/Documents/InsightsRepos/playbook-dispatcher'
+ 
