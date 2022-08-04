@@ -261,14 +261,15 @@ var _ = Describe("Cloud Connector", func() {
 
 		It("constructs a correct request", func() {
 			doer := test.MockHttpClient(200, `{"status": "connected"}`)
+			cfg := config.Get()
 
-			client := NewConnectorClientWithHttpRequestDoer(config.Get(), &doer)
+			client := NewConnectorClientWithHttpRequestDoer(cfg, &doer)
 			ctx := utils.SetLog(test.TestContext(), zap.NewNop().Sugar())
 			_, err := client.GetConnectionStatus(ctx, "5318290", "be175f04-4634-49f2-a292-b4ad7107af78")
 			Expect(err).ToNot(HaveOccurred())
 
 			Expect(doer.Request.Header.Get(constants.HeaderCloudConnectorOrgID)).To(Equal("5318290"))
-			Expect(doer.Request.Header.Get(constants.HeaderCloudConnectorPSK)).ToNot(BeNil())
+			Expect(doer.Request.Header.Get(constants.HeaderCloudConnectorPSK)).To(Equal(cfg.GetString("cloud.connector.psk")))
 		})
 	})
 })
