@@ -268,6 +268,7 @@ var _ = Describe("Cloud Connector", func() {
 			Expect(err).ToNot(HaveOccurred())
 
 			Expect(doer.Request.Header.Get(constants.HeaderCloudConnectorOrgID)).To(Equal("5318290"))
+			Expect(doer.Request.Header.Get(constants.HeaderCloudConnectorPSK)).ToNot(BeNil())
 		})
 	})
 })
