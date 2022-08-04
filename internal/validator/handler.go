@@ -152,7 +152,7 @@ func (this *handler) validationSteps(
 }
 
 func (this *handler) validateRequest(request *messageModel.IngressValidationRequest) (err error) {
-	if request.Size > cfg.GetInt64("artifact.max.size") {
+	if request.Size == 0 || request.Size > cfg.GetInt64("artifact.max.size") {
 		return fmt.Errorf("Rejecting payload due to file size: %d", request.Size)
 	}
 
