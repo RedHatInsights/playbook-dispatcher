@@ -40,7 +40,6 @@ type CloudConnectorClient interface {
 
 	GetConnectionStatus(
 		ctx context.Context,
-		account *string,
 		orgID string,
 		recipient string,
 	) (ConnectionStatus, error)
@@ -140,16 +139,13 @@ func (this *cloudConnectorClientImpl) SendCloudConnectorRequest(
 
 func (this *cloudConnectorClientImpl) GetConnectionStatus(
 	ctx context.Context,
-	account *string,
 	orgID string,
 	recipient string,
 ) (status ConnectionStatus, err error) {
 	ctx = context.WithValue(ctx, orgIDKey, orgID)
-	ctx = context.WithValue(ctx, accountKey, account)
 
 	utils.GetLogFromContext(ctx).Debugw("Sending Cloud Connector status request",
 		"org_id", orgID,
-		"account", account,
 		"recipient", recipient,
 	)
 
