@@ -336,8 +336,6 @@ parameters:
   value: '8892'
 - name: TENANT_TRANSLATOR_IMPL
   value: impl
-- name: PROMETHEUS_PUSHGATEWAY
-  value: "localhost"
 
 
 # Used for testing in ephemeral environments only.
