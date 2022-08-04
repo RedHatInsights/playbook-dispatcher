@@ -24,8 +24,7 @@ const basePath = "/api/cloud-connector/"
 type key int
 
 const (
-	accountKey key = iota
-	orgIDKey   key = iota
+	orgIDKey key = iota
 )
 
 type CloudConnectorClient interface {
