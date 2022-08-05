@@ -83,7 +83,7 @@ var _ = Describe("Cloud Connector", func() {
 
 		correlationId := uuid.New()
 		recipient := uuid.New()
-		url := fmt.Sprintf("http://example.com/api/v1/remediations/%s/playbook", recipient.String())
+		url := "http://example.com"
 
 		ctx := utils.SetLog(test.TestContext(), zap.NewNop().Sugar())
 		result, notFound, err := client.SendCloudConnectorRequest(ctx, "1234", recipient, &url, ansibleDirective, ansibleMetadata(correlationId))
@@ -99,8 +99,8 @@ var _ = Describe("Cloud Connector", func() {
 
 		Expect(parsedRequest["directive"]).To(Equal("playbook"))
 		Expect(parsedRequest["payload"]).To(Equal(url))
-		Expect(parsedRequest["payload"]).To(ContainSubstring(recipient.String()))
 
+		Expect(doer.Request.URL.String()).To(ContainSubstring(recipient.String()))
 		Expect(doer.Request.Header.Get(constants.HeaderCloudConnectorOrgID)).To(Equal("1234"))
 
 		metadata, ok := parsedRequest["metadata"].(map[string]interface{})
@@ -146,6 +146,7 @@ var _ = Describe("Cloud Connector", func() {
 		Expect(parsedRequest["directive"]).To(Equal("playbook-sat"))
 		Expect(parsedRequest["payload"]).To(Equal(url))
 
+		Expect(doer.Request.URL.String()).To(ContainSubstring(recipient.String()))
 		Expect(doer.Request.Header.Get(constants.HeaderCloudConnectorOrgID)).To(Equal("1234"))
 
 		metadata, ok := parsedRequest["metadata"].(map[string]interface{})
@@ -191,6 +192,7 @@ var _ = Describe("Cloud Connector", func() {
 		Expect(parsedRequest).To(HaveLen(2))
 		Expect(parsedRequest["directive"]).To(Equal("playbook-sat"))
 
+		Expect(doer.Request.URL.String()).To(ContainSubstring(recipient.String()))
 		Expect(doer.Request.Header.Get(constants.HeaderCloudConnectorOrgID)).To(Equal("1234"))
 
 		metadata, ok := parsedRequest["metadata"].(map[string]interface{})
