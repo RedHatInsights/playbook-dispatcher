@@ -82,9 +82,6 @@ func (j *PlaybookRunResponseMessageYamlEventsElem) UnmarshalJSON(b []byte) error
 }
 
 type PlaybookRunResponseMessageYaml struct {
-	// Account corresponds to the JSON schema field "account".
-	Account *string `json:"account,omitempty" yaml:"account,omitempty"`
-
 	// B64Identity corresponds to the JSON schema field "b64_identity".
 	B64Identity string `json:"b64_identity" yaml:"b64_identity"`
 
