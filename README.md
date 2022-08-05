@@ -300,7 +300,6 @@ In addition, each event contains the following headers:
 - `event_type` - the type of the event (see above)
 - `service` - the service that created the given playbook run
 - `status` - current of the playbook run
-- `account`* - a legacy identifier for the account (tenant) the given playbook run belongs to **(replaced by `org_id`, so this field may be null or absent)**
 - `org_id` - the account (tenant) the given playbook run belong to
 
 The event headers make it possible to filter events without the need to parse the value of each event.
@@ -387,9 +386,7 @@ For each Playbook run request a message with the following format is sent to Clo
 
 ```javascript
 {
-    "account":"540155",
     "directive":"rhc-worker-playbook",
-    "recipient":"869fe355-4b69-43f6-82ff-d151dddee472", // id of the cloud connector client
     "metadata":{
         "crc_dispatcher_correlation_id":"e957564e-b823-4047-9ad7-0277dc61c88f", // see Non-standard event types for more details
         "response_interval":"600", // how often the recipient should send back responses
@@ -407,9 +404,7 @@ See [rhc-worker-playbook](https://github.com/RedHatInsights/rhc-worker-playbook)
 For each Playbook run request a message with the following format is sent to Cloud Connector:
 
 ```javascript
-    "account":"540155",
     "directive":"foreman_rh_cloud",
-    "recipient":"869fe355-4b69-43f6-82ff-d151dddee472", // id of the cloud connector client
     "metadata":{
         "operation": "run",
         // URL to post responses to
