@@ -79,12 +79,12 @@ var _ = Describe("Cloud Connector", func() {
 
 	It("constructs a correct request", func() {
 		doer := test.MockHttpClient(201, `{"id": "871e31aa-7d41-43e3-8ef7-05706a0ee34a"}`)
-
-		url := "http://example.com"
-		correlationId := uuid.New()
-
 		client := NewConnectorClientWithHttpRequestDoer(config.Get(), &doer)
+
+		correlationId := uuid.New()
 		recipient := uuid.New()
+		url := fmt.Sprintf("http://example.com/api/v1/remediations/%s/playbook", recipient.String())
+
 		ctx := utils.SetLog(test.TestContext(), zap.NewNop().Sugar())
 		result, notFound, err := client.SendCloudConnectorRequest(ctx, "1234", recipient, &url, ansibleDirective, ansibleMetadata(correlationId))
 		Expect(notFound).To(BeFalse())
@@ -99,6 +99,9 @@ var _ = Describe("Cloud Connector", func() {
 
 		Expect(parsedRequest["directive"]).To(Equal("playbook"))
 		Expect(parsedRequest["payload"]).To(Equal(url))
+		Expect(parsedRequest["payload"]).To(ContainSubstring(recipient.String()))
+
+		Expect(doer.Request.Header.Get(constants.HeaderCloudConnectorOrgID)).To(Equal("1234"))
 
 		metadata, ok := parsedRequest["metadata"].(map[string]interface{})
 		Expect(ok).To(BeTrue())
@@ -143,6 +146,8 @@ var _ = Describe("Cloud Connector", func() {
 		Expect(parsedRequest["directive"]).To(Equal("playbook-sat"))
 		Expect(parsedRequest["payload"]).To(Equal(url))
 
+		Expect(doer.Request.Header.Get(constants.HeaderCloudConnectorOrgID)).To(Equal("1234"))
+
 		metadata, ok := parsedRequest["metadata"].(map[string]interface{})
 		Expect(ok).To(BeTrue())
 		Expect(metadata["return_url"]).To(Equal("http://example.com/return"))
@@ -185,6 +190,8 @@ var _ = Describe("Cloud Connector", func() {
 
 		Expect(parsedRequest).To(HaveLen(2))
 		Expect(parsedRequest["directive"]).To(Equal("playbook-sat"))
+
+		Expect(doer.Request.Header.Get(constants.HeaderCloudConnectorOrgID)).To(Equal("1234"))
 
 		metadata, ok := parsedRequest["metadata"].(map[string]interface{})
 		Expect(ok).To(BeTrue())
