@@ -9,7 +9,6 @@ import (
 
 const (
 	fieldId            = "id"
-	fieldAccount       = "account"
 	fieldOrgId         = "org_id"
 	fieldRecipient     = "recipient"
 	fieldUrl           = "url"
@@ -30,7 +29,7 @@ const (
 )
 
 var (
-	runFields     = utils.IndexStrings(fieldId, fieldAccount, fieldOrgId, fieldRecipient, fieldUrl, fieldLabels, fieldTimeout, fieldStatus, fieldCreatedAt, fieldUpdatedAt, fieldService, fieldCorrelationId, fieldName, fieldWebConsoleUrl)
+	runFields     = utils.IndexStrings(fieldId, fieldOrgId, fieldRecipient, fieldUrl, fieldLabels, fieldTimeout, fieldStatus, fieldCreatedAt, fieldUpdatedAt, fieldService, fieldCorrelationId, fieldName, fieldWebConsoleUrl)
 	runHostFields = utils.IndexStrings(fieldHost, fieldRun, fieldStatus, fieldStdout, fieldLinks, fieldInventoryId)
 )
 
