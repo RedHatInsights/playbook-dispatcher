@@ -97,6 +97,7 @@ components:
       type: string
       minLength: 1
       maxLength: 10
+      deprecated: true
 
     OrgId:
       description: Identifier of the tenant
@@ -398,7 +399,7 @@ components:
               type: string
               enum:
                 - id
-                - account
+                - org_id
                 - recipient
                 - correlation_id
                 - url
@@ -412,7 +413,7 @@ components:
                 - updated_at
             default:
               - id
-              - account
+              - org_id
               - recipient
               - url
               - labels

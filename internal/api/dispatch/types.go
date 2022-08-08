@@ -10,8 +10,8 @@ import (
 
 // orchestrates sending of playbook run signal and storing the database records
 type DispatchManager interface {
-	ProcessRun(ctx context.Context, account string, service string, run generic.RunInput) (runID, correlationID uuid.UUID, err error)
-	ProcessCancel(ctx context.Context, account string, cancel generic.CancelInput) (runID, correlationID uuid.UUID, err error)
+	ProcessRun(ctx context.Context, orgID string, service string, run generic.RunInput) (runID, correlationID uuid.UUID, err error)
+	ProcessCancel(ctx context.Context, orgID string, cancel generic.CancelInput) (runID, correlationID uuid.UUID, err error)
 }
 
 // Indicates that the recipient is not connected
@@ -21,6 +21,11 @@ type RecipientNotFoundError struct {
 }
 
 type RunNotFoundError struct {
+	err   error
+	runID uuid.UUID
+}
+
+type RunOrgIdMismatchError struct {
 	err   error
 	runID uuid.UUID
 }
@@ -39,6 +44,10 @@ func (this *RecipientNotFoundError) Error() string {
 
 func (this *RunNotFoundError) Error() string {
 	return fmt.Sprintf("Run not found: %s", this.runID)
+}
+
+func (this *RunOrgIdMismatchError) Error() string {
+	return fmt.Sprintf("Invalid org_id for cancel request: %s", this.runID)
 }
 
 func (this *RunCancelTypeError) Error() string {

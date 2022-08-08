@@ -37,11 +37,10 @@ func newResponseMessage(value interface{}, correlationId uuid.UUID, requestType 
 }
 
 func newSatResponseMessage(satEvents *[]messageModel.PlaybookSatRunResponseMessageYamlEventsElem, correlationId uuid.UUID) *k.Message {
-	accountNumber := accountNumber()
+	orgId := orgId()
 
 	data := messageModel.PlaybookSatRunResponseMessageYaml{
-		Account:   accountNumber,
-		OrgId:     accountNumber + "-test",
+		OrgId:     orgId,
 		RequestId: uuid.New().String(),
 		Events:    *satEvents,
 	}
@@ -50,11 +49,10 @@ func newSatResponseMessage(satEvents *[]messageModel.PlaybookSatRunResponseMessa
 }
 
 func newRunnerResponseMessage(runnerEvents *[]messageModel.PlaybookRunResponseMessageYamlEventsElem, correlationId uuid.UUID) *k.Message {
-	accountNumber := accountNumber()
+	orgId := orgId()
 
 	data := messageModel.PlaybookRunResponseMessageYaml{
-		Account:   accountNumber,
-		OrgId:     accountNumber + "-test",
+		OrgId:     orgId,
 		RequestId: uuid.New().String(),
 		Events:    *runnerEvents,
 	}
@@ -171,7 +169,7 @@ var _ = Describe("handler", func() {
 
 	Describe("state update", func() {
 		It("noop on empty list of events", func() {
-			var data = test.NewRun(accountNumber())
+			var data = test.NewRun(orgId())
 			Expect(db().Create(&data).Error).ToNot(HaveOccurred())
 
 			msg := newRunnerResponseMessage(&[]messageModel.PlaybookRunResponseMessageYamlEventsElem{}, uuid.New())
@@ -185,7 +183,7 @@ var _ = Describe("handler", func() {
 		})
 
 		It("updates the run status based on successful runner events", func() {
-			var data = test.NewRun(accountNumber())
+			var data = test.NewRun(orgId())
 			Expect(db().Create(&data).Error).ToNot(HaveOccurred())
 
 			events := createRunnerEvents(
@@ -206,7 +204,7 @@ var _ = Describe("handler", func() {
 		})
 
 		It("updates the run status based on failure runner events", func() {
-			var data = test.NewRun(accountNumber())
+			var data = test.NewRun(orgId())
 			Expect(db().Create(&data).Error).ToNot(HaveOccurred())
 
 			events := createRunnerEvents(
@@ -227,7 +225,7 @@ var _ = Describe("handler", func() {
 		})
 
 		It("updates multiple hosts involved in a run", func() {
-			var data = test.NewRun(accountNumber())
+			var data = test.NewRun(orgId())
 			Expect(db().Create(&data).Error).ToNot(HaveOccurred())
 
 			events := createRunnerEvents(
@@ -284,8 +282,8 @@ var _ = Describe("handler", func() {
 	Describe("correlation", func() {
 		It("updates the correct run", func() {
 			data := []dbModel.Run{
-				test.NewRun(accountNumber()),
-				test.NewRun(accountNumber()),
+				test.NewRun(orgId()),
+				test.NewRun(orgId()),
 			}
 
 			Expect(db().Create(&data).Error).ToNot(HaveOccurred())
@@ -316,7 +314,7 @@ var _ = Describe("handler", func() {
 
 	Describe("Satellite", func() {
 		It("updates the run status based on successful satellite events", func() {
-			var data = test.NewRun(accountNumber())
+			var data = test.NewRun(orgId())
 			Expect(db().Create(&data).Error).ToNot(HaveOccurred())
 
 			inventoryId := uuid.New()
@@ -341,7 +339,7 @@ var _ = Describe("handler", func() {
 		})
 
 		It("updates the run status based on failed satellite events", func() {
-			var data = test.NewRun(accountNumber())
+			var data = test.NewRun(orgId())
 			Expect(db().Create(&data).Error).ToNot(HaveOccurred())
 
 			inventoryId := uuid.New()
@@ -366,7 +364,7 @@ var _ = Describe("handler", func() {
 		})
 
 		It("updates the run status based on canceled satellite events", func() {
-			var data = test.NewRun(accountNumber())
+			var data = test.NewRun(orgId())
 			Expect(db().Create(&data).Error).ToNot(HaveOccurred())
 
 			inventoryId := uuid.New()
@@ -390,7 +388,7 @@ var _ = Describe("handler", func() {
 		})
 
 		It("updates multiple satellite hosts involved in a run", func() {
-			var data = test.NewRun(accountNumber())
+			var data = test.NewRun(orgId())
 			Expect(db().Create(&data).Error).ToNot(HaveOccurred())
 
 			inventoryId := uuid.New()
@@ -438,7 +436,7 @@ var _ = Describe("handler", func() {
 		})
 
 		It("correctly updates satellite hosts from an out-of-order multi-host run", func() {
-			var data = test.NewRun(accountNumber())
+			var data = test.NewRun(orgId())
 			Expect(db().Create(&data).Error).ToNot(HaveOccurred())
 
 			inventoryId := uuid.New()
@@ -485,7 +483,7 @@ var _ = Describe("handler", func() {
 		})
 
 		It("marks playbook run as running when some hosts are still running", func() {
-			var data = test.NewRun(accountNumber())
+			var data = test.NewRun(orgId())
 			Expect(db().Create(&data).Error).ToNot(HaveOccurred())
 
 			inventoryId := uuid.New()
@@ -527,7 +525,7 @@ var _ = Describe("handler", func() {
 		})
 
 		It("correctly determines failure run status when completed event is missing", func() {
-			var data = test.NewRun(accountNumber())
+			var data = test.NewRun(orgId())
 			Expect(db().Create(&data).Error).ToNot(HaveOccurred())
 
 			inventoryId := uuid.New()
@@ -556,7 +554,7 @@ var _ = Describe("handler", func() {
 		})
 
 		It("correctly determines canceled run status when completed event is missing", func() {
-			var data = test.NewRun(accountNumber())
+			var data = test.NewRun(orgId())
 			Expect(db().Create(&data).Error).ToNot(HaveOccurred())
 
 			inventoryId := uuid.New()
@@ -585,7 +583,7 @@ var _ = Describe("handler", func() {
 		})
 
 		It("correctly determines run status when completed event is missing and both failed and canceled events are present", func() {
-			var data = test.NewRun(accountNumber())
+			var data = test.NewRun(orgId())
 			Expect(db().Create(&data).Error).ToNot(HaveOccurred())
 
 			inventoryId := uuid.New()
@@ -614,7 +612,7 @@ var _ = Describe("handler", func() {
 		})
 
 		It("copies over satellite_connection_error to console", func() {
-			var data = test.NewRun(accountNumber())
+			var data = test.NewRun(orgId())
 			Expect(db().Create(&data).Error).ToNot(HaveOccurred())
 
 			inventoryId := uuid.New()
@@ -644,7 +642,7 @@ var _ = Describe("handler", func() {
 		})
 
 		It("copies over satellite_infrastructure_error to console", func() {
-			var data = test.NewRun(accountNumber())
+			var data = test.NewRun(orgId())
 			Expect(db().Create(&data).Error).ToNot(HaveOccurred())
 
 			inventoryId := uuid.New()
@@ -675,7 +673,7 @@ var _ = Describe("handler", func() {
 
 		Describe("response_full false", func() {
 			It("infers the logs properly (1 host)", func() {
-				var data = test.NewRun(accountNumber())
+				var data = test.NewRun(orgId())
 				data.ResponseFull = true
 
 				Expect(db().Create(&data).Error).ToNot(HaveOccurred())
@@ -711,7 +709,7 @@ var _ = Describe("handler", func() {
 
 		Describe("response_full false", func() {
 			It("concatenates the logs for the same host", func() {
-				var data = test.NewRun(accountNumber())
+				var data = test.NewRun(orgId())
 				data.ResponseFull = false
 
 				Expect(db().Create(&data).Error).ToNot(HaveOccurred())
@@ -745,7 +743,7 @@ var _ = Describe("handler", func() {
 			})
 
 			It("adds indicator in logs for missed host sequence", func() {
-				var data = test.NewRun(accountNumber())
+				var data = test.NewRun(orgId())
 				data.ResponseFull = false
 
 				Expect(db().Create(&data).Error).ToNot(HaveOccurred())
@@ -779,7 +777,7 @@ var _ = Describe("handler", func() {
 			})
 
 			It("event ignored if received out of order", func() {
-				var data = test.NewRun(accountNumber())
+				var data = test.NewRun(orgId())
 				data.ResponseFull = false
 
 				Expect(db().Create(&data).Error).ToNot(HaveOccurred())
@@ -820,7 +818,7 @@ var _ = Describe("handler", func() {
 			})
 
 			It("failed status not overridden by out-of-order event", func() {
-				var data = test.NewRun(accountNumber())
+				var data = test.NewRun(orgId())
 				data.ResponseFull = false
 
 				Expect(db().Create(&data).Error).ToNot(HaveOccurred())
@@ -853,7 +851,7 @@ var _ = Describe("handler", func() {
 			})
 
 			It("correctly determines run/host status if the finished/completed events are sent separately", func() {
-				var data = test.NewRun(accountNumber())
+				var data = test.NewRun(orgId())
 				data.ResponseFull = false
 
 				Expect(db().Create(&data).Error).ToNot(HaveOccurred())
@@ -894,7 +892,7 @@ var _ = Describe("handler", func() {
 
 			Context("with multiple hosts", func() {
 				It("infers the run status properly", func() {
-					var data = test.NewRun(accountNumber())
+					var data = test.NewRun(orgId())
 					data.ResponseFull = false
 
 					Expect(db().Create(&data).Error).ToNot(HaveOccurred())
@@ -953,7 +951,7 @@ var _ = Describe("handler", func() {
 				})
 
 				It("logs do not interfere between hosts", func() {
-					var data = test.NewRun(accountNumber())
+					var data = test.NewRun(orgId())
 					data.ResponseFull = false
 
 					Expect(db().Create(&data).Error).ToNot(HaveOccurred())

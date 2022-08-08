@@ -15,8 +15,6 @@ properties:
     properties:
       id:
         type: string
-      account:
-        type: string
       org_id:
         type: string
       recipient:
@@ -61,7 +59,6 @@ properties:
         type: string
     required:
       - id
-      - account
       - org_id
       - recipient
       - correlation_id

@@ -48,7 +48,7 @@ func getProtocol(runInput generic.RunInput) protocols.Protocol {
 	}
 }
 
-func (this *dispatchManager) ProcessRun(ctx context.Context, account string, service string, run generic.RunInput) (runID, correlationID uuid.UUID, err error) {
+func (this *dispatchManager) ProcessRun(ctx context.Context, orgID string, service string, run generic.RunInput) (runID, correlationID uuid.UUID, err error) {
 	correlationID = this.newCorrelationId()
 	ctx = utils.WithCorrelationId(ctx, correlationID.String())
 
@@ -67,7 +67,7 @@ func (this *dispatchManager) ProcessRun(ctx context.Context, account string, ser
 
 	messageId, notFound, err := this.cloudConnector.SendCloudConnectorRequest(
 		ctx,
-		account,
+		orgID,
 		run.Recipient,
 		&run.Url,
 		string(protocol.GetDirective()),
@@ -112,12 +112,17 @@ func (this *dispatchManager) ProcessRun(ctx context.Context, account string, ser
 	return entity.ID, correlationID, nil
 }
 
-func (this *dispatchManager) ProcessCancel(ctx context.Context, account string, cancel generic.CancelInput) (runID, correlationID uuid.UUID, err error) {
+func (this *dispatchManager) ProcessCancel(ctx context.Context, orgID string, cancel generic.CancelInput) (runID, correlationID uuid.UUID, err error) {
 	var run db.Run
 
 	if err := this.db.First(&run, cancel.RunId).Error; err != nil {
 		instrumentation.PlaybookRunCancelError(ctx, err)
 		return uuid.UUID{}, run.CorrelationID, &RunNotFoundError{err: err, runID: cancel.RunId}
+	}
+
+	if run.OrgID != orgID {
+		instrumentation.PlaybookRunCancelError(ctx, err)
+		return uuid.UUID{}, run.CorrelationID, &RunOrgIdMismatchError{err: err, runID: cancel.RunId}
 	}
 
 	if run.SatId == nil || run.SatOrgId == nil {
@@ -141,7 +146,7 @@ func (this *dispatchManager) ProcessCancel(ctx context.Context, account string, 
 
 	messageId, notFound, err := this.cloudConnector.SendCloudConnectorRequest(
 		ctx,
-		account,
+		orgID,
 		run.Recipient,
 		nil,
 		string(protocol.GetDirective()),

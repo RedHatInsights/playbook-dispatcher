@@ -52,7 +52,6 @@ func (this *handler) onMessage(ctx context.Context, msg *k.Message) {
 		return
 	}
 
-	ctx = utils.WithAccount(ctx, value.Account)
 	ctx = utils.WithOrgId(ctx, value.OrgId)
 
 	utils.GetLogFromContext(ctx).Debugw("Processing message",
@@ -338,7 +337,6 @@ func checkSatStatusPartial(events *[]message.PlaybookSatRunResponseMessageYamlEv
 }
 
 type parsedMessageInfo struct {
-	Account         string
 	OrgId           string
 	B64Identity     string
 	UploadTimestamp string
@@ -356,7 +354,6 @@ func parseMessage(ctx context.Context, requestType string, msg *k.Message) *pars
 		}
 
 		return &parsedMessageInfo{
-			Account:         value.Account,
 			OrgId:           value.OrgId,
 			B64Identity:     value.B64Identity,
 			UploadTimestamp: value.UploadTimestamp,
@@ -371,7 +368,6 @@ func parseMessage(ctx context.Context, requestType string, msg *k.Message) *pars
 		}
 
 		return &parsedMessageInfo{
-			Account:         value.Account,
 			OrgId:           value.OrgId,
 			B64Identity:     value.B64Identity,
 			UploadTimestamp: value.UploadTimestamp,

@@ -18,9 +18,8 @@ const (
 
 type Run struct {
 	ID      uuid.UUID `gorm:"type:uuid"`
-	Account string
-	OrgID   string `gorm:"default:unknown"`
-	Service string `gorm:"default:unknown"`
+	OrgID   string    `gorm:"default:unknown"`
+	Service string    `gorm:"default:unknown"`
 
 	Recipient     uuid.UUID `gorm:"type:uuid"`
 	CorrelationID uuid.UUID `gorm:"type:uuid"`

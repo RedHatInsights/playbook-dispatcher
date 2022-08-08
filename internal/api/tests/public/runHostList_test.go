@@ -36,7 +36,7 @@ var _ = Describe("runHostList", func() {
 
 	Describe("list hosts", func() {
 		It("by default returns a list of run hosts", func() {
-			run := test.NewRun(accountNumber())
+			run := test.NewRun(orgId())
 			dbInsertRuns(run)
 			host1, host2 := test.NewRunHost(run.ID, "running", nil), test.NewRunHost(run.ID, "failure", nil)
 			host1.Host = "01.example.com"
@@ -55,8 +55,8 @@ var _ = Describe("runHostList", func() {
 		Describe("filtering", func() {
 			It("filters by host status", func() {
 				data := []dbModel.Run{
-					test.NewRunWithStatus(accountNumber(), "success"),
-					test.NewRunWithStatus(accountNumber(), "failure"),
+					test.NewRunWithStatus(orgId(), "success"),
+					test.NewRunWithStatus(orgId(), "failure"),
 				}
 
 				dbInsertRuns(data...)
@@ -70,9 +70,9 @@ var _ = Describe("runHostList", func() {
 
 			It("filters by run id", func() {
 				data := []dbModel.Run{
-					test.NewRun(accountNumber()),
-					test.NewRun(accountNumber()),
-					test.NewRun(accountNumber()),
+					test.NewRun(orgId()),
+					test.NewRun(orgId()),
+					test.NewRun(orgId()),
 				}
 
 				dbInsertRuns(data...)
@@ -88,9 +88,9 @@ var _ = Describe("runHostList", func() {
 
 			It("filters by run labels", func() {
 				data := []dbModel.Run{
-					test.NewRun(accountNumber()),
-					test.NewRun(accountNumber()),
-					test.NewRun(accountNumber()),
+					test.NewRun(orgId()),
+					test.NewRun(orgId()),
+					test.NewRun(orgId()),
 				}
 
 				data[0].Labels = map[string]string{"remediation": "0"}
@@ -109,7 +109,7 @@ var _ = Describe("runHostList", func() {
 			})
 
 			It("filters by service", func() {
-				run := test.NewRun(accountNumber())
+				run := test.NewRun(orgId())
 				dbInsertRuns(run)
 				dbInsertHosts(test.NewRunHost(run.ID, "running", nil))
 
@@ -125,9 +125,9 @@ var _ = Describe("runHostList", func() {
 
 			It("filters by inventory_id", func() {
 				data := []dbModel.Run{
-					test.NewRun(accountNumber()),
-					test.NewRun(accountNumber()),
-					test.NewRun(accountNumber()),
+					test.NewRun(orgId()),
+					test.NewRun(orgId()),
+					test.NewRun(orgId()),
 				}
 
 				dbInsertRuns(data...)
@@ -148,7 +148,7 @@ var _ = Describe("runHostList", func() {
 
 	Describe("sparse fieldsets", func() {
 		BeforeEach(func() {
-			run := test.NewRun(accountNumber())
+			run := test.NewRun(orgId())
 			dbInsertRuns(run)
 			inventoryID := uuid.New()
 			dbInsertHosts(test.NewRunHost(run.ID, "running", &inventoryID))
@@ -171,7 +171,7 @@ var _ = Describe("runHostList", func() {
 
 	DescribeTable("pagination",
 		func(expected, limit, offset int) {
-			newRuns := test.NewRunsWithLocalhost(accountNumber(), 3)
+			newRuns := test.NewRunsWithLocalhost(orgId(), 3)
 			dbInsertRuns(newRuns...)
 
 			dbInsertHosts(test.FlatMapRunToHost(newRuns, func(run dbModel.Run) []dbModel.RunHost {
@@ -201,9 +201,9 @@ var _ = Describe("runHostList", func() {
 
 		BeforeEach(func() {
 			data = []dbModel.Run{
-				test.NewRun(accountNumber()),
-				test.NewRun(accountNumber()),
-				test.NewRun(accountNumber()),
+				test.NewRun(orgId()),
+				test.NewRun(orgId()),
+				test.NewRun(orgId()),
 			}
 
 			data[0].Service = "test"
@@ -230,11 +230,11 @@ var _ = Describe("runHostList", func() {
 	Describe("links", func() {
 		BeforeEach(func() {
 			var data = []dbModel.Run{
-				test.NewRun(accountNumber()),
-				test.NewRun(accountNumber()),
-				test.NewRun(accountNumber()),
-				test.NewRun(accountNumber()),
-				test.NewRun(accountNumber()),
+				test.NewRun(orgId()),
+				test.NewRun(orgId()),
+				test.NewRun(orgId()),
+				test.NewRun(orgId()),
+				test.NewRun(orgId()),
 			}
 
 			dbInsertRuns(data...)

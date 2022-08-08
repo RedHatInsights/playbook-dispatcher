@@ -22,6 +22,7 @@ const (
 )
 
 var (
+	orgId         = test.WithOrgId()
 	accountNumber = test.WithAccountNumber()
 	client        = &Client{
 		Server: common.TestServer,

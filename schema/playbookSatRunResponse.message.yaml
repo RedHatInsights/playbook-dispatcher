@@ -3,8 +3,6 @@ $id: playbookSatRunResponseMessage
 $schema: http://json-schema.org/draft-07/schema#
 type: object
 properties:
-  account:
-    type: string
   org_id:
     type: string
   request_id:
@@ -64,7 +62,6 @@ properties:
         - correlation_id
 
 required:
-  - account
   - org_id
   - request_id
   - b64_identity
