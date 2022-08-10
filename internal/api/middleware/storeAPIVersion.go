@@ -2,7 +2,7 @@ package middleware
 
 import (
 	"net/http"
-	"playbook-dispatcher/internal/common/utils"
+	"playbook-dispatcher/internal/api/utils"
 	"strings"
 )
 

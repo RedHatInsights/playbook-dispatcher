@@ -27,23 +27,20 @@ func (j *PlaybookSatRunResponseMessageYamlEventsElemType) UnmarshalJSON(b []byte
 }
 
 type PlaybookSatRunResponseMessageYaml struct {
-	// Account corresponds to the JSON schema field "account".
-	Account string `json:"account"`
-
 	// B64Identity corresponds to the JSON schema field "b64_identity".
-	B64Identity string `json:"b64_identity"`
+	B64Identity string `json:"b64_identity" yaml:"b64_identity"`
 
 	// Events corresponds to the JSON schema field "events".
-	Events []PlaybookSatRunResponseMessageYamlEventsElem `json:"events"`
+	Events []PlaybookSatRunResponseMessageYamlEventsElem `json:"events" yaml:"events"`
 
 	// OrgId corresponds to the JSON schema field "org_id".
-	OrgId string `json:"org_id"`
+	OrgId string `json:"org_id" yaml:"org_id"`
 
 	// RequestId corresponds to the JSON schema field "request_id".
-	RequestId string `json:"request_id"`
+	RequestId string `json:"request_id" yaml:"request_id"`
 
 	// UploadTimestamp corresponds to the JSON schema field "upload_timestamp".
-	UploadTimestamp string `json:"upload_timestamp"`
+	UploadTimestamp string `json:"upload_timestamp" yaml:"upload_timestamp"`
 }
 
 // UnmarshalJSON implements json.Unmarshaler.
@@ -73,13 +70,13 @@ func (j *PlaybookSatRunResponseMessageYamlEventsElem) UnmarshalJSON(b []byte) er
 		return err
 	}
 	if v, ok := raw["correlation_id"]; !ok || v == nil {
-		return fmt.Errorf("field correlation_id: required")
+		return fmt.Errorf("field correlation_id in PlaybookSatRunResponseMessageYamlEventsElem: required")
 	}
 	if v, ok := raw["type"]; !ok || v == nil {
-		return fmt.Errorf("field type: required")
+		return fmt.Errorf("field type in PlaybookSatRunResponseMessageYamlEventsElem: required")
 	}
 	if v, ok := raw["version"]; !ok || v == nil {
-		return fmt.Errorf("field version: required")
+		return fmt.Errorf("field version in PlaybookSatRunResponseMessageYamlEventsElem: required")
 	}
 	type Plain PlaybookSatRunResponseMessageYamlEventsElem
 	var plain Plain
@@ -92,47 +89,47 @@ func (j *PlaybookSatRunResponseMessageYamlEventsElem) UnmarshalJSON(b []byte) er
 
 type PlaybookSatRunResponseMessageYamlEventsElem struct {
 	// ConnectionCode corresponds to the JSON schema field "connection_code".
-	ConnectionCode *int `json:"connection_code,omitempty"`
+	ConnectionCode *int `json:"connection_code,omitempty" yaml:"connection_code,omitempty"`
 
 	// Console corresponds to the JSON schema field "console".
-	Console *string `json:"console,omitempty"`
+	Console *string `json:"console,omitempty" yaml:"console,omitempty"`
 
 	// CorrelationId corresponds to the JSON schema field "correlation_id".
-	CorrelationId string `json:"correlation_id"`
+	CorrelationId string `json:"correlation_id" yaml:"correlation_id"`
 
 	// ExecutionCode corresponds to the JSON schema field "execution_code".
-	ExecutionCode *int `json:"execution_code,omitempty"`
+	ExecutionCode *int `json:"execution_code,omitempty" yaml:"execution_code,omitempty"`
 
 	// Host corresponds to the JSON schema field "host".
-	Host *string `json:"host,omitempty"`
+	Host *string `json:"host,omitempty" yaml:"host,omitempty"`
 
 	// SatelliteConnectionCode corresponds to the JSON schema field
 	// "satellite_connection_code".
-	SatelliteConnectionCode *int `json:"satellite_connection_code,omitempty"`
+	SatelliteConnectionCode *int `json:"satellite_connection_code,omitempty" yaml:"satellite_connection_code,omitempty"`
 
 	// SatelliteConnectionError corresponds to the JSON schema field
 	// "satellite_connection_error".
-	SatelliteConnectionError *string `json:"satellite_connection_error,omitempty"`
+	SatelliteConnectionError *string `json:"satellite_connection_error,omitempty" yaml:"satellite_connection_error,omitempty"`
 
 	// SatelliteInfrastructureCode corresponds to the JSON schema field
 	// "satellite_infrastructure_code".
-	SatelliteInfrastructureCode *int `json:"satellite_infrastructure_code,omitempty"`
+	SatelliteInfrastructureCode *int `json:"satellite_infrastructure_code,omitempty" yaml:"satellite_infrastructure_code,omitempty"`
 
 	// SatelliteInfrastructureError corresponds to the JSON schema field
 	// "satellite_infrastructure_error".
-	SatelliteInfrastructureError *string `json:"satellite_infrastructure_error,omitempty"`
+	SatelliteInfrastructureError *string `json:"satellite_infrastructure_error,omitempty" yaml:"satellite_infrastructure_error,omitempty"`
 
 	// Sequence corresponds to the JSON schema field "sequence".
-	Sequence *int `json:"sequence,omitempty"`
+	Sequence *int `json:"sequence,omitempty" yaml:"sequence,omitempty"`
 
 	// Status corresponds to the JSON schema field "status".
-	Status *PlaybookSatRunResponseMessageYamlEventsElemStatus `json:"status,omitempty"`
+	Status *PlaybookSatRunResponseMessageYamlEventsElemStatus `json:"status,omitempty" yaml:"status,omitempty"`
 
 	// Type corresponds to the JSON schema field "type".
-	Type PlaybookSatRunResponseMessageYamlEventsElemType `json:"type"`
+	Type PlaybookSatRunResponseMessageYamlEventsElemType `json:"type" yaml:"type"`
 
 	// Version corresponds to the JSON schema field "version".
-	Version int `json:"version"`
+	Version int `json:"version" yaml:"version"`
 }
 
 type PlaybookSatRunResponseMessageYamlEventsElemStatus string
@@ -164,23 +161,20 @@ func (j *PlaybookSatRunResponseMessageYaml) UnmarshalJSON(b []byte) error {
 	if err := json.Unmarshal(b, &raw); err != nil {
 		return err
 	}
-	if v, ok := raw["account"]; !ok || v == nil {
-		return fmt.Errorf("field account: required")
-	}
 	if v, ok := raw["b64_identity"]; !ok || v == nil {
-		return fmt.Errorf("field b64_identity: required")
+		return fmt.Errorf("field b64_identity in PlaybookSatRunResponseMessageYaml: required")
 	}
 	if v, ok := raw["events"]; !ok || v == nil {
-		return fmt.Errorf("field events: required")
+		return fmt.Errorf("field events in PlaybookSatRunResponseMessageYaml: required")
 	}
 	if v, ok := raw["org_id"]; !ok || v == nil {
-		return fmt.Errorf("field org_id: required")
+		return fmt.Errorf("field org_id in PlaybookSatRunResponseMessageYaml: required")
 	}
 	if v, ok := raw["request_id"]; !ok || v == nil {
-		return fmt.Errorf("field request_id: required")
+		return fmt.Errorf("field request_id in PlaybookSatRunResponseMessageYaml: required")
 	}
 	if v, ok := raw["upload_timestamp"]; !ok || v == nil {
-		return fmt.Errorf("field upload_timestamp: required")
+		return fmt.Errorf("field upload_timestamp in PlaybookSatRunResponseMessageYaml: required")
 	}
 	type Plain PlaybookSatRunResponseMessageYaml
 	var plain Plain
