@@ -24,6 +24,7 @@ func NewProducer(config *viper.Viper) (*kafka.Producer, error) {
 		"request.required.acks":    config.GetInt("kafka.request.required.acks"),
 		"message.send.max.retries": config.GetInt("kafka.message.send.max.retries"),
 		"retry.backoff.ms":         config.GetInt("kafka.retry.backoff.ms"),
+		"socket.keepalive.enable":  config.GetBool("kafka.socket.keepalive.enable"),
 	}
 	if config.Get("kafka.sasl.username") != nil {
 		_ = kafkaConfigMap.SetKey("sasl.username", config.GetString("kafka.sasl.username"))
@@ -32,12 +33,24 @@ func NewProducer(config *viper.Viper) (*kafka.Producer, error) {
 		_ = kafkaConfigMap.SetKey("security.protocol", config.GetString("kafka.sasl.protocol"))
 		_ = kafkaConfigMap.SetKey("ssl.ca.location", config.GetString("kafka.capath"))
 	}
+
+	// FIXME:
+	logKafkaConfigForDebugging(kafkaConfigMap)
+
 	producer, err := kafka.NewProducer(kafkaConfigMap)
 	if err != nil {
 		return nil, err
 	}
 
 	return producer, nil
+}
+
+func logKafkaConfigForDebugging(configMap *kafka.ConfigMap) {
+	// FIXME: REMOVE ME AFTER WE GET THINGS WORKING
+	var ignoreMeDefaultValue kafka.ConfigValue
+	v, e := configMap.Get("socket.keepalive.enable", ignoreMeDefaultValue)
+	fmt.Println("socket.keepalive.enable:", v)
+	fmt.Println("err:", e)
 }
 
 func NewConsumer(ctx context.Context, config *viper.Viper, topic string) (*kafka.Consumer, error) {
@@ -49,6 +62,7 @@ func NewConsumer(ctx context.Context, config *viper.Viper, topic string) (*kafka
 		"auto.commit.interval.ms":  config.GetInt("kafka.auto.commit.interval.ms"),
 		"go.logs.channel.enable":   true,
 		"allow.auto.create.topics": true,
+		"socket.keepalive.enable":  config.GetBool("kafka.socket.keepalive.enable"),
 	}
 
 	if config.Get("kafka.sasl.username") != nil {
@@ -58,6 +72,9 @@ func NewConsumer(ctx context.Context, config *viper.Viper, topic string) (*kafka
 		_ = kafkaConfigMap.SetKey("security.protocol", config.GetString("kafka.sasl.protocol"))
 		_ = kafkaConfigMap.SetKey("ssl.ca.location", config.GetString("kafka.capath"))
 	}
+
+	// FIXME:
+	logKafkaConfigForDebugging(kafkaConfigMap)
 
 	consumer, err := kafka.NewConsumer(kafkaConfigMap)
 	if err != nil {
