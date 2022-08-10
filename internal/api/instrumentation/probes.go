@@ -2,6 +2,7 @@ package instrumentation
 
 import (
 	"context"
+	api "playbook-dispatcher/internal/api/utils"
 	"playbook-dispatcher/internal/common/utils"
 
 	"github.com/google/uuid"
@@ -35,7 +36,7 @@ var (
 	errorTotal = promauto.NewCounterVec(prometheus.CounterOpts{
 		Name: "api_error_total",
 		Help: "The total number of errors",
-	}, []string{"type", "subtype", "request"})
+	}, []string{"type", "subtype", "request", "api_version"})
 
 	connectorErrorTotal = promauto.NewCounterVec(prometheus.CounterOpts{
 		Name: "api_cloud_connector_error_total",
@@ -60,7 +61,7 @@ var (
 	runCreatedTotal = promauto.NewCounterVec(prometheus.CounterOpts{
 		Name: "api_run_created_total",
 		Help: "The total number of created playbook runs",
-	}, []string{"dispatching_service", "request"})
+	}, []string{"dispatching_service", "request", "api_version"})
 
 	runCanceledTotal = promauto.NewCounter(prometheus.CounterOpts{
 		Name: "api_run_canceled_total",
@@ -100,12 +101,12 @@ func CloudConnectorOK(ctx context.Context, recipient uuid.UUID, messageId *strin
 
 func PlaybookRunCreateError(ctx context.Context, err error, run *dbModel.Run, requestType string) {
 	utils.GetLogFromContext(ctx).Errorw("Error creating run", "error", err, "run", *run)
-	errorTotal.WithLabelValues(labelDb, labelPlaybookRunCreate, requestType).Inc()
+	errorTotal.WithLabelValues(labelDb, labelPlaybookRunCreate, requestType, api.GetApiVersion(ctx)).Inc()
 }
 
 func PlaybookRunHostCreateError(ctx context.Context, err error, data []dbModel.RunHost, requestType string) {
 	utils.GetLogFromContext(ctx).Errorw("Error creating run host", "error", err, "data", data)
-	errorTotal.WithLabelValues(labelDb, labelPlaybookRunHostCreate, requestType).Inc()
+	errorTotal.WithLabelValues(labelDb, labelPlaybookRunHostCreate, requestType, api.GetApiVersion(ctx)).Inc()
 }
 
 func PlaybookRunCancelError(ctx context.Context, err error) {
@@ -135,7 +136,7 @@ func RbacRejected(ctx echo.Context) {
 
 func RunCreated(ctx context.Context, recipient uuid.UUID, runId uuid.UUID, payload string, service string, requestType string) {
 	utils.GetLogFromContext(ctx).Infow("Created new playbook run", "recipient", recipient.String(), "run_id", runId.String(), "payload", string(payload), "service", service)
-	runCreatedTotal.WithLabelValues(service, requestType).Inc()
+	runCreatedTotal.WithLabelValues(service, requestType, api.GetApiVersion(ctx)).Inc()
 }
 
 func RunCanceled(ctx context.Context, runId uuid.UUID) {
@@ -149,13 +150,17 @@ func Start() {
 	validationFailureTotal.WithLabelValues(labelTenantAnemic)
 	validationFailureTotal.WithLabelValues(labelSatellite)
 
-	errorTotal.WithLabelValues(labelDb, labelPlaybookRunCreate, LabelAnsibleRequest)
-	errorTotal.WithLabelValues(labelDb, labelPlaybookRunHostCreate, LabelAnsibleRequest)
-	errorTotal.WithLabelValues(labelDb, labelPlaybookRunRead, LabelAnsibleRequest)
+	errorTotal.WithLabelValues(labelDb, labelPlaybookRunCreate, LabelAnsibleRequest, api.V1.String())
+	errorTotal.WithLabelValues(labelDb, labelPlaybookRunHostCreate, LabelAnsibleRequest, api.V1.String())
+	errorTotal.WithLabelValues(labelDb, labelPlaybookRunRead, LabelAnsibleRequest, api.V1.String())
 
-	errorTotal.WithLabelValues(labelDb, labelPlaybookRunCreate, LabelSatRequest)
-	errorTotal.WithLabelValues(labelDb, labelPlaybookRunHostCreate, LabelSatRequest)
-	errorTotal.WithLabelValues(labelDb, labelPlaybookRunRead, LabelSatRequest)
+	errorTotal.WithLabelValues(labelDb, labelPlaybookRunCreate, LabelAnsibleRequest, api.V2.String())
+	errorTotal.WithLabelValues(labelDb, labelPlaybookRunHostCreate, LabelAnsibleRequest, api.V2.String())
+	errorTotal.WithLabelValues(labelDb, labelPlaybookRunRead, LabelAnsibleRequest, api.V2.String())
+
+	errorTotal.WithLabelValues(labelDb, labelPlaybookRunCreate, LabelSatRequest, api.V2.String())
+	errorTotal.WithLabelValues(labelDb, labelPlaybookRunHostCreate, LabelSatRequest, api.V2.String())
+	errorTotal.WithLabelValues(labelDb, labelPlaybookRunRead, LabelSatRequest, api.V2.String())
 
 	connectorErrorTotal.WithLabelValues(labelErrorGeneric, LabelAnsibleRequest)
 	connectorErrorTotal.WithLabelValues(labelErrorGeneric, LabelSatRequest)
