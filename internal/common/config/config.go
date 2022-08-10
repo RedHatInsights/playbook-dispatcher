@@ -45,6 +45,7 @@ func Get() *viper.Viper {
 	options.SetDefault("kafka.request.required.acks", -1) // -1 == "all"
 	options.SetDefault("kafka.message.send.max.retries", 15)
 	options.SetDefault("kafka.retry.backoff.ms", 100)
+	options.SetDefault("kafka.socket.keepalive.enable", true)
 
 	options.SetDefault("schema.message.response", "./schema/playbookRunResponse.message.yaml")
 	options.SetDefault("schema.satmessage.response", "./schema/playbookSatRunResponse.message.yaml")
