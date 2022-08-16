@@ -114,6 +114,7 @@ func (this *dispatchManager) ProcessRun(ctx context.Context, orgID string, servi
 
 func (this *dispatchManager) ProcessCancel(ctx context.Context, orgID string, cancel generic.CancelInput) (runID, correlationID uuid.UUID, err error) {
 	var run db.Run
+	payload := ""
 
 	if err := this.db.First(&run, cancel.RunId).Error; err != nil {
 		instrumentation.PlaybookRunCancelError(ctx, err)
@@ -148,7 +149,7 @@ func (this *dispatchManager) ProcessCancel(ctx context.Context, orgID string, ca
 		ctx,
 		orgID,
 		run.Recipient,
-		nil,
+		&payload,
 		string(protocol.GetDirective()),
 		signalMetadata,
 	)
