@@ -40,59 +40,5 @@
             {"inventory_id": "19cd5135-ddd9-492a-8153-ca27c0e2392e"},
             {"inventory_id": "8d9ca641-50a5-4d9e-85d3-0fb98a03dc62"}
         ]
-    },
-    {
-        "org_id": "5318290",
-        "recipient": "11e7a22f-be55-4c91-8af9-8076a20ef5d9",
-        "url": "http://example.com/playbook",
-        "labels": {
-            "foo": "bar",
-            "type": "rhc-worker-playbook"
-        },
-        "name":"Directly connected hosts fix",
-        "principal": "test-user",
-        "web_console_url": "https://example.com",
-        "hosts": [
-            {   
-                "ansible_host": "localhost-1",
-                "inventory_id": "2aa1a305-b434-4d54-b659-b4965d6f248a"
-            }
-        ]
-    },
-    {
-        "org_id": "5318290",
-        "recipient": "671e691d-9117-440c-8977-100ad53ce234",
-        "url": "http://example.com/playbook",
-        "labels": {
-            "foo": "bar",
-            "type": "rhc-worker-playbook"
-        },
-        "name":"Directly connected hosts fix",
-        "principal": "test-user",
-        "web_console_url": "https://example.com",
-        "hosts": [
-            {
-                "ansible_host": "localhost-2",
-                "inventory_id": "19cd5135-ddd9-492a-8153-ca27c0e2392e"
-            }
-        ]
-    },
-    {
-        "org_id": "5318290",
-        "recipient": "f32ff46f-f8d8-4236-863c-14e6bdf4ed2a",
-        "url": "http://example.com/playbook",
-        "labels": {
-            "foo": "bar",
-            "type": "rhc-worker-playbook"
-        },
-        "name":"Directly connected hosts fix",
-        "principal": "test-user",
-        "web_console_url": "https://example.com",
-        "hosts": [
-            {
-                "ansible_host": "localhost-3",
-                "inventory_id": "8d9ca641-50a5-4d9e-85d3-0fb98a03dc62"
-            }
-        ]
     }
 ]

@@ -1,4 +1,4 @@
-## Onboarding guide
+# Onboarding guide
 
 Playbook Dispatcher is a service that simplifies running Ansible Playbooks on connected hosts.
 This guide explains how an application be integrated with it in order to benefit from:
@@ -8,11 +8,11 @@ This guide explains how an application be integrated with it in order to benefit
 * common model for representing playbook results
 * built-in authorization support
 
-### Dispatching playbooks
+## Dispatching playbooks
 
 Currently, dispatching of playbooks is only possible with the [Internal/Private API](https://github.com/RedHatInsights/playbook-dispatcher/blob/master/schema/private.openapi.yaml), and it will only be available to accept requests within the cluster.
 
-#### Authenticating with the Internal API
+### Authenticating with the Internal API
 
 In order to send requests to the Internal API, the client is required to provide a service specific pre-shared key under the `Authorization` header of the HTTP request.
 
@@ -22,12 +22,11 @@ POST /internal/dispatch HTTP/1.1
 Authorization: PSK <pre-shared key>
 ```
 
-The service specific pre-kshared keys are configured via environment variables.
-You can open a PR in this repository to add a dispatcher pre-shared key for your service.
-The environment variable will need to be in the form of `PSK_AUTH_<service id>`, for example, `PSK_AUTH_REMEDIATIONS`.
-Here is a PR that added a PSK for the Tasks app [#217](https://github.com/RedHatInsights/playbook-dispatcher/pull/217).
+The service specific pre-shared keys are configured via environment variables.
+If you are interested in adding a dispatcher pre-shared key for your service, you can contact the pipeline team at `#team-consoledot-pipeline` channel on the CoreOs slack workspace.
+A pipeline workstream memeber will then follow the [instructions outlined here](https://gitlab.cee.redhat.com/service/app-interface/-/blob/master/docs/console.redhat.com/app-sops/playbook-dispatcher/onboarding-new-application.md) to set up the pre-shared key for you.
 
-#### Obtaining the necessary infomation
+### Obtaining the necessary infomation
 
 To dispatch a playbook, you will need to POST to the private api's `/internal/v2/dispatch` endpoint.
 The openapi schema for this endpoint can be found [here](https://github.com/RedHatInsights/playbook-dispatcher/blob/master/schema/private.openapi.yaml#L77).
@@ -40,8 +39,13 @@ The endpoint accepts the following parameters:
     The `rhc_id`, or `recipient`, can be obtained using the `/sources/{id}/rhc_connections` [endpoint](https://github.com/RedHatInsights/sources-api-go/blob/9a7c9288be53f84717a6337063a481dcf533f615/public/openapi-3-v3.1.json#L1333).
     For example:
       ```sh
-        curl -v -H "x-rh-identity: <identity-header>" localhost:3000/api/sources/v3.1/sources/<source-id>/rhc_connections      
+        curl -v -H "x-rh-identity: <identity-header>" localhost:3000/api/sources/v3.1/sources/<source-id>/rhc_connections
       ```
+      The `id` in the endpoint is the sources id and can be obtained using the upper-level `/sources` [endpoint](https://github.com/RedHatInsights/sources-api-go/blob/9a7c9288be53f84717a6337063a481dcf533f615/public/openapi-3-v3.1.json#L1498) by doing the following:
+        ```sh
+          curl -v -H "x-rh-identity: <identity-header>" localhost:3000/api/sources/v3.1/sources?filter[source_ref]=<satellite_instance_id>
+        ```
+      The satellite instance id is discussed below.
 * `org_id`
   * The account/tenant this playbook is part of.
     This field is required.
@@ -79,21 +83,36 @@ The endpoint accepts the following parameters:
       This is present within [Inventory's host Facts](https://github.com/RedHatInsights/insights-host-inventory/blob/4e09b9154c364d2553c259cfeef2b99772aef06d/swagger/api.spec.yaml#L848).
 
 
+Please note that, you can dispatch playbooks to multiple satellite hosts in one request (described below), however, for directly connected hosts there should be a separate request for each host.
 Some minimal `rhc-worker-playbook` and satellite hosts dispatch request bodies can be found [here](https://github.com/RedHatInsights/playbook-dispatcher#dispatching-of-playbooks).
 
-### Helpful Tips
+## Fetching playbook run information
 
-#### Dispatching multiple playbook runs
+Playbook dispatcher provides an event interface on the `platform.playbook-dispatcher.runs` kafka topic which can be used to listen for state changes of playbooks.
+All the playbook information provided by the event interface is described in [this JSON schema](https://github.com/RedHatInsights/playbook-dispatcher/blob/master/schema/run.event.yaml).
+Currently, the event interface only provides information on the playbook level.
+Host level information, such as console logs, are not available through this interface.
+Please refer to [this section of the docs](https://github.com/RedHatInsights/playbook-dispatcher#event-interface) to learn more about the event interface.
 
-The Internal API's dispatch enpoint supports the dispatching of multiple playbooks in one request.
-This [sample request body](https://github.com/RedHatInsights/playbook-dispatcher/blob/master/examples/payload-multiple-run-v2.json) demonstrates how to dispatch 3 different playbooks in a single request - 3 satellite hosts in one instance and then 3 more satellite hosts in another along with 3 more directly connected hosts.
+You can also use playbook dispatcher's public API to fetch playbook run or host information on demand.
+Please refer to the following schema definitions for the details:
+
+* Public API endpoint to fetch playbook run information: [here](https://github.com/RedHatInsights/playbook-dispatcher/blob/master/schema/public.openapi.yaml#L17).
+* Public API endpoint to fetch host information: [here](https://github.com/RedHatInsights/playbook-dispatcher/blob/master/schema/public.openapi.yaml#L44).
+
+## Helpful Tips
+
+### Dispatching multiple satellite playbook runs
+
+The Internal API's dispatch endpoint supports the dispatching of multiple playbooks in one request.
+This [sample request body](https://github.com/RedHatInsights/playbook-dispatcher/blob/master/examples/payload-multiple-run-v2.json) demonstrates how to dispatch 2 different playbooks in a single request - 3 satellite hosts in one instance and then 3 more satellite hosts in another.
 
 You can try it out locally using the following curl command
 ```sh
 	curl -v -H "content-type: application/json" -H "Authorization: PSK xwKhCUzgJ8" -d "@examples/payload-multiple-run-v2.json" http://localhost:8000/internal/v2/dispatch
 ```
 
-#### Using labels to group runs
+### Using labels to group runs
 
 You can use the `labels` object in the request body of your dispatch request metioned earlier to group together multiple runs.
 
@@ -109,17 +128,3 @@ Then, when fetching playbook run information through dispatcher's Public API, yo
 ```sh
 /api/playbook-dispatcher/v1/runs?filter[labels][playbook-type]=sat-playbook&filter[labels][service]=remediations
 ```
-
-### Fetching information
-
-Playbook dispatcher provides an event interface on the `platform.playbook-dispatcher.runs` kafka topic which can be used to listen for state changes of playbooks.
-All the playbook information provided by the event interface is described in [this JSON schema](https://github.com/RedHatInsights/playbook-dispatcher/blob/master/schema/run.event.yaml).
-Currently, the event interface only provides information on the playbook level.
-Host level information, such as console logs, are not available through this interface.
-Please refer to [this section of the docs](https://github.com/RedHatInsights/playbook-dispatcher#event-interface) to learn more about the event interface.
-
-You can also use playbook dispatcher's public API to fetch playbook run or host information on demand.
-Please refer to the following schema definitions for the details:
-
-* Public API endpoint to fetch playbook run information: [here](https://github.com/RedHatInsights/playbook-dispatcher/blob/master/schema/public.openapi.yaml#L17).
-* Public API endpoint to fetch host information: [here](https://github.com/RedHatInsights/playbook-dispatcher/blob/master/schema/public.openapi.yaml#L44).
