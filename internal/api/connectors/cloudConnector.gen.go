@@ -33,6 +33,14 @@ type ConnectionListAccountResponse struct {
 	PaginatedResponseLinks `yaml:",inline"`
 }
 
+// ConnectionListByAccountResponseV2 defines model for ConnectionListByAccountResponseV2.
+type ConnectionListByAccountResponseV2 struct {
+	// Embedded struct due to allOf(#/components/schemas/PaginatedResponseMeta)
+	PaginatedResponseMeta `yaml:",inline"`
+	// Embedded struct due to allOf(#/components/schemas/PaginatedResponseLinks)
+	PaginatedResponseLinks `yaml:",inline"`
+}
+
 // ConnectionListResponse defines model for ConnectionListResponse.
 type ConnectionListResponse struct {
 	// Embedded struct due to allOf(#/components/schemas/PaginatedResponseMeta)
@@ -76,6 +84,22 @@ type ConnectionStatusResponse struct {
 	Status      *ConnectionStatus       `json:"status,omitempty"`
 }
 
+// ConnectionStatusResponseV2 defines model for ConnectionStatusResponseV2.
+type ConnectionStatusResponseV2 struct {
+	// Embedded struct due to allOf(#/components/schemas/ConnectionV2)
+	ConnectionV2 `yaml:",inline"`
+}
+
+// ConnectionV2 defines model for ConnectionV2.
+type ConnectionV2 struct {
+	Account        *string                 `json:"account,omitempty"`
+	CanonicalFacts *map[string]interface{} `json:"canonical_facts,omitempty"`
+	ClientId       *string                 `json:"client_id,omitempty"`
+	Dispatchers    *map[string]interface{} `json:"dispatchers,omitempty"`
+	OrgId          *string                 `json:"org_id,omitempty"`
+	Tags           *map[string]interface{} `json:"tags,omitempty"`
+}
+
 // MessageRequest defines model for MessageRequest.
 type MessageRequest struct {
 	Account   *string                  `json:"account,omitempty"`
@@ -87,6 +111,18 @@ type MessageRequest struct {
 
 // MessageRequest_Metadata defines model for MessageRequest.Metadata.
 type MessageRequest_Metadata struct {
+	AdditionalProperties map[string]string `json:"-"`
+}
+
+// MessageRequestV2 defines model for MessageRequestV2.
+type MessageRequestV2 struct {
+	Directive *string                    `json:"directive,omitempty"`
+	Metadata  *MessageRequestV2_Metadata `json:"metadata,omitempty"`
+	Payload   *string                    `json:"payload,omitempty"`
+}
+
+// MessageRequestV2_Metadata defines model for MessageRequestV2.Metadata.
+type MessageRequestV2_Metadata struct {
 	AdditionalProperties map[string]string `json:"-"`
 }
 
@@ -127,14 +163,17 @@ type Payload struct {
 // AccountID defines model for AccountID.
 type AccountID string
 
+// ClientID defines model for ClientID.
+type ClientID string
+
 // Limit defines model for Limit.
 type Limit int
 
 // Offset defines model for Offset.
 type Offset int
 
-// GetConnectionParams defines parameters for GetConnection.
-type GetConnectionParams struct {
+// GetV1ConnectionParams defines parameters for GetV1Connection.
+type GetV1ConnectionParams struct {
 
 	// limit
 	Limit *Limit `json:"limit,omitempty"`
@@ -143,20 +182,20 @@ type GetConnectionParams struct {
 	Offset *Offset `json:"offset,omitempty"`
 }
 
-// PostConnectionDisconnectJSONBody defines parameters for PostConnectionDisconnect.
-type PostConnectionDisconnectJSONBody ConnectionDisconnectRequest
+// PostV1ConnectionDisconnectJSONBody defines parameters for PostV1ConnectionDisconnect.
+type PostV1ConnectionDisconnectJSONBody ConnectionDisconnectRequest
 
-// PostConnectionPingJSONBody defines parameters for PostConnectionPing.
-type PostConnectionPingJSONBody ConnectionStatusRequest
+// PostV1ConnectionPingJSONBody defines parameters for PostV1ConnectionPing.
+type PostV1ConnectionPingJSONBody ConnectionStatusRequest
 
-// PostConnectionReconnectJSONBody defines parameters for PostConnectionReconnect.
-type PostConnectionReconnectJSONBody ConnectionReconnectRequest
+// PostV1ConnectionReconnectJSONBody defines parameters for PostV1ConnectionReconnect.
+type PostV1ConnectionReconnectJSONBody ConnectionReconnectRequest
 
 // V1ConnectionStatusJSONBody defines parameters for V1ConnectionStatus.
 type V1ConnectionStatusJSONBody ConnectionStatusRequest
 
-// GetConnectionAccountParams defines parameters for GetConnectionAccount.
-type GetConnectionAccountParams struct {
+// GetV1ConnectionAccountParams defines parameters for GetV1ConnectionAccount.
+type GetV1ConnectionAccountParams struct {
 
 	// limit
 	Limit *Limit `json:"limit,omitempty"`
@@ -168,17 +207,20 @@ type GetConnectionAccountParams struct {
 // V1ConnectionStatusMultiorgJSONBody defines parameters for V1ConnectionStatusMultiorg.
 type V1ConnectionStatusMultiorgJSONBody ConnectionStatusRequest
 
-// PostMessageJSONBody defines parameters for PostMessage.
-type PostMessageJSONBody MessageRequest
+// PostV1MessageJSONBody defines parameters for PostV1Message.
+type PostV1MessageJSONBody MessageRequest
 
-// PostConnectionDisconnectRequestBody defines body for PostConnectionDisconnect for application/json ContentType.
-type PostConnectionDisconnectJSONRequestBody PostConnectionDisconnectJSONBody
+// PostV2ConnectionsClientIdMessageJSONBody defines parameters for PostV2ConnectionsClientIdMessage.
+type PostV2ConnectionsClientIdMessageJSONBody MessageRequestV2
 
-// PostConnectionPingRequestBody defines body for PostConnectionPing for application/json ContentType.
-type PostConnectionPingJSONRequestBody PostConnectionPingJSONBody
+// PostV1ConnectionDisconnectRequestBody defines body for PostV1ConnectionDisconnect for application/json ContentType.
+type PostV1ConnectionDisconnectJSONRequestBody PostV1ConnectionDisconnectJSONBody
 
-// PostConnectionReconnectRequestBody defines body for PostConnectionReconnect for application/json ContentType.
-type PostConnectionReconnectJSONRequestBody PostConnectionReconnectJSONBody
+// PostV1ConnectionPingRequestBody defines body for PostV1ConnectionPing for application/json ContentType.
+type PostV1ConnectionPingJSONRequestBody PostV1ConnectionPingJSONBody
+
+// PostV1ConnectionReconnectRequestBody defines body for PostV1ConnectionReconnect for application/json ContentType.
+type PostV1ConnectionReconnectJSONRequestBody PostV1ConnectionReconnectJSONBody
 
 // V1ConnectionStatusRequestBody defines body for V1ConnectionStatus for application/json ContentType.
 type V1ConnectionStatusJSONRequestBody V1ConnectionStatusJSONBody
@@ -186,8 +228,11 @@ type V1ConnectionStatusJSONRequestBody V1ConnectionStatusJSONBody
 // V1ConnectionStatusMultiorgRequestBody defines body for V1ConnectionStatusMultiorg for application/json ContentType.
 type V1ConnectionStatusMultiorgJSONRequestBody V1ConnectionStatusMultiorgJSONBody
 
-// PostMessageRequestBody defines body for PostMessage for application/json ContentType.
-type PostMessageJSONRequestBody PostMessageJSONBody
+// PostV1MessageRequestBody defines body for PostV1Message for application/json ContentType.
+type PostV1MessageJSONRequestBody PostV1MessageJSONBody
+
+// PostV2ConnectionsClientIdMessageRequestBody defines body for PostV2ConnectionsClientIdMessage for application/json ContentType.
+type PostV2ConnectionsClientIdMessageJSONRequestBody PostV2ConnectionsClientIdMessageJSONBody
 
 // Getter for additional properties for MessageRequest_Metadata. Returns the specified
 // element and whether it was found
@@ -230,6 +275,59 @@ func (a *MessageRequest_Metadata) UnmarshalJSON(b []byte) error {
 
 // Override default JSON handling for MessageRequest_Metadata to handle AdditionalProperties
 func (a MessageRequest_Metadata) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, errors.Wrap(err, fmt.Sprintf("error marshaling '%s'", fieldName))
+		}
+	}
+	return json.Marshal(object)
+}
+
+// Getter for additional properties for MessageRequestV2_Metadata. Returns the specified
+// element and whether it was found
+func (a MessageRequestV2_Metadata) Get(fieldName string) (value string, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for MessageRequestV2_Metadata
+func (a *MessageRequestV2_Metadata) Set(fieldName string, value string) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]string)
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for MessageRequestV2_Metadata to handle AdditionalProperties
+func (a *MessageRequestV2_Metadata) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]string)
+		for fieldName, fieldBuf := range object {
+			var fieldVal string
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return errors.Wrap(err, fmt.Sprintf("error unmarshaling field %s", fieldName))
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for MessageRequestV2_Metadata to handle AdditionalProperties
+func (a MessageRequestV2_Metadata) MarshalJSON() ([]byte, error) {
 	var err error
 	object := make(map[string]json.RawMessage)
 
@@ -315,45 +413,56 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
-	// GetConnection request
-	GetConnection(ctx context.Context, params *GetConnectionParams) (*http.Response, error)
+	// GetV1Connection request
+	GetV1Connection(ctx context.Context, params *GetV1ConnectionParams) (*http.Response, error)
 
-	// PostConnectionDisconnect request  with any body
-	PostConnectionDisconnectWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error)
+	// PostV1ConnectionDisconnect request  with any body
+	PostV1ConnectionDisconnectWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error)
 
-	PostConnectionDisconnect(ctx context.Context, body PostConnectionDisconnectJSONRequestBody) (*http.Response, error)
+	PostV1ConnectionDisconnect(ctx context.Context, body PostV1ConnectionDisconnectJSONRequestBody) (*http.Response, error)
 
-	// PostConnectionPing request  with any body
-	PostConnectionPingWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error)
+	// PostV1ConnectionPing request  with any body
+	PostV1ConnectionPingWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error)
 
-	PostConnectionPing(ctx context.Context, body PostConnectionPingJSONRequestBody) (*http.Response, error)
+	PostV1ConnectionPing(ctx context.Context, body PostV1ConnectionPingJSONRequestBody) (*http.Response, error)
 
-	// PostConnectionReconnect request  with any body
-	PostConnectionReconnectWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error)
+	// PostV1ConnectionReconnect request  with any body
+	PostV1ConnectionReconnectWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error)
 
-	PostConnectionReconnect(ctx context.Context, body PostConnectionReconnectJSONRequestBody) (*http.Response, error)
+	PostV1ConnectionReconnect(ctx context.Context, body PostV1ConnectionReconnectJSONRequestBody) (*http.Response, error)
 
 	// V1ConnectionStatus request  with any body
 	V1ConnectionStatusWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error)
 
 	V1ConnectionStatus(ctx context.Context, body V1ConnectionStatusJSONRequestBody) (*http.Response, error)
 
-	// GetConnectionAccount request
-	GetConnectionAccount(ctx context.Context, account AccountID, params *GetConnectionAccountParams) (*http.Response, error)
+	// GetV1ConnectionAccount request
+	GetV1ConnectionAccount(ctx context.Context, account AccountID, params *GetV1ConnectionAccountParams) (*http.Response, error)
 
 	// V1ConnectionStatusMultiorg request  with any body
 	V1ConnectionStatusMultiorgWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error)
 
 	V1ConnectionStatusMultiorg(ctx context.Context, body V1ConnectionStatusMultiorgJSONRequestBody) (*http.Response, error)
 
-	// PostMessage request  with any body
-	PostMessageWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error)
+	// PostV1Message request  with any body
+	PostV1MessageWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error)
 
-	PostMessage(ctx context.Context, body PostMessageJSONRequestBody) (*http.Response, error)
+	PostV1Message(ctx context.Context, body PostV1MessageJSONRequestBody) (*http.Response, error)
+
+	// GetV2Connections request
+	GetV2Connections(ctx context.Context) (*http.Response, error)
+
+	// PostV2ConnectionsClientIdMessage request  with any body
+	PostV2ConnectionsClientIdMessageWithBody(ctx context.Context, clientId ClientID, contentType string, body io.Reader) (*http.Response, error)
+
+	PostV2ConnectionsClientIdMessage(ctx context.Context, clientId ClientID, body PostV2ConnectionsClientIdMessageJSONRequestBody) (*http.Response, error)
+
+	// V2ConnectionStatusMultiorg request
+	V2ConnectionStatusMultiorg(ctx context.Context, clientId ClientID) (*http.Response, error)
 }
 
-func (c *Client) GetConnection(ctx context.Context, params *GetConnectionParams) (*http.Response, error) {
-	req, err := NewGetConnectionRequest(c.Server, params)
+func (c *Client) GetV1Connection(ctx context.Context, params *GetV1ConnectionParams) (*http.Response, error) {
+	req, err := NewGetV1ConnectionRequest(c.Server, params)
 	if err != nil {
 		return nil, err
 	}
@@ -367,8 +476,8 @@ func (c *Client) GetConnection(ctx context.Context, params *GetConnectionParams)
 	return c.Client.Do(req)
 }
 
-func (c *Client) PostConnectionDisconnectWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error) {
-	req, err := NewPostConnectionDisconnectRequestWithBody(c.Server, contentType, body)
+func (c *Client) PostV1ConnectionDisconnectWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error) {
+	req, err := NewPostV1ConnectionDisconnectRequestWithBody(c.Server, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -382,8 +491,8 @@ func (c *Client) PostConnectionDisconnectWithBody(ctx context.Context, contentTy
 	return c.Client.Do(req)
 }
 
-func (c *Client) PostConnectionDisconnect(ctx context.Context, body PostConnectionDisconnectJSONRequestBody) (*http.Response, error) {
-	req, err := NewPostConnectionDisconnectRequest(c.Server, body)
+func (c *Client) PostV1ConnectionDisconnect(ctx context.Context, body PostV1ConnectionDisconnectJSONRequestBody) (*http.Response, error) {
+	req, err := NewPostV1ConnectionDisconnectRequest(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -397,8 +506,8 @@ func (c *Client) PostConnectionDisconnect(ctx context.Context, body PostConnecti
 	return c.Client.Do(req)
 }
 
-func (c *Client) PostConnectionPingWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error) {
-	req, err := NewPostConnectionPingRequestWithBody(c.Server, contentType, body)
+func (c *Client) PostV1ConnectionPingWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error) {
+	req, err := NewPostV1ConnectionPingRequestWithBody(c.Server, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -412,8 +521,8 @@ func (c *Client) PostConnectionPingWithBody(ctx context.Context, contentType str
 	return c.Client.Do(req)
 }
 
-func (c *Client) PostConnectionPing(ctx context.Context, body PostConnectionPingJSONRequestBody) (*http.Response, error) {
-	req, err := NewPostConnectionPingRequest(c.Server, body)
+func (c *Client) PostV1ConnectionPing(ctx context.Context, body PostV1ConnectionPingJSONRequestBody) (*http.Response, error) {
+	req, err := NewPostV1ConnectionPingRequest(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -427,8 +536,8 @@ func (c *Client) PostConnectionPing(ctx context.Context, body PostConnectionPing
 	return c.Client.Do(req)
 }
 
-func (c *Client) PostConnectionReconnectWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error) {
-	req, err := NewPostConnectionReconnectRequestWithBody(c.Server, contentType, body)
+func (c *Client) PostV1ConnectionReconnectWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error) {
+	req, err := NewPostV1ConnectionReconnectRequestWithBody(c.Server, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -442,8 +551,8 @@ func (c *Client) PostConnectionReconnectWithBody(ctx context.Context, contentTyp
 	return c.Client.Do(req)
 }
 
-func (c *Client) PostConnectionReconnect(ctx context.Context, body PostConnectionReconnectJSONRequestBody) (*http.Response, error) {
-	req, err := NewPostConnectionReconnectRequest(c.Server, body)
+func (c *Client) PostV1ConnectionReconnect(ctx context.Context, body PostV1ConnectionReconnectJSONRequestBody) (*http.Response, error) {
+	req, err := NewPostV1ConnectionReconnectRequest(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -487,8 +596,8 @@ func (c *Client) V1ConnectionStatus(ctx context.Context, body V1ConnectionStatus
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetConnectionAccount(ctx context.Context, account AccountID, params *GetConnectionAccountParams) (*http.Response, error) {
-	req, err := NewGetConnectionAccountRequest(c.Server, account, params)
+func (c *Client) GetV1ConnectionAccount(ctx context.Context, account AccountID, params *GetV1ConnectionAccountParams) (*http.Response, error) {
+	req, err := NewGetV1ConnectionAccountRequest(c.Server, account, params)
 	if err != nil {
 		return nil, err
 	}
@@ -532,8 +641,8 @@ func (c *Client) V1ConnectionStatusMultiorg(ctx context.Context, body V1Connecti
 	return c.Client.Do(req)
 }
 
-func (c *Client) PostMessageWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error) {
-	req, err := NewPostMessageRequestWithBody(c.Server, contentType, body)
+func (c *Client) PostV1MessageWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error) {
+	req, err := NewPostV1MessageRequestWithBody(c.Server, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -547,8 +656,8 @@ func (c *Client) PostMessageWithBody(ctx context.Context, contentType string, bo
 	return c.Client.Do(req)
 }
 
-func (c *Client) PostMessage(ctx context.Context, body PostMessageJSONRequestBody) (*http.Response, error) {
-	req, err := NewPostMessageRequest(c.Server, body)
+func (c *Client) PostV1Message(ctx context.Context, body PostV1MessageJSONRequestBody) (*http.Response, error) {
+	req, err := NewPostV1MessageRequest(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -562,8 +671,68 @@ func (c *Client) PostMessage(ctx context.Context, body PostMessageJSONRequestBod
 	return c.Client.Do(req)
 }
 
-// NewGetConnectionRequest generates requests for GetConnection
-func NewGetConnectionRequest(server string, params *GetConnectionParams) (*http.Request, error) {
+func (c *Client) GetV2Connections(ctx context.Context) (*http.Response, error) {
+	req, err := NewGetV2ConnectionsRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if c.RequestEditor != nil {
+		err = c.RequestEditor(ctx, req)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PostV2ConnectionsClientIdMessageWithBody(ctx context.Context, clientId ClientID, contentType string, body io.Reader) (*http.Response, error) {
+	req, err := NewPostV2ConnectionsClientIdMessageRequestWithBody(c.Server, clientId, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if c.RequestEditor != nil {
+		err = c.RequestEditor(ctx, req)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PostV2ConnectionsClientIdMessage(ctx context.Context, clientId ClientID, body PostV2ConnectionsClientIdMessageJSONRequestBody) (*http.Response, error) {
+	req, err := NewPostV2ConnectionsClientIdMessageRequest(c.Server, clientId, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if c.RequestEditor != nil {
+		err = c.RequestEditor(ctx, req)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) V2ConnectionStatusMultiorg(ctx context.Context, clientId ClientID) (*http.Response, error) {
+	req, err := NewV2ConnectionStatusMultiorgRequest(c.Server, clientId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if c.RequestEditor != nil {
+		err = c.RequestEditor(ctx, req)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return c.Client.Do(req)
+}
+
+// NewGetV1ConnectionRequest generates requests for GetV1Connection
+func NewGetV1ConnectionRequest(server string, params *GetV1ConnectionParams) (*http.Request, error) {
 	var err error
 
 	queryUrl, err := url.Parse(server)
@@ -571,7 +740,7 @@ func NewGetConnectionRequest(server string, params *GetConnectionParams) (*http.
 		return nil, err
 	}
 
-	basePath := fmt.Sprintf("/connection")
+	basePath := fmt.Sprintf("/v1/connection")
 	if basePath[0] == '/' {
 		basePath = basePath[1:]
 	}
@@ -625,19 +794,19 @@ func NewGetConnectionRequest(server string, params *GetConnectionParams) (*http.
 	return req, nil
 }
 
-// NewPostConnectionDisconnectRequest calls the generic PostConnectionDisconnect builder with application/json body
-func NewPostConnectionDisconnectRequest(server string, body PostConnectionDisconnectJSONRequestBody) (*http.Request, error) {
+// NewPostV1ConnectionDisconnectRequest calls the generic PostV1ConnectionDisconnect builder with application/json body
+func NewPostV1ConnectionDisconnectRequest(server string, body PostV1ConnectionDisconnectJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewPostConnectionDisconnectRequestWithBody(server, "application/json", bodyReader)
+	return NewPostV1ConnectionDisconnectRequestWithBody(server, "application/json", bodyReader)
 }
 
-// NewPostConnectionDisconnectRequestWithBody generates requests for PostConnectionDisconnect with any type of body
-func NewPostConnectionDisconnectRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+// NewPostV1ConnectionDisconnectRequestWithBody generates requests for PostV1ConnectionDisconnect with any type of body
+func NewPostV1ConnectionDisconnectRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	queryUrl, err := url.Parse(server)
@@ -645,7 +814,7 @@ func NewPostConnectionDisconnectRequestWithBody(server string, contentType strin
 		return nil, err
 	}
 
-	basePath := fmt.Sprintf("/connection/disconnect")
+	basePath := fmt.Sprintf("/v1/connection/disconnect")
 	if basePath[0] == '/' {
 		basePath = basePath[1:]
 	}
@@ -664,19 +833,19 @@ func NewPostConnectionDisconnectRequestWithBody(server string, contentType strin
 	return req, nil
 }
 
-// NewPostConnectionPingRequest calls the generic PostConnectionPing builder with application/json body
-func NewPostConnectionPingRequest(server string, body PostConnectionPingJSONRequestBody) (*http.Request, error) {
+// NewPostV1ConnectionPingRequest calls the generic PostV1ConnectionPing builder with application/json body
+func NewPostV1ConnectionPingRequest(server string, body PostV1ConnectionPingJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewPostConnectionPingRequestWithBody(server, "application/json", bodyReader)
+	return NewPostV1ConnectionPingRequestWithBody(server, "application/json", bodyReader)
 }
 
-// NewPostConnectionPingRequestWithBody generates requests for PostConnectionPing with any type of body
-func NewPostConnectionPingRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+// NewPostV1ConnectionPingRequestWithBody generates requests for PostV1ConnectionPing with any type of body
+func NewPostV1ConnectionPingRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	queryUrl, err := url.Parse(server)
@@ -684,7 +853,7 @@ func NewPostConnectionPingRequestWithBody(server string, contentType string, bod
 		return nil, err
 	}
 
-	basePath := fmt.Sprintf("/connection/ping")
+	basePath := fmt.Sprintf("/v1/connection/ping")
 	if basePath[0] == '/' {
 		basePath = basePath[1:]
 	}
@@ -703,19 +872,19 @@ func NewPostConnectionPingRequestWithBody(server string, contentType string, bod
 	return req, nil
 }
 
-// NewPostConnectionReconnectRequest calls the generic PostConnectionReconnect builder with application/json body
-func NewPostConnectionReconnectRequest(server string, body PostConnectionReconnectJSONRequestBody) (*http.Request, error) {
+// NewPostV1ConnectionReconnectRequest calls the generic PostV1ConnectionReconnect builder with application/json body
+func NewPostV1ConnectionReconnectRequest(server string, body PostV1ConnectionReconnectJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewPostConnectionReconnectRequestWithBody(server, "application/json", bodyReader)
+	return NewPostV1ConnectionReconnectRequestWithBody(server, "application/json", bodyReader)
 }
 
-// NewPostConnectionReconnectRequestWithBody generates requests for PostConnectionReconnect with any type of body
-func NewPostConnectionReconnectRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+// NewPostV1ConnectionReconnectRequestWithBody generates requests for PostV1ConnectionReconnect with any type of body
+func NewPostV1ConnectionReconnectRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	queryUrl, err := url.Parse(server)
@@ -723,7 +892,7 @@ func NewPostConnectionReconnectRequestWithBody(server string, contentType string
 		return nil, err
 	}
 
-	basePath := fmt.Sprintf("/connection/reconnect")
+	basePath := fmt.Sprintf("/v1/connection/reconnect")
 	if basePath[0] == '/' {
 		basePath = basePath[1:]
 	}
@@ -762,7 +931,7 @@ func NewV1ConnectionStatusRequestWithBody(server string, contentType string, bod
 		return nil, err
 	}
 
-	basePath := fmt.Sprintf("/connection/status")
+	basePath := fmt.Sprintf("/v1/connection/status")
 	if basePath[0] == '/' {
 		basePath = basePath[1:]
 	}
@@ -781,8 +950,8 @@ func NewV1ConnectionStatusRequestWithBody(server string, contentType string, bod
 	return req, nil
 }
 
-// NewGetConnectionAccountRequest generates requests for GetConnectionAccount
-func NewGetConnectionAccountRequest(server string, account AccountID, params *GetConnectionAccountParams) (*http.Request, error) {
+// NewGetV1ConnectionAccountRequest generates requests for GetV1ConnectionAccount
+func NewGetV1ConnectionAccountRequest(server string, account AccountID, params *GetV1ConnectionAccountParams) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -797,7 +966,7 @@ func NewGetConnectionAccountRequest(server string, account AccountID, params *Ge
 		return nil, err
 	}
 
-	basePath := fmt.Sprintf("/connection/%s", pathParam0)
+	basePath := fmt.Sprintf("/v1/connection/%s", pathParam0)
 	if basePath[0] == '/' {
 		basePath = basePath[1:]
 	}
@@ -871,7 +1040,7 @@ func NewV1ConnectionStatusMultiorgRequestWithBody(server string, contentType str
 		return nil, err
 	}
 
-	basePath := fmt.Sprintf("/connection_status")
+	basePath := fmt.Sprintf("/v1/connection_status")
 	if basePath[0] == '/' {
 		basePath = basePath[1:]
 	}
@@ -890,19 +1059,19 @@ func NewV1ConnectionStatusMultiorgRequestWithBody(server string, contentType str
 	return req, nil
 }
 
-// NewPostMessageRequest calls the generic PostMessage builder with application/json body
-func NewPostMessageRequest(server string, body PostMessageJSONRequestBody) (*http.Request, error) {
+// NewPostV1MessageRequest calls the generic PostV1Message builder with application/json body
+func NewPostV1MessageRequest(server string, body PostV1MessageJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewPostMessageRequestWithBody(server, "application/json", bodyReader)
+	return NewPostV1MessageRequestWithBody(server, "application/json", bodyReader)
 }
 
-// NewPostMessageRequestWithBody generates requests for PostMessage with any type of body
-func NewPostMessageRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+// NewPostV1MessageRequestWithBody generates requests for PostV1Message with any type of body
+func NewPostV1MessageRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	queryUrl, err := url.Parse(server)
@@ -910,7 +1079,7 @@ func NewPostMessageRequestWithBody(server string, contentType string, body io.Re
 		return nil, err
 	}
 
-	basePath := fmt.Sprintf("/message")
+	basePath := fmt.Sprintf("/v1/message")
 	if basePath[0] == '/' {
 		basePath = basePath[1:]
 	}
@@ -926,6 +1095,113 @@ func NewPostMessageRequestWithBody(server string, contentType string, body io.Re
 	}
 
 	req.Header.Add("Content-Type", contentType)
+	return req, nil
+}
+
+// NewGetV2ConnectionsRequest generates requests for GetV2Connections
+func NewGetV2ConnectionsRequest(server string) (*http.Request, error) {
+	var err error
+
+	queryUrl, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	basePath := fmt.Sprintf("/v2/connections")
+	if basePath[0] == '/' {
+		basePath = basePath[1:]
+	}
+
+	queryUrl, err = queryUrl.Parse(basePath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryUrl.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewPostV2ConnectionsClientIdMessageRequest calls the generic PostV2ConnectionsClientIdMessage builder with application/json body
+func NewPostV2ConnectionsClientIdMessageRequest(server string, clientId ClientID, body PostV2ConnectionsClientIdMessageJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewPostV2ConnectionsClientIdMessageRequestWithBody(server, clientId, "application/json", bodyReader)
+}
+
+// NewPostV2ConnectionsClientIdMessageRequestWithBody generates requests for PostV2ConnectionsClientIdMessage with any type of body
+func NewPostV2ConnectionsClientIdMessageRequestWithBody(server string, clientId ClientID, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParam("simple", false, "client_id", clientId)
+	if err != nil {
+		return nil, err
+	}
+
+	queryUrl, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	basePath := fmt.Sprintf("/v2/connections/%s/message", pathParam0)
+	if basePath[0] == '/' {
+		basePath = basePath[1:]
+	}
+
+	queryUrl, err = queryUrl.Parse(basePath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryUrl.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+	return req, nil
+}
+
+// NewV2ConnectionStatusMultiorgRequest generates requests for V2ConnectionStatusMultiorg
+func NewV2ConnectionStatusMultiorgRequest(server string, clientId ClientID) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParam("simple", false, "client_id", clientId)
+	if err != nil {
+		return nil, err
+	}
+
+	queryUrl, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	basePath := fmt.Sprintf("/v2/connections/%s/status", pathParam0)
+	if basePath[0] == '/' {
+		basePath = basePath[1:]
+	}
+
+	queryUrl, err = queryUrl.Parse(basePath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryUrl.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
 	return req, nil
 }
 
@@ -958,51 +1234,62 @@ func WithBaseURL(baseURL string) ClientOption {
 
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
-	// GetConnection request
-	GetConnectionWithResponse(ctx context.Context, params *GetConnectionParams) (*GetConnectionResponse, error)
+	// GetV1Connection request
+	GetV1ConnectionWithResponse(ctx context.Context, params *GetV1ConnectionParams) (*GetV1ConnectionResponse, error)
 
-	// PostConnectionDisconnect request  with any body
-	PostConnectionDisconnectWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*PostConnectionDisconnectResponse, error)
+	// PostV1ConnectionDisconnect request  with any body
+	PostV1ConnectionDisconnectWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*PostV1ConnectionDisconnectResponse, error)
 
-	PostConnectionDisconnectWithResponse(ctx context.Context, body PostConnectionDisconnectJSONRequestBody) (*PostConnectionDisconnectResponse, error)
+	PostV1ConnectionDisconnectWithResponse(ctx context.Context, body PostV1ConnectionDisconnectJSONRequestBody) (*PostV1ConnectionDisconnectResponse, error)
 
-	// PostConnectionPing request  with any body
-	PostConnectionPingWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*PostConnectionPingResponse, error)
+	// PostV1ConnectionPing request  with any body
+	PostV1ConnectionPingWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*PostV1ConnectionPingResponse, error)
 
-	PostConnectionPingWithResponse(ctx context.Context, body PostConnectionPingJSONRequestBody) (*PostConnectionPingResponse, error)
+	PostV1ConnectionPingWithResponse(ctx context.Context, body PostV1ConnectionPingJSONRequestBody) (*PostV1ConnectionPingResponse, error)
 
-	// PostConnectionReconnect request  with any body
-	PostConnectionReconnectWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*PostConnectionReconnectResponse, error)
+	// PostV1ConnectionReconnect request  with any body
+	PostV1ConnectionReconnectWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*PostV1ConnectionReconnectResponse, error)
 
-	PostConnectionReconnectWithResponse(ctx context.Context, body PostConnectionReconnectJSONRequestBody) (*PostConnectionReconnectResponse, error)
+	PostV1ConnectionReconnectWithResponse(ctx context.Context, body PostV1ConnectionReconnectJSONRequestBody) (*PostV1ConnectionReconnectResponse, error)
 
 	// V1ConnectionStatus request  with any body
 	V1ConnectionStatusWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*V1ConnectionStatusResponse, error)
 
 	V1ConnectionStatusWithResponse(ctx context.Context, body V1ConnectionStatusJSONRequestBody) (*V1ConnectionStatusResponse, error)
 
-	// GetConnectionAccount request
-	GetConnectionAccountWithResponse(ctx context.Context, account AccountID, params *GetConnectionAccountParams) (*GetConnectionAccountResponse, error)
+	// GetV1ConnectionAccount request
+	GetV1ConnectionAccountWithResponse(ctx context.Context, account AccountID, params *GetV1ConnectionAccountParams) (*GetV1ConnectionAccountResponse, error)
 
 	// V1ConnectionStatusMultiorg request  with any body
 	V1ConnectionStatusMultiorgWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*V1ConnectionStatusMultiorgResponse, error)
 
 	V1ConnectionStatusMultiorgWithResponse(ctx context.Context, body V1ConnectionStatusMultiorgJSONRequestBody) (*V1ConnectionStatusMultiorgResponse, error)
 
-	// PostMessage request  with any body
-	PostMessageWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*PostMessageResponse, error)
+	// PostV1Message request  with any body
+	PostV1MessageWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*PostV1MessageResponse, error)
 
-	PostMessageWithResponse(ctx context.Context, body PostMessageJSONRequestBody) (*PostMessageResponse, error)
+	PostV1MessageWithResponse(ctx context.Context, body PostV1MessageJSONRequestBody) (*PostV1MessageResponse, error)
+
+	// GetV2Connections request
+	GetV2ConnectionsWithResponse(ctx context.Context) (*GetV2ConnectionsResponse, error)
+
+	// PostV2ConnectionsClientIdMessage request  with any body
+	PostV2ConnectionsClientIdMessageWithBodyWithResponse(ctx context.Context, clientId ClientID, contentType string, body io.Reader) (*PostV2ConnectionsClientIdMessageResponse, error)
+
+	PostV2ConnectionsClientIdMessageWithResponse(ctx context.Context, clientId ClientID, body PostV2ConnectionsClientIdMessageJSONRequestBody) (*PostV2ConnectionsClientIdMessageResponse, error)
+
+	// V2ConnectionStatusMultiorg request
+	V2ConnectionStatusMultiorgWithResponse(ctx context.Context, clientId ClientID) (*V2ConnectionStatusMultiorgResponse, error)
 }
 
-type GetConnectionResponse struct {
+type GetV1ConnectionResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *ConnectionListResponse
 }
 
 // Status returns HTTPResponse.Status
-func (r GetConnectionResponse) Status() string {
+func (r GetV1ConnectionResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -1010,20 +1297,20 @@ func (r GetConnectionResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r GetConnectionResponse) StatusCode() int {
+func (r GetV1ConnectionResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type PostConnectionDisconnectResponse struct {
+type PostV1ConnectionDisconnectResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 }
 
 // Status returns HTTPResponse.Status
-func (r PostConnectionDisconnectResponse) Status() string {
+func (r PostV1ConnectionDisconnectResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -1031,21 +1318,21 @@ func (r PostConnectionDisconnectResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r PostConnectionDisconnectResponse) StatusCode() int {
+func (r PostV1ConnectionDisconnectResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type PostConnectionPingResponse struct {
+type PostV1ConnectionPingResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *ConnectionPingResponse
 }
 
 // Status returns HTTPResponse.Status
-func (r PostConnectionPingResponse) Status() string {
+func (r PostV1ConnectionPingResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -1053,20 +1340,20 @@ func (r PostConnectionPingResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r PostConnectionPingResponse) StatusCode() int {
+func (r PostV1ConnectionPingResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type PostConnectionReconnectResponse struct {
+type PostV1ConnectionReconnectResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 }
 
 // Status returns HTTPResponse.Status
-func (r PostConnectionReconnectResponse) Status() string {
+func (r PostV1ConnectionReconnectResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -1074,7 +1361,7 @@ func (r PostConnectionReconnectResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r PostConnectionReconnectResponse) StatusCode() int {
+func (r PostV1ConnectionReconnectResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -1103,14 +1390,14 @@ func (r V1ConnectionStatusResponse) StatusCode() int {
 	return 0
 }
 
-type GetConnectionAccountResponse struct {
+type GetV1ConnectionAccountResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *ConnectionListAccountResponse
 }
 
 // Status returns HTTPResponse.Status
-func (r GetConnectionAccountResponse) Status() string {
+func (r GetV1ConnectionAccountResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -1118,7 +1405,7 @@ func (r GetConnectionAccountResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r GetConnectionAccountResponse) StatusCode() int {
+func (r GetV1ConnectionAccountResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -1147,14 +1434,14 @@ func (r V1ConnectionStatusMultiorgResponse) StatusCode() int {
 	return 0
 }
 
-type PostMessageResponse struct {
+type PostV1MessageResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON201      *MessageResponse
 }
 
 // Status returns HTTPResponse.Status
-func (r PostMessageResponse) Status() string {
+func (r PostV1MessageResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -1162,71 +1449,137 @@ func (r PostMessageResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r PostMessageResponse) StatusCode() int {
+func (r PostV1MessageResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-// GetConnectionWithResponse request returning *GetConnectionResponse
-func (c *ClientWithResponses) GetConnectionWithResponse(ctx context.Context, params *GetConnectionParams) (*GetConnectionResponse, error) {
-	rsp, err := c.GetConnection(ctx, params)
-	if err != nil {
-		return nil, err
-	}
-	return ParseGetConnectionResponse(rsp)
+type GetV2ConnectionsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *ConnectionListByAccountResponseV2
 }
 
-// PostConnectionDisconnectWithBodyWithResponse request with arbitrary body returning *PostConnectionDisconnectResponse
-func (c *ClientWithResponses) PostConnectionDisconnectWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*PostConnectionDisconnectResponse, error) {
-	rsp, err := c.PostConnectionDisconnectWithBody(ctx, contentType, body)
-	if err != nil {
-		return nil, err
+// Status returns HTTPResponse.Status
+func (r GetV2ConnectionsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
 	}
-	return ParsePostConnectionDisconnectResponse(rsp)
+	return http.StatusText(0)
 }
 
-func (c *ClientWithResponses) PostConnectionDisconnectWithResponse(ctx context.Context, body PostConnectionDisconnectJSONRequestBody) (*PostConnectionDisconnectResponse, error) {
-	rsp, err := c.PostConnectionDisconnect(ctx, body)
-	if err != nil {
-		return nil, err
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetV2ConnectionsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
 	}
-	return ParsePostConnectionDisconnectResponse(rsp)
+	return 0
 }
 
-// PostConnectionPingWithBodyWithResponse request with arbitrary body returning *PostConnectionPingResponse
-func (c *ClientWithResponses) PostConnectionPingWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*PostConnectionPingResponse, error) {
-	rsp, err := c.PostConnectionPingWithBody(ctx, contentType, body)
-	if err != nil {
-		return nil, err
-	}
-	return ParsePostConnectionPingResponse(rsp)
+type PostV2ConnectionsClientIdMessageResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON201      *MessageResponse
 }
 
-func (c *ClientWithResponses) PostConnectionPingWithResponse(ctx context.Context, body PostConnectionPingJSONRequestBody) (*PostConnectionPingResponse, error) {
-	rsp, err := c.PostConnectionPing(ctx, body)
-	if err != nil {
-		return nil, err
+// Status returns HTTPResponse.Status
+func (r PostV2ConnectionsClientIdMessageResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
 	}
-	return ParsePostConnectionPingResponse(rsp)
+	return http.StatusText(0)
 }
 
-// PostConnectionReconnectWithBodyWithResponse request with arbitrary body returning *PostConnectionReconnectResponse
-func (c *ClientWithResponses) PostConnectionReconnectWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*PostConnectionReconnectResponse, error) {
-	rsp, err := c.PostConnectionReconnectWithBody(ctx, contentType, body)
-	if err != nil {
-		return nil, err
+// StatusCode returns HTTPResponse.StatusCode
+func (r PostV2ConnectionsClientIdMessageResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
 	}
-	return ParsePostConnectionReconnectResponse(rsp)
+	return 0
 }
 
-func (c *ClientWithResponses) PostConnectionReconnectWithResponse(ctx context.Context, body PostConnectionReconnectJSONRequestBody) (*PostConnectionReconnectResponse, error) {
-	rsp, err := c.PostConnectionReconnect(ctx, body)
+type V2ConnectionStatusMultiorgResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *ConnectionStatusResponseV2
+}
+
+// Status returns HTTPResponse.Status
+func (r V2ConnectionStatusMultiorgResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r V2ConnectionStatusMultiorgResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// GetV1ConnectionWithResponse request returning *GetV1ConnectionResponse
+func (c *ClientWithResponses) GetV1ConnectionWithResponse(ctx context.Context, params *GetV1ConnectionParams) (*GetV1ConnectionResponse, error) {
+	rsp, err := c.GetV1Connection(ctx, params)
 	if err != nil {
 		return nil, err
 	}
-	return ParsePostConnectionReconnectResponse(rsp)
+	return ParseGetV1ConnectionResponse(rsp)
+}
+
+// PostV1ConnectionDisconnectWithBodyWithResponse request with arbitrary body returning *PostV1ConnectionDisconnectResponse
+func (c *ClientWithResponses) PostV1ConnectionDisconnectWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*PostV1ConnectionDisconnectResponse, error) {
+	rsp, err := c.PostV1ConnectionDisconnectWithBody(ctx, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePostV1ConnectionDisconnectResponse(rsp)
+}
+
+func (c *ClientWithResponses) PostV1ConnectionDisconnectWithResponse(ctx context.Context, body PostV1ConnectionDisconnectJSONRequestBody) (*PostV1ConnectionDisconnectResponse, error) {
+	rsp, err := c.PostV1ConnectionDisconnect(ctx, body)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePostV1ConnectionDisconnectResponse(rsp)
+}
+
+// PostV1ConnectionPingWithBodyWithResponse request with arbitrary body returning *PostV1ConnectionPingResponse
+func (c *ClientWithResponses) PostV1ConnectionPingWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*PostV1ConnectionPingResponse, error) {
+	rsp, err := c.PostV1ConnectionPingWithBody(ctx, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePostV1ConnectionPingResponse(rsp)
+}
+
+func (c *ClientWithResponses) PostV1ConnectionPingWithResponse(ctx context.Context, body PostV1ConnectionPingJSONRequestBody) (*PostV1ConnectionPingResponse, error) {
+	rsp, err := c.PostV1ConnectionPing(ctx, body)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePostV1ConnectionPingResponse(rsp)
+}
+
+// PostV1ConnectionReconnectWithBodyWithResponse request with arbitrary body returning *PostV1ConnectionReconnectResponse
+func (c *ClientWithResponses) PostV1ConnectionReconnectWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*PostV1ConnectionReconnectResponse, error) {
+	rsp, err := c.PostV1ConnectionReconnectWithBody(ctx, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePostV1ConnectionReconnectResponse(rsp)
+}
+
+func (c *ClientWithResponses) PostV1ConnectionReconnectWithResponse(ctx context.Context, body PostV1ConnectionReconnectJSONRequestBody) (*PostV1ConnectionReconnectResponse, error) {
+	rsp, err := c.PostV1ConnectionReconnect(ctx, body)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePostV1ConnectionReconnectResponse(rsp)
 }
 
 // V1ConnectionStatusWithBodyWithResponse request with arbitrary body returning *V1ConnectionStatusResponse
@@ -1246,13 +1599,13 @@ func (c *ClientWithResponses) V1ConnectionStatusWithResponse(ctx context.Context
 	return ParseV1ConnectionStatusResponse(rsp)
 }
 
-// GetConnectionAccountWithResponse request returning *GetConnectionAccountResponse
-func (c *ClientWithResponses) GetConnectionAccountWithResponse(ctx context.Context, account AccountID, params *GetConnectionAccountParams) (*GetConnectionAccountResponse, error) {
-	rsp, err := c.GetConnectionAccount(ctx, account, params)
+// GetV1ConnectionAccountWithResponse request returning *GetV1ConnectionAccountResponse
+func (c *ClientWithResponses) GetV1ConnectionAccountWithResponse(ctx context.Context, account AccountID, params *GetV1ConnectionAccountParams) (*GetV1ConnectionAccountResponse, error) {
+	rsp, err := c.GetV1ConnectionAccount(ctx, account, params)
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetConnectionAccountResponse(rsp)
+	return ParseGetV1ConnectionAccountResponse(rsp)
 }
 
 // V1ConnectionStatusMultiorgWithBodyWithResponse request with arbitrary body returning *V1ConnectionStatusMultiorgResponse
@@ -1272,32 +1625,67 @@ func (c *ClientWithResponses) V1ConnectionStatusMultiorgWithResponse(ctx context
 	return ParseV1ConnectionStatusMultiorgResponse(rsp)
 }
 
-// PostMessageWithBodyWithResponse request with arbitrary body returning *PostMessageResponse
-func (c *ClientWithResponses) PostMessageWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*PostMessageResponse, error) {
-	rsp, err := c.PostMessageWithBody(ctx, contentType, body)
+// PostV1MessageWithBodyWithResponse request with arbitrary body returning *PostV1MessageResponse
+func (c *ClientWithResponses) PostV1MessageWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*PostV1MessageResponse, error) {
+	rsp, err := c.PostV1MessageWithBody(ctx, contentType, body)
 	if err != nil {
 		return nil, err
 	}
-	return ParsePostMessageResponse(rsp)
+	return ParsePostV1MessageResponse(rsp)
 }
 
-func (c *ClientWithResponses) PostMessageWithResponse(ctx context.Context, body PostMessageJSONRequestBody) (*PostMessageResponse, error) {
-	rsp, err := c.PostMessage(ctx, body)
+func (c *ClientWithResponses) PostV1MessageWithResponse(ctx context.Context, body PostV1MessageJSONRequestBody) (*PostV1MessageResponse, error) {
+	rsp, err := c.PostV1Message(ctx, body)
 	if err != nil {
 		return nil, err
 	}
-	return ParsePostMessageResponse(rsp)
+	return ParsePostV1MessageResponse(rsp)
 }
 
-// ParseGetConnectionResponse parses an HTTP response from a GetConnectionWithResponse call
-func ParseGetConnectionResponse(rsp *http.Response) (*GetConnectionResponse, error) {
+// GetV2ConnectionsWithResponse request returning *GetV2ConnectionsResponse
+func (c *ClientWithResponses) GetV2ConnectionsWithResponse(ctx context.Context) (*GetV2ConnectionsResponse, error) {
+	rsp, err := c.GetV2Connections(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetV2ConnectionsResponse(rsp)
+}
+
+// PostV2ConnectionsClientIdMessageWithBodyWithResponse request with arbitrary body returning *PostV2ConnectionsClientIdMessageResponse
+func (c *ClientWithResponses) PostV2ConnectionsClientIdMessageWithBodyWithResponse(ctx context.Context, clientId ClientID, contentType string, body io.Reader) (*PostV2ConnectionsClientIdMessageResponse, error) {
+	rsp, err := c.PostV2ConnectionsClientIdMessageWithBody(ctx, clientId, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePostV2ConnectionsClientIdMessageResponse(rsp)
+}
+
+func (c *ClientWithResponses) PostV2ConnectionsClientIdMessageWithResponse(ctx context.Context, clientId ClientID, body PostV2ConnectionsClientIdMessageJSONRequestBody) (*PostV2ConnectionsClientIdMessageResponse, error) {
+	rsp, err := c.PostV2ConnectionsClientIdMessage(ctx, clientId, body)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePostV2ConnectionsClientIdMessageResponse(rsp)
+}
+
+// V2ConnectionStatusMultiorgWithResponse request returning *V2ConnectionStatusMultiorgResponse
+func (c *ClientWithResponses) V2ConnectionStatusMultiorgWithResponse(ctx context.Context, clientId ClientID) (*V2ConnectionStatusMultiorgResponse, error) {
+	rsp, err := c.V2ConnectionStatusMultiorg(ctx, clientId)
+	if err != nil {
+		return nil, err
+	}
+	return ParseV2ConnectionStatusMultiorgResponse(rsp)
+}
+
+// ParseGetV1ConnectionResponse parses an HTTP response from a GetV1ConnectionWithResponse call
+func ParseGetV1ConnectionResponse(rsp *http.Response) (*GetV1ConnectionResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetConnectionResponse{
+	response := &GetV1ConnectionResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -1315,15 +1703,15 @@ func ParseGetConnectionResponse(rsp *http.Response) (*GetConnectionResponse, err
 	return response, nil
 }
 
-// ParsePostConnectionDisconnectResponse parses an HTTP response from a PostConnectionDisconnectWithResponse call
-func ParsePostConnectionDisconnectResponse(rsp *http.Response) (*PostConnectionDisconnectResponse, error) {
+// ParsePostV1ConnectionDisconnectResponse parses an HTTP response from a PostV1ConnectionDisconnectWithResponse call
+func ParsePostV1ConnectionDisconnectResponse(rsp *http.Response) (*PostV1ConnectionDisconnectResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &PostConnectionDisconnectResponse{
+	response := &PostV1ConnectionDisconnectResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -1334,15 +1722,15 @@ func ParsePostConnectionDisconnectResponse(rsp *http.Response) (*PostConnectionD
 	return response, nil
 }
 
-// ParsePostConnectionPingResponse parses an HTTP response from a PostConnectionPingWithResponse call
-func ParsePostConnectionPingResponse(rsp *http.Response) (*PostConnectionPingResponse, error) {
+// ParsePostV1ConnectionPingResponse parses an HTTP response from a PostV1ConnectionPingWithResponse call
+func ParsePostV1ConnectionPingResponse(rsp *http.Response) (*PostV1ConnectionPingResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &PostConnectionPingResponse{
+	response := &PostV1ConnectionPingResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -1360,15 +1748,15 @@ func ParsePostConnectionPingResponse(rsp *http.Response) (*PostConnectionPingRes
 	return response, nil
 }
 
-// ParsePostConnectionReconnectResponse parses an HTTP response from a PostConnectionReconnectWithResponse call
-func ParsePostConnectionReconnectResponse(rsp *http.Response) (*PostConnectionReconnectResponse, error) {
+// ParsePostV1ConnectionReconnectResponse parses an HTTP response from a PostV1ConnectionReconnectWithResponse call
+func ParsePostV1ConnectionReconnectResponse(rsp *http.Response) (*PostV1ConnectionReconnectResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &PostConnectionReconnectResponse{
+	response := &PostV1ConnectionReconnectResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -1405,15 +1793,15 @@ func ParseV1ConnectionStatusResponse(rsp *http.Response) (*V1ConnectionStatusRes
 	return response, nil
 }
 
-// ParseGetConnectionAccountResponse parses an HTTP response from a GetConnectionAccountWithResponse call
-func ParseGetConnectionAccountResponse(rsp *http.Response) (*GetConnectionAccountResponse, error) {
+// ParseGetV1ConnectionAccountResponse parses an HTTP response from a GetV1ConnectionAccountWithResponse call
+func ParseGetV1ConnectionAccountResponse(rsp *http.Response) (*GetV1ConnectionAccountResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetConnectionAccountResponse{
+	response := &GetV1ConnectionAccountResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -1457,15 +1845,15 @@ func ParseV1ConnectionStatusMultiorgResponse(rsp *http.Response) (*V1ConnectionS
 	return response, nil
 }
 
-// ParsePostMessageResponse parses an HTTP response from a PostMessageWithResponse call
-func ParsePostMessageResponse(rsp *http.Response) (*PostMessageResponse, error) {
+// ParsePostV1MessageResponse parses an HTTP response from a PostV1MessageWithResponse call
+func ParsePostV1MessageResponse(rsp *http.Response) (*PostV1MessageResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &PostMessageResponse{
+	response := &PostV1MessageResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -1477,6 +1865,84 @@ func ParsePostMessageResponse(rsp *http.Response) (*PostMessageResponse, error) 
 			return nil, err
 		}
 		response.JSON201 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetV2ConnectionsResponse parses an HTTP response from a GetV2ConnectionsWithResponse call
+func ParseGetV2ConnectionsResponse(rsp *http.Response) (*GetV2ConnectionsResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetV2ConnectionsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ConnectionListByAccountResponseV2
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParsePostV2ConnectionsClientIdMessageResponse parses an HTTP response from a PostV2ConnectionsClientIdMessageWithResponse call
+func ParsePostV2ConnectionsClientIdMessageResponse(rsp *http.Response) (*PostV2ConnectionsClientIdMessageResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &PostV2ConnectionsClientIdMessageResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
+		var dest MessageResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON201 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseV2ConnectionStatusMultiorgResponse parses an HTTP response from a V2ConnectionStatusMultiorgWithResponse call
+func ParseV2ConnectionStatusMultiorgResponse(rsp *http.Response) (*V2ConnectionStatusMultiorgResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &V2ConnectionStatusMultiorgResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ConnectionStatusResponseV2
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
 
 	}
 

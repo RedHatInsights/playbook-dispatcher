@@ -56,7 +56,6 @@ var _ = Describe("Satellite Protocol", func() {
 
 		It("Produces the correct cancel metadata", func() {
 			cancel := generic.CancelInput{
-				Account:   "12345",
 				OrgId:     "24601",
 				RunId:     uuid.MustParse("b680597e-1a41-46c5-a8d4-12d9e8578023"),
 				Principal: "jharting",

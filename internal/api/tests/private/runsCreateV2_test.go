@@ -39,14 +39,6 @@ func minimalV2Payload(recipient uuid.UUID) RunInputV2 {
 var _ = Describe("runsCreate V2", func() {
 	db := test.WithDatabase()
 
-	It("sends 400 for invalid orgId", func() {
-		payload := minimalV2Payload(uuid.New())
-		payload.OrgId = "1234"
-
-		runs, _ := dispatchV2(&ApiInternalV2RunsCreateJSONRequestBody{payload})
-		Expect((*runs)[0].Code).To(Equal(400))
-	})
-
 	It("creates a new ansible playbook run", func() {
 		payload := minimalV2Payload(uuid.New())
 		payload.OrgId = "12900172"
@@ -61,7 +53,6 @@ var _ = Describe("runsCreate V2", func() {
 		var run dbModel.Run
 		result := db().Where("id = ?", string(*(*runs)[0].Id)).First(&run)
 		Expect(result.Error).ToNot(HaveOccurred())
-		Expect(run.Account).To(Equal("12900-test"))
 		Expect(run.OrgID).To(Equal(string(payload.OrgId)))
 		Expect(run.Recipient.String()).To(Equal(string(payload.Recipient)))
 		Expect(run.URL).To(Equal(string(payload.Url)))
@@ -109,7 +100,6 @@ var _ = Describe("runsCreate V2", func() {
 		var run dbModel.Run
 		result := db().Where("id = ?", string(*(*runs)[0].Id)).First(&run)
 		Expect(result.Error).ToNot(HaveOccurred())
-		Expect(run.Account).To(Equal("53182-test"))
 		Expect(run.OrgID).To(Equal(orgId))
 		Expect(run.Recipient).To(Equal(recipient))
 		Expect(run.URL).To(Equal(url))
@@ -266,24 +256,14 @@ var _ = Describe("runsCreate V2", func() {
 		Expect((*runs)[0].Code).To(Equal(404))
 	})
 
-	It("400s if tenant is not known", func() {
-		payload := minimalV2Payload(uuid.MustParse("b31955fb-3064-4f56-ae44-a1c488a28587"))
-		payload.OrgId = "654321"
-
-		runs, _ := dispatchV2(&ApiInternalV2RunsCreateJSONRequestBody{payload})
-
-		Expect(*runs).To(HaveLen(1))
-		Expect((*runs)[0].Code).To(Equal(400))
-	})
-
-	It("400s on anemic tenant", func() {
-		payload := minimalV2Payload(uuid.MustParse("b31955fb-3064-4f56-ae44-a1c488a28587"))
+	It("Successfully handles an anemic tenant", func() {
+		payload := minimalV2Payload(uuid.New())
 		payload.OrgId = "654322"
 
 		runs, _ := dispatchV2(&ApiInternalV2RunsCreateJSONRequestBody{payload})
 
 		Expect(*runs).To(HaveLen(1))
-		Expect((*runs)[0].Code).To(Equal(400))
+		Expect((*runs)[0].Code).To(Equal(201))
 	})
 
 	It("500s on cloud connector error", func() {

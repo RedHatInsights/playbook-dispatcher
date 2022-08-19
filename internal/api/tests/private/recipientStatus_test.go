@@ -62,20 +62,7 @@ var _ = Describe("recipient status", func() {
 		})
 	})
 
-	It("400s on unknown tenant", func() {
-		payload := ApiInternalV2RecipientsStatusJSONRequestBody{
-			RecipientWithOrg{
-				OrgId:     "654321",
-				Recipient: "ac2edabb-c489-4d28-8c7b-d60fbd2f99ba",
-			},
-		}
-
-		resp, err := client.ApiInternalV2RecipientsStatus(test.TestContext(), payload)
-		Expect(err).ToNot(HaveOccurred())
-		Expect(resp.StatusCode).To(Equal(400))
-	})
-
-	It("400s on anemic tenant", func() {
+	It("Handles an anemic tenant", func() {
 		payload := ApiInternalV2RecipientsStatusJSONRequestBody{
 			RecipientWithOrg{
 				OrgId:     "654322",
@@ -85,6 +72,6 @@ var _ = Describe("recipient status", func() {
 
 		resp, err := client.ApiInternalV2RecipientsStatus(test.TestContext(), payload)
 		Expect(err).ToNot(HaveOccurred())
-		Expect(resp.StatusCode).To(Equal(400))
+		Expect(resp.StatusCode).To(Equal(200))
 	})
 })

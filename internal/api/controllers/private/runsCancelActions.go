@@ -11,14 +11,12 @@ import (
 
 func CancelInputV2GenericMap(
 	cancelInput CancelInputV2,
-	account string,
 	runId uuid.UUID,
 ) generic.CancelInput {
 	orgIdString := string(cancelInput.OrgId)
 	principal := string(cancelInput.Principal)
 
 	result := generic.CancelInput{
-		Account:   account,
 		RunId:     runId,
 		OrgId:     orgIdString,
 		Principal: principal,
@@ -37,6 +35,10 @@ func runCancelError(code int) *RunCanceled {
 func handleRunCancelError(err error) *RunCanceled {
 	if _, ok := err.(*dispatch.RunNotFoundError); ok {
 		return runCancelError(http.StatusNotFound)
+	}
+
+	if _, ok := err.(*dispatch.RunOrgIdMismatchError); ok {
+		return runCancelError(http.StatusBadRequest)
 	}
 
 	if _, ok := err.(*dispatch.RecipientNotFoundError); ok {

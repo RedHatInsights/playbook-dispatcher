@@ -50,11 +50,11 @@ func parseRunHosts(input *RunInputHosts) []generic.RunHostsInput {
 	return result
 }
 
-func RunInputV1GenericMap(runInput RunInput, orgId *string, parsedRecipient uuid.UUID, parsedHosts []generic.RunHostsInput, cfg *viper.Viper) generic.RunInput {
+func RunInputV1GenericMap(runInput RunInput, orgId string, parsedRecipient uuid.UUID, parsedHosts []generic.RunHostsInput, cfg *viper.Viper) generic.RunInput {
 	return generic.RunInput{
 		Recipient: parsedRecipient,
 		OrgId:     orgId,
-		Account:   string(runInput.Account),
+		Account:   (*string)(&runInput.Account),
 		Url:       string(runInput.Url),
 		Labels:    getLabels(runInput.Labels),
 		Timeout:   (*int)(runInput.Timeout),
@@ -64,20 +64,17 @@ func RunInputV1GenericMap(runInput RunInput, orgId *string, parsedRecipient uuid
 
 func RunInputV2GenericMap(
 	runInput RunInputV2,
-	account string,
 	parsedRecipient uuid.UUID,
 	parsedHosts []generic.RunHostsInput,
 	parsedSatID *uuid.UUID,
 	cfg *viper.Viper,
 ) generic.RunInput {
-	orgIdString := string(runInput.OrgId)
 	playbookName := string(runInput.Name)
 	principal := string(runInput.Principal)
 
 	result := generic.RunInput{
 		Recipient:     parsedRecipient,
-		OrgId:         &orgIdString,
-		Account:       account,
+		OrgId:         string(runInput.OrgId),
 		Url:           string(runInput.Url),
 		Labels:        getLabels(runInput.Labels),
 		Timeout:       (*int)(runInput.Timeout),

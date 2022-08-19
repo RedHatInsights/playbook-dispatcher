@@ -52,7 +52,7 @@ func doGet(baseUrl string, keysAndValues ...interface{}) *http.Response {
 
 	req, err := http.NewRequest("GET", url, nil)
 	Expect(err).ToNot(HaveOccurred())
-	req.Header.Set("x-rh-identity", test.IdentityHeaderMinimal(accountNumber()))
+	req.Header.Set("x-rh-identity", test.IdentityHeaderMinimal(orgId()))
 	resp, err := test.Client.Do(req)
 	Expect(err).ToNot(HaveOccurred())
 	return resp

@@ -4,12 +4,12 @@ import "github.com/google/uuid"
 
 type RunInput struct {
 	Recipient     uuid.UUID
-	Account       string
+	Account       *string
 	Url           string
 	Hosts         []RunHostsInput
 	Labels        map[string]string
 	Timeout       *int
-	OrgId         *string
+	OrgId         string
 	SatId         *uuid.UUID
 	SatOrgId      *string
 	Name          *string
@@ -18,7 +18,7 @@ type RunInput struct {
 }
 
 type CancelInput struct {
-	Account   string
+	Account   *string
 	RunId     uuid.UUID
 	OrgId     string
 	Principal string

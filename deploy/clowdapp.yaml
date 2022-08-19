@@ -274,48 +274,6 @@ objects:
           requests:
             cpu: 100m
             memory: 64Mi
-    - name: org-id-populator
-      restartPolicy: OnFailure
-      podSpec:
-        image: ${POPULATOR_IMAGE}:${POPULATOR_IMAGE_TAG}
-        command:
-          - ./org-id-column-populator
-          - -C
-          - -a
-          - account
-          - -o
-          - org_id
-          - -t
-          - runs
-          - --db-null-org-id-place-holder
-          - unknown
-          - --ean-translator-addr
-          - http://${TENANT_TRANSLATOR_HOST}:${TENANT_TRANSLATOR_PORT}
-          - --prometheus-push-addr
-          - ${PROMETHEUS_PUSHGATEWAY}
-          - --db-operation-timeout
-          - ${POPULATOR_OPERATION_TIMEOUT}
-        env:
-          - name: LOG_FORMAT
-            value: ${POPULATOR_LOG_FORMAT}
-          - name: LOG_BATCH_FREQUENCY
-            value: '1s'
-        resources:
-          limits:
-            cpu: 300m
-            memory: 1Gi
-          requests:
-            cpu: 50m
-            memory: 512Mi
-
-- apiVersion: cloud.redhat.com/v1alpha1
-  kind: ClowdJobInvocation
-  metadata:
-    name: populate-org-id-column-${POPULATOR_RUN_NUMBER}
-  spec:
-    appName: playbook-dispatcher
-    jobs:
-      - org-id-populator
 
 parameters:
 - name: IMAGE_TAG
@@ -378,18 +336,6 @@ parameters:
   value: '8892'
 - name: TENANT_TRANSLATOR_IMPL
   value: impl
-- name: POPULATOR_LOG_FORMAT
-  value: cloudwatch
-- name: POPULATOR_IMAGE
-  value: quay.io/cloudservices/tenant-utils
-- name: POPULATOR_IMAGE_TAG
-  value: latest
-- name: POPULATOR_RUN_NUMBER # in case we need to run populator again, just increment this
-  value: "1"
-- name: POPULATOR_OPERATION_TIMEOUT
-  value: "10"
-- name: PROMETHEUS_PUSHGATEWAY
-  value: "localhost"
 
 
 # Used for testing in ephemeral environments only.

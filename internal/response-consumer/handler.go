@@ -36,6 +36,14 @@ type handler struct {
 	db *gorm.DB
 }
 
+func (this *handler) BeforeUpdate(ctx context.Context, tx *gorm.DB) (err error) {
+	if !tx.Statement.Changed("SatSequence") {
+		instrumentation.PlaybookRunUpdateSequenceOrder(ctx)
+	}
+
+	return nil
+}
+
 func (this *handler) onMessage(ctx context.Context, msg *k.Message) {
 	requestId, correlationId, requestType, err := getHeaders(msg)
 
@@ -52,7 +60,6 @@ func (this *handler) onMessage(ctx context.Context, msg *k.Message) {
 		return
 	}
 
-	ctx = utils.WithAccount(ctx, value.Account)
 	ctx = utils.WithOrgId(ctx, value.OrgId)
 
 	utils.GetLogFromContext(ctx).Debugw("Processing message",
@@ -186,10 +193,11 @@ func satAssignmentWithCase(responseFull bool, updateHost db.RunHost) map[string]
 
 func satUpdateRecord(ctx context.Context, tx *gorm.DB, responseFull bool, toUpdate []db.RunHost) error {
 	for _, runHost := range toUpdate {
-		updateResult := tx.Model(db.RunHost{})
+		resultValues := db.RunHost{}
+		updateResult := tx.Model(&resultValues)
 
 		if runHost.SatSequence != nil {
-			updateResult.Where("run_id = ? AND inventory_id = ? AND (sat_sequence IS NULL OR sat_sequence < ?)", runHost.RunID, runHost.InventoryID, *runHost.SatSequence).
+			updateResult.Clauses(clause.Returning{}).Where("run_id = ? AND inventory_id = ? AND (sat_sequence IS NULL OR sat_sequence < ?)", runHost.RunID, runHost.InventoryID, *runHost.SatSequence).
 				Updates(satAssignmentWithCase(responseFull, runHost))
 		} else {
 			// only update status when runHost.SatSequence is nil e.g. when runHost finished
@@ -338,7 +346,6 @@ func checkSatStatusPartial(events *[]message.PlaybookSatRunResponseMessageYamlEv
 }
 
 type parsedMessageInfo struct {
-	Account         string
 	OrgId           string
 	B64Identity     string
 	UploadTimestamp string
@@ -356,7 +363,6 @@ func parseMessage(ctx context.Context, requestType string, msg *k.Message) *pars
 		}
 
 		return &parsedMessageInfo{
-			Account:         value.Account,
 			OrgId:           value.OrgId,
 			B64Identity:     value.B64Identity,
 			UploadTimestamp: value.UploadTimestamp,
@@ -371,7 +377,6 @@ func parseMessage(ctx context.Context, requestType string, msg *k.Message) *pars
 		}
 
 		return &parsedMessageInfo{
-			Account:         value.Account,
 			OrgId:           value.OrgId,
 			B64Identity:     value.B64Identity,
 			UploadTimestamp: value.UploadTimestamp,

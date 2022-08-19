@@ -14,5 +14,5 @@ func TestConfig(t *testing.T) {
 }
 
 var (
-	accountNumber = test.WithAccountNumber()
+	orgId = test.WithOrgId()
 )

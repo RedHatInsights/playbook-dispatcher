@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	accountNumber = test.WithAccountNumber()
+	orgId = test.WithOrgId()
 )
 
 func TestConfig(t *testing.T) {

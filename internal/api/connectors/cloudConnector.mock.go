@@ -16,7 +16,7 @@ func NewConnectorClientMock() CloudConnectorClient {
 
 func (this *cloudConnectorClientMock) SendCloudConnectorRequest(
 	ctx context.Context,
-	account string,
+	orgID string,
 	recipient uuid.UUID,
 	url *string,
 	directive string,
@@ -42,7 +42,6 @@ func (this *cloudConnectorClientMock) SendCloudConnectorRequest(
 
 func (this *cloudConnectorClientMock) GetConnectionStatus(
 	ctx context.Context,
-	account string,
 	orgID string,
 	recipient string,
 ) (ConnectionStatus, error) {
