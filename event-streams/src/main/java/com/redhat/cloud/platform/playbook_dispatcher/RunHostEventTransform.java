@@ -1,7 +1,6 @@
 package com.redhat.cloud.platform.playbook_dispatcher;
 
 import java.lang.invoke.MethodHandles;
-import java.net.URI;
 import java.util.Map;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
