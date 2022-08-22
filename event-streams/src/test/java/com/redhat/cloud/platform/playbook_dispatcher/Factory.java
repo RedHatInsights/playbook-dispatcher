@@ -11,6 +11,7 @@ class Factory {
         return new SourceRecord(null, null, null, null, null, key, null, value);
     }
 
+
     public static Struct getData(String status) {
         return new StructBuilder()
         .put("id", "b5c80cd3-8849-46a2-97e2-368cf62a1cda")
@@ -33,8 +34,27 @@ class Factory {
         .build();
     }
 
+    public static Struct getHostData(String status) {
+        return new StructBuilder()
+        .put("id", "7609546c-f965-4c9c-966c-9e15f4ecbc5f")
+        .put("run_id", "f0705502-6049-461f-99f9-0e18846d8222")
+        .put("inventory_id", "48e144d2-50c6-4886-8044-7e0791603d97")
+        .put("host", "48e144d2-50c6-4886-8044-7e0791603d97")
+        .put("status", status)
+        .put("log", "")
+        .put("events", "[]")
+        .put("created_at", "2021-03-10T08:18:12.370585Z")
+        .put("updated_at", "2021-03-10T09:18:12.370585Z")
+        .put("sat_sequence", 10)
+        .build();
+    }
+
     public static Struct getData() {
         return getData("success");
+    }
+
+    public static Struct getHostData() {
+        return getHostData("success");
     }
 
     public static Struct getSource() {
@@ -43,9 +63,21 @@ class Factory {
         .build();
     }
 
+    public static Struct getHostSource() {
+        return new StructBuilder()
+        .put("table", "run_hosts")
+        .build();
+    }
+
     public static Struct getKey() {
         return new StructBuilder()
         .put("id", "b5c80cd3-8849-46a2-97e2-368cf62a1cda")
+        .build();
+    }
+
+    public static Struct getHostKey() {
+        return new StructBuilder()
+        .put("id", "7609546c-f965-4c9c-966c-9e15f4ecbc5f")
         .build();
     }
 
@@ -60,6 +92,17 @@ class Factory {
         return new SourceRecord(null, null, "public.runs", null, key.schema(), key, value.schema(), value);
     }
 
+    public static SourceRecord newHostEventCreate() {
+        final Struct key = getHostKey();
+        final Struct value = new StructBuilder()
+        .put("after", getHostData())
+        .put("op", "c")
+        .put("source", getHostSource())
+        .build();
+
+        return new SourceRecord(null, null, "public.run_hosts", null, key.schema(), key, value.schema(), value);
+    }
+
     public static SourceRecord newEventRead() {
         final Struct key = getKey();
         final Struct value = new StructBuilder()
@@ -69,6 +112,17 @@ class Factory {
         .build();
 
         return new SourceRecord(null, null, "public.runs", null, key.schema(), key, value.schema(), value);
+    }
+
+    public static SourceRecord newHostEventRead() {
+        final Struct key = getHostKey();
+        final Struct value = new StructBuilder()
+        .put("after", getHostData())
+        .put("op", "r")
+        .put("source", getHostSource())
+        .build();
+
+        return new SourceRecord(null, null, "public.run_hosts", null, key.schema(), key, value.schema(), value);
     }
 
     public static SourceRecord newEventUpdate() {
@@ -83,6 +137,18 @@ class Factory {
         return new SourceRecord(null, null, "public.runs", null, key.schema(), key, value.schema(), value);
     }
 
+    public static SourceRecord newHostEventUpdate() {
+        final Struct key = getHostKey();
+        final Struct value = new StructBuilder()
+        .put("before", getHostData("running"))
+        .put("after", getHostData())
+        .put("op", "u")
+        .put("source", getHostSource())
+        .build();
+
+        return new SourceRecord(null, null, "public.run_hosts", null, key.schema(), key, value.schema(), value);
+    }
+
     public static SourceRecord newEventDelete() {
         final Struct key = getKey();
         final Struct value = new StructBuilder()
@@ -92,5 +158,16 @@ class Factory {
         .build();
 
         return new SourceRecord(null, null, "public.runs", null, key.schema(), key, value.schema(), value);
+    }
+
+    public static SourceRecord newHostEventDelete() {
+        final Struct key = getHostKey();
+        final Struct value = new StructBuilder()
+        .put("before", getHostData())
+        .put("op", "d")
+        .put("source", getHostSource())
+        .build();
+
+        return new SourceRecord(null, null, "public.run_hosts", null, key.schema(), key, value.schema(), value);
     }
 }
