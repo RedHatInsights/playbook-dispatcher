@@ -143,9 +143,6 @@ public class RunHostEventTransform<T extends ConnectRecord<T>> implements Transf
         payload.setCreatedAt(input.getString("created_at"));
         payload.setUpdatedAt(input.getString("updated_at"));
 
-        if (input.get("sat_sequence") != null) {
-            payload.setSatSequence(input.getInt32("sat_sequence"));
-        }
 
         return payload;
     }

@@ -18,10 +18,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
         "inventory_id",
         "host",
         "log",
-        "events",
-        "sat_sequence",
         "status",
-        "timeout",
         "created_at",
         "updated_at"
 })
@@ -34,13 +31,13 @@ public class HostPayload {
      */
     @JsonProperty("id")
     private String id;
-    @JsonProperty("run_id")
-    private String runId;
     /**
      *
      * (Required)
      *
      */
+    @JsonProperty("run_id")
+    private String runId;
     @JsonProperty("inventory_id")
     private String inventoryId;
     /**
@@ -55,22 +52,11 @@ public class HostPayload {
     /**
      *
      * (Required)
-     *
-     */
-    @JsonProperty("events")
-    private String events;
-    @JsonProperty("sat_sequence")
-    private Object satSequence;
-    /**
-     *
-     * (Required)
      * (Required)
      *
      */
     @JsonProperty("status")
     private HostPayload.Status status;
-    @JsonProperty("timeout")
-    private Integer timeout;
     /**
      *
      * (Required)
@@ -108,31 +94,31 @@ public class HostPayload {
         this.id = id;
     }
 
+    /**
+     *
+     * (Required)
+     *
+     */
     @JsonProperty("run_id")
     public String getRunId() {
         return runId;
     }
 
+    /**
+     *
+     * (Required)
+     *
+     */
     @JsonProperty("run_id")
     public void setRunId(String runId) {
         this.runId = runId;
     }
 
-    /**
-     *
-     * (Required)
-     *
-     */
     @JsonProperty("inventory_id")
     public String getInventoryId() {
         return inventoryId;
     }
 
-    /**
-     *
-     * (Required)
-     *
-     */
     @JsonProperty("inventory_id")
     public void setInventoryId(String inventoryId) {
         this.inventoryId = inventoryId;
@@ -173,36 +159,6 @@ public class HostPayload {
      * (Required)
      *
      */
-    @JsonProperty("events")
-    public String getEvents() {
-        return events;
-    }
-
-    /**
-     *
-     * (Required)
-     *
-     */
-    @JsonProperty("events")
-    public void setEvents(String events) {
-        this.events = events;
-    }
-
-    @JsonProperty("sat_sequence")
-    public Object getSatSequence() {
-        return satSequence;
-    }
-
-    @JsonProperty("sat_sequence")
-    public void setSatSequence(Object satSequence) {
-        this.satSequence = satSequence;
-    }
-
-    /**
-     *
-     * (Required)
-     *
-     */
     @JsonProperty("status")
     public HostPayload.Status getStatus() {
         return status;
@@ -216,16 +172,6 @@ public class HostPayload {
     @JsonProperty("status")
     public void setStatus(HostPayload.Status status) {
         this.status = status;
-    }
-
-    @JsonProperty("timeout")
-    public Integer getTimeout() {
-        return timeout;
-    }
-
-    @JsonProperty("timeout")
-    public void setTimeout(Integer timeout) {
-        this.timeout = timeout;
     }
 
     /**
@@ -303,21 +249,9 @@ public class HostPayload {
         sb.append('=');
         sb.append(((this.log == null) ? "<null>" : this.log));
         sb.append(',');
-        sb.append("events");
-        sb.append('=');
-        sb.append(((this.events == null) ? "<null>" : this.events));
-        sb.append(',');
-        sb.append("satSequence");
-        sb.append('=');
-        sb.append(((this.satSequence == null) ? "<null>" : this.satSequence));
-        sb.append(',');
         sb.append("status");
         sb.append('=');
         sb.append(((this.status == null) ? "<null>" : this.status));
-        sb.append(',');
-        sb.append("timeout");
-        sb.append('=');
-        sb.append(((this.timeout == null) ? "<null>" : this.timeout));
         sb.append(',');
         sb.append("createdAt");
         sb.append('=');
@@ -342,16 +276,13 @@ public class HostPayload {
     @Override
     public int hashCode() {
         int result = 1;
-        result = ((result * 31) + ((this.log == null) ? 0 : this.log.hashCode()));
-        result = ((result * 31) + ((this.timeout == null) ? 0 : this.timeout.hashCode()));
         result = ((result * 31) + ((this.createdAt == null) ? 0 : this.createdAt.hashCode()));
+        result = ((result * 31) + ((this.log == null) ? 0 : this.log.hashCode()));
         result = ((result * 31) + ((this.inventoryId == null) ? 0 : this.inventoryId.hashCode()));
         result = ((result * 31) + ((this.host == null) ? 0 : this.host.hashCode()));
-        result = ((result * 31) + ((this.satSequence == null) ? 0 : this.satSequence.hashCode()));
         result = ((result * 31) + ((this.id == null) ? 0 : this.id.hashCode()));
         result = ((result * 31) + ((this.runId == null) ? 0 : this.runId.hashCode()));
         result = ((result * 31) + ((this.additionalProperties == null) ? 0 : this.additionalProperties.hashCode()));
-        result = ((result * 31) + ((this.events == null) ? 0 : this.events.hashCode()));
         result = ((result * 31) + ((this.status == null) ? 0 : this.status.hashCode()));
         result = ((result * 31) + ((this.updatedAt == null) ? 0 : this.updatedAt.hashCode()));
         return result;
@@ -366,20 +297,16 @@ public class HostPayload {
             return false;
         }
         HostPayload rhs = ((HostPayload) other);
-        return (((((((((((((this.log == rhs.log) || ((this.log != null) && this.log.equals(rhs.log)))
-                && ((this.timeout == rhs.timeout) || ((this.timeout != null) && this.timeout.equals(rhs.timeout))))
-                && ((this.createdAt == rhs.createdAt)
-                        || ((this.createdAt != null) && this.createdAt.equals(rhs.createdAt))))
+        return ((((((((((this.createdAt == rhs.createdAt)
+                || ((this.createdAt != null) && this.createdAt.equals(rhs.createdAt)))
+                && ((this.log == rhs.log) || ((this.log != null) && this.log.equals(rhs.log))))
                 && ((this.inventoryId == rhs.inventoryId)
                         || ((this.inventoryId != null) && this.inventoryId.equals(rhs.inventoryId))))
                 && ((this.host == rhs.host) || ((this.host != null) && this.host.equals(rhs.host))))
-                && ((this.satSequence == rhs.satSequence)
-                        || ((this.satSequence != null) && this.satSequence.equals(rhs.satSequence))))
                 && ((this.id == rhs.id) || ((this.id != null) && this.id.equals(rhs.id))))
                 && ((this.runId == rhs.runId) || ((this.runId != null) && this.runId.equals(rhs.runId))))
                 && ((this.additionalProperties == rhs.additionalProperties) || ((this.additionalProperties != null)
                         && this.additionalProperties.equals(rhs.additionalProperties))))
-                && ((this.events == rhs.events) || ((this.events != null) && this.events.equals(rhs.events))))
                 && ((this.status == rhs.status) || ((this.status != null) && this.status.equals(rhs.status))))
                 && ((this.updatedAt == rhs.updatedAt)
                         || ((this.updatedAt != null) && this.updatedAt.equals(rhs.updatedAt))));
