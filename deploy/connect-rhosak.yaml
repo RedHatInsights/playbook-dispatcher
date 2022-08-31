@@ -379,7 +379,7 @@ objects:
               - /check-connectors.sh
               env:
               - name: CONNECT_HOST
-                value: playbook-dispatcher-connect-connect-api
+                value: playbook-dispatcher-connect-rhosak-connect-api
               - name: CONNECT_PORT
                 value: "8083"
               image: ${KAFKA_CONNECT_IMAGE}:${IMAGE_TAG}
