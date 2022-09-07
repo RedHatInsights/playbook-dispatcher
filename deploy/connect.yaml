@@ -19,6 +19,8 @@ parameters:
   value: plain
 - name: KAFKA_TOPIC_PREFIX
   value: ""
+- name: KAFKA_PASSWORD
+  value: password
 - name: DB_HOSTNAME
   value: '${file:/opt/kafka/external-configuration/playbook-dispatcher-db/db.host}'
 - name: DB_PORT
@@ -330,6 +332,14 @@ objects:
           - ${EVENT_CONSUMER_GROUP}
           - --topic
           - ${EVENT_CONSUMER_TOPIC}
+          - --consumer-property
+          - sasl.mechanism=${KAFKA_SASL_MECHANISM}
+          - --consumer-property
+          - security.protocol=${KAFKA_SASL_SECURITY_PROTOCOL}
+          - --consumer-property
+          - sasl.username=${KAFKA_USERNAME}
+          - --consumer-property
+          - sasl.password=${KAFKA_PASSWORD}
           image: ${KAFKA_CONNECT_IMAGE}:${IMAGE_TAG}
           name: playbook-dispatcher-event-consumer
           resources:
