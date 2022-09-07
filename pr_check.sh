@@ -28,7 +28,8 @@ IMAGE_CONNECT="quay.io/cloudservices/playbook-dispatcher-connect"
 source $CICD_ROOT/build.sh
 
 # IMAGE is set to the Connect image, setting dispatcher image as an extra arg
-EXTRA_DEPLOY_ARGS="--set-image-tag ${IMAGE_DISPATCHER}=${IMAGE_TAG}"
+# use managed-kafka due to limitations in configuring kafka connect
+EXTRA_DEPLOY_ARGS="--set-image-tag ${IMAGE_DISPATCHER}=${IMAGE_TAG} --pool managed-kafka"
 
 # Deploy to an ephemeral environment
 source $CICD_ROOT/deploy_ephemeral_env.sh
