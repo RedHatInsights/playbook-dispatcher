@@ -13,6 +13,12 @@ parameters:
   value: '9092'
 - name: KAFKA_REPLICATION_FACTOR
   value: '3'
+- name: KAFKA_USERNAME
+  value: kafkauser
+- name: KAFKA_SASL_MECHANISM
+  value: plain
+- name: KAFKA_TOPIC_PREFIX
+  value: ""
 - name: DB_HOSTNAME
   value: '${file:/opt/kafka/external-configuration/playbook-dispatcher-db/db.host}'
 - name: DB_PORT
@@ -195,12 +201,21 @@ objects:
       group.id: playbook-dispatcher-connect
       config.providers: file
       config.providers.file.class: com.redhat.insights.kafka.config.providers.PlainFileConfigProvider
-      offset.storage.topic: playbook-dispatcher-connect-config
-      status.storage.topic: playbook-dispatcher-connect-status
-      config.storage.topic: playbook-dispatcher-connect-offsets
+      offset.storage.topic: ${KAFKA_TOPIC_PREFIX}playbook-dispatcher-connect-config
+      status.storage.topic: ${KAFKA_TOPIC_PREFIX}playbook-dispatcher-connect-status
+      config.storage.topic: ${KAFKA_TOPIC_PREFIX}playbook-dispatcher-connect-offsets
       offset.storage.replication.factor: ${KAFKA_REPLICATION_FACTOR}
       status.storage.replication.factor: ${KAFKA_REPLICATION_FACTOR}
       config.storage.replication.factor: ${KAFKA_REPLICATION_FACTOR}
+    tls:
+      trustedCertificates: []
+    authentication:
+      # this config is specific to PLAIN sasl mechanism
+      type: ${KAFKA_SASL_MECHANISM}
+      username: ${KAFKA_USERNAME}
+      passwordSecret:
+        secretName: clowder-oauth
+        password: password 
     externalConfiguration:
       volumes:
         - name: rds-client-ca
@@ -274,7 +289,7 @@ objects:
         transforms: transformRunEvent
         transforms.transformRunEvent.type: com.redhat.cloud.platform.playbook_dispatcher.RunEventTransform
         transforms.transformRunEvent.table: runs
-        transforms.transformRunEvent.topic: platform.playbook-dispatcher.runs
+        transforms.transformRunEvent.topic: ${KAFKA_TOPIC_PREFIX}platform.playbook-dispatcher.runs
 
         errors.tolerance: all
         errors.retry.delay.max.ms: 30000
@@ -283,7 +298,7 @@ objects:
         errors.log.include.messages: "true"
 
         heartbeat.interval.ms: 600000
-        heartbeat.topics.prefix: "__debezium-heartbeat-pd"
+        heartbeat.topics.prefix: "${KAFKA_TOPIC_PREFIX}__debezium-heartbeat-pd"
         heartbeat.action.query: "INSERT INTO public.runs (id, org_id, recipient, correlation_id, url, service, timeout, created_at, updated_at) VALUES ('98875b33-b37e-4c35-be8b-d74f321bac28', '5318290', '00000000-0000-0000-0000-000000000000', '00000000-0000-0000-0000-000000000000', 'https://redhat.com', 'heartbeat', 3600, NOW(), NOW()) ON CONFLICT(id) DO UPDATE SET updated_at=NOW();"
 
 - apiVersion: apps/v1
