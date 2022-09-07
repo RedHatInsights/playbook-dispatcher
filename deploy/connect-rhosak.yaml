@@ -17,6 +17,8 @@ parameters:
   value: kafkauser
 - name: KAFKA_SASL_MECHANISM
   value: plain 
+- name: KAFKA_TOPIC_PREFIX
+  value: ""
 - name: DB_HOSTNAME
   value: '${file:/opt/kafka/external-configuration/playbook-dispatcher-db/db.host}'
 - name: DB_PORT
@@ -194,9 +196,9 @@ objects:
       group.id: playbook-dispatcher-connect
       config.providers: file
       config.providers.file.class: com.redhat.insights.kafka.config.providers.PlainFileConfigProvider
-      offset.storage.topic: playbook-dispatcher-connect-config
-      status.storage.topic: playbook-dispatcher-connect-status
-      config.storage.topic: playbook-dispatcher-connect-offsets
+      offset.storage.topic: ${KAFKA_TOPIC_PREFIX}playbook-dispatcher-connect-config
+      status.storage.topic: ${KAFKA_TOPIC_PREFIX}playbook-dispatcher-connect-status
+      config.storage.topic: ${KAFKA_TOPIC_PREFIX}playbook-dispatcher-connect-offsets
       offset.storage.replication.factor: ${KAFKA_REPLICATION_FACTOR}
       status.storage.replication.factor: ${KAFKA_REPLICATION_FACTOR}
       config.storage.replication.factor: ${KAFKA_REPLICATION_FACTOR}
@@ -282,7 +284,7 @@ objects:
         transforms: transformRunEvent
         transforms.transformRunEvent.type: com.redhat.cloud.platform.playbook_dispatcher.RunEventTransform
         transforms.transformRunEvent.table: runs
-        transforms.transformRunEvent.topic: platform.playbook-dispatcher.runs
+        transforms.transformRunEvent.topic: ${KAFKA_TOPIC_PREFIX}platform.playbook-dispatcher.runs
 
         errors.tolerance: all
         errors.retry.delay.max.ms: 30000
