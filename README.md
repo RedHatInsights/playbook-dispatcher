@@ -434,6 +434,11 @@ For each Playbook run request a message with the following format is sent to Clo
 
 See [foreman_rh_cloud](https://github.com/ShimShtein/foreman_rh_cloud) for details.
 
+## Onboarding guide
+
+New application onboarding guide can be found [here](https://github.com/RedHatInsights/playbook-dispatcher/blob/master/docs/onboarding/Onboarding.md).
+
+
 ## Development
 
 ### Prerequisities
