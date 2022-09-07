@@ -1,0 +1,44 @@
+[
+    {
+        "org_id": "5318290",
+        "recipient": "dd018b96-da04-4651-84d1-187fa5c23f6c",
+        "url": "http://example.com/playbook",
+        "labels": {
+            "foo": "1234",
+            "type": "satellite"
+        },
+        "name":"sat playbook 1",
+        "web_console_url": "http://example.com",
+        "recipient_config": {
+            "sat_id":"16372e6f-1c18-4cdb-b780-50ab4b88e74b",
+            "sat_org_id":"6826"
+        },
+        "principal": "test-user",
+        "hosts": [
+            {"inventory_id": "16372e6f-1c18-4cdb-b780-50ab4b88e74b"},
+            {"inventory_id": "3ee1e0ec-76ea-4820-99de-dec8ee3f8aaa"},
+            {"inventory_id": "8dad7980-f936-4352-af61-bec829588ec9"}
+        ]
+    },
+    {
+        "org_id": "5318290",
+        "recipient": "2c781569-1402-482e-b741-61d78b542be5",
+        "url": "http://example.com/playbook",
+        "labels": {
+            "foo": "5678",
+            "type": "satellite"
+        },
+        "name":"sat playbook 2",
+        "web_console_url": "http://example.com",
+        "recipient_config": {
+            "sat_id":"5c9d1524-2f5d-4401-bd56-0326f4a3bae4",
+            "sat_org_id":"6826"
+        },
+        "principal": "test-user",
+        "hosts": [
+            {"inventory_id": "48e144d2-50c6-4886-8044-7e0791603d97"},
+            {"inventory_id": "19cd5135-ddd9-492a-8153-ca27c0e2392e"},
+            {"inventory_id": "8d9ca641-50a5-4d9e-85d3-0fb98a03dc62"}
+        ]
+    }
+]
