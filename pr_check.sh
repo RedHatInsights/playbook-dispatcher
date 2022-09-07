@@ -42,6 +42,7 @@ source $CICD_ROOT/cji_smoke_test.sh
 bonfire deploy playbook-dispatcher cloud-connector \
     --source=appsre \
     --ref-env ${REF_ENV} \
+    --pool managed-kafka \
     --set-template-ref ${COMPONENT_NAME}=${GIT_COMMIT} \
     --set-image-tag ${IMAGE_DISPATCHER}=${IMAGE_TAG} \
     --set-image-tag ${IMAGE_CONNECT}=${IMAGE_TAG} \
