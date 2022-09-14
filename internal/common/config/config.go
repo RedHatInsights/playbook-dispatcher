@@ -73,6 +73,15 @@ func Get() *viper.Viper {
 	options.SetDefault("web.console.url.default", "https://console.redhat.com")
 	options.SetDefault("response.interval", "600")
 
+	options.SetDefault("xjoin.connector.impl", "mock")
+	options.SetDefault("xjoin.connector.host", "localhost")
+	options.SetDefault("xjoin.connector.port", "4000")
+	options.SetDefault("xjoin.connector.scheme", "http")
+	options.SetDefault("xjoin.connector.ordered.by", "display_name")
+	options.SetDefault("xjoin.connector.ordered.how", "ASC")
+	options.SetDefault("xjoin.connector.limit", 100)
+	options.SetDefault("xjoin.connector.offset", 0)
+
 	options.SetDefault("rbac.impl", "mock")
 	options.SetDefault("rbac.host", "rbac")
 	options.SetDefault("rbac.port", "8080")

@@ -1,0 +1,13 @@
+# Default genqlient config; for full documentation see:
+# https://github.com/Khan/genqlient/blob/main/docs/genqlient.yaml
+schema: ./xjoin_schema.graphql
+operations:
+- ./internal/api/connectors/inventory/xjoin_queries.graphql
+generated: ./internal/api/connectors/inventory/xjoin_generated.go
+bindings:
+  BigInt:
+    type: int
+  JSONObject:
+    type: map[string]interface{}
+  JSON:
+    type: map[string]interface{}

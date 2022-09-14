@@ -1,0 +1,34 @@
+# Queries used to reach out to host inventory
+query getHostDetails ($filter: HostFilter, $order_by: HOSTS_ORDER_BY, $order_how: ORDER_DIR, $limit: Int, $offset: Int) {
+    hosts (
+        filter: $filter,
+        order_by: $order_by,
+        order_how: $order_how,
+        limit: $limit,
+        offset: $offset
+        )
+    {
+        data {
+            id
+            display_name
+            facts
+            canonical_facts (filter: ["fqdn"])
+        }
+    }
+}
+
+query getSystemProfileFacts ($filter: HostFilter, $order_by: HOSTS_ORDER_BY, $order_how: ORDER_DIR, $limit: Int, $offset: Int) {
+    hosts (
+        filter: $filter
+        order_by: $order_by,
+        order_how: $order_how,
+        limit: $limit,
+        offset: $offset
+    )
+    {
+        data {
+            id
+            system_profile_facts (filter: ["rhc_client_id"])
+        }
+    }
+}

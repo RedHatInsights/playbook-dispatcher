@@ -3,6 +3,7 @@ module playbook-dispatcher
 go 1.16
 
 require (
+	github.com/Khan/genqlient v0.5.0 // indirect
 	github.com/RedHatInsights/tenant-utils v1.0.0
 	github.com/atombender/go-jsonschema v0.9.1-0.20220615213626-45dcfa31db10 // indirect
 	github.com/aws/aws-sdk-go v1.38.51

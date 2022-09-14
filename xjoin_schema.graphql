@@ -1,0 +1,768 @@
+#
+# Common types
+#
+scalar JSON
+scalar JSONObject
+scalar BigInt
+
+enum ORDER_DIR {
+    ASC,
+    DESC
+}
+
+"Metadata about a collection of entities"
+type CollectionMeta {
+    "number of returned results"
+    count: Int!
+    "total number of entities matching the query"
+    total: Int!
+}
+
+#
+# Input types
+#
+
+enum HOSTS_ORDER_BY {
+    display_name,
+    modified_on,
+    operating_system
+}
+
+enum HOST_TAGS_ORDER_BY {
+    tag,
+    count
+}
+
+enum VALUES_ORDER_BY {
+    value,
+    count
+}
+
+"""
+Defines criteria by which the hosts are filtered.
+"""
+input HostFilter {
+    "Apply logical conjunction on the given filtering criteria"
+    AND: [HostFilter!]
+    "Apply logical disjunction on the given filtering criteria"
+    OR: [HostFilter!]
+    "Negate the given filtering criteria"
+    NOT: HostFilter
+
+    "Filter by host id"
+    id: FilterStringWithWildcard,
+    "Filter by insights id"
+    insights_id: FilterStringWithWildcard,
+    "Filter by display_name"
+    display_name: FilterStringWithWildcardWithLowercase,
+    "Filter by fqdn"
+    fqdn: FilterStringWithWildcardWithLowercase,
+    "Filter by provider_type"
+    provider_type: FilterString,
+    "Filter by provider_id"
+    provider_id: FilterString,
+
+    # DO NOT REMOVE. Used to automatically update this schema
+    # based on the system_profile JSONschema
+    # START: system_profile schema filters
+    "Filter by 'mssql' field of system profile"
+    spf_mssql: FilterMssql
+
+    "Filter by 'ansible' field of system profile"
+    spf_ansible: FilterAnsible
+
+    "Filter by 'system_purpose' field of system profile"
+    spf_system_purpose: FilterSystemPurpose
+
+    "Filter by 'rhsm' field of system profile"
+    spf_rhsm: FilterRhsm
+
+    "Filter by 'rpm_ostree_deployments' field of system profile"
+    spf_rpm_ostree_deployments: FilterRpmOstreeDeployments
+
+    "Filter by 'greenboot_fallback_detected' field of system profile"
+    spf_greenboot_fallback_detected: FilterBoolean
+
+    "Filter by 'greenboot_status' field of system profile"
+    spf_greenboot_status: FilterString
+
+    "Filter by 'host_type' field of system profile"
+    spf_host_type: FilterString
+
+    "Filter by 'is_marketplace' field of system profile"
+    spf_is_marketplace: FilterBoolean
+
+    "Filter by 'selinux_config_file' field of system profile"
+    spf_selinux_config_file: FilterString
+
+    "Filter by 'selinux_current_mode' field of system profile"
+    spf_selinux_current_mode: FilterString
+
+    "Filter by 'tuned_profile' field of system profile"
+    spf_tuned_profile: FilterString
+
+    "Filter by 'sap_version' field of system profile"
+    spf_sap_version: FilterString
+
+    "Filter by 'sap_instance_number' field of system profile"
+    spf_sap_instance_number: FilterString
+
+    "Filter by 'sap_sids' field of system profile"
+    spf_sap_sids: FilterString
+
+    "Filter by 'sap_system' field of system profile"
+    spf_sap_system: FilterBoolean
+
+    "Filter by 'enabled_services' field of system profile"
+    spf_enabled_services: FilterString
+
+    "Filter by 'installed_services' field of system profile"
+    spf_installed_services: FilterString
+
+    "Filter by 'gpg_pubkeys' field of system profile"
+    spf_gpg_pubkeys: FilterString
+
+    "Filter by 'installed_packages' field of system profile"
+    spf_installed_packages: FilterString
+
+    "Filter by 'captured_date' field of system profile"
+    spf_captured_date: FilterString
+
+    "Filter by 'insights_egg_version' field of system profile"
+    spf_insights_egg_version: FilterString
+
+    "Filter by 'insights_client_version' field of system profile"
+    spf_insights_client_version: FilterStringWithWildcard
+
+    "Filter by 'installed_products' field of system profile"
+    spf_installed_products: FilterInstalledProducts
+
+    "Filter by 'dnf_modules' field of system profile"
+    spf_dnf_modules: FilterDnfModules
+
+    "Filter by 'cloud_provider' field of system profile"
+    spf_cloud_provider: FilterString
+
+    "Filter by 'satellite_managed' field of system profile"
+    spf_satellite_managed: FilterBoolean
+
+    "Filter by 'katello_agent_running' field of system profile"
+    spf_katello_agent_running: FilterBoolean
+
+    "Filter by 'subscription_auto_attach' field of system profile"
+    spf_subscription_auto_attach: FilterString
+
+    "Filter by 'subscription_status' field of system profile"
+    spf_subscription_status: FilterString
+
+    "Filter by 'last_boot_time' field of system profile"
+    spf_last_boot_time: FilterTimestamp
+
+    "Filter by 'kernel_modules' field of system profile"
+    spf_kernel_modules: FilterString
+
+    "Filter by 'arch' field of system profile"
+    spf_arch: FilterString
+
+    "Filter by 'os_kernel_version' field of system profile"
+    spf_os_kernel_version: FilterStringWithWildcard
+
+    "Filter by 'os_release' field of system profile"
+    spf_os_release: FilterStringWithWildcard
+
+    "Filter by 'operating_system' field of system profile"
+    spf_operating_system: FilterOperatingSystem
+
+    "Filter by 'cpu_flags' field of system profile"
+    spf_cpu_flags: FilterString
+
+    "Filter by 'bios_version' field of system profile"
+    spf_bios_version: FilterString
+
+    "Filter by 'bios_vendor' field of system profile"
+    spf_bios_vendor: FilterString
+
+    "Filter by 'disk_devices' field of system profile"
+    spf_disk_devices: FilterDiskDevices
+
+    "Filter by 'network_interfaces' field of system profile"
+    spf_network_interfaces: FilterNetworkInterfaces
+
+    "Filter by 'infrastructure_vendor' field of system profile"
+    spf_infrastructure_vendor: FilterString
+
+    "Filter by 'infrastructure_type' field of system profile"
+    spf_infrastructure_type: FilterString
+
+    "Filter by 'system_memory_bytes' field of system profile"
+    spf_system_memory_bytes: FilterInt
+
+    "Filter by 'cores_per_socket' field of system profile"
+    spf_cores_per_socket: FilterInt
+
+    "Filter by 'number_of_sockets' field of system profile"
+    spf_number_of_sockets: FilterInt
+
+    "Filter by 'number_of_cpus' field of system profile"
+    spf_number_of_cpus: FilterInt
+
+    "Filter by 'cpu_model' field of system profile"
+    spf_cpu_model: FilterString
+
+    "Filter by 'rhc_config_state' field of system profile"
+    spf_rhc_config_state: FilterString
+
+    "Filter by 'rhc_client_id' field of system profile"
+    spf_rhc_client_id: FilterString
+
+    "Filter by 'owner_id' field of system profile"
+    spf_owner_id: FilterString
+
+
+
+    # END: system_profile schema filters
+    # DO NOT REMOVE.
+
+    "Filter by the stale_timestamp value"
+    stale_timestamp: FilterTimestamp
+
+    "Filter by host tag. The tag namespace/key/value must match exactly what the host is tagged with"
+    tag: FilterTag
+
+    "Filter by per_reporter_staleness sub-fields"
+    per_reporter_staleness: FilterPerReporterStaleness
+}
+
+"""
+Basic filter for boolean fields.
+"""
+input FilterBoolean {
+    """
+    Compares the document field with the provided value.
+    If `null` is provided then documents where the given field does not exist are returned.
+    """
+    is: Boolean
+}
+
+"""
+Basic filter for string fields that allows filtering based on exact match.
+"""
+input FilterString {
+    """
+    Compares the document field with the provided value.
+    If `null` is provided then documents where the given field does not exist are returned.
+    """
+    eq: String
+}
+
+"""
+String field filter that allows filtering based on exact match or using wildcards.
+"""
+input FilterStringWithWildcard {
+    """
+    Compares the document field with the provided value.
+    If `null` is provided then documents where the given field does not exist are returned.
+    """
+    eq: String
+
+    """
+    Compares the document field with the provided value.
+    Wildcards may be used in the query (e.g. `ki*y`).
+    Two types of wildcard operators are supported:
+    * `?`, which matches any single character
+    * `*`, which can match zero or more characters, including an empty one
+
+    See [Elasticsearch documentation](https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-wildcard-query.html) for more details.
+    """
+    matches: String
+}
+
+"""
+String field filter that allows filtering based on exact match or using wildcards.
+In both cases the case of a letter can be ignored (case-insensitive matching) using the `_lc` suffixed operators.
+"""
+input FilterStringWithWildcardWithLowercase {
+    """
+    Compares the document field with the provided value.
+    If `null` is provided then documents where the given field does not exist are returned.
+    """
+    eq: String
+
+    """
+    This operator is like [FilterStringWithWildcard.eq](#filterstring) except that it performs case-insensitive matching.
+    Furthermore, unlike for `eq`, `null` is not an allowed value.
+    """
+    eq_lc: String
+
+    """
+    Compares the document field with the provided value.
+    Wildcards may be used in the query (e.g. `ki*y`).
+    Two types of wildcard operators are supported:
+    * `?`, which matches any single character
+    * `*`, which can match zero or more characters, including an empty one
+
+    See [Elasticsearch documentation](https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-wildcard-query.html) for more details.
+    """
+    matches: String
+
+    """
+    This operator is like [FilterStringWithWildcard.matches](#filterstringwithwildcard) except that it performs case-insensitive matching.
+    """
+    matches_lc: String
+}
+
+"""
+String field filter that allows filtering based on exact match or using regular expression.
+"""
+input FilterStringWithRegex {
+    """
+    Compares the document field with the provided value.
+    If `null` is provided then documents where the given field does not exist are returned.
+    """
+    eq: String
+
+    """
+    Matches the document field against the provided regular expression.
+    """
+    regex: String
+}
+
+"""
+Timestamp field filter with support for common operations.
+"""
+input FilterTimestamp {
+    "Less than"
+    lt: String
+
+    "Less than or equal to"
+    lte: String
+
+    "Greater than"
+    gt: String
+
+    "Greater than or equal to"
+    gte: String
+
+    "Equal"
+    eq: String
+}
+
+"""
+Filters hosts by the presence of a host tag
+"""
+input FilterTag {
+    "Tag namespace"
+    namespace: FilterString,
+
+    "Tag key"
+    key: FilterString!,
+
+    "Tag value"
+    value: FilterString
+}
+
+"""
+Timestamp field filter with support for common operations.
+"""
+input FilterInt {
+    "Equal to"
+    eq: BigInt
+
+    "Less than"
+    lt: BigInt
+
+    "Less than or equal to"
+    lte: BigInt
+
+    "Greater than"
+    gt: BigInt
+
+    "Greater than or equal to"
+    gte: BigInt
+}
+
+"""
+Defines the criteria by which tags are filtered in the `hostTags` query.
+"""
+input TagAggregationFilter {
+    """
+    Limits the aggregation to tags that match the given search term.
+    The search term is a regular exression that operates on a string representation of a tag.
+    The string representation has a form of "namespace/key=value" i.e. the segments are concatenated together using "=" and "/", respectively.
+    There is no expecing of the control characters in the segments.
+    As a result, "=" and "/" appear in every tag.
+    """
+    search: FilterStringWithRegex
+}
+
+"""
+Defines the criteria by which sap_sids are filtered in the `hostSystemProfile` query.
+"""
+input SapSidFilter {
+    """
+    Limits the aggregation to sap_sids that match the given search term.
+    The search term is a regular exression that operates on a string representation of a sap_sid.
+    """
+    search: FilterStringWithRegex
+}
+
+#
+# Generated system_profile input types
+#
+"""
+Filter by 'mssql' field of system profile
+"""
+input FilterMssql {
+
+    "Filter by 'version' field of mssql"
+    version: FilterStringWithWildcard
+
+}
+
+"""
+Filter by 'ansible' field of system profile
+"""
+input FilterAnsible {
+
+    "Filter by 'controller_version' field of ansible"
+    controller_version: FilterStringWithWildcard
+
+    "Filter by 'hub_version' field of ansible"
+    hub_version: FilterStringWithWildcard
+
+    "Filter by 'catalog_worker_version' field of ansible"
+    catalog_worker_version: FilterStringWithWildcard
+
+    "Filter by 'sso_version' field of ansible"
+    sso_version: FilterStringWithWildcard
+
+}
+
+"""
+Filter by 'system_purpose' field of system profile
+"""
+input FilterSystemPurpose {
+
+    "Filter by 'usage' field of system_purpose"
+    usage: FilterString
+
+    "Filter by 'role' field of system_purpose"
+    role: FilterString
+
+    "Filter by 'sla' field of system_purpose"
+    sla: FilterString
+
+}
+
+"""
+Filter by 'rhsm' field of system profile
+"""
+input FilterRhsm {
+
+    "Filter by 'version' field of rhsm"
+    version: FilterString
+
+}
+
+"""
+Filter by 'rpm_ostree_deployments' field of system profile
+"""
+input FilterRpmOstreeDeployments {
+
+    "Filter by 'id' field of rpm_ostree_deployments"
+    id: FilterString
+
+    "Filter by 'checksum' field of rpm_ostree_deployments"
+    checksum: FilterString
+
+    "Filter by 'origin' field of rpm_ostree_deployments"
+    origin: FilterString
+
+    "Filter by 'osname' field of rpm_ostree_deployments"
+    osname: FilterString
+
+    "Filter by 'version' field of rpm_ostree_deployments"
+    version: FilterString
+
+    "Filter by 'booted' field of rpm_ostree_deployments"
+    booted: FilterBoolean
+
+    "Filter by 'pinned' field of rpm_ostree_deployments"
+    pinned: FilterBoolean
+
+}
+
+"""
+Filter by 'installed_products' field of system profile
+"""
+input FilterInstalledProducts {
+
+    "Filter by 'name' field of installed_products"
+    name: FilterString
+
+    "Filter by 'id' field of installed_products"
+    id: FilterString
+
+    "Filter by 'status' field of installed_products"
+    status: FilterString
+
+}
+
+"""
+Filter by 'dnf_modules' field of system profile
+"""
+input FilterDnfModules {
+
+    "Filter by 'name' field of dnf_modules"
+    name: FilterString
+
+    "Filter by 'stream' field of dnf_modules"
+    stream: FilterString
+
+}
+
+"""
+Filter by 'operating_system' field of system profile
+"""
+input FilterOperatingSystem {
+
+    "Filter by 'major' field of operating_system"
+    major: FilterInt
+
+    "Filter by 'minor' field of operating_system"
+    minor: FilterInt
+
+    "Filter by 'name' field of operating_system"
+    name: FilterString
+
+}
+
+"""
+Filter by 'disk_devices' field of system profile
+"""
+input FilterDiskDevices {
+
+    "Filter by 'device' field of disk_devices"
+    device: FilterString
+
+    "Filter by 'label' field of disk_devices"
+    label: FilterString
+
+    "Filter by 'mount_point' field of disk_devices"
+    mount_point: FilterString
+
+    "Filter by 'type' field of disk_devices"
+    type: FilterString
+
+}
+
+"""
+Filter by 'network_interfaces' field of system profile
+"""
+input FilterNetworkInterfaces {
+
+    "Filter by 'ipv4_addresses' field of network_interfaces"
+    ipv4_addresses: FilterString
+
+    "Filter by 'ipv6_addresses' field of network_interfaces"
+    ipv6_addresses: FilterString
+
+    "Filter by 'mtu' field of network_interfaces"
+    mtu: FilterInt
+
+    "Filter by 'mac_address' field of network_interfaces"
+    mac_address: FilterString
+
+    "Filter by 'name' field of network_interfaces"
+    name: FilterString
+
+    "Filter by 'state' field of network_interfaces"
+    state: FilterString
+
+    "Filter by 'type' field of network_interfaces"
+    type: FilterString
+
+}
+
+"""
+Per-reporter staleness filter.
+"""
+input FilterPerReporterStaleness {
+    reporter: FilterString
+    stale_timestamp: FilterTimestamp
+    last_check_in: FilterTimestamp
+    check_in_succeeded: FilterBoolean
+}
+
+#
+# Output types
+#
+
+"Inventory host"
+type Host {
+    id: ID!
+    account: String
+    org_id: String!
+    display_name: String
+    created_on: String
+    modified_on: String
+    stale_timestamp: String,
+    reporter: String,
+    ansible_host: String,
+
+    "Canonical facts of a host. The subset of keys can be requested using `filter`."
+    canonical_facts (filter: [String!]): JSONObject,
+
+    "System profile of a host. The subset of keys can be requested using `filter`."
+    system_profile_facts (filter: [String!]): JSONObject
+
+    tags: Tags,
+
+    "Facts of a host. The subset of keys can be requested using `filter`."
+    facts (filter: [String!]): JSONObject
+
+    "The host's per-reporter staleness data in object format."
+    per_reporter_staleness (filter: [String!]): JSONObject
+
+    "The host's per-reporter staleness, flattened into an array."
+    per_reporter_staleness_flat (filter: [String!]): [JSONObject]
+}
+
+type Hosts {
+    data: [Host]!
+    meta: CollectionMeta!
+}
+
+"Structured representation of a tag"
+type StructuredTag {
+    namespace: String,
+    key: String!,
+    value: String
+}
+
+type Tags {
+    data: [StructuredTag]!
+    meta: CollectionMeta!
+}
+
+type TagInfo {
+    tag: StructuredTag!
+    count: Int!
+}
+
+type HostTags {
+    data: [TagInfo]!
+    meta: CollectionMeta!
+}
+
+"""
+Lists unique system profile values.
+"""
+type HostSystemProfile {
+
+    "Lists unique values of the `sap_system` field"
+    sap_system (
+        limit: Int = 10,
+        offset: Int = 0,
+        order_by: VALUES_ORDER_BY = value,
+        order_how: ORDER_DIR = ASC
+    ): BooleanValues!
+
+    "Lists unique values of the `sap_sids` field"
+    sap_sids (
+        limit: Int = 10,
+        offset: Int = 0,
+        filter: SapSidFilter = null,
+        order_by: VALUES_ORDER_BY = value,
+        order_how: ORDER_DIR = ASC
+    ): StringValues!
+
+    operating_system (
+        limit: Int = 10,
+        offset: Int = 0,
+        order_by: VALUES_ORDER_BY = value,
+        order_how: ORDER_DIR = ASC
+    ): operatingSystemValues!
+}
+
+"A list of Boolean values together with count information"
+type BooleanValues {
+    data: [BooleanValueInfo]!
+    meta: CollectionMeta!
+}
+
+"Represents a single Boolean value. The `count` field indicates how many systems with the given value were returned by a query"
+type BooleanValueInfo {
+    value: Boolean!
+    count: Int!
+}
+
+"A list of String values together with count information"
+type StringValues {
+    data: [StringValueInfo]!
+    meta: CollectionMeta!
+}
+
+"Represents a single String value. The `count` field indicates how many systems with the given value were returned by a query."
+type StringValueInfo {
+    value: String!
+    count: Int!
+}
+
+type OperatingSystem {
+    name: String!
+    major: Int
+    minor: Int
+}
+
+type operatingSystemValueInfo {
+    value: OperatingSystem
+    count: Int!
+}
+
+type operatingSystemValues {
+    data: [operatingSystemValueInfo]!
+    meta: CollectionMeta!
+}
+
+#
+# Queries
+#
+type Query {
+
+    "Fetches a list of hosts based on the given filtering, ordering and pagination criteria."
+    hosts (
+        filter: HostFilter,
+        limit: Int = 10,
+        offset: Int = 0,
+        order_by: HOSTS_ORDER_BY = display_name,
+        order_how: ORDER_DIR = ASC
+    ): Hosts!
+
+    """
+    Fetches a list of unique tags and the number of their occurenes in the given set of systems.
+
+    By default the query operates on all known systems that are registered with the given org_id.
+    This can be altered using the `hostFilter` parameter.
+
+    The tags themselves can be filtered further using the `filter` parameter.
+    """
+    hostTags (
+        hostFilter: HostFilter,
+        filter: TagAggregationFilter,
+        limit: Int = 10,
+        offset: Int = 0,
+        order_by: HOST_TAGS_ORDER_BY = count,
+        order_how: ORDER_DIR = DESC
+    ): HostTags
+
+    """
+    Fetches a list of unique values for a given system profile field.
+
+    By default the query operates on all known systems that are registered with the given org_id.
+    This can be altered using `hostFilter` parameter.
+    """
+    hostSystemProfile (
+        hostFilter: HostFilter,
+    ): HostSystemProfile
+}

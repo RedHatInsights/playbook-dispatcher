@@ -1,5 +1,6 @@
 CLOUD_CONNECTOR_SCHEMA ?= https://raw.githubusercontent.com/RedHatInsights/cloud-connector/master/internal/controller/api/api.spec.json
 RBAC_CONNECTOR_SCHEMA ?= https://cloud.redhat.com/api/rbac/v1/openapi.json
+XJOIN_GRAPHQL_SCHEMA ?= https://raw.githubusercontent.com/RedHatInsights/xjoin-search/master/src/schema/schema.graphql
 
 MKFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
 PROJECT_PATH := $(patsubst %/,%,$(dir $(MKFILE_PATH)))
@@ -17,6 +18,8 @@ init:
 	pip install json2yaml
 	go get github.com/kulshekhar/fungen
 	go install github.com/kulshekhar/fungen
+	go get github.com/Khan/genqlient
+	go install github.com/Khan/genqlient
 
 generate-api:
 	# public API
@@ -46,10 +49,14 @@ generate-rbac:
 	~/go/bin/oapi-codegen -generate client,types -package rbac -include-tags Access -o internal/api/rbac/rbac.gen.go rbac.yaml
 	rm rbac.json rbac.yaml
 
+generate-xjoin: 
+	curl -s ${XJOIN_GRAPHQL_SCHEMA} -o xjoin_schema.graphql
+	go run github.com/Khan/genqlient
+
 generate-utils:
 	go generate ./...
 
-generate: generate-api generate-messages generate-cloud-connector generate-utils generate-clients generate-rbac
+generate: generate-api generate-messages generate-cloud-connector generate-utils generate-clients generate-rbac generate-xjoin
 
 build:
 	go build -o pd .
