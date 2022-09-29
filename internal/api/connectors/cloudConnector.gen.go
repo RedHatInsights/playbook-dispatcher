@@ -31,6 +31,8 @@ type ConnectionListAccountResponse struct {
 	PaginatedResponseMeta `yaml:",inline"`
 	// Embedded struct due to allOf(#/components/schemas/PaginatedResponseLinks)
 	PaginatedResponseLinks `yaml:",inline"`
+	// Embedded fields due to inline allOf schema
+	Data *[]string `json:"data,omitempty"`
 }
 
 // ConnectionListByAccountResponseV2 defines model for ConnectionListByAccountResponseV2.
@@ -39,6 +41,8 @@ type ConnectionListByAccountResponseV2 struct {
 	PaginatedResponseMeta `yaml:",inline"`
 	// Embedded struct due to allOf(#/components/schemas/PaginatedResponseLinks)
 	PaginatedResponseLinks `yaml:",inline"`
+	// Embedded fields due to inline allOf schema
+	Data *[]ConnectionV2 `json:"data,omitempty"`
 }
 
 // ConnectionListResponse defines model for ConnectionListResponse.
@@ -47,6 +51,11 @@ type ConnectionListResponse struct {
 	PaginatedResponseMeta `yaml:",inline"`
 	// Embedded struct due to allOf(#/components/schemas/PaginatedResponseLinks)
 	PaginatedResponseLinks `yaml:",inline"`
+	// Embedded fields due to inline allOf schema
+	Data *[]struct {
+		Account     *string   `json:"account,omitempty"`
+		Connections *[]string `json:"connections,omitempty"`
+	} `json:"data,omitempty"`
 }
 
 // ConnectionPingResponse defines model for ConnectionPingResponse.
@@ -88,6 +97,8 @@ type ConnectionStatusResponse struct {
 type ConnectionStatusResponseV2 struct {
 	// Embedded struct due to allOf(#/components/schemas/ConnectionV2)
 	ConnectionV2 `yaml:",inline"`
+	// Embedded fields due to inline allOf schema
+	Status *ConnectionStatus `json:"status,omitempty"`
 }
 
 // ConnectionV2 defines model for ConnectionV2.

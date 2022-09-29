@@ -154,12 +154,5 @@ func (this *cloudConnectorClientImpl) GetConnectionStatus(
 		return "", err
 	}
 
-	// The Status field is not correctly being generated in the ConnectionStatusResponseV2 struct
-	// Unmarshaling using ConnectionStatusResponse as a work-around until the openapi codegen is fixed
-	connectionStatusResponse := ConnectionStatusResponse{}
-	if err := json.Unmarshal(res.Body, &connectionStatusResponse); err != nil {
-		return "", err
-	}
-
-	return *connectionStatusResponse.Status, nil
+	return *res.JSON200.Status, nil
 }
