@@ -130,7 +130,7 @@ func (this *cloudConnectorClientImpl) SendCloudConnectorRequest(
 	}
 
 	if res.JSON201 == nil {
-		return nil, false, unexpectedResponse(res.HTTPResponse)
+		return nil, false, utils.UnexpectedResponse(res.HTTPResponse)
 	}
 
 	return res.JSON201.Id, false, nil
