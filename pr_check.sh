@@ -39,12 +39,14 @@ IQE_MARKER_EXPRESSION="smoke"
 source $CICD_ROOT/cji_smoke_test.sh
 
 # Re-deploy Playbook Dispatcher to an ephemeral environment, this time enabling the communication with Cloud Connector
+# The connect image template is overridden to make use of the connect.yaml file from before managed kafka was put in place
 bonfire deploy playbook-dispatcher cloud-connector \
     --source=appsre \
     --ref-env ${REF_ENV} \
     --set-template-ref ${COMPONENT_NAME}=${GIT_COMMIT} \
     --set-image-tag ${IMAGE_DISPATCHER}=${IMAGE_TAG} \
     --set-image-tag ${IMAGE_CONNECT}=${IMAGE_TAG} \
+    --set-template-ref ${IMAGE_CONNECT}=047e256da507f29d0e0ae803a4b1d688eb74a2cb \
     --namespace ${NAMESPACE} \
     --timeout ${DEPLOY_TIMEOUT} \
     --set-parameter playbook-dispatcher/CLOUD_CONNECTOR_IMPL=impl
