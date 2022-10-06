@@ -4,6 +4,7 @@
 # --------------------------------------------
 APP_NAME="playbook-dispatcher"  # name of app-sre "application" folder this component lives in
 COMPONENT_NAME="playbook-dispatcher"  # name of app-sre "resourceTemplate" in deploy.yaml for this component
+CONNECT_COMPONENT_NAME="playbook-dispatcher-connect"
 IMAGE="quay.io/cloudservices/playbook-dispatcher"
 IQE_CJI_TIMEOUT="30m"
 REF_ENV="insights-stage"
@@ -46,7 +47,7 @@ bonfire deploy playbook-dispatcher cloud-connector \
     --set-template-ref ${COMPONENT_NAME}=${GIT_COMMIT} \
     --set-image-tag ${IMAGE_DISPATCHER}=${IMAGE_TAG} \
     --set-image-tag ${IMAGE_CONNECT}=${IMAGE_TAG} \
-    --set-template-ref ${IMAGE_CONNECT}=047e256da507f29d0e0ae803a4b1d688eb74a2cb \
+    --set-template-ref ${CONNECT_COMPONENT_NAME}=047e256da507f29d0e0ae803a4b1d688eb74a2cb \
     --namespace ${NAMESPACE} \
     --timeout ${DEPLOY_TIMEOUT} \
     --set-parameter playbook-dispatcher/CLOUD_CONNECTOR_IMPL=impl
