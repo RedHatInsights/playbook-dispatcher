@@ -29,7 +29,8 @@ IMAGE_CONNECT="quay.io/cloudservices/playbook-dispatcher-connect"
 source $CICD_ROOT/build.sh
 
 # IMAGE is set to the Connect image, setting dispatcher image as an extra arg
-EXTRA_DEPLOY_ARGS="--set-image-tag ${IMAGE_DISPATCHER}=${IMAGE_TAG}"
+# hardcode connect to use a ref that works in ephemeral
+EXTRA_DEPLOY_ARGS="--set-image-tag ${IMAGE_DISPATCHER}=${IMAGE_TAG} --set-template-ref ${CONNECT_COMPONENT_NAME}=047e256da507f29d0e0ae803a4b1d688eb74a2cb"
 
 # Deploy to an ephemeral environment
 source $CICD_ROOT/deploy_ephemeral_env.sh
