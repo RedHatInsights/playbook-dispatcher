@@ -14,28 +14,28 @@ import (
 
 const basePath = "/api/inventory/"
 
-type InventoryConnector interface {
-	GetHostDetails(
-		ctx context.Context,
-		IDs []string,
-		orderBy string,
-		orderHow string,
-		limit int,
-		offest int,
-	) (hostDetails []HostDetails, err error)
-
-	GetSystemProfileDetails(
-		ctx context.Context,
-		IDs []string,
-		orderBy string,
-		orderHow string,
-		limit int,
-		offset int,
-	) (profileDetails []SystemProfileDetails, err error)
-}
-
 type inventoryConnectorImpl struct {
 	client ClientWithResponsesInterface
+}
+
+func getSatelliteFacts(facts *[]FactSet) SatelliteFacts {
+	satelliteFacts := SatelliteFacts{}
+	for _, fact := range *facts {
+		if fact.Namespace == "satellite" {
+			satelliteInstanceID, idExists := fact.Facts["satellite_instance_id"].(string)
+			satelliteVersion, versionExists := fact.Facts["satellite_version"].(string)
+
+			if idExists {
+				satelliteFacts.SatelliteInstanceID = &satelliteInstanceID
+			}
+
+			if versionExists {
+				satelliteFacts.SatelliteVersion = &satelliteVersion
+			}
+		}
+	}
+
+	return satelliteFacts
 }
 
 func createHostGetHostByIdParams(orderBy string, orderHow string) *ApiHostGetHostByIdParams {
@@ -66,58 +66,17 @@ func createHostGetHostSystemProfileByIdParams(orderBy string, orderHow string) *
 	}
 }
 
-func createHostDetails(response *ApiHostGetHostByIdResponse) []HostDetails {
-	hostDetails := make([]HostDetails, len(response.JSON200.Results))
-
-	for i, response := range response.JSON200.Results {
-		satelliteFacts := getSatelliteFacts(response.Facts)
-
-		hostDetails[i] = HostDetails{
-			ID:          *response.Id,
-			DisplayName: *response.DisplayName,
-			Facts:       satelliteFacts,
-			CanonicalFacts: map[string]interface{}{
-				"fqdn": *response.CanonicalFactsOut.Fqdn,
-			},
-		}
-	}
-
-	return hostDetails
-}
-
-func createSystemProfileDetails(response *ApiHostGetHostSystemProfileByIdResponse) []SystemProfileDetails {
-	systemProfileDetails := make([]SystemProfileDetails, len(response.JSON200.Results))
-	for i, response := range response.JSON200.Results {
-		systemProfileDetails[i] = SystemProfileDetails{
-			ID: *response.Id,
-			SystemProfileFacts: map[string]interface{}{
-				"rhc_client_id": *response.SystemProfile.RhcClientId,
-				"owner_id":      *response.SystemProfile.OwnerId,
-			},
-		}
-	}
-
-	return systemProfileDetails
-}
-
-func getSatelliteFacts(facts *[]FactSet) map[string]interface{} {
-	satelliteFacts := map[string]interface{}{}
-	for _, fact := range *facts {
-		if fact.Namespace == "satellite" {
-			satelliteFacts = fact.Facts
-		}
-	}
-
-	return satelliteFacts
-}
-
 func NewInventoryClientWithHttpRequestDoer(cfg *viper.Viper, doer HttpRequestDoer) InventoryConnector {
 	client := &ClientWithResponses{
 		ClientInterface: &Client{
 			Server: fmt.Sprintf("%s://%s:%d%s", cfg.GetString("inventory.connector.scheme"), cfg.GetString("inventory.connector.host"), cfg.GetInt("inventory.connector.port"), basePath),
-			Client: utils.NewMeasuredHttpRequestDoer(doer, "inventory", "GetHostDetails"), // TODO Change this
+			Client: utils.NewMeasuredHttpRequestDoer(doer, "inventory", "GetHostConnectionDetails"),
 			RequestEditor: func(ctx context.Context, req *http.Request) error {
 				req.Header.Set(constants.HeaderRequestId, request_id.GetReqID(ctx))
+
+				if identity, ok := ctx.Value(constants.HeaderIdentity).(string); ok {
+					req.Header.Set(constants.HeaderIdentity, identity)
+				}
 
 				return nil
 			},
@@ -137,54 +96,80 @@ func NewInventoryClient(cfg *viper.Viper) InventoryConnector {
 	return NewInventoryClientWithHttpRequestDoer(cfg, &httpClient)
 }
 
-func (this *inventoryConnectorImpl) GetHostDetails(
+func (this *inventoryConnectorImpl) getHostDetails(
 	ctx context.Context,
 	IDs []string,
 	orderBy string,
 	orderHow string,
 	limit int,
 	offset int,
-) (details []HostDetails, err error) {
+) (details []HostOut, err error) {
 
 	params := createHostGetHostByIdParams(orderBy, orderHow)
 
 	response, err := this.client.ApiHostGetHostByIdWithResponse(ctx, IDs, params)
 
 	if err != nil {
-		return []HostDetails{}, err
+		return nil, err
 	}
 
 	if response.JSON200 == nil {
-		return []HostDetails{}, utils.UnexpectedResponse(response.HTTPResponse)
+		return nil, utils.UnexpectedResponse(response.HTTPResponse)
 	}
 
-	hostDetails := createHostDetails(response)
-
-	return hostDetails, err
+	return response.JSON200.Results, err
 }
 
-func (this *inventoryConnectorImpl) GetSystemProfileDetails(
+func (this *inventoryConnectorImpl) getSystemProfileDetails(
 	ctx context.Context,
 	IDs []string,
 	orderBy string,
 	orderHow string,
 	limit int,
 	offset int,
-) (details []SystemProfileDetails, err error) {
+) (details []HostSystemProfileOut, err error) {
 
 	params := createHostGetHostSystemProfileByIdParams(orderBy, orderHow)
 
 	response, err := this.client.ApiHostGetHostSystemProfileByIdWithResponse(ctx, IDs, params)
 
 	if err != nil {
-		return []SystemProfileDetails{}, err
+		return nil, err
 	}
 
 	if response.JSON200 == nil {
-		return []SystemProfileDetails{}, utils.UnexpectedResponse(response.HTTPResponse)
+		return nil, utils.UnexpectedResponse(response.HTTPResponse)
 	}
 
-	systemProfileDetails := createSystemProfileDetails(response)
+	return response.JSON200.Results, nil
+}
 
-	return systemProfileDetails, nil
+func (this *inventoryConnectorImpl) GetHostConnectionDetails(ctx context.Context, IDs []string, order_how string, order_by string, limit int, offset int) (details []HostDetails, err error) {
+
+	hostResults, err := this.getHostDetails(ctx, IDs, order_how, order_by, limit, offset)
+
+	if err != nil {
+		return nil, err
+	}
+
+	systemProfileResults, err := this.getSystemProfileDetails(ctx, IDs, order_by, order_how, limit, offset)
+
+	if err != nil {
+		return nil, err
+	}
+
+	hostConnectionDetails := make([]HostDetails, len(IDs))
+	for i, host := range hostResults {
+		satelliteFacts := getSatelliteFacts(host.Facts)
+
+		hostConnectionDetails[i] = HostDetails{
+			ID:                  *host.Id,
+			OwnerID:             *systemProfileResults[i].SystemProfile.OwnerId,
+			SatelliteInstanceID: satelliteFacts.SatelliteInstanceID,
+			SatelliteVersion:    satelliteFacts.SatelliteVersion,
+			RHCConnectionID:     systemProfileResults[i].SystemProfile.RhcClientId,
+		}
+	}
+
+	return hostConnectionDetails, nil
 }
