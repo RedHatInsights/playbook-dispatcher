@@ -14,8 +14,8 @@ var _ = Describe("Inventory", func() {
 	Describe("GetHostDetails", func() {
 		It("Interperates response correctly", func() {
 			responses := []test.MockHttpResponse{
-				{200, `{"results":[{"id":"1234","display_name":"test","facts":[{"namespace":"satellite", "facts":{"satellite_version": "6.11.3","satellite_instance_id":"5678"}}],"fqdn":"test_host"}]}`},
-				{200, `{"results":[{"id":"1234","system_profile":{"rhc_client_id":"7bc66a39-e719-4bc5-b10a-77bfbd3a0ead","owner_id":"b2ea37a0-7fb0-4f14-815d-fb582a916d5b"}}]}`},
+				{StatusCode: 200, Body: `{"results":[{"id":"1234","display_name":"test","facts":[{"namespace":"satellite", "facts":{"satellite_version": "6.11.3","satellite_instance_id":"5678"}}],"fqdn":"test_host"}]}`},
+				{StatusCode: 200, Body: `{"results":[{"id":"1234","system_profile":{"rhc_client_id":"7bc66a39-e719-4bc5-b10a-77bfbd3a0ead","owner_id":"b2ea37a0-7fb0-4f14-815d-fb582a916d5b"}}]}`},
 			}
 
 			doer := test.MockMultiResponseHttpClient(responses...)
@@ -34,8 +34,8 @@ var _ = Describe("Inventory", func() {
 
 		It("Interperates response correctly on unexpected status code from hostDetails", func() {
 			responses := []test.MockHttpResponse{
-				{400, `{"results":[{"id":"1234","display_name":"test","facts":[{"namespace":"satellite", "facts":{"satellite_version": "6.11.3","satellite_instance_id":"5678"}}],"fqdn":"test_host"}]}`},
-				{200, `{"results":[{"id":"1234","system_profile":{"rhc_client_id":"7bc66a39-e719-4bc5-b10a-77bfbd3a0ead","owner_id":"b2ea37a0-7fb0-4f14-815d-fb582a916d5b"}}]}`},
+				{StatusCode: 400, Body: `{"results":[{"id":"1234","display_name":"test","facts":[{"namespace":"satellite", "facts":{"satellite_version": "6.11.3","satellite_instance_id":"5678"}}],"fqdn":"test_host"}]}`},
+				{StatusCode: 200, Body: `{"results":[{"id":"1234","system_profile":{"rhc_client_id":"7bc66a39-e719-4bc5-b10a-77bfbd3a0ead","owner_id":"b2ea37a0-7fb0-4f14-815d-fb582a916d5b"}}]}`},
 			}
 
 			doer := test.MockMultiResponseHttpClient(responses...)
@@ -49,8 +49,8 @@ var _ = Describe("Inventory", func() {
 
 		It("Interperates response correctly on unexpected status code from systemProfileDetails", func() {
 			responses := []test.MockHttpResponse{
-				{200, `{"results":[{"id":"1234","display_name":"test","facts":[{"namespace":"satellite", "facts":{"satellite_version": "6.11.3","satellite_instance_id":"5678"}}],"fqdn":"test_host"}]}`},
-				{400, `{"results":[{"id":"1234","system_profile":{"rhc_client_id":"7bc66a39-e719-4bc5-b10a-77bfbd3a0ead","owner_id":"b2ea37a0-7fb0-4f14-815d-fb582a916d5b"}}]}`},
+				{StatusCode: 200, Body: `{"results":[{"id":"1234","display_name":"test","facts":[{"namespace":"satellite", "facts":{"satellite_version": "6.11.3","satellite_instance_id":"5678"}}],"fqdn":"test_host"}]}`},
+				{StatusCode: 400, Body: `{"results":[{"id":"1234","system_profile":{"rhc_client_id":"7bc66a39-e719-4bc5-b10a-77bfbd3a0ead","owner_id":"b2ea37a0-7fb0-4f14-815d-fb582a916d5b"}}]}`},
 			}
 
 			doer := test.MockMultiResponseHttpClient(responses...)
@@ -64,8 +64,8 @@ var _ = Describe("Inventory", func() {
 
 		It("Interperates response correctly when host detail facts are not present", func() {
 			responses := []test.MockHttpResponse{
-				{200, `{"results":[{"id":"1234","display_name":"test","facts":[],"fqdn":"test_host"}]}`},
-				{200, `{"results":[{"id":"1234","system_profile":{"rhc_client_id":"7bc66a39-e719-4bc5-b10a-77bfbd3a0ead","owner_id":"b2ea37a0-7fb0-4f14-815d-fb582a916d5b"}}]}`},
+				{StatusCode: 200, Body: `{"results":[{"id":"1234","display_name":"test","facts":[],"fqdn":"test_host"}]}`},
+				{StatusCode: 200, Body: `{"results":[{"id":"1234","system_profile":{"rhc_client_id":"7bc66a39-e719-4bc5-b10a-77bfbd3a0ead","owner_id":"b2ea37a0-7fb0-4f14-815d-fb582a916d5b"}}]}`},
 			}
 
 			doer := test.MockMultiResponseHttpClient(responses...)
@@ -84,8 +84,8 @@ var _ = Describe("Inventory", func() {
 
 		It("Interperates response correctly when rhc_client_id is not present", func() {
 			responses := []test.MockHttpResponse{
-				{200, `{"results":[{"id":"1234","display_name":"test","facts":[{"namespace":"satellite", "facts":{"satellite_version": "6.11.3","satellite_instance_id":"5678"}}],"fqdn":"test_host"}]}`},
-				{200, `{"results":[{"id":"1234","system_profile":{"owner_id":"b2ea37a0-7fb0-4f14-815d-fb582a916d5b"}}]}`},
+				{StatusCode: 200, Body: `{"results":[{"id":"1234","display_name":"test","facts":[{"namespace":"satellite", "facts":{"satellite_version": "6.11.3","satellite_instance_id":"5678"}}],"fqdn":"test_host"}]}`},
+				{StatusCode: 200, Body: `{"results":[{"id":"1234","system_profile":{"owner_id":"b2ea37a0-7fb0-4f14-815d-fb582a916d5b"}}]}`},
 			}
 
 			doer := test.MockMultiResponseHttpClient(responses...)
