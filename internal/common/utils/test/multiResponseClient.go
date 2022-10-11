@@ -7,8 +7,8 @@ import (
 )
 
 type MockHttpResponse struct {
-	StatusCode int
-	Body       string
+	StatusCode int    `json:"status_code"`
+	Body       string `json:"body"`
 }
 
 type mockMultiResponseHttpRequestDoer struct {
