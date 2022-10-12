@@ -18,19 +18,31 @@ type inventoryConnectorImpl struct {
 	client ClientWithResponsesInterface
 }
 
-func getSatelliteFacts(facts *[]FactSet) SatelliteFacts {
-	satelliteFacts := SatelliteFacts{}
+func keySystemProfileResults(systemProfileResults []HostSystemProfileOut) map[string]HostSystemProfileOut {
+	formatedResults := make(map[string]HostSystemProfileOut, len(systemProfileResults))
+
+	for _, result := range systemProfileResults {
+		formatedResults[*result.Id] = result
+	}
+
+	return formatedResults
+}
+
+func getSatelliteFacts(facts *[]FactSet) satelliteFacts {
+	satelliteFacts := satelliteFacts{}
 	for _, fact := range *facts {
 		if fact.Namespace == "satellite" {
-			satelliteInstanceID, idExists := fact.Facts["satellite_instance_id"].(string)
-			satelliteVersion, versionExists := fact.Facts["satellite_version"].(string)
+			satelliteInstanceID, idExists := fact.Facts["satellite_instance_id"]
+			satelliteVersion, versionExists := fact.Facts["satellite_version"]
 
 			if idExists {
-				satelliteFacts.SatelliteInstanceID = &satelliteInstanceID
+				strigifiedInstanceID := satelliteInstanceID.(string)
+				satelliteFacts.SatelliteInstanceID = &strigifiedInstanceID
 			}
 
 			if versionExists {
-				satelliteFacts.SatelliteVersion = &satelliteVersion
+				stringifiedVersion := satelliteVersion.(string)
+				satelliteFacts.SatelliteVersion = &stringifiedVersion
 			}
 		}
 	}
@@ -127,7 +139,7 @@ func (this *inventoryConnectorImpl) getSystemProfileDetails(
 	orderHow string,
 	limit int,
 	offset int,
-) (details []HostSystemProfileOut, err error) {
+) (details map[string]HostSystemProfileOut, err error) {
 
 	params := createHostGetHostSystemProfileByIdParams(orderBy, orderHow)
 
@@ -141,7 +153,9 @@ func (this *inventoryConnectorImpl) getSystemProfileDetails(
 		return nil, utils.UnexpectedResponse(response.HTTPResponse)
 	}
 
-	return response.JSON200.Results, nil
+	formatedResults := keySystemProfileResults(response.JSON200.Results)
+
+	return formatedResults, nil
 }
 
 func (this *inventoryConnectorImpl) GetHostConnectionDetails(ctx context.Context, IDs []string, order_how string, order_by string, limit int, offset int) (details []HostDetails, err error) {
@@ -160,14 +174,17 @@ func (this *inventoryConnectorImpl) GetHostConnectionDetails(ctx context.Context
 
 	hostConnectionDetails := make([]HostDetails, len(IDs))
 	for i, host := range hostResults {
-		satelliteFacts := getSatelliteFacts(host.Facts)
+		_, IDPresent := systemProfileResults[*host.Id]
+		if IDPresent {
+			satelliteFacts := getSatelliteFacts(host.Facts)
 
-		hostConnectionDetails[i] = HostDetails{
-			ID:                  *host.Id,
-			OwnerID:             *systemProfileResults[i].SystemProfile.OwnerId,
-			SatelliteInstanceID: satelliteFacts.SatelliteInstanceID,
-			SatelliteVersion:    satelliteFacts.SatelliteVersion,
-			RHCConnectionID:     systemProfileResults[i].SystemProfile.RhcClientId,
+			hostConnectionDetails[i] = HostDetails{
+				ID:                  *host.Id,
+				OwnerID:             *systemProfileResults[*host.Id].SystemProfile.OwnerId,
+				SatelliteInstanceID: satelliteFacts.SatelliteInstanceID,
+				SatelliteVersion:    satelliteFacts.SatelliteVersion,
+				RHCConnectionID:     systemProfileResults[*host.Id].SystemProfile.RhcClientId,
+			}
 		}
 	}
 

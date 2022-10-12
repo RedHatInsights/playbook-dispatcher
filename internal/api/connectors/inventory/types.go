@@ -4,7 +4,7 @@ import (
 	"context"
 )
 
-type SatelliteFacts struct {
+type satelliteFacts struct {
 	SatelliteInstanceID *string `json:"satellite_instance_id,omitempty"`
 	SatelliteVersion    *string `json:"satellite_version,omitempty"`
 }
