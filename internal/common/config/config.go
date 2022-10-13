@@ -79,6 +79,16 @@ func Get() *viper.Viper {
 	options.SetDefault("rbac.scheme", "http")
 	options.SetDefault("rbac.timeout", 10)
 
+	options.SetDefault("inventory.connector.impl", "mock")
+	options.SetDefault("inventory.connector.host", "localhost")
+	options.SetDefault("inventory.connector.port", "4000")
+	options.SetDefault("inventory.connector.scheme", "http")
+	options.SetDefault("inventory.connector.ordered.by", "display_name")
+	options.SetDefault("inventory.connector.ordered.how", "ASC")
+	options.SetDefault("inventory.connector.limit", 100)
+	options.SetDefault("inventory.connector.offset", 0)
+	options.SetDefault("inventory.connector.timeout", 10)
+
 	options.SetDefault("tenant.translator.impl", "dynamic-mock")
 	options.SetDefault("tenant.translator.host", "localhost")
 	options.SetDefault("tenant.translator.scheme", "http")
