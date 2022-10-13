@@ -174,17 +174,13 @@ func (this *inventoryConnectorImpl) GetHostConnectionDetails(ctx context.Context
 
 	hostConnectionDetails := make([]HostDetails, len(IDs))
 	for i, host := range hostResults {
-		_, IDPresent := systemProfileResults[*host.Id]
-		if IDPresent {
-			satelliteFacts := getSatelliteFacts(host.Facts)
-
-			hostConnectionDetails[i] = HostDetails{
-				ID:                  *host.Id,
-				OwnerID:             *systemProfileResults[*host.Id].SystemProfile.OwnerId,
-				SatelliteInstanceID: satelliteFacts.SatelliteInstanceID,
-				SatelliteVersion:    satelliteFacts.SatelliteVersion,
-				RHCConnectionID:     systemProfileResults[*host.Id].SystemProfile.RhcClientId,
-			}
+		satelliteFacts := getSatelliteFacts(host.Facts)
+		hostConnectionDetails[i] = HostDetails{
+			ID:                  *host.Id,
+			OwnerID:             systemProfileResults[*host.Id].SystemProfile.OwnerId,
+			SatelliteInstanceID: satelliteFacts.SatelliteInstanceID,
+			SatelliteVersion:    satelliteFacts.SatelliteVersion,
+			RHCConnectionID:     systemProfileResults[*host.Id].SystemProfile.RhcClientId,
 		}
 	}
 

@@ -25,13 +25,14 @@ func (this *inventoryConnectorMock) GetHostConnectionDetails(
 		return []HostDetails{}, fmt.Errorf("timeout")
 	}
 
+	ownerID := "12345"
 	satelliteInstanceID := "bd54e0e9-5310-45be-b107-fd7c96672ce5"
 	satelliteVersion := "6.11"
 	rhcClientID := "32af5948-301f-449a-a25b-ff34c83264a2"
 
 	hostDetails := HostDetails{
 		ID:                  "c484f980-ab8d-401b-90e7-aa1d4ccf8c0e",
-		OwnerID:             "12345",
+		OwnerID:             &ownerID,
 		SatelliteInstanceID: &satelliteInstanceID,
 		SatelliteVersion:    &satelliteVersion,
 		RHCConnectionID:     &rhcClientID,

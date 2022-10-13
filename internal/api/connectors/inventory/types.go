@@ -11,7 +11,7 @@ type satelliteFacts struct {
 
 type HostDetails struct {
 	ID                  string  `json:"id"`
-	OwnerID             string  `json:"owner_id"`
+	OwnerID             *string `json:"owner_id,omitempty"`
 	SatelliteInstanceID *string `json:"satellite_instance_id,omitempty"`
 	SatelliteVersion    *string `json:"satellite_version,omitempty"`
 	RHCConnectionID     *string `json:"rhc_client_id,omitempty"`
