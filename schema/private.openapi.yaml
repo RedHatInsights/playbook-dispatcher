@@ -120,6 +120,26 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
+  /internal/highlevel/recipients/status:
+    post:
+      summary: Obtain Connection Status of recipient(s) based on a list of host IDs
+      description: Builds list of recipient(s) and indicates whether the given recipient(s) are available
+      operationId: api.internal.highlevel.connection.status
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HostsWithOrgId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HighLevelRecipientStatus'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
 components:
   schemas:
     RunInput:
@@ -279,6 +299,80 @@ components:
             description: Indicates whether a connection is established with the recipient
         required:
         - connected
+
+    HostsWithOrgId:
+      type: object
+      properties:
+        org_id:
+          $ref: '#/components/schemas/OrgId'
+        hosts:
+          type: array
+          items:
+            description: Identifies a record of the Host-Inventory service
+            type: string
+            minLength: 1
+      required:
+      - org_id
+      - hosts
+
+    RecipientWithConnectionInfo:
+      type: object
+      properties:
+        recipient:
+          $ref: './public.openapi.yaml#/components/schemas/RunRecipient'
+        org_id:
+          $ref: '#/components/schemas/OrgId'
+        sat_id:
+          $ref: '#/components/schemas/SatelliteId'
+        sat_org_id:
+          $ref: '#/components/schemas/SatelliteOrgId'
+        recipient_type:
+          $ref: '#/components/schemas/RecipientType'
+        systems:
+          type: array
+          items:
+            $ref: '#/components/schemas/HostId'
+        status:
+          description: Indicates the current run status of the recipient
+          type: string
+          enum: [connected, disconnected, rhc_not_configured]
+      required:
+      - recipient
+      - org_id
+      - recipient_type
+      - sat_id
+      - sat_org_id
+      - systems
+      - status
+
+
+    HighLevelRecipientStatus:
+      type: array
+      items:
+        $ref: '#/components/schemas/RecipientWithConnectionInfo'
+
+    HostId:
+      description: Identifies a record of the Host-Inventory service
+      type: string
+      minLength: 1
+
+    SatelliteId:
+      description: Identifier of the Satellite instance in the uuid v4/v5 format
+      type: string
+      format: sat-id-uuid
+      example: aa3b1faa-56f3-4d14-8258-615d11e20060
+    
+    SatelliteOrgId:
+      description: Identifier of the organization within Satellite
+      type: string
+      example: "12345"
+      minLength: 1
+
+    RecipientType:
+      description: Identifies the type of recipient [Satellite, Direct Connected, None]
+      type: string
+      enum: [satellite, directConnect, none]
+      minLength: 1
 
     OrgId:
       description: Identifies the organization that the given resource belongs to

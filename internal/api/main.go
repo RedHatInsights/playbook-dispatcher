@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net/http"
 	"playbook-dispatcher/internal/api/connectors"
+	"playbook-dispatcher/internal/api/connectors/inventory"
+	"playbook-dispatcher/internal/api/connectors/sources"
 	"playbook-dispatcher/internal/api/controllers/private"
 	"playbook-dispatcher/internal/api/controllers/public"
 	"playbook-dispatcher/internal/api/instrumentation"
@@ -83,6 +85,24 @@ func Start(
 		log.Warn("Using mock CloudConnectorClient")
 	}
 
+	var inventoryConnectorClient inventory.InventoryConnector
+
+	if cfg.GetString("inventory.connector.impl") == "impl" {
+		inventoryConnectorClient = inventory.NewInventoryClient(cfg)
+	} else {
+		inventoryConnectorClient = inventory.NewInventoryClientMock()
+		log.Warn("Using mock InventoryConnectorClient")
+	}
+
+	var sourcesConnectorClient sources.SourcesConnector
+
+	if cfg.GetString("sources.connector.impl") == "impl" {
+		sourcesConnectorClient = sources.NewSourcesClient(cfg)
+	} else {
+		sourcesConnectorClient = sources.NewMockSourcesClient()
+		log.Warn("Using mock SourcesConnectorClient")
+	}
+
 	var translator tenantid.Translator
 	switch cfg.GetString("tenant.translator.impl") {
 	case "impl":
@@ -102,7 +122,7 @@ func Start(
 	authConfig := middleware.BuildPskAuthConfigFromEnv()
 	log.Infow("Authentication required for internal API", "principals", utils.MapKeysString(authConfig))
 
-	privateController := private.CreateController(db, cloudConnectorClient, cfg, translator)
+	privateController := private.CreateController(db, cloudConnectorClient, inventoryConnectorClient, sourcesConnectorClient, cfg, translator)
 	internal := server.Group("/internal")
 	internal.Use(oapiMiddleware.OapiRequestValidator(privateSpec))
 	// Authorization header not required for GET /internal/version
@@ -113,6 +133,7 @@ func Start(
 	internal.POST("/v2/recipients/status", privateController.ApiInternalV2RecipientsStatus)
 	internal.POST("/v2/dispatch", privateController.ApiInternalV2RunsCreate)
 	internal.POST("/v2/cancel", privateController.ApiInternalV2RunsCancel)
+	internal.POST("/highlevel/recipients/status", privateController.ApiInternalHighlevelConnectionStatus)
 
 	publicController := public.CreateController(db, cloudConnectorClient)
 	public := server.Group("/api/playbook-dispatcher")

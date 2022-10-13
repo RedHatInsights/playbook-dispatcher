@@ -3,6 +3,8 @@ package private
 import (
 	"fmt"
 	"playbook-dispatcher/internal/api/connectors"
+	"playbook-dispatcher/internal/api/connectors/inventory"
+	"playbook-dispatcher/internal/api/connectors/sources"
 	"playbook-dispatcher/internal/api/dispatch"
 	"playbook-dispatcher/internal/common/config"
 
@@ -14,27 +16,31 @@ import (
 	"gorm.io/gorm"
 )
 
-func CreateController(database *gorm.DB, cloudConnectorClient connectors.CloudConnectorClient, config *viper.Viper, translator tenantid.Translator) ServerInterfaceWrapper {
+func CreateController(database *gorm.DB, cloudConnectorClient connectors.CloudConnectorClient, inventoryConnectorClient inventory.InventoryConnector, sourcesConnectorClient sources.SourcesConnector, config *viper.Viper, translator tenantid.Translator) ServerInterfaceWrapper {
 	rateLimiter := getRateLimiter(config)
 
 	return ServerInterfaceWrapper{
 		Handler: &controllers{
-			cloudConnectorClient: cloudConnectorClient,
-			config:               config,
-			rateLimiter:          rateLimiter,
-			translator:           translator,
-			dispatchManager:      dispatch.NewDispatchManager(config, cloudConnectorClient, rateLimiter, database),
+			cloudConnectorClient:     cloudConnectorClient,
+			inventoryConnectorClient: inventoryConnectorClient,
+			sourcesConnectorClient:   sourcesConnectorClient,
+			config:                   config,
+			rateLimiter:              rateLimiter,
+			translator:               translator,
+			dispatchManager:          dispatch.NewDispatchManager(config, cloudConnectorClient, rateLimiter, database),
 		},
 	}
 }
 
 // implements api.ServerInterface
 type controllers struct {
-	cloudConnectorClient connectors.CloudConnectorClient
-	config               *viper.Viper
-	rateLimiter          *rate.Limiter
-	translator           tenantid.Translator
-	dispatchManager      dispatch.DispatchManager
+	cloudConnectorClient     connectors.CloudConnectorClient
+	inventoryConnectorClient inventory.InventoryConnector
+	sourcesConnectorClient   sources.SourcesConnector
+	config                   *viper.Viper
+	rateLimiter              *rate.Limiter
+	translator               tenantid.Translator
+	dispatchManager          dispatch.DispatchManager
 }
 
 // workaround for https://github.com/deepmap/oapi-codegen/issues/42

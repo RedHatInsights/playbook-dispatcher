@@ -37,6 +37,20 @@ type Error struct {
 	Message string `json:"message"`
 }
 
+// HighLevelRecipientStatus defines model for HighLevelRecipientStatus.
+type HighLevelRecipientStatus []RecipientWithConnectionInfo
+
+// HostId defines model for HostId.
+type HostId string
+
+// HostsWithOrgId defines model for HostsWithOrgId.
+type HostsWithOrgId struct {
+	Hosts []string `json:"hosts"`
+
+	// Identifies the organization that the given resource belongs to
+	OrgId OrgId `json:"org_id"`
+}
+
 // OrgId defines model for OrgId.
 type OrgId string
 
@@ -61,6 +75,39 @@ type RecipientStatus struct {
 
 	// Indicates whether a connection is established with the recipient
 	Connected bool `json:"connected"`
+}
+
+// RecipientType defines model for RecipientType.
+type RecipientType string
+
+// List of RecipientType
+const (
+	RecipientType_directConnect RecipientType = "directConnect"
+	RecipientType_none          RecipientType = "none"
+	RecipientType_satellite     RecipientType = "satellite"
+)
+
+// RecipientWithConnectionInfo defines model for RecipientWithConnectionInfo.
+type RecipientWithConnectionInfo struct {
+
+	// Identifies the organization that the given resource belongs to
+	OrgId OrgId `json:"org_id"`
+
+	// Identifier of the host to which a given Playbook is addressed
+	Recipient externalRef0.RunRecipient `json:"recipient"`
+
+	// Identifies the type of recipient [Satellite, Direct Connected, None]
+	RecipientType RecipientType `json:"recipient_type"`
+
+	// Identifier of the Satellite instance in the uuid v4/v5 format
+	SatId SatelliteId `json:"sat_id"`
+
+	// Identifier of the organization within Satellite
+	SatOrgId SatelliteOrgId `json:"sat_org_id"`
+
+	// Indicates the current run status of the recipient
+	Status  string   `json:"status"`
+	Systems []HostId `json:"systems"`
 }
 
 // RecipientWithOrg defines model for RecipientWithOrg.
@@ -170,6 +217,12 @@ type RunsCanceled []RunCanceled
 // RunsCreated defines model for RunsCreated.
 type RunsCreated []RunCreated
 
+// SatelliteId defines model for SatelliteId.
+type SatelliteId string
+
+// SatelliteOrgId defines model for SatelliteOrgId.
+type SatelliteOrgId string
+
 // Version defines model for Version.
 type Version string
 
@@ -178,6 +231,9 @@ type BadRequest Error
 
 // ApiInternalRunsCreateJSONBody defines parameters for ApiInternalRunsCreate.
 type ApiInternalRunsCreateJSONBody []RunInput
+
+// ApiInternalHighlevelConnectionStatusJSONBody defines parameters for ApiInternalHighlevelConnectionStatus.
+type ApiInternalHighlevelConnectionStatusJSONBody HostsWithOrgId
 
 // ApiInternalV2RunsCancelJSONBody defines parameters for ApiInternalV2RunsCancel.
 type ApiInternalV2RunsCancelJSONBody []CancelInputV2
@@ -190,6 +246,9 @@ type ApiInternalV2RecipientsStatusJSONBody []RecipientWithOrg
 
 // ApiInternalRunsCreateRequestBody defines body for ApiInternalRunsCreate for application/json ContentType.
 type ApiInternalRunsCreateJSONRequestBody ApiInternalRunsCreateJSONBody
+
+// ApiInternalHighlevelConnectionStatusRequestBody defines body for ApiInternalHighlevelConnectionStatus for application/json ContentType.
+type ApiInternalHighlevelConnectionStatusJSONRequestBody ApiInternalHighlevelConnectionStatusJSONBody
 
 // ApiInternalV2RunsCancelRequestBody defines body for ApiInternalV2RunsCancel for application/json ContentType.
 type ApiInternalV2RunsCancelJSONRequestBody ApiInternalV2RunsCancelJSONBody
@@ -278,6 +337,11 @@ type ClientInterface interface {
 
 	ApiInternalRunsCreate(ctx context.Context, body ApiInternalRunsCreateJSONRequestBody) (*http.Response, error)
 
+	// ApiInternalHighlevelConnectionStatus request  with any body
+	ApiInternalHighlevelConnectionStatusWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error)
+
+	ApiInternalHighlevelConnectionStatus(ctx context.Context, body ApiInternalHighlevelConnectionStatusJSONRequestBody) (*http.Response, error)
+
 	// ApiInternalV2RunsCancel request  with any body
 	ApiInternalV2RunsCancelWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error)
 
@@ -314,6 +378,36 @@ func (c *Client) ApiInternalRunsCreateWithBody(ctx context.Context, contentType 
 
 func (c *Client) ApiInternalRunsCreate(ctx context.Context, body ApiInternalRunsCreateJSONRequestBody) (*http.Response, error) {
 	req, err := NewApiInternalRunsCreateRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if c.RequestEditor != nil {
+		err = c.RequestEditor(ctx, req)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ApiInternalHighlevelConnectionStatusWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error) {
+	req, err := NewApiInternalHighlevelConnectionStatusRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if c.RequestEditor != nil {
+		err = c.RequestEditor(ctx, req)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ApiInternalHighlevelConnectionStatus(ctx context.Context, body ApiInternalHighlevelConnectionStatusJSONRequestBody) (*http.Response, error) {
+	req, err := NewApiInternalHighlevelConnectionStatusRequest(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -453,6 +547,45 @@ func NewApiInternalRunsCreateRequestWithBody(server string, contentType string, 
 	}
 
 	basePath := fmt.Sprintf("/internal/dispatch")
+	if basePath[0] == '/' {
+		basePath = basePath[1:]
+	}
+
+	queryUrl, err = queryUrl.Parse(basePath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryUrl.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+	return req, nil
+}
+
+// NewApiInternalHighlevelConnectionStatusRequest calls the generic ApiInternalHighlevelConnectionStatus builder with application/json body
+func NewApiInternalHighlevelConnectionStatusRequest(server string, body ApiInternalHighlevelConnectionStatusJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewApiInternalHighlevelConnectionStatusRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewApiInternalHighlevelConnectionStatusRequestWithBody generates requests for ApiInternalHighlevelConnectionStatus with any type of body
+func NewApiInternalHighlevelConnectionStatusRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	queryUrl, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	basePath := fmt.Sprintf("/internal/highlevel/recipients/status")
 	if basePath[0] == '/' {
 		basePath = basePath[1:]
 	}
@@ -649,6 +782,11 @@ type ClientWithResponsesInterface interface {
 
 	ApiInternalRunsCreateWithResponse(ctx context.Context, body ApiInternalRunsCreateJSONRequestBody) (*ApiInternalRunsCreateResponse, error)
 
+	// ApiInternalHighlevelConnectionStatus request  with any body
+	ApiInternalHighlevelConnectionStatusWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*ApiInternalHighlevelConnectionStatusResponse, error)
+
+	ApiInternalHighlevelConnectionStatusWithResponse(ctx context.Context, body ApiInternalHighlevelConnectionStatusJSONRequestBody) (*ApiInternalHighlevelConnectionStatusResponse, error)
+
 	// ApiInternalV2RunsCancel request  with any body
 	ApiInternalV2RunsCancelWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*ApiInternalV2RunsCancelResponse, error)
 
@@ -685,6 +823,29 @@ func (r ApiInternalRunsCreateResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r ApiInternalRunsCreateResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type ApiInternalHighlevelConnectionStatusResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *HighLevelRecipientStatus
+	JSON400      *Error
+}
+
+// Status returns HTTPResponse.Status
+func (r ApiInternalHighlevelConnectionStatusResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ApiInternalHighlevelConnectionStatusResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -798,6 +959,23 @@ func (c *ClientWithResponses) ApiInternalRunsCreateWithResponse(ctx context.Cont
 	return ParseApiInternalRunsCreateResponse(rsp)
 }
 
+// ApiInternalHighlevelConnectionStatusWithBodyWithResponse request with arbitrary body returning *ApiInternalHighlevelConnectionStatusResponse
+func (c *ClientWithResponses) ApiInternalHighlevelConnectionStatusWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*ApiInternalHighlevelConnectionStatusResponse, error) {
+	rsp, err := c.ApiInternalHighlevelConnectionStatusWithBody(ctx, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	return ParseApiInternalHighlevelConnectionStatusResponse(rsp)
+}
+
+func (c *ClientWithResponses) ApiInternalHighlevelConnectionStatusWithResponse(ctx context.Context, body ApiInternalHighlevelConnectionStatusJSONRequestBody) (*ApiInternalHighlevelConnectionStatusResponse, error) {
+	rsp, err := c.ApiInternalHighlevelConnectionStatus(ctx, body)
+	if err != nil {
+		return nil, err
+	}
+	return ParseApiInternalHighlevelConnectionStatusResponse(rsp)
+}
+
 // ApiInternalV2RunsCancelWithBodyWithResponse request with arbitrary body returning *ApiInternalV2RunsCancelResponse
 func (c *ClientWithResponses) ApiInternalV2RunsCancelWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*ApiInternalV2RunsCancelResponse, error) {
 	rsp, err := c.ApiInternalV2RunsCancelWithBody(ctx, contentType, body)
@@ -878,6 +1056,39 @@ func ParseApiInternalRunsCreateResponse(rsp *http.Response) (*ApiInternalRunsCre
 			return nil, err
 		}
 		response.JSON207 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseApiInternalHighlevelConnectionStatusResponse parses an HTTP response from a ApiInternalHighlevelConnectionStatusWithResponse call
+func ParseApiInternalHighlevelConnectionStatusResponse(rsp *http.Response) (*ApiInternalHighlevelConnectionStatusResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ApiInternalHighlevelConnectionStatusResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest HighLevelRecipientStatus
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
 		var dest Error

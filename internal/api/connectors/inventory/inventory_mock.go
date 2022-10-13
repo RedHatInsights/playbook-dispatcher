@@ -8,7 +8,7 @@ import (
 type inventoryConnectorMock struct {
 }
 
-func InventoryConnectorClientMock() InventoryConnector {
+func NewInventoryClientMock() InventoryConnector {
 	return &inventoryConnectorMock{}
 }
 
@@ -27,6 +27,7 @@ func (this *inventoryConnectorMock) GetHostConnectionDetails(
 
 	ownerID := "12345"
 	satelliteInstanceID := "bd54e0e9-5310-45be-b107-fd7c96672ce5"
+	satelliteOrgID := "5"
 	satelliteVersion := "6.11"
 	rhcClientID := "32af5948-301f-449a-a25b-ff34c83264a2"
 
@@ -35,10 +36,16 @@ func (this *inventoryConnectorMock) GetHostConnectionDetails(
 		OwnerID:             &ownerID,
 		SatelliteInstanceID: &satelliteInstanceID,
 		SatelliteVersion:    &satelliteVersion,
-		RHCConnectionID:     &rhcClientID,
+		SatelliteOrgID:      &satelliteOrgID,
 	}
 
-	hostDetailsList := []HostDetails{hostDetails}
+	directConnectDetails := HostDetails{
+		ID:          "fe30b997-c15a-44a9-89df-c236c3b5c540",
+		OwnerID:     &ownerID,
+		RHCClientID: &rhcClientID,
+	}
+
+	hostDetailsList := []HostDetails{hostDetails, directConnectDetails}
 
 	return hostDetailsList, nil
 }
