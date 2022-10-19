@@ -154,5 +154,9 @@ func (this *cloudConnectorClientImpl) GetConnectionStatus(
 		return "", err
 	}
 
+	if res.JSON200 == nil {
+		return "", utils.UnexpectedResponse(res.HTTPResponse)
+	}
+
 	return *res.JSON200.Status, nil
 }
