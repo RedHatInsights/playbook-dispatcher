@@ -64,6 +64,12 @@ More examples:
 
 Default and available fields for each resource can be found in the [API schema](https://github.com/RedHatInsights/playbook-dispatcher/blob/master/schema/public.openapi.yaml)
 
+**Note:** Users interested in the up to date output of running playbooks should include the `stdout` field
+in their requests to the `/v1/run_hosts` endpoint.
+For example:
+
+- `/api/playbook-dispatcher/v1/run_hosts?fields[data]=host,status,stdout`
+
 ### Authentication
 
 The API is placed behind a [web gateway (3scale)](https://internal.cloud.redhat.com/docs/services/3scale/).

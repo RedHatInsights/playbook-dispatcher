@@ -100,6 +100,11 @@ Please refer to the following schema definitions for the details:
 * Public API endpoint to fetch playbook run information: [here](https://github.com/RedHatInsights/playbook-dispatcher/blob/master/schema/public.openapi.yaml#L17).
 * Public API endpoint to fetch host information: [here](https://github.com/RedHatInsights/playbook-dispatcher/blob/master/schema/public.openapi.yaml#L44).
 
+**Note:** Users interested in the up to date console output of currently running playbooks should include the `stdout` field in their requests to the endpoint that fetches host information (`/v1/run_hosts`).
+For example:
+
+- `/api/playbook-dispatcher/v1/run_hosts?fields[data]=host,status,stdout`
+
 ## Helpful Tips
 
 ### Dispatching multiple satellite playbook runs
