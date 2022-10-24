@@ -105,6 +105,17 @@ For example:
 
 - `/api/playbook-dispatcher/v1/run_hosts?fields[data]=host,status,stdout`
 
+### Authneticating with the Public API
+
+In order to fetch host or playbook information using the Public API, your application must have the correct Playbook Dispatcher RBAC permission attached to it.
+The current Playbook Dispatcher RBAC permissions are `playbook-dispatcher:run:read` and `playbook-dispatcher:run:write`.
+
+Please consult the [RBAC config documentation](https://github.com/RedHatInsights/rbac-config) if you are unfamiliar with the RBAC config integration process.
+
+* Playbook dispatcher RBAC config permission definition: [here](https://github.com/RedHatInsights/rbac-config/blob/ce6ddfd40c0950a7e2220e80f921cb77658b4d80/configs/prod/permissions/playbook-dispatcher.json).
+* Example of Remediations using the Playbook dispatcher read permission: [here](https://github.com/RedHatInsights/rbac-config/blob/ce6ddfd40c0950a7e2220e80f921cb77658b4d80/configs/fedramp-prod/roles/remediations.json#L44).
+* RBAC service information and integration documentation: [here](https://consoledot.pages.redhat.com/docs/dev/services/rbac.html).
+
 ## Helpful Tips
 
 ### Dispatching multiple satellite playbook runs
