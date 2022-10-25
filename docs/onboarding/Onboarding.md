@@ -105,15 +105,20 @@ For example:
 
 - `/api/playbook-dispatcher/v1/run_hosts?fields[data]=host,status,stdout`
 
-### Authneticating with the Public API
+### Authorization with the Public API
 
 In order to fetch host or playbook information using the Public API, your application must have the correct Playbook Dispatcher RBAC permission attached to it.
-The current Playbook Dispatcher RBAC permissions are `playbook-dispatcher:run:read` and `playbook-dispatcher:run:write`.
+The current supported Playbook Dispatcher RBAC permission is `playbook-dispatcher:run:read`.
+This permission grants read access to Playbook Dispatcher resources.
+In addition to that, Playbook Dispatcher uses the attribute filter of this permission to determine which types of playbooks the user has access to.
+With a permission definition that contains an attribute filter [like this](https://github.com/RedHatInsights/rbac-config/blob/ce6ddfd40c0950a7e2220e80f921cb77658b4d80/configs/prod/roles/remediations.json#L21-L23) the user gets to see playbook runs originating from the Remediations service.
+Similarly, the role for the Config Manager service contains a [permission definition]( https://github.com/RedHatInsights/rbac-config/blob/ce6ddfd40c0950a7e2220e80f921cb77658b4d80/configs/prod/roles/config-manager.json#L28-L30) that grants the user the permission necessary to see the playbooks originating from config manager.
+When listing playbook runs or playbook run hosts, Playbook Dispatcher will filter out all entities originating from services for which the user does not have a corresponding permission for.
+What it means for a new service is that information about playbooks initiated by it won't be visible by default until a corresponding permission (i.e. `playbook-dispatcher:run:read` with attribute filter matching the given service name) is attached to a role(s) used by the service.
 
 Please consult the [RBAC config documentation](https://github.com/RedHatInsights/rbac-config) if you are unfamiliar with the RBAC config integration process.
 
 * Playbook dispatcher RBAC config permission definition: [here](https://github.com/RedHatInsights/rbac-config/blob/ce6ddfd40c0950a7e2220e80f921cb77658b4d80/configs/prod/permissions/playbook-dispatcher.json).
-* Example of Remediations using the Playbook dispatcher read permission: [here](https://github.com/RedHatInsights/rbac-config/blob/ce6ddfd40c0950a7e2220e80f921cb77658b4d80/configs/fedramp-prod/roles/remediations.json#L44).
 * RBAC service information and integration documentation: [here](https://consoledot.pages.redhat.com/docs/dev/services/rbac.html).
 
 ## Helpful Tips
