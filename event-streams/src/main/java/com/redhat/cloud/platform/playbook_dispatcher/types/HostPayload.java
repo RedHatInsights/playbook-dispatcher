@@ -17,7 +17,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
         "run_id",
         "inventory_id",
         "host",
-        "log",
+        "stdout",
         "status",
         "created_at",
         "updated_at"
@@ -47,7 +47,7 @@ public class HostPayload {
      */
     @JsonProperty("host")
     private String host;
-    @JsonProperty("log")
+    @JsonProperty("stdout")
     private String log;
     /**
      *
@@ -144,12 +144,12 @@ public class HostPayload {
         this.host = host;
     }
 
-    @JsonProperty("log")
+    @JsonProperty("stdout")
     public String getLog() {
         return log;
     }
 
-    @JsonProperty("log")
+    @JsonProperty("stdout")
     public void setLog(String log) {
         this.log = log;
     }
@@ -245,7 +245,7 @@ public class HostPayload {
         sb.append('=');
         sb.append(((this.host == null) ? "<null>" : this.host));
         sb.append(',');
-        sb.append("log");
+        sb.append("stdout");
         sb.append('=');
         sb.append(((this.log == null) ? "<null>" : this.log));
         sb.append(',');
