@@ -214,7 +214,7 @@ objects:
       type: ${KAFKA_SASL_MECHANISM}
       username: ${KAFKA_USERNAME}
       passwordSecret:
-        secretName: clowder-oauth
+        secretName: clowder-auth
         password: password 
     externalConfiguration:
       volumes:
