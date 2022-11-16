@@ -10,8 +10,9 @@ properties:
     - read
     - update
     - delete
-  hostPayload:
+  payload:
     type: object
+    javaType: com.redhat.cloud.platform.playbook_dispatcher.types.RunHostPayload
     properties:
       id:
         type: string
@@ -46,5 +47,4 @@ properties:
 
 required:
   - event_type
-  - hostPayload
-
+  - payload

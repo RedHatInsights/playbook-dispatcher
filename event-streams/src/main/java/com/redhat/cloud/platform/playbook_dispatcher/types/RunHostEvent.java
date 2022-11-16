@@ -1,3 +1,4 @@
+
 package com.redhat.cloud.platform.playbook_dispatcher.types;
 
 import java.util.HashMap;
@@ -13,32 +14,32 @@ import com.fasterxml.jackson.annotation.JsonValue;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
-        "event_type",
-        "hostPayload"
+    "event_type",
+    "payload"
 })
 public class RunHostEvent {
 
     /**
-     *
+     * 
      * (Required)
-     *
+     * 
      */
     @JsonProperty("event_type")
     private RunHostEvent.EventType eventType;
     /**
-     *
+     * 
      * (Required)
-     *
+     * 
      */
-    @JsonProperty("hostPayload")
-    private HostPayload hostPayload;
+    @JsonProperty("payload")
+    private RunHostPayload payload;
     @JsonIgnore
     private Map<String, Object> additionalProperties = new HashMap<String, Object>();
 
     /**
-     *
+     * 
      * (Required)
-     *
+     * 
      */
     @JsonProperty("event_type")
     public RunHostEvent.EventType getEventType() {
@@ -46,9 +47,9 @@ public class RunHostEvent {
     }
 
     /**
-     *
+     * 
      * (Required)
-     *
+     * 
      */
     @JsonProperty("event_type")
     public void setEventType(RunHostEvent.EventType eventType) {
@@ -56,23 +57,23 @@ public class RunHostEvent {
     }
 
     /**
-     *
+     * 
      * (Required)
-     *
+     * 
      */
-    @JsonProperty("hostPayload")
-    public HostPayload getHostPayload() {
-        return hostPayload;
+    @JsonProperty("payload")
+    public RunHostPayload getPayload() {
+        return payload;
     }
 
     /**
-     *
+     * 
      * (Required)
-     *
+     * 
      */
-    @JsonProperty("hostPayload")
-    public void setHostPayload(HostPayload hostPayload) {
-        this.hostPayload = hostPayload;
+    @JsonProperty("payload")
+    public void setPayload(RunHostPayload payload) {
+        this.payload = payload;
     }
 
     @JsonAnyGetter
@@ -88,22 +89,21 @@ public class RunHostEvent {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append(RunHostEvent.class.getName()).append('@').append(Integer.toHexString(System.identityHashCode(this)))
-                .append('[');
+        sb.append(RunHostEvent.class.getName()).append('@').append(Integer.toHexString(System.identityHashCode(this))).append('[');
         sb.append("eventType");
         sb.append('=');
-        sb.append(((this.eventType == null) ? "<null>" : this.eventType));
+        sb.append(((this.eventType == null)?"<null>":this.eventType));
         sb.append(',');
-        sb.append("hostPayload");
+        sb.append("payload");
         sb.append('=');
-        sb.append(((this.hostPayload == null) ? "<null>" : this.hostPayload));
+        sb.append(((this.payload == null)?"<null>":this.payload));
         sb.append(',');
         sb.append("additionalProperties");
         sb.append('=');
-        sb.append(((this.additionalProperties == null) ? "<null>" : this.additionalProperties));
+        sb.append(((this.additionalProperties == null)?"<null>":this.additionalProperties));
         sb.append(',');
-        if (sb.charAt((sb.length() - 1)) == ',') {
-            sb.setCharAt((sb.length() - 1), ']');
+        if (sb.charAt((sb.length()- 1)) == ',') {
+            sb.setCharAt((sb.length()- 1), ']');
         } else {
             sb.append(']');
         }
@@ -113,9 +113,9 @@ public class RunHostEvent {
     @Override
     public int hashCode() {
         int result = 1;
-        result = ((result * 31) + ((this.eventType == null) ? 0 : this.eventType.hashCode()));
-        result = ((result * 31) + ((this.additionalProperties == null) ? 0 : this.additionalProperties.hashCode()));
-        result = ((result * 31) + ((this.hostPayload == null) ? 0 : this.hostPayload.hashCode()));
+        result = ((result* 31)+((this.eventType == null)? 0 :this.eventType.hashCode()));
+        result = ((result* 31)+((this.additionalProperties == null)? 0 :this.additionalProperties.hashCode()));
+        result = ((result* 31)+((this.payload == null)? 0 :this.payload.hashCode()));
         return result;
     }
 
@@ -128,12 +128,7 @@ public class RunHostEvent {
             return false;
         }
         RunHostEvent rhs = ((RunHostEvent) other);
-        return ((((this.eventType == rhs.eventType)
-                || ((this.eventType != null) && this.eventType.equals(rhs.eventType)))
-                && ((this.additionalProperties == rhs.additionalProperties) || ((this.additionalProperties != null)
-                        && this.additionalProperties.equals(rhs.additionalProperties))))
-                && ((this.hostPayload == rhs.hostPayload)
-                        || ((this.hostPayload != null) && this.hostPayload.equals(rhs.hostPayload))));
+        return ((((this.eventType == rhs.eventType)||((this.eventType!= null)&&this.eventType.equals(rhs.eventType)))&&((this.additionalProperties == rhs.additionalProperties)||((this.additionalProperties!= null)&&this.additionalProperties.equals(rhs.additionalProperties))))&&((this.payload == rhs.payload)||((this.payload!= null)&&this.payload.equals(rhs.payload))));
     }
 
     public enum EventType {
@@ -142,17 +137,16 @@ public class RunHostEvent {
         READ("read"),
         UPDATE("update"),
         DELETE("delete");
-
         private final String value;
         private final static Map<String, RunHostEvent.EventType> CONSTANTS = new HashMap<String, RunHostEvent.EventType>();
 
         static {
-            for (RunHostEvent.EventType c : values()) {
+            for (RunHostEvent.EventType c: values()) {
                 CONSTANTS.put(c.value, c);
             }
         }
 
-        EventType(String value) {
+        private EventType(String value) {
             this.value = value;
         }
 

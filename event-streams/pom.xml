@@ -45,6 +45,7 @@
         <version.surefire.plugin>2.22.2</version.surefire.plugin>
 
         <schema.event.run>${project.basedir}/../schema/run.event.yaml</schema.event.run>
+        <schema.event.run.host>${project.basedir}/../schema/run.host.event.yaml</schema.event.run.host>
     </properties>
 
     <dependencies>
@@ -148,7 +149,8 @@
                 <version>${version.jsonschema2pojo.plugin}</version>
                 <configuration>
                     <!-- https://joelittlejohn.github.io/jsonschema2pojo/site/1.0.2/generate-mojo.html -->
-                    <sourceDirectory>${schema.event.run}</sourceDirectory>
+                    <sourcePaths>${schema.event.run}</sourcePaths>
+                    <sourcePaths>${schema.event.run.host}</sourcePaths>
                     <sourceType>yamlSchema</sourceType>
                     <targetPackage>com.redhat.cloud.platform.playbook_dispatcher.types</targetPackage>
                     <outputDirectory>${project.basedir}/src/main/java</outputDirectory>

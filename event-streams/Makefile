@@ -6,3 +6,6 @@ connector_create:
 
 connector_delete:
 	curl -XDELETE localhost:8083/connectors/playbook-dispatcher-source
+
+generate_java_classes:
+	./mvnw generate-sources
