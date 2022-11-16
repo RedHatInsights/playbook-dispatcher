@@ -138,7 +138,7 @@ public class RunHostEventTransform<T extends ConnectRecord<T>> implements Transf
         payload.setRunId(input.getString("run_id"));
         payload.setInventoryId(input.getString("inventory_id"));
         payload.setHost(input.getString("host"));
-        payload.setStdout(input.getString("stdout"));
+        payload.setStdout(input.getString("log"));
         payload.setStatus(Status.fromValue(input.getString("status")));
         payload.setCreatedAt(input.getString("created_at"));
         payload.setUpdatedAt(input.getString("updated_at"));
