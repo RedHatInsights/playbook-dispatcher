@@ -83,10 +83,10 @@ public class RunHostEventTransformParameterizedTest {
         final RunHostEvent value = mapper.readValue((String) result.value(), RunHostEvent.class);
 
         assertEquals(this.eventType, value.getEventType().value());
-        assertEquals("7609546c-f965-4c9c-966c-9e15f4ecbc5f", value.getHostPayload().getId());
-        assertEquals("success", value.getHostPayload().getStatus().toString());
-        assertEquals("2021-03-10T08:18:12.370585Z", value.getHostPayload().getCreatedAt());
-        assertEquals("2021-03-10T09:18:12.370585Z", value.getHostPayload().getUpdatedAt());
+        assertEquals("7609546c-f965-4c9c-966c-9e15f4ecbc5f", value.getPayload().getId());
+        assertEquals("success", value.getPayload().getStatus().toString());
+        assertEquals("2021-03-10T08:18:12.370585Z", value.getPayload().getCreatedAt());
+        assertEquals("2021-03-10T09:18:12.370585Z", value.getPayload().getUpdatedAt());
     }
 
     @Test

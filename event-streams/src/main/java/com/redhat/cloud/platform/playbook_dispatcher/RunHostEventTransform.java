@@ -6,9 +6,9 @@ import java.util.Map;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.redhat.cloud.platform.playbook_dispatcher.types.RunHostEvent;
-import com.redhat.cloud.platform.playbook_dispatcher.types.HostPayload.Status;
+import com.redhat.cloud.platform.playbook_dispatcher.types.RunHostPayload.Status;
 import com.redhat.cloud.platform.playbook_dispatcher.types.RunHostEvent.EventType;
-import com.redhat.cloud.platform.playbook_dispatcher.types.HostPayload;
+import com.redhat.cloud.platform.playbook_dispatcher.types.RunHostPayload;
 
 import org.apache.kafka.common.config.AbstractConfig;
 import org.apache.kafka.common.config.ConfigDef;
@@ -106,7 +106,7 @@ public class RunHostEventTransform<T extends ConnectRecord<T>> implements Transf
     private Headers createHeaders(RunHostEvent event) {
         return new ConnectHeaders()
             .addString(HEADER_EVENT_TYPE, event.getEventType().value())
-            .addString(HEADER_STATUS, event.getHostPayload().getStatus().value());
+            .addString(HEADER_STATUS, event.getPayload().getStatus().value());
     }
 
     private String transformKey(Struct key) {
@@ -128,17 +128,17 @@ public class RunHostEventTransform<T extends ConnectRecord<T>> implements Transf
             return null;
         }
 
-        final HostPayload payload = this.buildRunHostPayload(data);
+        final RunHostPayload payload = this.buildRunHostPayload(data);
         return newRunHostEvent(payload, eventType);
     }
 
-    HostPayload buildRunHostPayload(Struct input) {
-        final HostPayload payload = new HostPayload();
+    RunHostPayload buildRunHostPayload(Struct input) {
+        final RunHostPayload payload = new RunHostPayload();
         payload.setId(input.getString("id"));
         payload.setRunId(input.getString("run_id"));
         payload.setInventoryId(input.getString("inventory_id"));
         payload.setHost(input.getString("host"));
-        payload.setLog(input.getString("log"));
+        payload.setStdout(input.getString("stdout"));
         payload.setStatus(Status.fromValue(input.getString("status")));
         payload.setCreatedAt(input.getString("created_at"));
         payload.setUpdatedAt(input.getString("updated_at"));
@@ -151,10 +151,10 @@ public class RunHostEventTransform<T extends ConnectRecord<T>> implements Transf
     public void close() {
     }
 
-    static RunHostEvent newRunHostEvent(HostPayload payload, EventType eventType) {
+    static RunHostEvent newRunHostEvent(RunHostPayload payload, EventType eventType) {
         final RunHostEvent event = new RunHostEvent();
         event.setEventType(eventType);
-        event.setHostPayload(payload);
+        event.setPayload(payload);
         return event;
     }
 
