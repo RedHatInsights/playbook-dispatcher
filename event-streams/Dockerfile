@@ -11,6 +11,7 @@ ENV EXTRA_PLUGINS=/deps/plugins \
 WORKDIR /src
 ADD event-streams /src
 ADD schema/run.event.yaml /src
+ADD schema/run.host.event.yaml /src
 
 RUN microdnf install gzip
 
