@@ -287,15 +287,15 @@ objects:
         key.converter: org.apache.kafka.connect.storage.StringConverter
         value.converter: org.apache.kafka.connect.storage.StringConverter
 
-        transforms: transformRunEvent
+        transforms: transformRunEvent,transformRunHostEvent
+
         transforms.transformRunEvent.type: com.redhat.cloud.platform.playbook_dispatcher.RunEventTransform
         transforms.transformRunEvent.table: runs
         transforms.transformRunEvent.topic: ${KAFKA_TOPIC_PREFIX}platform.playbook-dispatcher.runs
 
-        hosttransforms: transformRunHostsEvent
-        hosttransforms.trasnformRunHostsEvent.type: com.redhat.cloud.platform.playbook_dispatcher.RunHostsEventTransform
-        hosttransforms.trasnformRunHostsEvent.table: run_hosts
-        hosttransforms.trasnformRunHostsEvent.topic: platform.playbook-dispatcher.run_hosts
+        transforms.transformRunHostEvent.type: com.redhat.cloud.platform.playbook_dispatcher.RunHostEventTransform
+        transforms.transformRunHostEvent.table: run_hosts
+        transforms.transformRunHostEvent.topic: ${KAFKA_TOPIC_PREFIX}platform.playbook-dispatcher.run_hosts
 
         errors.tolerance: all
         errors.retry.delay.max.ms: 30000
