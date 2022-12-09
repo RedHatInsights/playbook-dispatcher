@@ -295,7 +295,7 @@ objects:
 
         transforms.transformRunHostEvent.type: com.redhat.cloud.platform.playbook_dispatcher.RunHostEventTransform
         transforms.transformRunHostEvent.table: run_hosts
-        transforms.transformRunHostEvent.topic: ${KAFKA_TOPIC_PREFIX}platform.playbook-dispatcher.run_hosts
+        transforms.transformRunHostEvent.topic: ${KAFKA_TOPIC_PREFIX}platform.playbook-dispatcher.run-hosts
 
         errors.tolerance: all
         errors.retry.delay.max.ms: 30000

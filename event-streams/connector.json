@@ -28,7 +28,7 @@
         "hosttransforms": "transformRunHostsEvent",
         "hosttransforms.trasnformRunHostsEvent.type": "com.redhat.cloud.platform.playbook_dispatcher.RunHostsEventTransform",
         "hosttransforms.trasnformRunHostsEvent.table": "run_hosts",
-        "hosttransforms.trasnformRunHostsEvent.topic": "platform.playbook-dispatcher.run_hosts",
+        "hosttransforms.trasnformRunHostsEvent.topic": "platform.playbook-dispatcher.run-hosts",
 
         "errors.tolerance": "all",
         "errors.retry.delay.max.ms": 30000,
