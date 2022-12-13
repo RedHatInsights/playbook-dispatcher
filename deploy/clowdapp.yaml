@@ -292,11 +292,11 @@ parameters:
   value: 512Mi
 
 - name: REPLICAS_API
-  value: "2"
+  value: "3"
 - name: REPLICAS_RESPONSE_CONSUMER
-  value: "2"
+  value: "3"
 - name: REPLICAS_VALIDATOR
-  value: "2"
+  value: "3"
 
 - name: DB_SSLMODE
   value: verify-full
