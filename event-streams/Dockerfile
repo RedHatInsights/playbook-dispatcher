@@ -11,6 +11,7 @@ ENV EXTRA_PLUGINS=/deps/plugins \
 WORKDIR /src
 ADD event-streams /src
 ADD schema/run.event.yaml /src
+ADD schema/run.host.event.yaml /src
 
 RUN microdnf install gzip
 
@@ -19,7 +20,7 @@ RUN mkdir -p $EXTRA_PLUGINS $EXTRA_LIBS && \
     MAVEN_DEP_DESTINATION=$EXTRA_PLUGINS /src/docker-maven-download.sh debezium postgres ${DEBEZIUM_VERSION} ${DEBEZIUM_CHECKSUM} && \
     MAVEN_DEP_DESTINATION=$EXTRA_LIBS /src/docker-maven-download.sh central com/redhat/insights/kafka config-providers ${CONFIG_PROVIDERS_VERSION} ${CONFIG_PROVIDERS_CHECKSUM}
 
-RUN ./mvnw -Dschema.event.run=/src/run.event.yaml clean package && \
+RUN ./mvnw -Dschema.event.run=/src/run.event.yaml -Dschema.event.run.host=/src/run.host.event.yaml clean package && \
     mv target/playbook-dispatcher-smt-*.jar target/playbook-dispatcher-smt.jar
 
 

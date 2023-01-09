@@ -14,7 +14,7 @@
         "plugin.name": "pgoutput",
         "slot.max.retries": 999999999,
         "database.server.name": "playbook-dispatcher",
-        "table.include.list": "public.runs",
+        "table.include.list": "public.runs,public.run_hosts",
         "tombstones.on.delete": false,
 
         "key.converter": "org.apache.kafka.connect.storage.StringConverter",
@@ -24,6 +24,11 @@
         "transforms.transformRunEvent.type": "com.redhat.cloud.platform.playbook_dispatcher.RunEventTransform",
         "transforms.transformRunEvent.table": "runs",
         "transforms.transformRunEvent.topic": "platform.playbook-dispatcher.runs",
+
+        "hosttransforms": "transformRunHostsEvent",
+        "hosttransforms.trasnformRunHostsEvent.type": "com.redhat.cloud.platform.playbook_dispatcher.RunHostsEventTransform",
+        "hosttransforms.trasnformRunHostsEvent.table": "run_hosts",
+        "hosttransforms.trasnformRunHostsEvent.topic": "platform.playbook-dispatcher.run-hosts",
 
         "errors.tolerance": "all",
         "errors.retry.delay.max.ms": 30000,
