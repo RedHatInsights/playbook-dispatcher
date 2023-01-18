@@ -413,9 +413,15 @@ objects:
     name: rds-client-ca
   stringData:
     rds-cacert: ${RDS_CACERT}
-    
+
   # this secrect is only used in ephemeral for testing
 - apiVersion: v1
   kind: Secret
   metadata:
     name: clowder-auth
+  stringData:
+    hostname: ephemeral-kafka-bootstrap
+    port: 9092
+    password: imapassword
+
+
