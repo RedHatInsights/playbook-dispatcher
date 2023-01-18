@@ -422,6 +422,6 @@ objects:
   stringData:
     hostname: ephemeral-kafka-bootstrap
     port: "9092"
-    password: imapassword
+    password:
 
 
