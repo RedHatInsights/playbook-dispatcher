@@ -39,7 +39,6 @@ properties:
     required:
       - id
       - run_id
-      - status
       - host
       - status
       - created_at
