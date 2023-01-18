@@ -421,7 +421,7 @@ objects:
     name: clowder-auth
   stringData:
     hostname: ephemeral-kafka-bootstrap
-    port: 9092
+    port: "9092"
     password: imapassword
 
 
