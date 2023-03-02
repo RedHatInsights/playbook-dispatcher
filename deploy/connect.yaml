@@ -181,7 +181,6 @@ objects:
       app: playbook-dispatcher
     annotations:
       strimzi.io/use-connector-resources: "true"
-      ignore-check.kube-linter.io/minimum-three-replicas: "This deployment uses 1 pod, using more than 1 pod will produce more than 1 kafka messages for every db update"
   spec:
     image: ${KAFKA_CONNECT_IMAGE}:${IMAGE_TAG}
     version: ${VERSION}
@@ -231,6 +230,10 @@ objects:
         imagePullSecrets:
           - name: quay-cloudservices-pull
           - name: rh-registry-pull
+      deployment:
+        metadata:
+          annotations:
+            ignore-check.kube-linter.io/minimum-three-replicas: "This deployment uses 1 pod, using more than 1 pod will produce more than 1 kafka messages for every db update"
 
     metricsConfig:
       type: jmxPrometheusExporter
