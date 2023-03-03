@@ -30,7 +30,7 @@ source $CICD_ROOT/build.sh
 
 # IMAGE is set to the Connect image, setting dispatcher image as an extra arg
 # hardcode connect to use a ref that works in ephemeral
-EXTRA_DEPLOY_ARGS="--set-image-tag ${IMAGE_DISPATCHER}=${IMAGE_TAG} --set-template-ref ${CONNECT_COMPONENT_NAME}=047e256da507f29d0e0ae803a4b1d688eb74a2cb"
+EXTRA_DEPLOY_ARGS="--set-image-tag ${IMAGE_DISPATCHER}=${IMAGE_TAG} --set-template-ref ${CONNECT_COMPONENT_NAME}=68f6d23c28b8f87401af546900961d4654db2e34"
 
 # Deploy to an ephemeral environment
 source $CICD_ROOT/deploy_ephemeral_env.sh

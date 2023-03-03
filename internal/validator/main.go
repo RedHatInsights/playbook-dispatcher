@@ -39,6 +39,7 @@ func Start(
 	handler := &handler{
 		producer:     producer,
 		schemas:      schemas,
+		errors:       errors,
 		requestsChan: make(chan messageContext),
 		validateChan: make(chan enrichedMessageContext),
 	}
