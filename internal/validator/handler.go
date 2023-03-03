@@ -33,7 +33,7 @@ const (
 type handler struct {
 	producer     *kafka.Producer
 	schemas      []*jsonschema.Schema
-	errors       chan error
+	errors       chan<- error
 	requestsChan chan messageContext
 	validateChan chan enrichedMessageContext
 }
