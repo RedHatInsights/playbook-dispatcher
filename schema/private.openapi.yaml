@@ -120,7 +120,7 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
-  /internal/highlevel/recipients/status:
+  /internal/v2/connection_status:
     post:
       summary: Obtain Connection Status of recipient(s) based on a list of host IDs
       description: Builds list of recipient(s) and indicates whether the given recipient(s) are available

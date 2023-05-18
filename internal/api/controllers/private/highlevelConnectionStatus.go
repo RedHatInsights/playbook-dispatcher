@@ -58,11 +58,12 @@ func (this *controllers) ApiInternalHighlevelConnectionStatus(ctx echo.Context) 
 		return ctx.JSON(http.StatusAccepted, noRHCResponses)
 	}
 
+	fmt.Print("MADE IT HERE #1")
 	if len(satellite) > 0 {
 		satelliteResponses, err = getSatelliteStatus(ctx, this.cloudConnectorClient, this.sourcesConnectorClient, input.OrgId, satellite)
 
 		if err != nil {
-			return fmt.Errorf("Error retrieving Satellite status: %s", err)
+			utils.GetLogFromEcho(ctx).Errorf("Error retrieving Satellite status: %s", err)
 		}
 	}
 
@@ -70,7 +71,7 @@ func (this *controllers) ApiInternalHighlevelConnectionStatus(ctx echo.Context) 
 		directConnectedResponses, err = getDirectConnectStatus(ctx, this.cloudConnectorClient, input.OrgId, directConnected)
 
 		if err != nil {
-			return fmt.Errorf("Error retrieving DirectConnect status: %s", err)
+			utils.GetLogFromEcho(ctx).Errorf("Error retrieving Direct Connect status: %s", err)
 		}
 	}
 
@@ -78,20 +79,22 @@ func (this *controllers) ApiInternalHighlevelConnectionStatus(ctx echo.Context) 
 }
 
 func sortHostsByRecipient(details []inventory.HostDetails) (satelliteDetails []inventory.HostDetails, directConnectedDetails []inventory.HostDetails, noRhc []inventory.HostDetails) {
-	recipients := make(map[int][]inventory.HostDetails, 3)
+	var satelliteConnectedHosts []inventory.HostDetails
+	var directConnectedHosts []inventory.HostDetails
+	var hostsNotConnected []inventory.HostDetails
 
 	for _, host := range details {
 		switch {
 		case host.SatelliteInstanceID != nil:
-			recipients[0] = append(recipients[0], host) // If satellite_instance_id exitsts Satellite host
+			satelliteConnectedHosts = append(satelliteConnectedHosts, host) // If satellite_instance_id exitsts Satellite host
 		case host.RHCClientID != nil:
-			recipients[1] = append(recipients[1], host) // if rhc_client_id exists in inventory facts host is direct connect
+			directConnectedHosts = append(directConnectedHosts, host) // if rhc_client_id exists in inventory facts host is direct connect
 		default:
-			recipients[2] = append(recipients[2], host)
+			hostsNotConnected = append(hostsNotConnected, host)
 		}
 	}
 
-	return recipients[0], recipients[1], recipients[2]
+	return satelliteConnectedHosts, directConnectedHosts, hostsNotConnected
 }
 
 func formatConnectionResponse(satID *string, satOrgID *string, rhcClientID *string, orgID OrgId, hosts []string, recipientType string, status string) RecipientWithConnectionInfo {
@@ -160,9 +163,25 @@ func getDirectConnectStatus(ctx echo.Context, client connectors.CloudConnectorCl
 }
 
 func getSatelliteStatus(ctx echo.Context, client connectors.CloudConnectorClient, sourceClient sources.SourcesConnector, orgId OrgId, hostDetails []inventory.HostDetails) ([]RecipientWithConnectionInfo, error) {
+	fmt.Print("GETSATELLITESTATUS")
+	hostsGroupedBySatellite := groupHostsBySatellite(hostDetails)
+
+	fmt.Print("POST GROUP: ", hostsGroupedBySatellite)
+	hostsGroupedBySatellite = getSourceInfo(ctx, hostsGroupedBySatellite, sourceClient)
+
+	fmt.Print("POST SOURCE: ", hostsGroupedBySatellite)
+	responses, err := createSatelliteConnectionResponses(ctx, hostsGroupedBySatellite, client, orgId)
+	if err != nil {
+		utils.GetLogFromEcho(ctx).Error("error occured creating satellite connection response")
+		return nil, ctx.NoContent(http.StatusInternalServerError)
+	}
+
+	return responses, nil
+}
+
+func groupHostsBySatellite(hostDetails []inventory.HostDetails) map[string]*rhcSatellite {
 	hostsGroupedBySatellite := make(map[string]*rhcSatellite)
 
-	// Group hosts by Satellite (instance_id + org_id)
 	for _, host := range hostDetails {
 		satInstanceAndOrg := *host.SatelliteInstanceID + *host.SatelliteOrgID
 		_, exists := hostsGroupedBySatellite[satInstanceAndOrg]
@@ -179,29 +198,40 @@ func getSatelliteStatus(ctx echo.Context, client connectors.CloudConnectorClient
 		}
 	}
 
-	// Get source info
+	return hostsGroupedBySatellite
+}
+
+func getSourceInfo(ctx echo.Context, hostsGroupedBySatellite map[string]*rhcSatellite, sourceClient sources.SourcesConnector) map[string]*rhcSatellite {
+	fmt.Print("MADE IT TO SOURCE INFO")
 	for i, satellite := range hostsGroupedBySatellite {
 		result, err := sourceClient.GetSourceConnectionDetails(ctx.Request().Context(), satellite.SatelliteInstanceID)
 
+		fmt.Print("MADE IT PAST SOURCE INFO")
 		if err != nil {
-			return nil, ctx.NoContent(http.StatusInternalServerError)
+			utils.GetLogFromEcho(ctx).Errorf("Sources data could not be found for SatelliteID %s Error: %s", satellite.SatelliteInstanceID, err)
+		} else {
+			hostsGroupedBySatellite[i].SourceID = result.ID
+			hostsGroupedBySatellite[i].RhcClientID = result.RhcID
+			hostsGroupedBySatellite[i].SourceAvailabilityStatus = result.AvailabilityStatus
 		}
-
-		hostsGroupedBySatellite[i].SourceID = result.ID
-		hostsGroupedBySatellite[i].RhcClientID = result.RhcID
-		hostsGroupedBySatellite[i].SourceAvailabilityStatus = result.AvailabilityStatus
 	}
 
-	// Get Connection Status
+	return hostsGroupedBySatellite
+}
+
+func createSatelliteConnectionResponses(ctx echo.Context, hostsGroupedBySatellite map[string]*rhcSatellite, cloudConnector connectors.CloudConnectorClient, orgId OrgId) ([]RecipientWithConnectionInfo, error) {
 	responses := []RecipientWithConnectionInfo{}
+
 	for _, satellite := range hostsGroupedBySatellite {
 		if satellite.RhcClientID != nil {
-			status, err := client.GetConnectionStatus(ctx.Request().Context(), satellite.SatelliteOrgID, satellite.SatelliteInstanceID)
+			fmt.Print("MADE IT TO SATELLITE CONNECTION: ", satellite)
+			status, err := cloudConnector.GetConnectionStatus(ctx.Request().Context(), satellite.SatelliteOrgID, satellite.SatelliteInstanceID)
 			if err != nil {
 				utils.GetLogFromEcho(ctx).Error(err)
 				return nil, ctx.NoContent(http.StatusInternalServerError)
 			}
 
+			fmt.Print("PAST SOURCES CONNECTION TEST")
 			recipient := RecipientWithOrg{
 				OrgId:     orgId,
 				Recipient: public.RunRecipient(*satellite.RhcClientID),

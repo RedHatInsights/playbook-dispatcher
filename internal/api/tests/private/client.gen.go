@@ -232,11 +232,11 @@ type BadRequest Error
 // ApiInternalRunsCreateJSONBody defines parameters for ApiInternalRunsCreate.
 type ApiInternalRunsCreateJSONBody []RunInput
 
-// ApiInternalHighlevelConnectionStatusJSONBody defines parameters for ApiInternalHighlevelConnectionStatus.
-type ApiInternalHighlevelConnectionStatusJSONBody HostsWithOrgId
-
 // ApiInternalV2RunsCancelJSONBody defines parameters for ApiInternalV2RunsCancel.
 type ApiInternalV2RunsCancelJSONBody []CancelInputV2
+
+// ApiInternalHighlevelConnectionStatusJSONBody defines parameters for ApiInternalHighlevelConnectionStatus.
+type ApiInternalHighlevelConnectionStatusJSONBody HostsWithOrgId
 
 // ApiInternalV2RunsCreateJSONBody defines parameters for ApiInternalV2RunsCreate.
 type ApiInternalV2RunsCreateJSONBody []RunInputV2
@@ -247,11 +247,11 @@ type ApiInternalV2RecipientsStatusJSONBody []RecipientWithOrg
 // ApiInternalRunsCreateRequestBody defines body for ApiInternalRunsCreate for application/json ContentType.
 type ApiInternalRunsCreateJSONRequestBody ApiInternalRunsCreateJSONBody
 
-// ApiInternalHighlevelConnectionStatusRequestBody defines body for ApiInternalHighlevelConnectionStatus for application/json ContentType.
-type ApiInternalHighlevelConnectionStatusJSONRequestBody ApiInternalHighlevelConnectionStatusJSONBody
-
 // ApiInternalV2RunsCancelRequestBody defines body for ApiInternalV2RunsCancel for application/json ContentType.
 type ApiInternalV2RunsCancelJSONRequestBody ApiInternalV2RunsCancelJSONBody
+
+// ApiInternalHighlevelConnectionStatusRequestBody defines body for ApiInternalHighlevelConnectionStatus for application/json ContentType.
+type ApiInternalHighlevelConnectionStatusJSONRequestBody ApiInternalHighlevelConnectionStatusJSONBody
 
 // ApiInternalV2RunsCreateRequestBody defines body for ApiInternalV2RunsCreate for application/json ContentType.
 type ApiInternalV2RunsCreateJSONRequestBody ApiInternalV2RunsCreateJSONBody
@@ -337,15 +337,15 @@ type ClientInterface interface {
 
 	ApiInternalRunsCreate(ctx context.Context, body ApiInternalRunsCreateJSONRequestBody) (*http.Response, error)
 
-	// ApiInternalHighlevelConnectionStatus request  with any body
-	ApiInternalHighlevelConnectionStatusWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error)
-
-	ApiInternalHighlevelConnectionStatus(ctx context.Context, body ApiInternalHighlevelConnectionStatusJSONRequestBody) (*http.Response, error)
-
 	// ApiInternalV2RunsCancel request  with any body
 	ApiInternalV2RunsCancelWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error)
 
 	ApiInternalV2RunsCancel(ctx context.Context, body ApiInternalV2RunsCancelJSONRequestBody) (*http.Response, error)
+
+	// ApiInternalHighlevelConnectionStatus request  with any body
+	ApiInternalHighlevelConnectionStatusWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error)
+
+	ApiInternalHighlevelConnectionStatus(ctx context.Context, body ApiInternalHighlevelConnectionStatusJSONRequestBody) (*http.Response, error)
 
 	// ApiInternalV2RunsCreate request  with any body
 	ApiInternalV2RunsCreateWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error)
@@ -391,36 +391,6 @@ func (c *Client) ApiInternalRunsCreate(ctx context.Context, body ApiInternalRuns
 	return c.Client.Do(req)
 }
 
-func (c *Client) ApiInternalHighlevelConnectionStatusWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error) {
-	req, err := NewApiInternalHighlevelConnectionStatusRequestWithBody(c.Server, contentType, body)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if c.RequestEditor != nil {
-		err = c.RequestEditor(ctx, req)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) ApiInternalHighlevelConnectionStatus(ctx context.Context, body ApiInternalHighlevelConnectionStatusJSONRequestBody) (*http.Response, error) {
-	req, err := NewApiInternalHighlevelConnectionStatusRequest(c.Server, body)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if c.RequestEditor != nil {
-		err = c.RequestEditor(ctx, req)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return c.Client.Do(req)
-}
-
 func (c *Client) ApiInternalV2RunsCancelWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error) {
 	req, err := NewApiInternalV2RunsCancelRequestWithBody(c.Server, contentType, body)
 	if err != nil {
@@ -438,6 +408,36 @@ func (c *Client) ApiInternalV2RunsCancelWithBody(ctx context.Context, contentTyp
 
 func (c *Client) ApiInternalV2RunsCancel(ctx context.Context, body ApiInternalV2RunsCancelJSONRequestBody) (*http.Response, error) {
 	req, err := NewApiInternalV2RunsCancelRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if c.RequestEditor != nil {
+		err = c.RequestEditor(ctx, req)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ApiInternalHighlevelConnectionStatusWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error) {
+	req, err := NewApiInternalHighlevelConnectionStatusRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if c.RequestEditor != nil {
+		err = c.RequestEditor(ctx, req)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ApiInternalHighlevelConnectionStatus(ctx context.Context, body ApiInternalHighlevelConnectionStatusJSONRequestBody) (*http.Response, error) {
+	req, err := NewApiInternalHighlevelConnectionStatusRequest(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -565,45 +565,6 @@ func NewApiInternalRunsCreateRequestWithBody(server string, contentType string, 
 	return req, nil
 }
 
-// NewApiInternalHighlevelConnectionStatusRequest calls the generic ApiInternalHighlevelConnectionStatus builder with application/json body
-func NewApiInternalHighlevelConnectionStatusRequest(server string, body ApiInternalHighlevelConnectionStatusJSONRequestBody) (*http.Request, error) {
-	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
-	if err != nil {
-		return nil, err
-	}
-	bodyReader = bytes.NewReader(buf)
-	return NewApiInternalHighlevelConnectionStatusRequestWithBody(server, "application/json", bodyReader)
-}
-
-// NewApiInternalHighlevelConnectionStatusRequestWithBody generates requests for ApiInternalHighlevelConnectionStatus with any type of body
-func NewApiInternalHighlevelConnectionStatusRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
-	var err error
-
-	queryUrl, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	basePath := fmt.Sprintf("/internal/highlevel/recipients/status")
-	if basePath[0] == '/' {
-		basePath = basePath[1:]
-	}
-
-	queryUrl, err = queryUrl.Parse(basePath)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest("POST", queryUrl.String(), body)
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Add("Content-Type", contentType)
-	return req, nil
-}
-
 // NewApiInternalV2RunsCancelRequest calls the generic ApiInternalV2RunsCancel builder with application/json body
 func NewApiInternalV2RunsCancelRequest(server string, body ApiInternalV2RunsCancelJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
@@ -625,6 +586,45 @@ func NewApiInternalV2RunsCancelRequestWithBody(server string, contentType string
 	}
 
 	basePath := fmt.Sprintf("/internal/v2/cancel")
+	if basePath[0] == '/' {
+		basePath = basePath[1:]
+	}
+
+	queryUrl, err = queryUrl.Parse(basePath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryUrl.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+	return req, nil
+}
+
+// NewApiInternalHighlevelConnectionStatusRequest calls the generic ApiInternalHighlevelConnectionStatus builder with application/json body
+func NewApiInternalHighlevelConnectionStatusRequest(server string, body ApiInternalHighlevelConnectionStatusJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewApiInternalHighlevelConnectionStatusRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewApiInternalHighlevelConnectionStatusRequestWithBody generates requests for ApiInternalHighlevelConnectionStatus with any type of body
+func NewApiInternalHighlevelConnectionStatusRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	queryUrl, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	basePath := fmt.Sprintf("/internal/v2/connection_status")
 	if basePath[0] == '/' {
 		basePath = basePath[1:]
 	}
@@ -782,15 +782,15 @@ type ClientWithResponsesInterface interface {
 
 	ApiInternalRunsCreateWithResponse(ctx context.Context, body ApiInternalRunsCreateJSONRequestBody) (*ApiInternalRunsCreateResponse, error)
 
-	// ApiInternalHighlevelConnectionStatus request  with any body
-	ApiInternalHighlevelConnectionStatusWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*ApiInternalHighlevelConnectionStatusResponse, error)
-
-	ApiInternalHighlevelConnectionStatusWithResponse(ctx context.Context, body ApiInternalHighlevelConnectionStatusJSONRequestBody) (*ApiInternalHighlevelConnectionStatusResponse, error)
-
 	// ApiInternalV2RunsCancel request  with any body
 	ApiInternalV2RunsCancelWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*ApiInternalV2RunsCancelResponse, error)
 
 	ApiInternalV2RunsCancelWithResponse(ctx context.Context, body ApiInternalV2RunsCancelJSONRequestBody) (*ApiInternalV2RunsCancelResponse, error)
+
+	// ApiInternalHighlevelConnectionStatus request  with any body
+	ApiInternalHighlevelConnectionStatusWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*ApiInternalHighlevelConnectionStatusResponse, error)
+
+	ApiInternalHighlevelConnectionStatusWithResponse(ctx context.Context, body ApiInternalHighlevelConnectionStatusJSONRequestBody) (*ApiInternalHighlevelConnectionStatusResponse, error)
 
 	// ApiInternalV2RunsCreate request  with any body
 	ApiInternalV2RunsCreateWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*ApiInternalV2RunsCreateResponse, error)
@@ -829,29 +829,6 @@ func (r ApiInternalRunsCreateResponse) StatusCode() int {
 	return 0
 }
 
-type ApiInternalHighlevelConnectionStatusResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *HighLevelRecipientStatus
-	JSON400      *Error
-}
-
-// Status returns HTTPResponse.Status
-func (r ApiInternalHighlevelConnectionStatusResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r ApiInternalHighlevelConnectionStatusResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
 type ApiInternalV2RunsCancelResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -869,6 +846,29 @@ func (r ApiInternalV2RunsCancelResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r ApiInternalV2RunsCancelResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type ApiInternalHighlevelConnectionStatusResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *HighLevelRecipientStatus
+	JSON400      *Error
+}
+
+// Status returns HTTPResponse.Status
+func (r ApiInternalHighlevelConnectionStatusResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ApiInternalHighlevelConnectionStatusResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -959,23 +959,6 @@ func (c *ClientWithResponses) ApiInternalRunsCreateWithResponse(ctx context.Cont
 	return ParseApiInternalRunsCreateResponse(rsp)
 }
 
-// ApiInternalHighlevelConnectionStatusWithBodyWithResponse request with arbitrary body returning *ApiInternalHighlevelConnectionStatusResponse
-func (c *ClientWithResponses) ApiInternalHighlevelConnectionStatusWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*ApiInternalHighlevelConnectionStatusResponse, error) {
-	rsp, err := c.ApiInternalHighlevelConnectionStatusWithBody(ctx, contentType, body)
-	if err != nil {
-		return nil, err
-	}
-	return ParseApiInternalHighlevelConnectionStatusResponse(rsp)
-}
-
-func (c *ClientWithResponses) ApiInternalHighlevelConnectionStatusWithResponse(ctx context.Context, body ApiInternalHighlevelConnectionStatusJSONRequestBody) (*ApiInternalHighlevelConnectionStatusResponse, error) {
-	rsp, err := c.ApiInternalHighlevelConnectionStatus(ctx, body)
-	if err != nil {
-		return nil, err
-	}
-	return ParseApiInternalHighlevelConnectionStatusResponse(rsp)
-}
-
 // ApiInternalV2RunsCancelWithBodyWithResponse request with arbitrary body returning *ApiInternalV2RunsCancelResponse
 func (c *ClientWithResponses) ApiInternalV2RunsCancelWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*ApiInternalV2RunsCancelResponse, error) {
 	rsp, err := c.ApiInternalV2RunsCancelWithBody(ctx, contentType, body)
@@ -991,6 +974,23 @@ func (c *ClientWithResponses) ApiInternalV2RunsCancelWithResponse(ctx context.Co
 		return nil, err
 	}
 	return ParseApiInternalV2RunsCancelResponse(rsp)
+}
+
+// ApiInternalHighlevelConnectionStatusWithBodyWithResponse request with arbitrary body returning *ApiInternalHighlevelConnectionStatusResponse
+func (c *ClientWithResponses) ApiInternalHighlevelConnectionStatusWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*ApiInternalHighlevelConnectionStatusResponse, error) {
+	rsp, err := c.ApiInternalHighlevelConnectionStatusWithBody(ctx, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	return ParseApiInternalHighlevelConnectionStatusResponse(rsp)
+}
+
+func (c *ClientWithResponses) ApiInternalHighlevelConnectionStatusWithResponse(ctx context.Context, body ApiInternalHighlevelConnectionStatusJSONRequestBody) (*ApiInternalHighlevelConnectionStatusResponse, error) {
+	rsp, err := c.ApiInternalHighlevelConnectionStatus(ctx, body)
+	if err != nil {
+		return nil, err
+	}
+	return ParseApiInternalHighlevelConnectionStatusResponse(rsp)
 }
 
 // ApiInternalV2RunsCreateWithBodyWithResponse request with arbitrary body returning *ApiInternalV2RunsCreateResponse
@@ -1069,39 +1069,6 @@ func ParseApiInternalRunsCreateResponse(rsp *http.Response) (*ApiInternalRunsCre
 	return response, nil
 }
 
-// ParseApiInternalHighlevelConnectionStatusResponse parses an HTTP response from a ApiInternalHighlevelConnectionStatusWithResponse call
-func ParseApiInternalHighlevelConnectionStatusResponse(rsp *http.Response) (*ApiInternalHighlevelConnectionStatusResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
-	defer rsp.Body.Close()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &ApiInternalHighlevelConnectionStatusResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest HighLevelRecipientStatus
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
-		var dest Error
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON400 = &dest
-
-	}
-
-	return response, nil
-}
-
 // ParseApiInternalV2RunsCancelResponse parses an HTTP response from a ApiInternalV2RunsCancelWithResponse call
 func ParseApiInternalV2RunsCancelResponse(rsp *http.Response) (*ApiInternalV2RunsCancelResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
@@ -1122,6 +1089,39 @@ func ParseApiInternalV2RunsCancelResponse(rsp *http.Response) (*ApiInternalV2Run
 			return nil, err
 		}
 		response.JSON207 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseApiInternalHighlevelConnectionStatusResponse parses an HTTP response from a ApiInternalHighlevelConnectionStatusWithResponse call
+func ParseApiInternalHighlevelConnectionStatusResponse(rsp *http.Response) (*ApiInternalHighlevelConnectionStatusResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ApiInternalHighlevelConnectionStatusResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest HighLevelRecipientStatus
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
 		var dest Error

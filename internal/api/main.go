@@ -133,7 +133,7 @@ func Start(
 	internal.POST("/v2/recipients/status", privateController.ApiInternalV2RecipientsStatus)
 	internal.POST("/v2/dispatch", privateController.ApiInternalV2RunsCreate)
 	internal.POST("/v2/cancel", privateController.ApiInternalV2RunsCancel)
-	internal.POST("/highlevel/recipients/status", privateController.ApiInternalHighlevelConnectionStatus)
+	internal.POST("/v2/connection_status", privateController.ApiInternalHighlevelConnectionStatus)
 
 	publicController := public.CreateController(db, cloudConnectorClient)
 	public := server.Group("/api/playbook-dispatcher")

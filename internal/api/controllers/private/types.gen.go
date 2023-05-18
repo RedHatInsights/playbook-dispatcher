@@ -222,11 +222,11 @@ type BadRequest Error
 // ApiInternalRunsCreateJSONBody defines parameters for ApiInternalRunsCreate.
 type ApiInternalRunsCreateJSONBody []RunInput
 
-// ApiInternalHighlevelConnectionStatusJSONBody defines parameters for ApiInternalHighlevelConnectionStatus.
-type ApiInternalHighlevelConnectionStatusJSONBody HostsWithOrgId
-
 // ApiInternalV2RunsCancelJSONBody defines parameters for ApiInternalV2RunsCancel.
 type ApiInternalV2RunsCancelJSONBody []CancelInputV2
+
+// ApiInternalHighlevelConnectionStatusJSONBody defines parameters for ApiInternalHighlevelConnectionStatus.
+type ApiInternalHighlevelConnectionStatusJSONBody HostsWithOrgId
 
 // ApiInternalV2RunsCreateJSONBody defines parameters for ApiInternalV2RunsCreate.
 type ApiInternalV2RunsCreateJSONBody []RunInputV2
@@ -237,11 +237,11 @@ type ApiInternalV2RecipientsStatusJSONBody []RecipientWithOrg
 // ApiInternalRunsCreateRequestBody defines body for ApiInternalRunsCreate for application/json ContentType.
 type ApiInternalRunsCreateJSONRequestBody ApiInternalRunsCreateJSONBody
 
-// ApiInternalHighlevelConnectionStatusRequestBody defines body for ApiInternalHighlevelConnectionStatus for application/json ContentType.
-type ApiInternalHighlevelConnectionStatusJSONRequestBody ApiInternalHighlevelConnectionStatusJSONBody
-
 // ApiInternalV2RunsCancelRequestBody defines body for ApiInternalV2RunsCancel for application/json ContentType.
 type ApiInternalV2RunsCancelJSONRequestBody ApiInternalV2RunsCancelJSONBody
+
+// ApiInternalHighlevelConnectionStatusRequestBody defines body for ApiInternalHighlevelConnectionStatus for application/json ContentType.
+type ApiInternalHighlevelConnectionStatusJSONRequestBody ApiInternalHighlevelConnectionStatusJSONBody
 
 // ApiInternalV2RunsCreateRequestBody defines body for ApiInternalV2RunsCreate for application/json ContentType.
 type ApiInternalV2RunsCreateJSONRequestBody ApiInternalV2RunsCreateJSONBody
