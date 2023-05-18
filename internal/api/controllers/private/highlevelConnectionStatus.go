@@ -140,19 +140,7 @@ func getDirectConnectStatus(ctx echo.Context, client connectors.CloudConnectorCl
 			return nil, ctx.NoContent(http.StatusInternalServerError)
 		}
 
-		recipient := RecipientWithOrg{
-			OrgId:     orgId,
-			Recipient: public.RunRecipient(*host.RHCClientID),
-		}
-
-		results := recipientStatusResponse(recipient, status == connectors.ConnectionStatus_connected)
-
-		var connectionStatus string
-		if results.Connected {
-			connectionStatus = "connected"
-		} else {
-			connectionStatus = "disconnected"
-		}
+		connectionStatus := getRecipientStatus(orgId, *host.RHCClientID, status)
 
 		responses = append(responses, formatConnectionResponse(nil, nil, host.RHCClientID, orgId, []string{host.ID}, string(RecipientType_directConnect), connectionStatus))
 	}
@@ -223,25 +211,31 @@ func createSatelliteConnectionResponses(ctx echo.Context, hostsGroupedBySatellit
 				return nil, ctx.NoContent(http.StatusInternalServerError)
 			}
 
-			recipient := RecipientWithOrg{
-				OrgId:     orgId,
-				Recipient: public.RunRecipient(*satellite.RhcClientID),
-			}
-
-			results := recipientStatusResponse(recipient, status == connectors.ConnectionStatus_connected)
-
-			var connectionStatus string
-			if results.Connected {
-				connectionStatus = "connected"
-			} else {
-				connectionStatus = "disconnected"
-			}
+			connectionStatus := getRecipientStatus(orgId, *satellite.RhcClientID, status)
 
 			responses = append(responses, formatConnectionResponse(&satellite.SourceID, &satellite.SatelliteOrgID, satellite.RhcClientID, orgId, satellite.Hosts, string(RecipientType_satellite), connectionStatus))
 		}
 	}
 
 	return responses, nil
+}
+
+func getRecipientStatus(orgId OrgId, rhcClientID string, status connectors.ConnectionStatus) string {
+	recipient := RecipientWithOrg{
+		OrgId:     orgId,
+		Recipient: public.RunRecipient(rhcClientID),
+	}
+
+	results := recipientStatusResponse(recipient, status == connectors.ConnectionStatus_connected)
+
+	var connectionStatus string
+	if results.Connected {
+		connectionStatus = "connected"
+	} else {
+		connectionStatus = "disconnected"
+	}
+
+	return connectionStatus
 }
 
 func getRHCStatus(hostDetails []inventory.HostDetails, orgID OrgId) RecipientWithConnectionInfo {
