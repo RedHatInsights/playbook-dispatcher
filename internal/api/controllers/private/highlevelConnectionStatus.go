@@ -1,7 +1,6 @@
 package private
 
 import (
-	"fmt"
 	"net/http"
 	"playbook-dispatcher/internal/api/connectors"
 	"playbook-dispatcher/internal/api/connectors/inventory"
@@ -58,7 +57,6 @@ func (this *controllers) ApiInternalHighlevelConnectionStatus(ctx echo.Context) 
 		return ctx.JSON(http.StatusAccepted, noRHCResponses)
 	}
 
-	fmt.Print("MADE IT HERE #1")
 	if len(satellite) > 0 {
 		satelliteResponses, err = getSatelliteStatus(ctx, this.cloudConnectorClient, this.sourcesConnectorClient, input.OrgId, satellite)
 
@@ -163,13 +161,10 @@ func getDirectConnectStatus(ctx echo.Context, client connectors.CloudConnectorCl
 }
 
 func getSatelliteStatus(ctx echo.Context, client connectors.CloudConnectorClient, sourceClient sources.SourcesConnector, orgId OrgId, hostDetails []inventory.HostDetails) ([]RecipientWithConnectionInfo, error) {
-	fmt.Print("GETSATELLITESTATUS")
 	hostsGroupedBySatellite := groupHostsBySatellite(hostDetails)
 
-	fmt.Print("POST GROUP: ", hostsGroupedBySatellite)
 	hostsGroupedBySatellite = getSourceInfo(ctx, hostsGroupedBySatellite, sourceClient)
 
-	fmt.Print("POST SOURCE: ", hostsGroupedBySatellite)
 	responses, err := createSatelliteConnectionResponses(ctx, hostsGroupedBySatellite, client, orgId)
 	if err != nil {
 		utils.GetLogFromEcho(ctx).Error("error occured creating satellite connection response")
@@ -202,11 +197,9 @@ func groupHostsBySatellite(hostDetails []inventory.HostDetails) map[string]*rhcS
 }
 
 func getSourceInfo(ctx echo.Context, hostsGroupedBySatellite map[string]*rhcSatellite, sourceClient sources.SourcesConnector) map[string]*rhcSatellite {
-	fmt.Print("MADE IT TO SOURCE INFO")
 	for i, satellite := range hostsGroupedBySatellite {
 		result, err := sourceClient.GetSourceConnectionDetails(ctx.Request().Context(), satellite.SatelliteInstanceID)
 
-		fmt.Print("MADE IT PAST SOURCE INFO")
 		if err != nil {
 			utils.GetLogFromEcho(ctx).Errorf("Sources data could not be found for SatelliteID %s Error: %s", satellite.SatelliteInstanceID, err)
 		} else {
@@ -224,14 +217,12 @@ func createSatelliteConnectionResponses(ctx echo.Context, hostsGroupedBySatellit
 
 	for _, satellite := range hostsGroupedBySatellite {
 		if satellite.RhcClientID != nil {
-			fmt.Print("MADE IT TO SATELLITE CONNECTION: ", satellite)
 			status, err := cloudConnector.GetConnectionStatus(ctx.Request().Context(), satellite.SatelliteOrgID, satellite.SatelliteInstanceID)
 			if err != nil {
 				utils.GetLogFromEcho(ctx).Error(err)
 				return nil, ctx.NoContent(http.StatusInternalServerError)
 			}
 
-			fmt.Print("PAST SOURCES CONNECTION TEST")
 			recipient := RecipientWithOrg{
 				OrgId:     orgId,
 				Recipient: public.RunRecipient(*satellite.RhcClientID),
