@@ -43,6 +43,7 @@ func (this *controllers) ApiInternalHighlevelConnectionStatus(ctx echo.Context) 
 	)
 
 	if err != nil {
+		utils.GetLogFromEcho(ctx).Error(err)
 		return ctx.NoContent(http.StatusBadRequest)
 	}
 
@@ -210,7 +211,7 @@ func createSatelliteConnectionResponses(ctx echo.Context, hostsGroupedBySatellit
 
 	for _, satellite := range hostsGroupedBySatellite {
 		if satellite.RhcClientID != nil {
-			status, err := cloudConnector.GetConnectionStatus(ctx.Request().Context(), satellite.SatelliteOrgID, satellite.SatelliteInstanceID)
+			status, err := cloudConnector.GetConnectionStatus(ctx.Request().Context(), satellite.SatelliteOrgID, *satellite.RhcClientID)
 			if err != nil {
 				utils.GetLogFromEcho(ctx).Error(err)
 				return nil, ctx.NoContent(http.StatusInternalServerError)
