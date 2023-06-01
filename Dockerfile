@@ -7,9 +7,11 @@ COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . .
-
 USER 0
 
+RUN find . | grep ".git/index"
+#RUN rm ./.bonfire/.git/index
+RUN rm -rf ./.bonfire/.git
 RUN find . | grep ".git/index"
 
 RUN go build -v -o app .
