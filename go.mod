@@ -1,4 +1,4 @@
-module github.com/RedHatInsights/playbook-dispatcher
+module playbook-dispatcher
 
 go 1.18
 
