@@ -10,6 +10,8 @@ COPY . .
 
 USER 0
 
+RUN find . | grep ".git/index"
+
 RUN go build -v -o app .
 
 FROM registry.redhat.io/ubi8-minimal
