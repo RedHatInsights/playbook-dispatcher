@@ -1,11 +1,15 @@
 FROM registry.redhat.io/ubi8/go-toolset as builder
 
 WORKDIR /go/src/app
+
+COPY go.mod go.sum ./
+
+RUN go mod download
+
 COPY . .
 
 USER 0
 
-RUN go mod download
 RUN go build -v -o app .
 
 FROM registry.redhat.io/ubi8-minimal
