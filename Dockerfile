@@ -5,7 +5,7 @@ COPY . .
 
 USER 0
 
-RUN go build -v -o app .
+RUN go build -v -o app main.go
 
 FROM registry.redhat.io/ubi8-minimal
 
