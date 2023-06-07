@@ -13,6 +13,7 @@ RUN find . | grep ".git/index"
 #RUN rm ./.bonfire/.git/index
 RUN rm -rf ./.bonfire/.git
 RUN find . | grep ".git/index"
+RUN git config --global --add safe.directory /go/src/app
 
 RUN go build -v -o app .
 
