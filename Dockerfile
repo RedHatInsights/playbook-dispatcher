@@ -2,18 +2,7 @@ FROM registry.redhat.io/ubi8/go-toolset as builder
 
 WORKDIR /go/src/app
 
-COPY go.mod go.sum ./
-
-RUN go mod download
-
-COPY . .
 USER 0
-
-RUN find . | grep ".git/index"
-#RUN rm ./.bonfire/.git/index
-RUN rm -rf ./.bonfire/.git
-RUN find . | grep ".git/index"
-#RUN git config --global --add safe.directory /go/src/app
 
 RUN go build -v -o app main.go
 
