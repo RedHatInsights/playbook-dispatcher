@@ -1,6 +1,7 @@
 FROM registry.redhat.io/ubi8/go-toolset as builder
 
 WORKDIR /go/src/app
+COPY . .
 
 USER 0
 
