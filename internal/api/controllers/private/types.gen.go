@@ -27,6 +27,20 @@ type Error struct {
 	Message string `json:"message"`
 }
 
+// HighLevelRecipientStatus defines model for HighLevelRecipientStatus.
+type HighLevelRecipientStatus []RecipientWithConnectionInfo
+
+// HostId defines model for HostId.
+type HostId string
+
+// HostsWithOrgId defines model for HostsWithOrgId.
+type HostsWithOrgId struct {
+	Hosts []string `json:"hosts"`
+
+	// Identifies the organization that the given resource belongs to
+	OrgId OrgId `json:"org_id"`
+}
+
 // OrgId defines model for OrgId.
 type OrgId string
 
@@ -51,6 +65,39 @@ type RecipientStatus struct {
 
 	// Indicates whether a connection is established with the recipient
 	Connected bool `json:"connected"`
+}
+
+// RecipientType defines model for RecipientType.
+type RecipientType string
+
+// List of RecipientType
+const (
+	RecipientType_directConnect RecipientType = "directConnect"
+	RecipientType_none          RecipientType = "none"
+	RecipientType_satellite     RecipientType = "satellite"
+)
+
+// RecipientWithConnectionInfo defines model for RecipientWithConnectionInfo.
+type RecipientWithConnectionInfo struct {
+
+	// Identifies the organization that the given resource belongs to
+	OrgId OrgId `json:"org_id"`
+
+	// Identifier of the host to which a given Playbook is addressed
+	Recipient externalRef0.RunRecipient `json:"recipient"`
+
+	// Identifies the type of recipient [Satellite, Direct Connected, None]
+	RecipientType RecipientType `json:"recipient_type"`
+
+	// Identifier of the Satellite instance in the uuid v4/v5 format
+	SatId SatelliteId `json:"sat_id"`
+
+	// Identifier of the organization within Satellite
+	SatOrgId SatelliteOrgId `json:"sat_org_id"`
+
+	// Indicates the current run status of the recipient
+	Status  string   `json:"status"`
+	Systems []HostId `json:"systems"`
 }
 
 // RecipientWithOrg defines model for RecipientWithOrg.
@@ -160,6 +207,12 @@ type RunsCanceled []RunCanceled
 // RunsCreated defines model for RunsCreated.
 type RunsCreated []RunCreated
 
+// SatelliteId defines model for SatelliteId.
+type SatelliteId string
+
+// SatelliteOrgId defines model for SatelliteOrgId.
+type SatelliteOrgId string
+
 // Version defines model for Version.
 type Version string
 
@@ -172,6 +225,9 @@ type ApiInternalRunsCreateJSONBody []RunInput
 // ApiInternalV2RunsCancelJSONBody defines parameters for ApiInternalV2RunsCancel.
 type ApiInternalV2RunsCancelJSONBody []CancelInputV2
 
+// ApiInternalHighlevelConnectionStatusJSONBody defines parameters for ApiInternalHighlevelConnectionStatus.
+type ApiInternalHighlevelConnectionStatusJSONBody HostsWithOrgId
+
 // ApiInternalV2RunsCreateJSONBody defines parameters for ApiInternalV2RunsCreate.
 type ApiInternalV2RunsCreateJSONBody []RunInputV2
 
@@ -183,6 +239,9 @@ type ApiInternalRunsCreateJSONRequestBody ApiInternalRunsCreateJSONBody
 
 // ApiInternalV2RunsCancelRequestBody defines body for ApiInternalV2RunsCancel for application/json ContentType.
 type ApiInternalV2RunsCancelJSONRequestBody ApiInternalV2RunsCancelJSONBody
+
+// ApiInternalHighlevelConnectionStatusRequestBody defines body for ApiInternalHighlevelConnectionStatus for application/json ContentType.
+type ApiInternalHighlevelConnectionStatusJSONRequestBody ApiInternalHighlevelConnectionStatusJSONBody
 
 // ApiInternalV2RunsCreateRequestBody defines body for ApiInternalV2RunsCreate for application/json ContentType.
 type ApiInternalV2RunsCreateJSONRequestBody ApiInternalV2RunsCreateJSONBody

@@ -7,6 +7,7 @@ import (
 type satelliteFacts struct {
 	SatelliteInstanceID *string `json:"satellite_instance_id,omitempty"`
 	SatelliteVersion    *string `json:"satellite_version,omitempty"`
+	SatelliteOrgID      *string `json:"satellite_org_id,omitempty"`
 }
 
 type HostDetails struct {
@@ -14,7 +15,8 @@ type HostDetails struct {
 	OwnerID             *string `json:"owner_id,omitempty"`
 	SatelliteInstanceID *string `json:"satellite_instance_id,omitempty"`
 	SatelliteVersion    *string `json:"satellite_version,omitempty"`
-	RHCConnectionID     *string `json:"rhc_client_id,omitempty"`
+	SatelliteOrgID      *string `json:"satellite_org_id,omitempty"`
+	RHCClientID         *string `json:"rhc_client_id,omitempty"`
 }
 
 type InventoryConnector interface {

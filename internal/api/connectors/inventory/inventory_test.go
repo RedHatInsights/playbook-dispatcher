@@ -14,7 +14,7 @@ var _ = Describe("Inventory", func() {
 	Describe("GetHostDetails", func() {
 		It("Interperates response correctly", func() {
 			responses := []test.MockHttpResponse{
-				{StatusCode: 200, Body: `{"results":[{"id":"1234","display_name":"test","facts":[{"namespace":"satellite", "facts":{"satellite_version": "6.11.3","satellite_instance_id":"5678"}}],"fqdn":"test_host"}]}`},
+				{StatusCode: 200, Body: `{"results":[{"id":"1234","display_name":"test","facts":[{"namespace":"satellite", "facts":{"satellite_version": "6.11.3","satellite_instance_id":"5678","organization_id":"5"}}],"fqdn":"test_host"}]}`},
 				{StatusCode: 200, Body: `{"results":[{"id":"1234","system_profile":{"rhc_client_id":"7bc66a39-e719-4bc5-b10a-77bfbd3a0ead","owner_id":"b2ea37a0-7fb0-4f14-815d-fb582a916d5b"}}]}`},
 			}
 
@@ -29,7 +29,8 @@ var _ = Describe("Inventory", func() {
 			Expect(*resultData.OwnerID).To(Equal("b2ea37a0-7fb0-4f14-815d-fb582a916d5b"))
 			Expect(*resultData.SatelliteInstanceID).To(Equal("5678"))
 			Expect(*resultData.SatelliteVersion).To(Equal("6.11.3"))
-			Expect(*resultData.RHCConnectionID).To(Equal("7bc66a39-e719-4bc5-b10a-77bfbd3a0ead"))
+			Expect(*resultData.SatelliteOrgID).To(Equal("5"))
+			Expect(*resultData.RHCClientID).To(Equal("7bc66a39-e719-4bc5-b10a-77bfbd3a0ead"))
 		})
 
 		It("Interperates response correctly on unexpected status code from hostDetails", func() {
@@ -79,12 +80,13 @@ var _ = Describe("Inventory", func() {
 			Expect(resultData.OwnerID).To(BeNil())
 			Expect(resultData.SatelliteInstanceID).To(BeNil())
 			Expect(resultData.SatelliteVersion).To(BeNil())
-			Expect(*resultData.RHCConnectionID).To(Equal("7bc66a39-e719-4bc5-b10a-77bfbd3a0ead"))
+			Expect(resultData.SatelliteOrgID).To(BeNil())
+			Expect(*resultData.RHCClientID).To(Equal("7bc66a39-e719-4bc5-b10a-77bfbd3a0ead"))
 		})
 
 		It("Interperates response correctly when rhc_client_id is not present", func() {
 			responses := []test.MockHttpResponse{
-				{StatusCode: 200, Body: `{"results":[{"id":"1234","display_name":"test","facts":[{"namespace":"satellite", "facts":{"satellite_version": "6.11.3","satellite_instance_id":"5678"}}],"fqdn":"test_host"}]}`},
+				{StatusCode: 200, Body: `{"results":[{"id":"1234","display_name":"test","facts":[{"namespace":"satellite", "facts":{"satellite_version": "6.11.3","satellite_instance_id":"5678","organization_id":"5"}}],"fqdn":"test_host"}]}`},
 				{StatusCode: 200, Body: `{"results":[{"id":"1234","system_profile":{"owner_id":"b2ea37a0-7fb0-4f14-815d-fb582a916d5b"}}]}`},
 			}
 
@@ -99,7 +101,8 @@ var _ = Describe("Inventory", func() {
 			Expect(*resultData.OwnerID).To(Equal("b2ea37a0-7fb0-4f14-815d-fb582a916d5b"))
 			Expect(*resultData.SatelliteInstanceID).To(Equal("5678"))
 			Expect(*resultData.SatelliteVersion).To(Equal("6.11.3"))
-			Expect(resultData.RHCConnectionID).To(BeNil())
+			Expect(*resultData.SatelliteOrgID).To(Equal("5"))
+			Expect(resultData.RHCClientID).To(BeNil())
 		})
 	})
 })

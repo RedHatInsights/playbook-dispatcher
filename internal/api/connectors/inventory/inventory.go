@@ -34,6 +34,7 @@ func getSatelliteFacts(facts *[]FactSet) satelliteFacts {
 		if fact.Namespace == "satellite" {
 			satelliteInstanceID, idExists := fact.Facts["satellite_instance_id"]
 			satelliteVersion, versionExists := fact.Facts["satellite_version"]
+			satelliteOrgID, orgIDExists := fact.Facts["organization_id"]
 
 			if idExists {
 				strigifiedInstanceID := satelliteInstanceID.(string)
@@ -43,6 +44,11 @@ func getSatelliteFacts(facts *[]FactSet) satelliteFacts {
 			if versionExists {
 				stringifiedVersion := satelliteVersion.(string)
 				satelliteFacts.SatelliteVersion = &stringifiedVersion
+			}
+
+			if orgIDExists {
+				stringifiedOrgID := satelliteOrgID.(string)
+				satelliteFacts.SatelliteOrgID = &stringifiedOrgID
 			}
 		}
 	}
@@ -180,7 +186,8 @@ func (this *inventoryConnectorImpl) GetHostConnectionDetails(ctx context.Context
 			OwnerID:             systemProfileResults[*host.Id].SystemProfile.OwnerId,
 			SatelliteInstanceID: satelliteFacts.SatelliteInstanceID,
 			SatelliteVersion:    satelliteFacts.SatelliteVersion,
-			RHCConnectionID:     systemProfileResults[*host.Id].SystemProfile.RhcClientId,
+			SatelliteOrgID:      satelliteFacts.SatelliteOrgID,
+			RHCClientID:         systemProfileResults[*host.Id].SystemProfile.RhcClientId,
 		}
 	}
 
