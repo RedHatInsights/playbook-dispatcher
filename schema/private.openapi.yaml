@@ -140,6 +140,27 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
+  /internal/v2/send_job_request:
+    post:
+      summary: Send a job request to the recipient(s) based on a list of host IDs
+      description: Checks the connection status of the provided hosts, sends a job request to Cloud Connector to dispatch playbooks
+      operationId: api.internal.highlevel.job.request
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendJobRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HighLevelJobRequestResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+
 components:
   schemas:
     RunInput:
@@ -315,6 +336,19 @@ components:
       - org_id
       - hosts
 
+    SendJobRequest:
+      type: object
+      properties:
+        hosts:
+          $ref: '#/components/schemas/HostsWithOrgId'
+        url_prefix:
+          description: The URL prefix for the playbook generation endpoint for the service
+          type: string
+          minLength: 1
+      required:
+      - hosts
+      - url_prefix
+
     RecipientWithConnectionInfo:
       type: object
       properties:
@@ -345,11 +379,32 @@ components:
       - systems
       - status
 
+    JobRequestInfo:
+      type: object
+      properties:
+        host:
+          description: The host id provided by the user sending the job
+          type: string
+          minLength: 1
+        request_dispatch:
+          description: Mentions whether or not the playbook run request was successfully forwared to the Cloud Connector service
+          type: string
+          enum: [success, failure]
+          minLength: 1
+      required:
+      - host
+      - request_dispatch
 
     HighLevelRecipientStatus:
       type: array
       items:
         $ref: '#/components/schemas/RecipientWithConnectionInfo'
+
+    HighLevelJobRequestResponse:
+      description: The success response after sending a job request
+      type: array
+      items:
+        $ref: '#/components/schemas/JobRequestInfo'
 
     HostId:
       description: Identifies a record of the Host-Inventory service
