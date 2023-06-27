@@ -55,7 +55,7 @@ type JobRequestBody struct {
 	OrgId OrgId `json:"org_id"`
 
 	// Human readable name of the playbook run. Used to present the given playbook run in external systems (Satellite).
-	PlaybookName *externalRef0.PlaybookName `json:"playbook_name,omitempty"`
+	PlaybookName externalRef0.PlaybookName `json:"playbook_name"`
 
 	// Username of the user interacting with the service
 	Principal Principal `json:"principal"`
@@ -63,8 +63,8 @@ type JobRequestBody struct {
 	// Amount of seconds after which the run is considered failed due to timeout
 	Timeout *externalRef0.RunTimeout `json:"timeout,omitempty"`
 
-	// The URL prefix for the playbook generation endpoint for the service
-	Url string `json:"url"`
+	// URL hosting the Playbook
+	Url externalRef0.Url `json:"url"`
 
 	// URL that points to the section of the web console where the user find more information about the playbook run. The field is optional but highly suggested.
 	WebConsoleUrl *externalRef0.WebConsoleUrl `json:"web_console_url,omitempty"`

@@ -343,18 +343,16 @@ components:
           $ref: '#/components/schemas/OrgId'
         principal:
           $ref: '#/components/schemas/Principal'
+        url:
+          $ref: './public.openapi.yaml#/components/schemas/Url'
+        playbook_name:
+          $ref: './public.openapi.yaml#/components/schemas/PlaybookName'
         hosts:
           type: array
           items:
             description: Identifies a record of the Host-Inventory service
             type: string
             minLength: 1
-        url:
-          description: The URL prefix for the playbook generation endpoint for the service
-          type: string
-          minLength: 1
-        playbook_name:
-          $ref: './public.openapi.yaml#/components/schemas/PlaybookName'
         web_console_url:
           $ref: './public.openapi.yaml#/components/schemas/WebConsoleUrl'
         labels:
@@ -366,6 +364,7 @@ components:
       - principal
       - hosts
       - url
+      - playbook_name
 
     RecipientWithConnectionInfo:
       type: object

@@ -1,7 +1,6 @@
 package private
 
 import (
-	"fmt"
 	"net/http"
 	"playbook-dispatcher/internal/api/controllers/public"
 	"playbook-dispatcher/internal/api/middleware"
@@ -119,9 +118,7 @@ func (this *controllers) ApiInternalHighlevelJobRequest(ctx echo.Context) error 
 			RunId:           &convertedRunId,
 		})
 	}
-	fmt.Println("response...", response)
 
-	// response = append(response, JobRequestInfo{Recipient: "test", Status: "connected", RequestDispatch: "success", Systems: []HostId{"123abs"}})
 	return ctx.JSON(http.StatusOK, HighLevelJobRequestResponse(response))
 }
 
@@ -130,7 +127,8 @@ func runInputFormatter(input JobRequestBody, hostStatus RecipientWithConnectionI
 	runInput.OrgId = string(hostStatus.OrgId)
 	runInput.Principal = (*string)(&input.Principal)
 	runInput.Recipient, _ = uuid.Parse(string(hostStatus.Recipient))
-	runInput.Url = input.Url
+	runInput.Url = string(input.Url)
+	runInput.Name = (*string)(&input.PlaybookName)
 
 	var runInputHosts []generic.RunHostsInput
 	for _, hostId := range hostStatus.Systems {
@@ -147,9 +145,6 @@ func runInputFormatter(input JobRequestBody, hostStatus RecipientWithConnectionI
 		runInput.SatOrgId = &satOrgId
 	}
 
-	if input.PlaybookName != nil {
-		runInput.Name = (*string)(input.PlaybookName)
-	}
 	if input.WebConsoleUrl != nil {
 		runInput.WebConsoleUrl = (*string)(input.WebConsoleUrl)
 	}
@@ -162,7 +157,3 @@ func runInputFormatter(input JobRequestBody, hostStatus RecipientWithConnectionI
 
 	return runInput
 }
-
-// func buildSingleJobRequestBody() JobRequestInfo {
-
-// }
