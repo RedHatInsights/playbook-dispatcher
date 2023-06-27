@@ -37,6 +37,9 @@ type Error struct {
 	Message string `json:"message"`
 }
 
+// HighLevelJobRequestResponse defines model for HighLevelJobRequestResponse.
+type HighLevelJobRequestResponse []JobRequestInfo
+
 // HighLevelRecipientStatus defines model for HighLevelRecipientStatus.
 type HighLevelRecipientStatus []RecipientWithConnectionInfo
 
@@ -49,6 +52,49 @@ type HostsWithOrgId struct {
 
 	// Identifies the organization that the given resource belongs to
 	OrgId OrgId `json:"org_id"`
+}
+
+// JobRequestBody defines model for JobRequestBody.
+type JobRequestBody struct {
+	Hosts []string `json:"hosts"`
+
+	// Additional metadata about the Playbook run. Can be used for filtering purposes.
+	Labels *externalRef0.Labels `json:"labels,omitempty"`
+
+	// Identifies the organization that the given resource belongs to
+	OrgId OrgId `json:"org_id"`
+
+	// Human readable name of the playbook run. Used to present the given playbook run in external systems (Satellite).
+	PlaybookName *externalRef0.PlaybookName `json:"playbook_name,omitempty"`
+
+	// Username of the user interacting with the service
+	Principal Principal `json:"principal"`
+
+	// Amount of seconds after which the run is considered failed due to timeout
+	Timeout *externalRef0.RunTimeout `json:"timeout,omitempty"`
+
+	// The URL prefix for the playbook generation endpoint for the service
+	Url string `json:"url"`
+
+	// URL that points to the section of the web console where the user find more information about the playbook run. The field is optional but highly suggested.
+	WebConsoleUrl *externalRef0.WebConsoleUrl `json:"web_console_url,omitempty"`
+}
+
+// JobRequestInfo defines model for JobRequestInfo.
+type JobRequestInfo struct {
+
+	// Identifier of the host to which a given Playbook is addressed
+	Recipient externalRef0.RunRecipient `json:"recipient"`
+
+	// Mentions whether or not the playbook run request was successfully forwared to the Cloud Connector service
+	RequestDispatch string `json:"request_dispatch"`
+
+	// Unique identifier of a Playbook run
+	RunId *externalRef0.RunId `json:"run_id,omitempty"`
+
+	// Indicates the current run status of the recipient
+	Status  string   `json:"status"`
+	Systems []HostId `json:"systems"`
 }
 
 // OrgId defines model for OrgId.
@@ -244,6 +290,9 @@ type ApiInternalV2RunsCreateJSONBody []RunInputV2
 // ApiInternalV2RecipientsStatusJSONBody defines parameters for ApiInternalV2RecipientsStatus.
 type ApiInternalV2RecipientsStatusJSONBody []RecipientWithOrg
 
+// ApiInternalHighlevelJobRequestJSONBody defines parameters for ApiInternalHighlevelJobRequest.
+type ApiInternalHighlevelJobRequestJSONBody JobRequestBody
+
 // ApiInternalRunsCreateRequestBody defines body for ApiInternalRunsCreate for application/json ContentType.
 type ApiInternalRunsCreateJSONRequestBody ApiInternalRunsCreateJSONBody
 
@@ -258,6 +307,9 @@ type ApiInternalV2RunsCreateJSONRequestBody ApiInternalV2RunsCreateJSONBody
 
 // ApiInternalV2RecipientsStatusRequestBody defines body for ApiInternalV2RecipientsStatus for application/json ContentType.
 type ApiInternalV2RecipientsStatusJSONRequestBody ApiInternalV2RecipientsStatusJSONBody
+
+// ApiInternalHighlevelJobRequestRequestBody defines body for ApiInternalHighlevelJobRequest for application/json ContentType.
+type ApiInternalHighlevelJobRequestJSONRequestBody ApiInternalHighlevelJobRequestJSONBody
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
@@ -356,6 +408,11 @@ type ClientInterface interface {
 	ApiInternalV2RecipientsStatusWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error)
 
 	ApiInternalV2RecipientsStatus(ctx context.Context, body ApiInternalV2RecipientsStatusJSONRequestBody) (*http.Response, error)
+
+	// ApiInternalHighlevelJobRequest request  with any body
+	ApiInternalHighlevelJobRequestWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error)
+
+	ApiInternalHighlevelJobRequest(ctx context.Context, body ApiInternalHighlevelJobRequestJSONRequestBody) (*http.Response, error)
 
 	// ApiInternalVersion request
 	ApiInternalVersion(ctx context.Context) (*http.Response, error)
@@ -498,6 +555,36 @@ func (c *Client) ApiInternalV2RecipientsStatusWithBody(ctx context.Context, cont
 
 func (c *Client) ApiInternalV2RecipientsStatus(ctx context.Context, body ApiInternalV2RecipientsStatusJSONRequestBody) (*http.Response, error) {
 	req, err := NewApiInternalV2RecipientsStatusRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if c.RequestEditor != nil {
+		err = c.RequestEditor(ctx, req)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ApiInternalHighlevelJobRequestWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error) {
+	req, err := NewApiInternalHighlevelJobRequestRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if c.RequestEditor != nil {
+		err = c.RequestEditor(ctx, req)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ApiInternalHighlevelJobRequest(ctx context.Context, body ApiInternalHighlevelJobRequestJSONRequestBody) (*http.Response, error) {
+	req, err := NewApiInternalHighlevelJobRequestRequest(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -721,6 +808,45 @@ func NewApiInternalV2RecipientsStatusRequestWithBody(server string, contentType 
 	return req, nil
 }
 
+// NewApiInternalHighlevelJobRequestRequest calls the generic ApiInternalHighlevelJobRequest builder with application/json body
+func NewApiInternalHighlevelJobRequestRequest(server string, body ApiInternalHighlevelJobRequestJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewApiInternalHighlevelJobRequestRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewApiInternalHighlevelJobRequestRequestWithBody generates requests for ApiInternalHighlevelJobRequest with any type of body
+func NewApiInternalHighlevelJobRequestRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	queryUrl, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	basePath := fmt.Sprintf("/internal/v2/send_job_request")
+	if basePath[0] == '/' {
+		basePath = basePath[1:]
+	}
+
+	queryUrl, err = queryUrl.Parse(basePath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryUrl.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+	return req, nil
+}
+
 // NewApiInternalVersionRequest generates requests for ApiInternalVersion
 func NewApiInternalVersionRequest(server string) (*http.Request, error) {
 	var err error
@@ -801,6 +927,11 @@ type ClientWithResponsesInterface interface {
 	ApiInternalV2RecipientsStatusWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*ApiInternalV2RecipientsStatusResponse, error)
 
 	ApiInternalV2RecipientsStatusWithResponse(ctx context.Context, body ApiInternalV2RecipientsStatusJSONRequestBody) (*ApiInternalV2RecipientsStatusResponse, error)
+
+	// ApiInternalHighlevelJobRequest request  with any body
+	ApiInternalHighlevelJobRequestWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*ApiInternalHighlevelJobRequestResponse, error)
+
+	ApiInternalHighlevelJobRequestWithResponse(ctx context.Context, body ApiInternalHighlevelJobRequestJSONRequestBody) (*ApiInternalHighlevelJobRequestResponse, error)
 
 	// ApiInternalVersion request
 	ApiInternalVersionWithResponse(ctx context.Context) (*ApiInternalVersionResponse, error)
@@ -920,6 +1051,29 @@ func (r ApiInternalV2RecipientsStatusResponse) StatusCode() int {
 	return 0
 }
 
+type ApiInternalHighlevelJobRequestResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *HighLevelJobRequestResponse
+	JSON400      *Error
+}
+
+// Status returns HTTPResponse.Status
+func (r ApiInternalHighlevelJobRequestResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ApiInternalHighlevelJobRequestResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type ApiInternalVersionResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -1025,6 +1179,23 @@ func (c *ClientWithResponses) ApiInternalV2RecipientsStatusWithResponse(ctx cont
 		return nil, err
 	}
 	return ParseApiInternalV2RecipientsStatusResponse(rsp)
+}
+
+// ApiInternalHighlevelJobRequestWithBodyWithResponse request with arbitrary body returning *ApiInternalHighlevelJobRequestResponse
+func (c *ClientWithResponses) ApiInternalHighlevelJobRequestWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*ApiInternalHighlevelJobRequestResponse, error) {
+	rsp, err := c.ApiInternalHighlevelJobRequestWithBody(ctx, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	return ParseApiInternalHighlevelJobRequestResponse(rsp)
+}
+
+func (c *ClientWithResponses) ApiInternalHighlevelJobRequestWithResponse(ctx context.Context, body ApiInternalHighlevelJobRequestJSONRequestBody) (*ApiInternalHighlevelJobRequestResponse, error) {
+	rsp, err := c.ApiInternalHighlevelJobRequest(ctx, body)
+	if err != nil {
+		return nil, err
+	}
+	return ParseApiInternalHighlevelJobRequestResponse(rsp)
 }
 
 // ApiInternalVersionWithResponse request returning *ApiInternalVersionResponse
@@ -1177,6 +1348,39 @@ func ParseApiInternalV2RecipientsStatusResponse(rsp *http.Response) (*ApiInterna
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest []RecipientStatus
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseApiInternalHighlevelJobRequestResponse parses an HTTP response from a ApiInternalHighlevelJobRequestWithResponse call
+func ParseApiInternalHighlevelJobRequestResponse(rsp *http.Response) (*ApiInternalHighlevelJobRequestResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ApiInternalHighlevelJobRequestResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest HighLevelJobRequestResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}

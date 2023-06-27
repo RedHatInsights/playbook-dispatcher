@@ -149,7 +149,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/SendJobRequest'
+              $ref: '#/components/schemas/JobRequestBody'
       responses:
         '200':
           description: OK
@@ -336,18 +336,36 @@ components:
       - org_id
       - hosts
 
-    SendJobRequest:
+    JobRequestBody:
       type: object
       properties:
+        org_id:
+          $ref: '#/components/schemas/OrgId'
+        principal:
+          $ref: '#/components/schemas/Principal'
         hosts:
-          $ref: '#/components/schemas/HostsWithOrgId'
-        url_prefix:
+          type: array
+          items:
+            description: Identifies a record of the Host-Inventory service
+            type: string
+            minLength: 1
+        url:
           description: The URL prefix for the playbook generation endpoint for the service
           type: string
           minLength: 1
+        playbook_name:
+          $ref: './public.openapi.yaml#/components/schemas/PlaybookName'
+        web_console_url:
+          $ref: './public.openapi.yaml#/components/schemas/WebConsoleUrl'
+        labels:
+          $ref: './public.openapi.yaml#/components/schemas/Labels'
+        timeout:
+          $ref: './public.openapi.yaml#/components/schemas/RunTimeout'
       required:
+      - org_id
+      - principal
       - hosts
-      - url_prefix
+      - url
 
     RecipientWithConnectionInfo:
       type: object
@@ -382,17 +400,27 @@ components:
     JobRequestInfo:
       type: object
       properties:
-        host:
-          description: The host id provided by the user sending the job
+        recipient:
+          $ref: './public.openapi.yaml#/components/schemas/RunRecipient'
+        status:
+          description: Indicates the current run status of the recipient
           type: string
-          minLength: 1
+          enum: [connected, disconnected, rhc_not_configured]
+        systems:
+          type: array
+          items:
+            $ref: '#/components/schemas/HostId'
         request_dispatch:
           description: Mentions whether or not the playbook run request was successfully forwared to the Cloud Connector service
           type: string
           enum: [success, failure]
           minLength: 1
+        run_id:
+          $ref: './public.openapi.yaml#/components/schemas/RunId'
       required:
-      - host
+      - recipient
+      - status
+      - systems
       - request_dispatch
 
     HighLevelRecipientStatus:
