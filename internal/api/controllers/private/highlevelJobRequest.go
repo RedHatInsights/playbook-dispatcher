@@ -11,6 +11,11 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+var (
+	RequestDispatchSuccess = "success"
+	RequestDispatchFailure = "failure"
+)
+
 func (this *controllers) ApiInternalHighlevelJobRequest(ctx echo.Context) error {
 	var input JobRequestBody
 	var response []JobRequestInfo
@@ -46,7 +51,7 @@ func (this *controllers) ApiInternalHighlevelJobRequest(ctx echo.Context) error 
 			response = append(response, JobRequestInfo{
 				Recipient:       noRHCRecipientConn.Recipient,
 				Status:          noRHCRecipientConn.Status,
-				RequestDispatch: "failure",
+				RequestDispatch: RequestDispatchFailure,
 				Systems:         noRHCRecipientConn.Systems,
 			})
 		}
@@ -63,7 +68,7 @@ func (this *controllers) ApiInternalHighlevelJobRequest(ctx echo.Context) error 
 				response = append(response, JobRequestInfo{
 					Recipient:       satelliteStatus.Recipient,
 					Status:          satelliteStatus.Status,
-					RequestDispatch: "failure",
+					RequestDispatch: RequestDispatchFailure,
 					Systems:         satelliteStatus.Systems,
 				})
 			} else {
@@ -84,7 +89,7 @@ func (this *controllers) ApiInternalHighlevelJobRequest(ctx echo.Context) error 
 				response = append(response, JobRequestInfo{
 					Recipient:       directConnectedStatus.Recipient,
 					Status:          directConnectedStatus.Status,
-					RequestDispatch: "failure",
+					RequestDispatch: RequestDispatchFailure,
 					Systems:         directConnectedStatus.Systems,
 				})
 			} else {
@@ -103,7 +108,7 @@ func (this *controllers) ApiInternalHighlevelJobRequest(ctx echo.Context) error 
 			response = append(response, JobRequestInfo{
 				Recipient:       runInputConnInfo[i].Recipient,
 				Status:          runInputConnInfo[i].Status,
-				RequestDispatch: "failure",
+				RequestDispatch: RequestDispatchFailure,
 				Systems:         runInputConnInfo[i].Systems,
 			})
 			continue
@@ -113,7 +118,7 @@ func (this *controllers) ApiInternalHighlevelJobRequest(ctx echo.Context) error 
 		response = append(response, JobRequestInfo{
 			Recipient:       runInputConnInfo[i].Recipient,
 			Status:          runInputConnInfo[i].Status,
-			RequestDispatch: "success",
+			RequestDispatch: RequestDispatchSuccess,
 			Systems:         runInputConnInfo[i].Systems,
 			RunId:           &convertedRunId,
 		})
