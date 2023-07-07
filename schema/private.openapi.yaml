@@ -149,14 +149,18 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/JobRequestBody'
+              type: array
+              items:
+                $ref: '#/components/schemas/RunInputV2'
+              minItems: 1
+              maxItems: 50
       responses:
-        '200':
+        '207':
           description: OK
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HighLevelJobRequestResponse'
+                $ref: '#/components/schemas/RunsCreated'
         '400':
           $ref: '#/components/responses/BadRequest'
 
@@ -336,36 +340,6 @@ components:
       - org_id
       - hosts
 
-    JobRequestBody:
-      type: object
-      properties:
-        org_id:
-          $ref: '#/components/schemas/OrgId'
-        principal:
-          $ref: '#/components/schemas/Principal'
-        url:
-          $ref: './public.openapi.yaml#/components/schemas/Url'
-        playbook_name:
-          $ref: './public.openapi.yaml#/components/schemas/PlaybookName'
-        hosts:
-          type: array
-          items:
-            description: Identifies a record of the Host-Inventory service
-            type: string
-            minLength: 1
-        web_console_url:
-          $ref: './public.openapi.yaml#/components/schemas/WebConsoleUrl'
-        labels:
-          $ref: './public.openapi.yaml#/components/schemas/Labels'
-        timeout:
-          $ref: './public.openapi.yaml#/components/schemas/RunTimeout'
-      required:
-      - org_id
-      - principal
-      - hosts
-      - url
-      - playbook_name
-
     RecipientWithConnectionInfo:
       type: object
       properties:
@@ -396,42 +370,10 @@ components:
       - systems
       - status
 
-    JobRequestInfo:
-      type: object
-      properties:
-        recipient:
-          $ref: './public.openapi.yaml#/components/schemas/RunRecipient'
-        status:
-          description: Indicates the current run status of the recipient
-          type: string
-          enum: [connected, disconnected, rhc_not_configured]
-        systems:
-          type: array
-          items:
-            $ref: '#/components/schemas/HostId'
-        request_dispatch:
-          description: Mentions whether or not the playbook run request was successfully forwared to the Cloud Connector service
-          type: string
-          enum: [success, failure]
-          minLength: 1
-        run_id:
-          $ref: './public.openapi.yaml#/components/schemas/RunId'
-      required:
-      - recipient
-      - status
-      - systems
-      - request_dispatch
-
     HighLevelRecipientStatus:
       type: array
       items:
         $ref: '#/components/schemas/RecipientWithConnectionInfo'
-
-    HighLevelJobRequestResponse:
-      description: The success response after sending a job request
-      type: array
-      items:
-        $ref: '#/components/schemas/JobRequestInfo'
 
     HostId:
       description: Identifies a record of the Host-Inventory service

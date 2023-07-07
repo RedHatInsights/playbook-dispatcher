@@ -55,13 +55,3 @@ func (this *controllers) ApiInternalV2RunsCreate(ctx echo.Context) error {
 
 	return ctx.JSON(http.StatusMultiStatus, result)
 }
-
-func getRequestTypeLabel(run RunInputV2) string {
-	result := instrumentation.LabelAnsibleRequest
-
-	if run.RecipientConfig != nil && run.RecipientConfig.SatId != nil {
-		result = instrumentation.LabelSatRequest
-	}
-
-	return result
-}

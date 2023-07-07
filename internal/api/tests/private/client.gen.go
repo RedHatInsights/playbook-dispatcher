@@ -37,9 +37,6 @@ type Error struct {
 	Message string `json:"message"`
 }
 
-// HighLevelJobRequestResponse defines model for HighLevelJobRequestResponse.
-type HighLevelJobRequestResponse []JobRequestInfo
-
 // HighLevelRecipientStatus defines model for HighLevelRecipientStatus.
 type HighLevelRecipientStatus []RecipientWithConnectionInfo
 
@@ -52,49 +49,6 @@ type HostsWithOrgId struct {
 
 	// Identifies the organization that the given resource belongs to
 	OrgId OrgId `json:"org_id"`
-}
-
-// JobRequestBody defines model for JobRequestBody.
-type JobRequestBody struct {
-	Hosts []string `json:"hosts"`
-
-	// Additional metadata about the Playbook run. Can be used for filtering purposes.
-	Labels *externalRef0.Labels `json:"labels,omitempty"`
-
-	// Identifies the organization that the given resource belongs to
-	OrgId OrgId `json:"org_id"`
-
-	// Human readable name of the playbook run. Used to present the given playbook run in external systems (Satellite).
-	PlaybookName externalRef0.PlaybookName `json:"playbook_name"`
-
-	// Username of the user interacting with the service
-	Principal Principal `json:"principal"`
-
-	// Amount of seconds after which the run is considered failed due to timeout
-	Timeout *externalRef0.RunTimeout `json:"timeout,omitempty"`
-
-	// URL hosting the Playbook
-	Url externalRef0.Url `json:"url"`
-
-	// URL that points to the section of the web console where the user find more information about the playbook run. The field is optional but highly suggested.
-	WebConsoleUrl *externalRef0.WebConsoleUrl `json:"web_console_url,omitempty"`
-}
-
-// JobRequestInfo defines model for JobRequestInfo.
-type JobRequestInfo struct {
-
-	// Identifier of the host to which a given Playbook is addressed
-	Recipient externalRef0.RunRecipient `json:"recipient"`
-
-	// Mentions whether or not the playbook run request was successfully forwared to the Cloud Connector service
-	RequestDispatch string `json:"request_dispatch"`
-
-	// Unique identifier of a Playbook run
-	RunId *externalRef0.RunId `json:"run_id,omitempty"`
-
-	// Indicates the current run status of the recipient
-	Status  string   `json:"status"`
-	Systems []HostId `json:"systems"`
 }
 
 // OrgId defines model for OrgId.
@@ -291,7 +245,7 @@ type ApiInternalV2RunsCreateJSONBody []RunInputV2
 type ApiInternalV2RecipientsStatusJSONBody []RecipientWithOrg
 
 // ApiInternalHighlevelJobRequestJSONBody defines parameters for ApiInternalHighlevelJobRequest.
-type ApiInternalHighlevelJobRequestJSONBody JobRequestBody
+type ApiInternalHighlevelJobRequestJSONBody []RunInputV2
 
 // ApiInternalRunsCreateRequestBody defines body for ApiInternalRunsCreate for application/json ContentType.
 type ApiInternalRunsCreateJSONRequestBody ApiInternalRunsCreateJSONBody
@@ -1054,7 +1008,7 @@ func (r ApiInternalV2RecipientsStatusResponse) StatusCode() int {
 type ApiInternalHighlevelJobRequestResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *HighLevelJobRequestResponse
+	JSON207      *RunsCreated
 	JSON400      *Error
 }
 
@@ -1379,12 +1333,12 @@ func ParseApiInternalHighlevelJobRequestResponse(rsp *http.Response) (*ApiIntern
 	}
 
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest HighLevelJobRequestResponse
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 207:
+		var dest RunsCreated
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
-		response.JSON200 = &dest
+		response.JSON207 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
 		var dest Error

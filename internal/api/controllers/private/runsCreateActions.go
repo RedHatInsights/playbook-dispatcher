@@ -6,6 +6,7 @@ import (
 
 	"playbook-dispatcher/internal/api/controllers/public"
 	"playbook-dispatcher/internal/api/dispatch"
+	"playbook-dispatcher/internal/api/instrumentation"
 	"playbook-dispatcher/internal/common/model/generic"
 	"playbook-dispatcher/internal/common/utils"
 
@@ -21,6 +22,16 @@ func getLabels(input *public.Labels) map[string]string {
 	}
 
 	return input.AdditionalProperties
+}
+
+func getRequestTypeLabel(run RunInputV2) string {
+	result := instrumentation.LabelAnsibleRequest
+
+	if run.RecipientConfig != nil && run.RecipientConfig.SatId != nil {
+		result = instrumentation.LabelSatRequest
+	}
+
+	return result
 }
 
 // this will panic if the given value is not a valid UUID
@@ -122,6 +133,32 @@ func validateSatelliteFields(runInput RunInputV2) error {
 	return nil
 }
 
+func validateJobRequestFields(runInput RunInputV2) (string, error) {
+	if runInput.Hosts == nil {
+		return instrumentation.LabelErrorHighLevelGeneric, fmt.Errorf("Hosts need to be defined")
+	}
+
+	if len(*runInput.Hosts) == 0 {
+		return instrumentation.LabelErrorHighLevelGeneric, fmt.Errorf("Hosts cannot be empty")
+	}
+
+	for _, host := range *runInput.Hosts {
+		if host.InventoryId == nil {
+			return instrumentation.LabelErrorHighLevelGeneric, fmt.Errorf("Inventory ID needs to be defined")
+		}
+	}
+
+	if runInput.RecipientConfig == nil {
+		return instrumentation.LabelAnsibleRequest, nil
+	}
+
+	if (runInput.RecipientConfig.SatId == nil) && (runInput.RecipientConfig.SatOrgId == nil) {
+		return instrumentation.LabelSatRequest, fmt.Errorf("Both sat_id and sat_org need to be defined for satellite requests")
+	}
+
+	return instrumentation.LabelSatRequest, nil
+}
+
 func runCreateError(code int) *RunCreated {
 	return &RunCreated{
 		Code: code,
@@ -152,4 +189,12 @@ func invalidRequest(ctx echo.Context, err error) error {
 	return ctx.JSON(http.StatusBadRequest, Error{
 		Message: err.Error(),
 	})
+}
+
+func extractInventoryIds(hosts []generic.RunHostsInput) []string {
+	extractedHostIds := []string{}
+	for _, hosts := range hosts {
+		extractedHostIds = append(extractedHostIds, hosts.InventoryId.String())
+	}
+	return extractedHostIds
 }

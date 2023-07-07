@@ -25,6 +25,7 @@ const (
 	labelSatellite             = "satellite"
 	LabelAnsibleRequest        = "ansible"
 	LabelSatRequest            = "satellite"
+	LabelErrorHighLevelGeneric = "error"
 )
 
 var (
@@ -72,6 +73,11 @@ var (
 		Name: "app_run_canceled_error_total",
 		Help: "The total number of errors from the run cancel endpoint",
 	})
+
+	highLevelJobRequestErrorTotal = promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: "api_highlevel_job_request_total",
+		Help: "The total number of errors for the high level job request endpoint",
+	}, []string{"type"})
 )
 
 func TenantAnemic(ctx echo.Context, orgID string) {
@@ -144,6 +150,11 @@ func RunCanceled(ctx context.Context, runId uuid.UUID) {
 	runCanceledTotal.Inc()
 }
 
+func InvalidHighLevelJobRequest(ctx echo.Context, requestType string, err error) {
+	utils.GetLogFromEcho(ctx).Errorw("Invalid high level job request", "error", err)
+	highLevelJobRequestErrorTotal.WithLabelValues(requestType).Inc()
+}
+
 func Start() {
 	// initialize label values
 	// https://www.robustperception.io/existential-issues-with-metrics
@@ -166,4 +177,8 @@ func Start() {
 	connectorErrorTotal.WithLabelValues(labelErrorGeneric, LabelSatRequest)
 	connectorErrorTotal.WithLabelValues(labelNoConnection, LabelAnsibleRequest)
 	connectorErrorTotal.WithLabelValues(labelNoConnection, LabelSatRequest)
+
+	highLevelJobRequestErrorTotal.WithLabelValues(LabelSatRequest)
+	highLevelJobRequestErrorTotal.WithLabelValues(LabelAnsibleRequest)
+	highLevelJobRequestErrorTotal.WithLabelValues(LabelErrorHighLevelGeneric)
 }

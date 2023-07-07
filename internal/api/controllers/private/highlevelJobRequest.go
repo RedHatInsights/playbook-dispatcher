@@ -1,24 +1,18 @@
 package private
 
 import (
+	"fmt"
 	"net/http"
-	"playbook-dispatcher/internal/api/controllers/public"
+	"playbook-dispatcher/internal/api/instrumentation"
 	"playbook-dispatcher/internal/api/middleware"
-	"playbook-dispatcher/internal/common/model/generic"
 	"playbook-dispatcher/internal/common/utils"
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 )
 
-var (
-	RequestDispatchSuccess = "success"
-	RequestDispatchFailure = "failure"
-)
-
 func (this *controllers) ApiInternalHighlevelJobRequest(ctx echo.Context) error {
-	var input JobRequestBody
-	var response []JobRequestInfo
+	var input RunInputV2List
 
 	err := utils.ReadRequestBody(ctx, &input)
 	if err != nil {
@@ -26,139 +20,90 @@ func (this *controllers) ApiInternalHighlevelJobRequest(ctx echo.Context) error 
 		return ctx.NoContent(http.StatusBadRequest)
 	}
 
-	hostConnectorDetails, err := this.inventoryConnectorClient.GetHostConnectionDetails(
-		ctx.Request().Context(),
-		input.Hosts,
-		this.config.GetString("inventory.connector.ordered.how"),
-		this.config.GetString("inventory.connector.ordered.by"),
-		this.config.GetInt("inventory.connector.limit"),
-		this.config.GetInt("inventory.connector.offset"),
-	)
-	if err != nil {
-		utils.GetLogFromEcho(ctx).Error(err)
-		return ctx.NoContent(http.StatusBadRequest)
-	}
-
-	satellite, directConnected, noRhc := sortHostsByRecipient(hostConnectorDetails)
-
-	runInputs := []generic.RunInput{}
-	runInputConnInfo := []RecipientWithConnectionInfo{}
-
-	// when RHC is not setup, do not dispatch playbook run request
-	if noRhc != nil {
-		noRHCRecipientConnInfo := []RecipientWithConnectionInfo{getRHCStatus(noRhc, input.OrgId)}
-		for _, noRHCRecipientConn := range noRHCRecipientConnInfo {
-			response = append(response, JobRequestInfo{
-				Recipient:       noRHCRecipientConn.Recipient,
-				Status:          noRHCRecipientConn.Status,
-				RequestDispatch: RequestDispatchFailure,
-				Systems:         noRHCRecipientConn.Systems,
-			})
-		}
-	}
-
-	if len(satellite) > 0 {
-		satelliteStatuses, err := getSatelliteStatus(ctx, this.cloudConnectorClient, this.sourcesConnectorClient, input.OrgId, satellite)
-
+	for _, run := range input {
+		requestType, err := validateJobRequestFields(run)
 		if err != nil {
-			utils.GetLogFromEcho(ctx).Errorf("Error retrieving Satellite status: %s", err)
+			instrumentation.InvalidHighLevelJobRequest(ctx, requestType, err)
+			return ctx.NoContent(http.StatusBadRequest)
 		}
-		for _, satelliteStatus := range satelliteStatuses {
-			if satelliteStatus.Status != "connected" {
-				response = append(response, JobRequestInfo{
-					Recipient:       satelliteStatus.Recipient,
-					Status:          satelliteStatus.Status,
-					RequestDispatch: RequestDispatchFailure,
-					Systems:         satelliteStatus.Systems,
-				})
-			} else {
-				runInputs = append(runInputs, runInputFormatter(input, satelliteStatus))
-				runInputConnInfo = append(runInputConnInfo, satelliteStatus)
+	}
+
+	// processing individual requests concurrently
+	result := input.PMapRunCreated(func(runInputV2 RunInputV2) *RunCreated {
+		requestTypeLabel := getRequestTypeLabel(runInputV2)
+		context := utils.WithOrgId(ctx.Request().Context(), string(runInputV2.OrgId))
+		context = utils.WithRequestType(context, requestTypeLabel)
+
+		recipient := parseValidatedUUID(string(runInputV2.Recipient))
+
+		hosts := parseRunHosts(runInputV2.Hosts)
+
+		var parsedSatID *uuid.UUID
+		if runInputV2.RecipientConfig != nil && runInputV2.RecipientConfig.SatId != nil {
+			parsedSatID = utils.UUIDRef(parseValidatedUUID(string(*runInputV2.RecipientConfig.SatId)))
+		}
+
+		runInput := RunInputV2GenericMap(runInputV2, recipient, hosts, parsedSatID, this.config)
+
+		hostConnectorDetails, err := this.inventoryConnectorClient.GetHostConnectionDetails(
+			context,
+			extractInventoryIds(runInput.Hosts),
+			this.config.GetString("inventory.connector.ordered.how"),
+			this.config.GetString("inventory.connector.ordered.by"),
+			this.config.GetInt("inventory.connector.limit"),
+			this.config.GetInt("inventory.connector.offset"),
+		)
+		if err != nil {
+			utils.GetLogFromContext(context).Error(err)
+			return handleRunCreateError(err)
+		}
+
+		satellite, directConnected, noRhc := sortHostsByRecipient(hostConnectorDetails)
+
+		if len(satellite) > 1 || len(directConnected) > 1 || len(noRhc) > 1 {
+			instrumentation.InvalidHighLevelJobRequest(ctx, requestTypeLabel, fmt.Errorf("Multiple recipients for host list found"))
+			return &RunCreated{Code: http.StatusBadRequest}
+		}
+
+		// when RHC is not setup, do not dispatch playbook run request
+		if noRhc != nil {
+			noRHCRecipientConnInfo := []RecipientWithConnectionInfo{getRHCStatus(noRhc, OrgId(runInput.OrgId))}
+			instrumentation.InvalidHighLevelJobRequest(ctx, requestTypeLabel, fmt.Errorf("RHC not installed. Recipient: %s", noRHCRecipientConnInfo[0].Recipient))
+			return runCreateError(http.StatusNotFound)
+		}
+
+		if satellite != nil {
+			satelliteStatus, err := getSatelliteStatus(ctx, this.cloudConnectorClient, this.sourcesConnectorClient, OrgId(runInput.OrgId), satellite)
+			if err != nil {
+				utils.GetLogFromContext(context).Errorf("Error retrieving Satellite status: %s", err)
+				return runCreateError(http.StatusNotFound)
+			}
+			if satelliteStatus[0].Status != "connected" {
+				instrumentation.InvalidHighLevelJobRequest(ctx, requestTypeLabel, fmt.Errorf("Satellite not connected"))
+				return runCreateError(http.StatusNotFound)
 			}
 		}
-	}
 
-	if len(directConnected) > 0 {
-		directConnectedStatuses, err := getDirectConnectStatus(ctx, this.cloudConnectorClient, input.OrgId, directConnected)
-
-		if err != nil {
-			utils.GetLogFromEcho(ctx).Errorf("Error retrieving Direct Connect status: %s", err)
-		}
-		for _, directConnectedStatus := range directConnectedStatuses {
-			if directConnectedStatus.Status != "connected" {
-				response = append(response, JobRequestInfo{
-					Recipient:       directConnectedStatus.Recipient,
-					Status:          directConnectedStatus.Status,
-					RequestDispatch: RequestDispatchFailure,
-					Systems:         directConnectedStatus.Systems,
-				})
-			} else {
-				runInputs = append(runInputs, runInputFormatter(input, directConnectedStatus))
-				runInputConnInfo = append(runInputConnInfo, directConnectedStatus)
+		if directConnected != nil {
+			directConnectedStatus, err := getDirectConnectStatus(ctx, this.cloudConnectorClient, OrgId(runInput.OrgId), directConnected)
+			if err != nil {
+				utils.GetLogFromContext(context).Errorf("Error Retrieving Direct Connect status: %s", err)
+				return runCreateError(http.StatusNotFound)
+			}
+			if directConnectedStatus[0].Status != "connected" {
+				instrumentation.InvalidHighLevelJobRequest(ctx, requestTypeLabel, fmt.Errorf("Host not connected"))
+				return runCreateError(http.StatusNotFound)
 			}
 		}
-	}
 
-	for i, runInput := range runInputs {
-		context := ctx.Request().Context()
 		runID, _, err := this.dispatchManager.ProcessRun(context, runInput.OrgId, middleware.GetPSKPrincipal(context), runInput)
 
 		if err != nil {
-			utils.GetLogFromEcho(ctx).Warnf("Error processing playbook run: %s", err)
-			response = append(response, JobRequestInfo{
-				Recipient:       runInputConnInfo[i].Recipient,
-				Status:          runInputConnInfo[i].Status,
-				RequestDispatch: RequestDispatchFailure,
-				Systems:         runInputConnInfo[i].Systems,
-			})
-			continue
+			return handleRunCreateError(err)
 		}
 
-		convertedRunId := public.RunId(runID.String())
-		response = append(response, JobRequestInfo{
-			Recipient:       runInputConnInfo[i].Recipient,
-			Status:          runInputConnInfo[i].Status,
-			RequestDispatch: RequestDispatchSuccess,
-			Systems:         runInputConnInfo[i].Systems,
-			RunId:           &convertedRunId,
-		})
-	}
+		return runCreated(runID)
+	})
 
-	return ctx.JSON(http.StatusOK, HighLevelJobRequestResponse(response))
-}
-
-func runInputFormatter(input JobRequestBody, hostStatus RecipientWithConnectionInfo) generic.RunInput {
-	var runInput generic.RunInput
-	runInput.OrgId = string(hostStatus.OrgId)
-	runInput.Principal = (*string)(&input.Principal)
-	runInput.Recipient, _ = uuid.Parse(string(hostStatus.Recipient))
-	runInput.Url = string(input.Url)
-	runInput.Name = (*string)(&input.PlaybookName)
-
-	var runInputHosts []generic.RunHostsInput
-	for _, hostId := range hostStatus.Systems {
-		parsedHostId, _ := uuid.Parse(string(hostId))
-		runInputHosts = append(runInputHosts, generic.RunHostsInput{InventoryId: &parsedHostId})
-	}
-	runInput.Hosts = runInputHosts
-
-	if hostStatus.RecipientType == "satellite" {
-		hostSatId, _ := uuid.Parse(string(hostStatus.SatId))
-		runInput.SatId = &hostSatId
-
-		satOrgId := string(hostStatus.SatOrgId)
-		runInput.SatOrgId = &satOrgId
-	}
-
-	if input.WebConsoleUrl != nil {
-		runInput.WebConsoleUrl = (*string)(input.WebConsoleUrl)
-	}
-	if input.Timeout != nil {
-		runInput.Timeout = (*int)(input.Timeout)
-	}
-	if input.Labels != nil {
-		runInput.Labels = input.Labels.AdditionalProperties
-	}
-
-	return runInput
+	return ctx.JSON(http.StatusMultiStatus, result)
 }
