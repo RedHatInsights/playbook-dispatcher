@@ -24,7 +24,7 @@ func (this *controllers) ApiInternalHighlevelJobRequest(ctx echo.Context) error 
 		requestType, err := validateJobRequestFields(run)
 		if err != nil {
 			instrumentation.InvalidHighLevelJobRequest(ctx, requestType, err)
-			return ctx.NoContent(http.StatusBadRequest)
+			return invalidRequest(ctx, err)
 		}
 	}
 
@@ -61,7 +61,7 @@ func (this *controllers) ApiInternalHighlevelJobRequest(ctx echo.Context) error 
 		satellite, directConnected, noRhc := sortHostsByRecipient(hostConnectorDetails)
 
 		if len(satellite) > 1 || len(directConnected) > 1 || len(noRhc) > 1 {
-			instrumentation.InvalidHighLevelJobRequest(ctx, requestTypeLabel, fmt.Errorf("Multiple recipients for host list found"))
+			instrumentation.InvalidHighLevelJobRequest(ctx, requestTypeLabel, fmt.Errorf("Multiple recipients for host list found. Provided recipient and host list mismatch."))
 			return &RunCreated{Code: http.StatusBadRequest}
 		}
 

@@ -144,7 +144,7 @@ func validateJobRequestFields(runInput RunInputV2) (string, error) {
 
 	for _, host := range *runInput.Hosts {
 		if host.InventoryId == nil {
-			return instrumentation.LabelErrorHighLevelGeneric, fmt.Errorf("Inventory ID needs to be defined")
+			return instrumentation.LabelErrorHighLevelGeneric, fmt.Errorf("Inventory ID missing in hosts array")
 		}
 	}
 
@@ -152,7 +152,7 @@ func validateJobRequestFields(runInput RunInputV2) (string, error) {
 		return instrumentation.LabelAnsibleRequest, nil
 	}
 
-	if (runInput.RecipientConfig.SatId == nil) && (runInput.RecipientConfig.SatOrgId == nil) {
+	if (runInput.RecipientConfig.SatId == nil) != (runInput.RecipientConfig.SatOrgId == nil) {
 		return instrumentation.LabelSatRequest, fmt.Errorf("Both sat_id and sat_org need to be defined for satellite requests")
 	}
 
