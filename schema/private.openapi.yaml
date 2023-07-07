@@ -143,7 +143,10 @@ paths:
   /internal/v2/send_job_request:
     post:
       summary: Send a job request to the recipient(s) based on a list of host IDs
-      description: Checks the connection status of the provided hosts, sends a job request to Cloud Connector to dispatch playbooks
+      description: |
+        Checks the connection status of the provided hosts, sends a job request to Cloud Connector to dispatch playbooks.
+        The hosts array and the `inventory_id` that is inside the hosts array is required for this endpoint.
+        For satellite recipients, all fields inside the `recipient_config` object is required.
       operationId: api.internal.highlevel.job.request
       requestBody:
         content:
