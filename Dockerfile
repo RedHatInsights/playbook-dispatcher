@@ -1,4 +1,4 @@
-FROM registry.redhat.io/ubi8/go-toolset as builder
+FROM registry.access.redhat.com/ubi8/go-toolset as builder
 
 WORKDIR /go/src/app
 COPY . .
@@ -7,7 +7,7 @@ USER 0
 
 RUN go build -v -o app main.go
 
-FROM registry.redhat.io/ubi8-minimal
+FROM registry.access.redhat.com/ubi8-minimal
 
 ARG BUILD_COMMIT=unknown
 
