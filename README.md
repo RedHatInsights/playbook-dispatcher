@@ -258,6 +258,8 @@ See [API schema](./schema/private.openapi.yaml) for more details.
 
 ## Event interface
 
+### Run Event
+
 Services can integrate with Playbook Dispatcher by consuming its event interface.
 Playbook Dispatcher emits an event for every state change.
 These events are produced to `platform.playbook-dispatcher.runs` topic in Kafka from where integrating services can consume them.
@@ -309,6 +311,46 @@ In addition, each event contains the following headers:
 - `org_id` - the account (tenant) the given playbook run belong to
 
 The event headers make it possible to filter events without the need to parse the value of each event.
+
+### Run Hosts Event
+
+These events are produced to `platform.playbook-dispatcher.run-hosts` topic in Kafka from where integrating services can consume them.
+
+The key of each event is the id of the given playbook run.
+
+The value of each event is described by [a JSON schema](./schema/run.host.event.yaml).
+
+```json
+{
+    "event_type": "create",
+    "payload": {
+      "id": "6555d6f7-8dc1-4dec-9d1e-0ef8a02d7d43",
+      "run_id": "6555d6f7-8dc1-4dec-9d1e-0ef8a02d7d43",
+      "inventory_id": "16372e6f-1c18-4cdb-b780-50ab4b88e74b",
+      "host": "01.example.com",
+      "stdout": "output from the playbook",
+      "status": "running",
+      "created_at": "2022-04-22T11:15:45.429294Z",
+      "updated_at": "2022-04-22T11:15:45.429294Z"
+    }
+}
+```
+
+An event can be of type:
+
+- create - when a new playbook run is created
+- update - when the state of a playbook run changes
+- delete - when a playbook run is removed
+- read - special type of event used to re-populate the topic (i.e. to remind the consumers of the latest state of a given run). This event does not indicate state change but can be used to populate caches, etc.
+
+In addition, each event contains the following headers:
+
+- `event_type` - the type of the event (see above)
+- `status` - current state of the playbook run
+
+The event headers make it possible to filter events without the need to parse the value of each event.
+
+
 
 ## Expected input format
 
