@@ -84,7 +84,7 @@ data:
           "steppedLine": false,
           "targets": [
             {
-              "expr": "1 - (sum(increase(echo_http_requests_total{status=\"5xx\", service=\"playbook-dispatcher-api\"}[$__range:1m])) / sum(increase(echo_http_requests_total{service=\"playbook-dispatcher-api\"}[$__range:1m])))",
+              "expr": "1 - (sum(increase(api_3scale_gateway_api_status{status=\"5xx\", exported_service=\"playbook-dispatcher\"}[$__range:1m])) / sum(increase(api_3scale_gateway_api_status{exported_service=\"playbook-dispatcher\"}[$__range:1m])))",
               "interval": "",
               "legendFormat": "Ratio of successful requests",
               "refId": "A"
@@ -295,7 +295,7 @@ data:
           "reverseYBuckets": false,
           "targets": [
             {
-              "expr": "sum(increase(echo_http_request_duration_seconds_bucket{service=\"playbook-dispatcher-api\"}[1m])) by (le)",
+              "expr": "sum(increase(echo_http_request_duration_seconds_bucket{service=\"playbook-dispatcher-api\", method=\"POST\"}[1m])) by (le)",
               "format": "heatmap",
               "interval": "15s",
               "legendFormat": "{{le}}",
@@ -304,7 +304,7 @@ data:
           ],
           "timeFrom": null,
           "timeShift": null,
-          "title": "Latency",
+          "title": "Latency (POST)",
           "tooltip": {
             "show": true,
             "showHistogram": false
