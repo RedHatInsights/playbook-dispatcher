@@ -115,7 +115,9 @@ func (this *handler) onMessage(ctx context.Context, msg *k.Message) {
 			Events: eventsSerialized,
 		}
 
-		if updateResult := baseQuery.Select("status", "events").Updates(toUpdate); updateResult.Error != nil {
+		// Only update if the run is not marked as complete
+		updateResult := baseQuery.Where("status not in ?", []string{db.RunStatusSuccess, db.RunStatusFailure}).Select("status", "events").Updates(toUpdate)
+		if updateResult.Error != nil {
 			utils.GetLogFromContext(ctx).Errorw("Error updating run in db", "error", updateResult.Error)
 			return updateResult.Error
 		} else {
@@ -214,8 +216,17 @@ func satUpdateRecord(ctx context.Context, tx *gorm.DB, responseFull bool, toUpda
 }
 
 func createRecord(ctx context.Context, tx *gorm.DB, toCreate []db.RunHost) error {
+
+	successOrFailure := clause.OrConditions{Exprs: []clause.Expression{
+		clause.Eq{Column: "run_hosts.status", Value: db.RunStatusSuccess},
+		clause.Eq{Column: "run_hosts.status", Value: db.RunStatusFailure},
+	}}
+
+	notMarkedAsComplete := clause.Where{Exprs: []clause.Expression{clause.Not(successOrFailure)}}
+
 	createResult := tx.Model(db.RunHost{}).
 		Clauses(clause.OnConflict{
+			Where:     notMarkedAsComplete,
 			Columns:   []clause.Column{{Name: "run_id"}, {Name: "host"}},
 			DoUpdates: clause.AssignmentColumns([]string{"status", "log"}),
 		}).
