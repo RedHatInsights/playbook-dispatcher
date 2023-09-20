@@ -3,8 +3,8 @@ USER root
 
 ENV EXTRA_PLUGINS=/deps/plugins \
     EXTRA_LIBS=/deps/libs \
-    DEBEZIUM_VERSION=1.4.2.Final \
-    DEBEZIUM_CHECKSUM=39fcc96ba02533779921ba87c513811a \
+    DEBEZIUM_VERSION=1.9.7.Final \
+    DEBEZIUM_CHECKSUM=161e362568163639fcde39da27e29456 \
     CONFIG_PROVIDERS_VERSION=0.1.0 \
     CONFIG_PROVIDERS_CHECKSUM=108e0bf4148a37676bed866ff45e1199
 
@@ -15,7 +15,8 @@ ADD schema/run.host.event.yaml /src
 
 RUN microdnf install gzip
 
-# Taken from https://github.com/debezium/docker-images/blob/master/connect-base/1.5/docker-maven-download.sh
+# Taken from https://github.com/debezium/docker-images/blob/master/connect-base/1.9/docker-maven-download.sh
+# Debezium PostgreSQL checksum from https://github.com/debezium/container-images/blob/main/connect/1.9/Dockerfile
 RUN mkdir -p $EXTRA_PLUGINS $EXTRA_LIBS && \
     MAVEN_DEP_DESTINATION=$EXTRA_PLUGINS /src/docker-maven-download.sh debezium postgres ${DEBEZIUM_VERSION} ${DEBEZIUM_CHECKSUM} && \
     MAVEN_DEP_DESTINATION=$EXTRA_LIBS /src/docker-maven-download.sh central com/redhat/insights/kafka config-providers ${CONFIG_PROVIDERS_VERSION} ${CONFIG_PROVIDERS_CHECKSUM}
