@@ -15,7 +15,7 @@ PSK ?= secret
 init:
 	go install github.com/deepmap/oapi-codegen/cmd/oapi-codegen
 	go get github.com/atombender/go-jsonschema/...@main
-	go install github.com/atombender/go-jsonschema/cmd/gojsonschema
+	go install github.com/atombender/go-jsonschema@v0.14.0
 	pip install json2yaml
 	go get github.com/kulshekhar/fungen
 	go install github.com/kulshekhar/fungen
