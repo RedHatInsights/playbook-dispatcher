@@ -238,7 +238,7 @@ func getRHCStatus(hostDetails []inventory.HostDetails, orgID OrgId) RecipientWit
 		hostIDs[i] = host.ID
 	}
 
-	return formatConnectionResponse(nil, nil, nil, orgID, hostIDs, "none", "no_rhc")
+	return formatConnectionResponse(nil, nil, nil, orgID, hostIDs, "none", "rhc_not_configured")
 }
 
 func concatResponses(satellite []RecipientWithConnectionInfo, directConnect []RecipientWithConnectionInfo, noRHC []RecipientWithConnectionInfo) []RecipientWithConnectionInfo {
