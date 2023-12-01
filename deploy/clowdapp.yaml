@@ -158,6 +158,11 @@ objects:
           - name: TENANT_TRANSLATOR_PORT
             value: ${TENANT_TRANSLATOR_PORT}
 
+          - name: INVENTORY_CONNECTOR_IMPL
+            value: ${INVENTORY_CONNECTOR_IMPL}
+          - name: SOURCES_CONNECTOR_IMPL
+            value: ${SOURCES_CONNECTOR_IMPL}
+
         resources:
           limits:
             cpu: ${CPU_LIMIT}
@@ -337,6 +342,10 @@ parameters:
 - name: TENANT_TRANSLATOR_IMPL
   value: impl
 
+- name: INVENTORY_CONNECTOR_IMPL
+  value: impl
+- name: SOURCES_CONNECTOR_IMPL
+  value: impl
 
 # Used for testing in ephemeral environments only.
 - name: PSK_AUTH_TEST
