@@ -160,8 +160,21 @@ objects:
 
           - name: INVENTORY_CONNECTOR_IMPL
             value: ${INVENTORY_CONNECTOR_IMPL}
+          - name: INVENTORY_CONNECTOR_SCHEME
+            value: ${INVENTORY_CONNECTOR_SCHEME}
+          - name: INVENTORY_CONNECTOR_HOST
+            value: ${INVENTORY_CONNECTOR_HOST}
+          - name: INVENTORY_CONNECTOR_PORT
+            value: ${INVENTORY_CONNECTOR_PORT}
+
           - name: SOURCES_CONNECTOR_IMPL
             value: ${SOURCES_CONNECTOR_IMPL}
+          - name: SOURCES_CONNECTOR_SCHEME
+            value: ${SOURCES_CONNECTOR_SCHEME}
+          - name: SOURCES_CONNECTOR_HOST
+            value: ${SOURCES_CONNECTOR_HOST}
+          - name: SOURCES_CONNECTOR_PORT
+            value: ${SOURCES_CONNECTOR_PORT}
 
         resources:
           limits:
@@ -344,8 +357,21 @@ parameters:
 
 - name: INVENTORY_CONNECTOR_IMPL
   value: impl
+- name: INVENTORY_CONNECTOR_SCHEME
+  value: http
+- name: INVENTORY_CONNECTOR_HOST
+  required: true
+- name: INVENTORY_CONNECTOR_PORT
+  value: '8080'
+
 - name: SOURCES_CONNECTOR_IMPL
   value: impl
+- name: SOURCES_CONNECTOR_SCHEME
+  value: http
+- name: SOURCES_CONNECTOR_HOST
+  required: true
+- name: SOURCES_CONNECTOR_PORT
+  value: '8080'
 
 # Used for testing in ephemeral environments only.
 - name: PSK_AUTH_TEST
