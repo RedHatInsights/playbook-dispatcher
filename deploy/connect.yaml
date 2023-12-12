@@ -196,7 +196,7 @@ objects:
       "-Xmx": ${XMX}
       "-Xms": ${XMS}
 
-    bootstrapServers: ${KAFKA_BOOTSTRAP_HOST}
+    bootstrapServers: ${KAFKA_BOOTSTRAP_HOST}:${KAFKA_BOOTSTRAP_PORT}
     config:
       group.id: playbook-dispatcher-connect
       config.providers: file
@@ -207,15 +207,6 @@ objects:
       offset.storage.replication.factor: ${KAFKA_REPLICATION_FACTOR}
       status.storage.replication.factor: ${KAFKA_REPLICATION_FACTOR}
       config.storage.replication.factor: ${KAFKA_REPLICATION_FACTOR}
-    tls:
-      trustedCertificates: []
-    authentication:
-      # this config is specific to PLAIN sasl mechanism
-      type: ${KAFKA_SASL_MECHANISM}
-      username: ${KAFKA_USERNAME}
-      passwordSecret:
-        secretName: app-auth
-        password: client_secret
     externalConfiguration:
       volumes:
         - name: rds-client-ca
