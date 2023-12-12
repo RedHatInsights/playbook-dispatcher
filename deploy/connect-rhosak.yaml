@@ -196,7 +196,7 @@ objects:
       "-Xmx": ${XMX}
       "-Xms": ${XMS}
 
-    bootstrapServers: ${KAFKA_BOOTSTRAP_HOST}:${KAFKA_BOOTSTRAP_PORT}
+    bootstrapServers: ${KAFKA_BOOTSTRAP_HOST}
     config:
       group.id: playbook-dispatcher-connect
       config.providers: file
@@ -214,8 +214,8 @@ objects:
       type: ${KAFKA_SASL_MECHANISM}
       username: ${KAFKA_USERNAME}
       passwordSecret:
-        secretName: clowder-oauth
-        password: password 
+        secretName: app-auth
+        password: client_secret
     externalConfiguration:
       volumes:
         - name: rds-client-ca
@@ -230,6 +230,10 @@ objects:
         imagePullSecrets:
           - name: quay-cloudservices-pull
           - name: rh-registry-pull
+      deployment:
+        metadata:
+          annotations:
+            ignore-check.kube-linter.io/minimum-three-replicas: "This deployment uses 1 pod, using more than 1 pod will produce more than 1 kafka messages for every db update"
 
     metricsConfig:
       type: jmxPrometheusExporter
@@ -280,16 +284,19 @@ objects:
         plugin.name: pgoutput
         slot.max.retries: 999999999
         database.server.name: playbook-dispatcher
-        table.include.list: public.runs
+        table.include.list: public.runs,public.run_hosts
         tombstones.on.delete: false
 
         key.converter: org.apache.kafka.connect.storage.StringConverter
         value.converter: org.apache.kafka.connect.storage.StringConverter
 
-        transforms: transformRunEvent
+        transforms: transformRunEvent,transformRunHostEvent
         transforms.transformRunEvent.type: com.redhat.cloud.platform.playbook_dispatcher.RunEventTransform
         transforms.transformRunEvent.table: runs
         transforms.transformRunEvent.topic: ${KAFKA_TOPIC_PREFIX}platform.playbook-dispatcher.runs
+        transforms.transformRunHostEvent.type: com.redhat.cloud.platform.playbook_dispatcher.RunHostEventTransform
+        transforms.transformRunHostEvent.table: run_hosts
+        transforms.transformRunHostEvent.topic: ${KAFKA_TOPIC_PREFIX}platform.playbook-dispatcher.run-hosts
 
         errors.tolerance: all
         errors.retry.delay.max.ms: 30000
@@ -307,6 +314,8 @@ objects:
     labels:
       app: playbook-dispatcher
     name: playbook-dispatcher-event-consumer
+    annotations:
+      ignore-check.kube-linter.io/minimum-three-replicas: "This deployment uses 1 pod, using more than 1 pod will produce more than 1 kafka messages for every db update"
   spec:
     replicas: ${{EVENT_CONSUMER_REPLICAS}}
     selector:
@@ -324,7 +333,7 @@ objects:
         - command:
           - /opt/kafka/bin/kafka-console-consumer.sh
           - --bootstrap-server
-          - ${KAFKA_BOOTSTRAP_HOST}:${KAFKA_BOOTSTRAP_PORT}
+          - ${KAFKA_BOOTSTRAP_HOST}
           - --from-beginning
           - --group
           - ${EVENT_CONSUMER_GROUP}
