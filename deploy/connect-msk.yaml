@@ -329,8 +329,13 @@ objects:
           app: playbook-dispatcher
           pod: playbook-dispatcher-event-consumer
       spec:
+
         containers:
         - command:
+          - /bin/sh
+          - /build_kafka_consumer_config.sh
+          - /tmp/temp-files/kafka-jaas.conf
+          - &&
           - /opt/kafka/bin/kafka-console-consumer.sh
           - --bootstrap-server
           - ${KAFKA_BOOTSTRAP_HOST}
@@ -339,6 +344,8 @@ objects:
           - ${EVENT_CONSUMER_GROUP}
           - --topic
           - ${EVENT_CONSUMER_TOPIC}
+          - --consumer.config
+          - /tmp/temp-files/kafka-jaas.conf
           image: ${KAFKA_CONNECT_IMAGE}:${IMAGE_TAG}
           name: playbook-dispatcher-event-consumer
           resources:
@@ -348,6 +355,24 @@ objects:
             limits:
               cpu: 200m
               memory: 256Mi
+          env:
+          - name: KAFKA_USERNAME
+            valueFrom:
+              secretKeyRef:
+                key: client_id
+                name: app-auth
+          - name: KAFKA_SECRET
+            valueFrom:
+              secretKeyRef:
+                key: client_secret
+                name: app-auth
+          volumeMounts:
+            - name: volume-temp
+              mountPath: /tmp/temp-files
+        volumes:
+          - name: volume-temp
+            emptyDir: {}
+
 
 # this service is only used in ephemeral to give the ephemeral kafka a stable address
 - apiVersion: v1
