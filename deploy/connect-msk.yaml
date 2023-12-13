@@ -329,7 +329,6 @@ objects:
           app: playbook-dispatcher
           pod: playbook-dispatcher-event-consumer
       spec:
-
         containers:
         - command:
           - /bin/sh
