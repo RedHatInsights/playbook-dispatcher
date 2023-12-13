@@ -40,6 +40,7 @@ RUN microdnf install jq
 
 COPY event-streams/check-connectors.sh /
 COPY examples/connector-local.json /
+COPY event-streams/build_kafka_consumer_config.sh /
 
 RUN mkdir -p ${CONNECT_PLUGIN_PATH} /opt/kafka/custom-config/
 
