@@ -334,7 +334,7 @@ objects:
           - /bin/sh
           - /build_kafka_consumer_config.sh
           - /tmp/temp-files/kafka-jaas.conf
-          - &&
+          - "&&"
           - /opt/kafka/bin/kafka-console-consumer.sh
           - --bootstrap-server
           - ${KAFKA_BOOTSTRAP_HOST}
