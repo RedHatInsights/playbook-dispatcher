@@ -101,7 +101,7 @@ func NewInventoryClientWithHttpRequestDoer(cfg *viper.Viper, doer HttpRequestDoe
 		},
 	}
 
-    fmt.Printf("*** client: %+v\n", client)
+    fmt.Printf("*** client.ClientInterface: %+v\n", client.ClientInterface)
 
 	return &inventoryConnectorImpl{
 		client: client,
