@@ -12,7 +12,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-const basePath = "/api/inventory/"
+const basePath = "/api/inventory/v1/hosts/"
 
 type inventoryConnectorImpl struct {
 	client ClientWithResponsesInterface
