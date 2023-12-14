@@ -52,7 +52,7 @@ func (l RunCreatedList) PMapRunInputV2(f func(*RunCreated) RunInputV2) RunInputV
 }
 
 type CancelationInputV2List []CancelInputV2
-type RunCanceledList [] *RunCanceled
+type RunCanceledList []*RunCanceled
 
 // PMapRunCanceled executes the function on each member in parallel
 func (l CancelationInputV2List) PMapRunCanceled(f func(CancelInputV2) *RunCanceled) RunCanceledList {

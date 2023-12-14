@@ -85,6 +85,7 @@ func createHostGetHostSystemProfileByIdParams(orderBy string, orderHow string) *
 }
 
 func NewInventoryClientWithHttpRequestDoer(cfg *viper.Viper, doer HttpRequestDoer) InventoryConnector {
+	fmt.Println("inside NewInventoryClientWithHttpRequestDoer")
 	client := &ClientWithResponses{
 		ClientInterface: &Client{
 			Server: fmt.Sprintf("%s://%s:%d%s", cfg.GetString("inventory.connector.scheme"), cfg.GetString("inventory.connector.host"), cfg.GetInt("inventory.connector.port"), basePath),
@@ -101,7 +102,7 @@ func NewInventoryClientWithHttpRequestDoer(cfg *viper.Viper, doer HttpRequestDoe
 		},
 	}
 
-    fmt.Println("** inventory client.Server:", client.Server)
+	fmt.Println("** inventory client.Server:", client.Server)
 
 	return &inventoryConnectorImpl{
 		client: client,
@@ -124,6 +125,8 @@ func (this *inventoryConnectorImpl) getHostDetails(
 	limit int,
 	offset int,
 ) (details []HostOut, err error) {
+
+	fmt.Println("inside getHostDetails()")
 
 	params := createHostGetHostByIdParams(orderBy, orderHow)
 

@@ -61,8 +61,8 @@ func matches(expected, actual string) bool {
 }
 
 /*
-	playbook-dispatcher:run:read
-	playbook-dispatcher:run:write
+playbook-dispatcher:run:read
+playbook-dispatcher:run:write
 */
 func (this *clientImpl) GetPermissions(ctx context.Context) ([]Access, error) {
 	res, err := this.client.GetPrincipalAccessWithResponse(ctx, &GetPrincipalAccessParams{
