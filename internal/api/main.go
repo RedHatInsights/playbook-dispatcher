@@ -127,7 +127,7 @@ func Start(
 	internal.Use(oapiMiddleware.OapiRequestValidator(privateSpec))
 	// Authorization header not required for GET /internal/version
 	internal.GET("/version", privateController.ApiInternalVersion)
-	internal.POST("/v2/connection_status", privateController.ApiInternalHighlevelConnectionStatus)
+	internal.POST("/v2/connection_status", privateController.ApiInternalHighlevelConnectionStatus, echo.WrapMiddleware(identity.EnforceIdentity), middleware.ExtractHeaders(constants.HeaderIdentity))
 	internal.Use(middleware.CheckPskAuth(authConfig))
 	internal.Use(echo.WrapMiddleware(middleware.StoreAPIVersion))
 	internal.POST("/dispatch", privateController.ApiInternalRunsCreate)
