@@ -1496,7 +1496,9 @@ func (c *Client) ApiHostGetHostById(ctx context.Context, hostIdList HostIdList, 
 		}
 	}
     fmt.Println("req:", req)
-	return c.Client.Do(req)
+    resp, err := c.Client.Do(req)
+    fmt.Println("resp:", resp)
+	return resp, err
 }
 
 func (c *Client) ApiHostPatchByIdWithBody(ctx context.Context, hostIdList HostIdList, params *ApiHostPatchByIdParams, contentType string, body io.Reader) (*http.Response, error) {
