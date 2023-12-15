@@ -93,6 +93,7 @@ func NewInventoryClientWithHttpRequestDoer(cfg *viper.Viper, doer HttpRequestDoe
 				req.Header.Set(constants.HeaderRequestId, request_id.GetReqID(ctx))
 
 				if identity, ok := ctx.Value(constants.HeaderIdentity).(string); ok {
+                    fmt.Printf("*** setting header - %s - %s\n", constants.HeaderIdentity, identity)
 					req.Header.Set(constants.HeaderIdentity, identity)
 				}
 
