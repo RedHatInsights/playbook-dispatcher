@@ -127,13 +127,13 @@ func Start(
 	internal.Use(oapiMiddleware.OapiRequestValidator(privateSpec))
 	// Authorization header not required for GET /internal/version
 	internal.GET("/version", privateController.ApiInternalVersion)
+	internal.POST("/v2/connection_status", privateController.ApiInternalHighlevelConnectionStatus)
 	internal.Use(middleware.CheckPskAuth(authConfig))
 	internal.Use(echo.WrapMiddleware(middleware.StoreAPIVersion))
 	internal.POST("/dispatch", privateController.ApiInternalRunsCreate)
 	internal.POST("/v2/recipients/status", privateController.ApiInternalV2RecipientsStatus)
 	internal.POST("/v2/dispatch", privateController.ApiInternalV2RunsCreate)
 	internal.POST("/v2/cancel", privateController.ApiInternalV2RunsCancel)
-	internal.POST("/v2/connection_status", privateController.ApiInternalHighlevelConnectionStatus)
 
 	publicController := public.CreateController(db, cloudConnectorClient)
 	public := server.Group("/api/playbook-dispatcher")
