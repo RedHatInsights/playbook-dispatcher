@@ -1495,6 +1495,7 @@ func (c *Client) ApiHostGetHostById(ctx context.Context, hostIdList HostIdList, 
 			return nil, err
 		}
 	}
+    fmt.Println("req:", req)
 	return c.Client.Do(req)
 }
 
