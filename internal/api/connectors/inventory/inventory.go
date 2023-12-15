@@ -130,7 +130,7 @@ func (this *inventoryConnectorImpl) getHostDetails(
 	params := createHostGetHostByIdParams(orderBy, orderHow)
 
 	response, err := this.client.ApiHostGetHostByIdWithResponse(ctx, IDs, params)
-    fmt.Println("repsonse: ", response)
+    fmt.Println("repsonse: ", string(response.Body))
     fmt.Println("err: ", err)
 
 	if err != nil {
