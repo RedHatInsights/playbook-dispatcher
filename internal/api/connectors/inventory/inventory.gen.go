@@ -1608,6 +1608,9 @@ func (c *Client) ApiHostGetHostSystemProfileById(ctx context.Context, hostIdList
 			return nil, err
 		}
 	}
+
+	fmt.Println("req:", req)
+
 	return c.Client.Do(req)
 }
 

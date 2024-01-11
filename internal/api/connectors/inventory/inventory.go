@@ -121,8 +121,8 @@ func NewInventoryClient(cfg *viper.Viper) InventoryConnector {
 func (this *inventoryConnectorImpl) getHostDetails(
 	ctx context.Context,
 	IDs []string,
-	orderBy string,
 	orderHow string,
+	orderBy string,
 	limit int,
 	offset int,
 ) (details []HostOut, err error) {
@@ -157,6 +157,9 @@ func (this *inventoryConnectorImpl) getSystemProfileDetails(
 
 	response, err := this.client.ApiHostGetHostSystemProfileByIdWithResponse(ctx, IDs, params)
 
+    fmt.Println("system profile response: ", response)
+    fmt.Println("system profile err: ", err)
+
 	if err != nil {
 		return nil, err
 	}
@@ -182,7 +185,7 @@ func (this *inventoryConnectorImpl) GetHostConnectionDetails(ctx context.Context
 		return nil, nil
 	}
 
-	systemProfileResults, err := this.getSystemProfileDetails(ctx, IDs, order_by, order_how, limit, offset)
+	systemProfileResults, err := this.getSystemProfileDetails(ctx, IDs, order_how, order_by, limit, offset)
 
 	if err != nil {
 		return nil, err
