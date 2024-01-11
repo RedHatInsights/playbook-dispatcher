@@ -92,9 +92,9 @@ func NewInventoryClientWithHttpRequestDoer(cfg *viper.Viper, doer HttpRequestDoe
 			RequestEditor: func(ctx context.Context, req *http.Request) error {
 				req.Header.Set(constants.HeaderRequestId, request_id.GetReqID(ctx))
 
-                fmt.Printf("*** inside request editor")
+				fmt.Printf("*** inside request editor")
 				if identity, ok := ctx.Value(constants.HeaderIdentity).(string); ok {
-                    fmt.Printf("*** setting header - %s - %s\n", constants.HeaderIdentity, identity)
+					fmt.Printf("*** setting header - %s - %s\n", constants.HeaderIdentity, identity)
 					req.Header.Set(constants.HeaderIdentity, identity)
 				}
 
@@ -103,7 +103,7 @@ func NewInventoryClientWithHttpRequestDoer(cfg *viper.Viper, doer HttpRequestDoe
 		},
 	}
 
-    fmt.Printf("*** client.ClientInterface: %+v\n", client.ClientInterface)
+	fmt.Printf("*** client.ClientInterface: %+v\n", client.ClientInterface)
 
 	return &inventoryConnectorImpl{
 		client: client,
@@ -130,8 +130,8 @@ func (this *inventoryConnectorImpl) getHostDetails(
 	params := createHostGetHostByIdParams(orderBy, orderHow)
 
 	response, err := this.client.ApiHostGetHostByIdWithResponse(ctx, IDs, params)
-    fmt.Println("repsonse: ", string(response.Body))
-    fmt.Println("err: ", err)
+	fmt.Println("repsonse: ", string(response.Body))
+	fmt.Println("err: ", err)
 
 	if err != nil {
 		return nil, err
@@ -176,6 +176,10 @@ func (this *inventoryConnectorImpl) GetHostConnectionDetails(ctx context.Context
 
 	if err != nil {
 		return nil, err
+	}
+
+	if len(hostResults) == 0 {
+		return nil, nil
 	}
 
 	systemProfileResults, err := this.getSystemProfileDetails(ctx, IDs, order_by, order_how, limit, offset)

@@ -169,7 +169,7 @@ objects:
           - name: INVENTORY_CONNECTOR_PORT
             value: ${INVENTORY_CONNECTOR_PORT}
           - name: INVENTORY_CONNECTOR_ORDERED_HOW
-            value: "ASC"
+            value: "display_name"
           - name: INVENTORY_CONNECTOR_ORDERED_BY
             value: "display_name"
 
