@@ -121,8 +121,8 @@ func NewInventoryClient(cfg *viper.Viper) InventoryConnector {
 func (this *inventoryConnectorImpl) getHostDetails(
 	ctx context.Context,
 	IDs []string,
-	orderHow string,
 	orderBy string,
+	orderHow string,
 	limit int,
 	offset int,
 ) (details []HostOut, err error) {
@@ -147,8 +147,8 @@ func (this *inventoryConnectorImpl) getHostDetails(
 func (this *inventoryConnectorImpl) getSystemProfileDetails(
 	ctx context.Context,
 	IDs []string,
-	orderHow string,
 	orderBy string,
+	orderHow string,
 	limit int,
 	offset int,
 ) (details map[string]HostSystemProfileOut, err error) {
@@ -173,9 +173,9 @@ func (this *inventoryConnectorImpl) getSystemProfileDetails(
 	return formatedResults, nil
 }
 
-func (this *inventoryConnectorImpl) GetHostConnectionDetails(ctx context.Context, IDs []string, order_how string, order_by string, limit int, offset int) (details []HostDetails, err error) {
+func (this *inventoryConnectorImpl) GetHostConnectionDetails(ctx context.Context, IDs []string, order_by string, order_how string, limit int, offset int) (details []HostDetails, err error) {
 
-	hostResults, err := this.getHostDetails(ctx, IDs, order_how, order_by, limit, offset)
+	hostResults, err := this.getHostDetails(ctx, IDs, order_by, order_how, limit, offset)
 
 	if err != nil {
 		return nil, err
@@ -185,7 +185,7 @@ func (this *inventoryConnectorImpl) GetHostConnectionDetails(ctx context.Context
 		return nil, nil
 	}
 
-	systemProfileResults, err := this.getSystemProfileDetails(ctx, IDs, order_how, order_by, limit, offset)
+	systemProfileResults, err := this.getSystemProfileDetails(ctx, IDs, order_by, order_how, limit, offset)
 
 	if err != nil {
 		return nil, err
