@@ -147,8 +147,8 @@ func (this *inventoryConnectorImpl) getHostDetails(
 func (this *inventoryConnectorImpl) getSystemProfileDetails(
 	ctx context.Context,
 	IDs []string,
-	orderBy string,
 	orderHow string,
+	orderBy string,
 	limit int,
 	offset int,
 ) (details map[string]HostSystemProfileOut, err error) {
