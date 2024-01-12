@@ -29,8 +29,10 @@ objects:
   metadata:
     name: playbook-dispatcher
   spec:
+    dependencies:
+      - rbac
     optionalDependencies:
-    - ingress
+      - ingress
 
     envName: ${ENV_NAME}
 
