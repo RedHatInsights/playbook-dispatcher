@@ -30,7 +30,6 @@ func getConnectionStatus(payload ApiInternalHighlevelConnectionStatusJSONRequest
 
 var _ = Describe("high level connection status", func() {
 	It("get status for multiple different recipients", func() {
-
 		satID := SatelliteId("bd54e0e9-5310-45be-b107-fd7c96672ce5")
 		satOrgID := SatelliteOrgId("5")
 		satelliteHost := []HostId{"c484f980-ab8d-401b-90e7-aa1d4ccf8c0e"}
