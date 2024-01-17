@@ -3,15 +3,16 @@ package private
 import (
 	"net/http"
 	"playbook-dispatcher/internal/api/controllers/public"
-	"playbook-dispatcher/internal/common/utils/test"
 	"playbook-dispatcher/internal/api/tests/common"
+	"playbook-dispatcher/internal/common/utils/test"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
 
 func getConnectionStatus(payload ApiInternalHighlevelConnectionStatusJSONRequestBody) (*HighLevelRecipientStatus, *ApiInternalHighlevelConnectionStatusResponse) {
-	ctx := common.ContextWithIdentity(test.WithOrgId())
+	orgId := test.WithOrgId()
+	ctx := common.ContextWithIdentity(orgId())
 	resp, err := client.ApiInternalHighlevelConnectionStatus(ctx, payload)
 	Expect(err).ToNot(HaveOccurred())
 	res, err := ParseApiInternalHighlevelConnectionStatusResponse(resp)
