@@ -11,11 +11,11 @@ import (
 
 func getConnectionStatus(payload ApiInternalHighlevelConnectionStatusJSONRequestBody) (*HighLevelRecipientStatus, *ApiInternalHighlevelConnectionStatusResponse) {
 	orgId := "12345"
-    // Build a test client that passes an identity header because the high 
-    // level interface requires the identity header
-    identityPassingClient := &Client{
-		Server: common.TestServer,
-		Client: common.TestClient,
+	// Build a test client that passes an identity header because the high
+	// level interface requires the identity header
+	identityPassingClient := &Client{
+		Server:        common.TestServer,
+		Client:        common.TestClient,
 		RequestEditor: common.TestRequestEditor,
 	}
 	ctx := common.ContextWithIdentity(orgId)
