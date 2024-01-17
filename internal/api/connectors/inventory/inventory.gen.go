@@ -1495,7 +1495,7 @@ func (c *Client) ApiHostGetHostById(ctx context.Context, hostIdList HostIdList, 
 			return nil, err
 		}
 	}
-	return resp, err
+	return c.Client.Do(req)
 }
 
 func (c *Client) ApiHostPatchByIdWithBody(ctx context.Context, hostIdList HostIdList, params *ApiHostPatchByIdParams, contentType string, body io.Reader) (*http.Response, error) {
