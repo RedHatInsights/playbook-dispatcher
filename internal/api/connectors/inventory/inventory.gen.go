@@ -1495,14 +1495,6 @@ func (c *Client) ApiHostGetHostById(ctx context.Context, hostIdList HostIdList, 
 			return nil, err
 		}
 	}
-	fmt.Println("req:", req)
-	resp, err := c.Client.Do(req)
-	/*
-	   fmt.Println("resp:", resp)
-	   bodyBytes, _ := io.ReadAll(resp.Body)
-	   fmt.Println("resp:", string(bodyBytes))
-	*/
-
 	return resp, err
 }
 
@@ -1608,9 +1600,6 @@ func (c *Client) ApiHostGetHostSystemProfileById(ctx context.Context, hostIdList
 			return nil, err
 		}
 	}
-
-	fmt.Println("req:", req)
-
 	return c.Client.Do(req)
 }
 
