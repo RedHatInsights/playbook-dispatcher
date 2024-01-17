@@ -157,8 +157,8 @@ func (this *inventoryConnectorImpl) getSystemProfileDetails(
 
 	response, err := this.client.ApiHostGetHostSystemProfileByIdWithResponse(ctx, IDs, params)
 
-    fmt.Println("system profile response: ", response)
-    fmt.Println("system profile err: ", err)
+	fmt.Println("system profile response: ", response)
+	fmt.Println("system profile err: ", err)
 
 	if err != nil {
 		return nil, err

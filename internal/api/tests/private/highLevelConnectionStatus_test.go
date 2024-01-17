@@ -10,7 +10,8 @@ import (
 )
 
 func getConnectionStatus(payload ApiInternalHighlevelConnectionStatusJSONRequestBody) (*HighLevelRecipientStatus, *ApiInternalHighlevelConnectionStatusResponse) {
-	resp, err := client.ApiInternalHighlevelConnectionStatus(test.TestContext(), payload)
+	ctx := common.ContextWithIdentity(test.WithOrgId())
+	resp, err := client.ApiInternalHighlevelConnectionStatus(ctx, payload)
 	Expect(err).ToNot(HaveOccurred())
 	res, err := ParseApiInternalHighlevelConnectionStatusResponse(resp)
 	Expect(err).ToNot(HaveOccurred())
