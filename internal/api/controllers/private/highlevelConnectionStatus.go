@@ -36,8 +36,8 @@ func (this *controllers) ApiInternalHighlevelConnectionStatus(ctx echo.Context) 
 	hostConnectorDetails, err := this.inventoryConnectorClient.GetHostConnectionDetails(
 		ctx.Request().Context(),
 		input.Hosts,
-		this.config.GetString("inventory.connector.ordered.how"),
 		this.config.GetString("inventory.connector.ordered.by"),
+		this.config.GetString("inventory.connector.ordered.how"),
 		this.config.GetInt("inventory.connector.limit"),
 		this.config.GetInt("inventory.connector.offset"),
 	)

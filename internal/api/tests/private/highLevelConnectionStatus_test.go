@@ -3,14 +3,23 @@ package private
 import (
 	"net/http"
 	"playbook-dispatcher/internal/api/controllers/public"
-	"playbook-dispatcher/internal/common/utils/test"
+	"playbook-dispatcher/internal/api/tests/common"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
 
 func getConnectionStatus(payload ApiInternalHighlevelConnectionStatusJSONRequestBody) (*HighLevelRecipientStatus, *ApiInternalHighlevelConnectionStatusResponse) {
-	resp, err := client.ApiInternalHighlevelConnectionStatus(test.TestContext(), payload)
+	orgId := "12345"
+	// Build a test client that passes an identity header because the high
+	// level interface requires the identity header
+	identityPassingClient := &Client{
+		Server:        common.TestServer,
+		Client:        common.TestClient,
+		RequestEditor: common.TestRequestEditor,
+	}
+	ctx := common.ContextWithIdentity(orgId)
+	resp, err := identityPassingClient.ApiInternalHighlevelConnectionStatus(ctx, payload)
 	Expect(err).ToNot(HaveOccurred())
 	res, err := ParseApiInternalHighlevelConnectionStatusResponse(resp)
 	Expect(err).ToNot(HaveOccurred())

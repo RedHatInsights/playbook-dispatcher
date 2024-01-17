@@ -12,7 +12,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-const basePath = "/api/inventory/"
+const basePath = "/api/inventory/v1/hosts"
 
 type inventoryConnectorImpl struct {
 	client ClientWithResponsesInterface
@@ -164,12 +164,16 @@ func (this *inventoryConnectorImpl) getSystemProfileDetails(
 	return formatedResults, nil
 }
 
-func (this *inventoryConnectorImpl) GetHostConnectionDetails(ctx context.Context, IDs []string, order_how string, order_by string, limit int, offset int) (details []HostDetails, err error) {
+func (this *inventoryConnectorImpl) GetHostConnectionDetails(ctx context.Context, IDs []string, order_by string, order_how string, limit int, offset int) (details []HostDetails, err error) {
 
-	hostResults, err := this.getHostDetails(ctx, IDs, order_how, order_by, limit, offset)
+	hostResults, err := this.getHostDetails(ctx, IDs, order_by, order_how, limit, offset)
 
 	if err != nil {
 		return nil, err
+	}
+
+	if len(hostResults) == 0 {
+		return nil, nil
 	}
 
 	systemProfileResults, err := this.getSystemProfileDetails(ctx, IDs, order_by, order_how, limit, offset)
