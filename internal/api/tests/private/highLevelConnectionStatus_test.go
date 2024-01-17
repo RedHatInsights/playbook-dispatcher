@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"playbook-dispatcher/internal/api/controllers/public"
 	"playbook-dispatcher/internal/common/utils/test"
+	"playbook-dispatcher/internal/api/tests/common"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
