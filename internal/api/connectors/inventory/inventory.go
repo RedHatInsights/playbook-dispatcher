@@ -92,9 +92,7 @@ func NewInventoryClientWithHttpRequestDoer(cfg *viper.Viper, doer HttpRequestDoe
 			RequestEditor: func(ctx context.Context, req *http.Request) error {
 				req.Header.Set(constants.HeaderRequestId, request_id.GetReqID(ctx))
 
-				fmt.Printf("*** inside request editor")
 				if identity, ok := ctx.Value(constants.HeaderIdentity).(string); ok {
-					fmt.Printf("*** setting header - %s - %s\n", constants.HeaderIdentity, identity)
 					req.Header.Set(constants.HeaderIdentity, identity)
 				}
 
@@ -102,8 +100,6 @@ func NewInventoryClientWithHttpRequestDoer(cfg *viper.Viper, doer HttpRequestDoe
 			},
 		},
 	}
-
-	fmt.Printf("*** client.ClientInterface: %+v\n", client.ClientInterface)
 
 	return &inventoryConnectorImpl{
 		client: client,
@@ -130,8 +126,6 @@ func (this *inventoryConnectorImpl) getHostDetails(
 	params := createHostGetHostByIdParams(orderBy, orderHow)
 
 	response, err := this.client.ApiHostGetHostByIdWithResponse(ctx, IDs, params)
-	fmt.Println("repsonse: ", string(response.Body))
-	fmt.Println("err: ", err)
 
 	if err != nil {
 		return nil, err
@@ -156,9 +150,6 @@ func (this *inventoryConnectorImpl) getSystemProfileDetails(
 	params := createHostGetHostSystemProfileByIdParams(orderBy, orderHow)
 
 	response, err := this.client.ApiHostGetHostSystemProfileByIdWithResponse(ctx, IDs, params)
-
-	fmt.Println("system profile response: ", response)
-	fmt.Println("system profile err: ", err)
 
 	if err != nil {
 		return nil, err
