@@ -4,16 +4,22 @@ import (
 	"net/http"
 	"playbook-dispatcher/internal/api/controllers/public"
 	"playbook-dispatcher/internal/api/tests/common"
-	"playbook-dispatcher/internal/common/utils/test"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
 
 func getConnectionStatus(payload ApiInternalHighlevelConnectionStatusJSONRequestBody) (*HighLevelRecipientStatus, *ApiInternalHighlevelConnectionStatusResponse) {
-	orgId := test.WithOrgId()
-	ctx := common.ContextWithIdentity(orgId())
-	resp, err := client.ApiInternalHighlevelConnectionStatus(ctx, payload)
+	orgId := "12345"
+    // Build a test client that passes an identity header because the high 
+    // level interface requires the identity header
+    identityPassingClient := &Client{
+		Server: common.TestServer,
+		Client: common.TestClient,
+		RequestEditor: common.TestRequestEditor,
+	}
+	ctx := common.ContextWithIdentity(orgId)
+	resp, err := identityPassingClient.ApiInternalHighlevelConnectionStatus(ctx, payload)
 	Expect(err).ToNot(HaveOccurred())
 	res, err := ParseApiInternalHighlevelConnectionStatusResponse(resp)
 	Expect(err).ToNot(HaveOccurred())
@@ -24,6 +30,7 @@ func getConnectionStatus(payload ApiInternalHighlevelConnectionStatusJSONRequest
 
 var _ = Describe("high level connection status", func() {
 	It("get status for multiple different recipients", func() {
+
 		satID := SatelliteId("bd54e0e9-5310-45be-b107-fd7c96672ce5")
 		satOrgID := SatelliteOrgId("5")
 		satelliteHost := []HostId{"c484f980-ab8d-401b-90e7-aa1d4ccf8c0e"}
