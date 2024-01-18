@@ -42,6 +42,8 @@ func (this *controllers) ApiInternalHighlevelConnectionStatus(ctx echo.Context) 
 		this.config.GetInt("inventory.connector.offset"),
 	)
 
+	utils.GetLogFromEcho(ctx).Infow("returned from inventory", "data", hostConnectorDetails, "error", err)
+
 	if err != nil {
 		utils.GetLogFromEcho(ctx).Error(err)
 		return ctx.NoContent(http.StatusBadRequest)
@@ -55,11 +57,14 @@ func (this *controllers) ApiInternalHighlevelConnectionStatus(ctx echo.Context) 
 	}
 
 	if satellite == nil && directConnected == nil {
+		utils.GetLogFromEcho(ctx).Infow("no satellite or direct connected systems", "data", noRHCResponses)
 		return ctx.JSON(http.StatusOK, noRHCResponses)
 	}
 
 	if len(satellite) > 0 {
 		satelliteResponses, err = getSatelliteStatus(ctx, this.cloudConnectorClient, this.sourcesConnectorClient, input.OrgId, satellite)
+
+		utils.GetLogFromEcho(ctx).Infow("satellite status", "data", satelliteResponses, "error", err)
 
 		if err != nil {
 			utils.GetLogFromEcho(ctx).Errorf("Error retrieving Satellite status: %s", err)
@@ -69,12 +74,18 @@ func (this *controllers) ApiInternalHighlevelConnectionStatus(ctx echo.Context) 
 	if len(directConnected) > 0 {
 		directConnectedResponses, err = getDirectConnectStatus(ctx, this.cloudConnectorClient, input.OrgId, directConnected)
 
+		utils.GetLogFromEcho(ctx).Infow("direct connect status", "data", directConnectedResponses, "error", err)
+
 		if err != nil {
 			utils.GetLogFromEcho(ctx).Errorf("Error retrieving Direct Connect status: %s", err)
 		}
 	}
 
-	return ctx.JSON(http.StatusOK, HighLevelRecipientStatus(concatResponses(satelliteResponses, directConnectedResponses, noRHCResponses)))
+	highLevelStatus := HighLevelRecipientStatus(concatResponses(satelliteResponses, directConnectedResponses, noRHCResponses))
+	utils.GetLogFromEcho(ctx).Infow("returning high level status", "data", highLevelStatus)
+	return ctx.JSON(http.StatusOK, highLevelStatus)
+
+	//return ctx.JSON(http.StatusOK, HighLevelRecipientStatus(concatResponses(satelliteResponses, directConnectedResponses, noRHCResponses)))
 }
 
 func sortHostsByRecipient(details []inventory.HostDetails) (satelliteDetails []inventory.HostDetails, directConnectedDetails []inventory.HostDetails, noRhc []inventory.HostDetails) {
