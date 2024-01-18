@@ -55,7 +55,7 @@ func (this *controllers) ApiInternalHighlevelConnectionStatus(ctx echo.Context) 
 	}
 
 	if satellite == nil && directConnected == nil {
-		return ctx.JSON(http.StatusAccepted, noRHCResponses)
+		return ctx.JSON(http.StatusOK, noRHCResponses)
 	}
 
 	if len(satellite) > 0 {
