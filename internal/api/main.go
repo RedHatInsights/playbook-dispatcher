@@ -96,7 +96,7 @@ func Start(
 
 	var sourcesConnectorClient sources.SourcesConnector
 
-	if cfg.GetString("sources.connector.impl") == "impl" {
+	if cfg.GetString("sources.impl") == "impl" {
 		sourcesConnectorClient = sources.NewSourcesClient(cfg)
 	} else {
 		sourcesConnectorClient = sources.NewMockSourcesClient()

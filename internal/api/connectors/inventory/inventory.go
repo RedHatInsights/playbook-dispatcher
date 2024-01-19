@@ -59,7 +59,7 @@ func getSatelliteFacts(facts *[]FactSet) satelliteFacts {
 func convertInterfaceToString(v interface{}) string {
 	switch result := v.(type) {
 	case float64:
-		return fmt.Sprintf("%f", result)
+		return fmt.Sprintf("%d", int(result))
 	case string:
 		return v.(string)
 	default:
