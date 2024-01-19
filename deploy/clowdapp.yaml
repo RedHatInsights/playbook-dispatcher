@@ -169,13 +169,13 @@ objects:
           - name: INVENTORY_CONNECTOR_PORT
             value: ${INVENTORY_CONNECTOR_PORT}
 
-          - name: SOURCES_CONNECTOR_IMPL
+          - name: SOURCES_IMPL
             value: ${SOURCES_CONNECTOR_IMPL}
-          - name: SOURCES_CONNECTOR_SCHEME
+          - name: SOURCES_SCHEME
             value: ${SOURCES_CONNECTOR_SCHEME}
-          - name: SOURCES_CONNECTOR_HOST
+          - name: SOURCES_HOST
             value: ${SOURCES_CONNECTOR_HOST}
-          - name: SOURCES_CONNECTOR_PORT
+          - name: SOURCES_PORT
             value: ${SOURCES_CONNECTOR_PORT}
 
         resources:
