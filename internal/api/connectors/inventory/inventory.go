@@ -37,23 +37,34 @@ func getSatelliteFacts(facts *[]FactSet) satelliteFacts {
 			satelliteOrgID, orgIDExists := fact.Facts["organization_id"]
 
 			if idExists {
-				strigifiedInstanceID := satelliteInstanceID.(string)
+				strigifiedInstanceID := convertInterfaceToString(satelliteInstanceID)
 				satelliteFacts.SatelliteInstanceID = &strigifiedInstanceID
 			}
 
 			if versionExists {
-				stringifiedVersion := satelliteVersion.(string)
+				stringifiedVersion := convertInterfaceToString(satelliteVersion)
 				satelliteFacts.SatelliteVersion = &stringifiedVersion
 			}
 
 			if orgIDExists {
-				stringifiedOrgID := satelliteOrgID.(string)
+				stringifiedOrgID := convertInterfaceToString(satelliteOrgID)
 				satelliteFacts.SatelliteOrgID = &stringifiedOrgID
 			}
 		}
 	}
 
 	return satelliteFacts
+}
+
+func convertInterfaceToString(v interface{}) string {
+	switch result := v.(type) {
+	case float64:
+		return fmt.Sprintf("%f", result)
+	case string:
+		return v.(string)
+	default:
+		return ""
+	}
 }
 
 func createHostGetHostByIdParams(orderBy string, orderHow string) *ApiHostGetHostByIdParams {

@@ -31,7 +31,7 @@ require (
 )
 
 require (
-	github.com/atombender/go-jsonschema v0.15.1-0.20240118015147-40f48ce0470e // indirect
+	github.com/atombender/go-jsonschema v0.15.1-0.20240119115630-8bc07a9849d1 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/fatih/color v1.16.0 // indirect
@@ -84,7 +84,7 @@ require (
 	go.uber.org/atomic v1.7.0 // indirect
 	go.uber.org/multierr v1.5.0 // indirect
 	golang.org/x/crypto v0.18.0 // indirect
-	golang.org/x/exp v0.0.0-20240112132812-db7319d0e0e3 // indirect
+	golang.org/x/exp v0.0.0-20240119083558-1b970713d09a // indirect
 	golang.org/x/mod v0.14.0 // indirect
 	golang.org/x/net v0.20.0 // indirect
 	golang.org/x/sys v0.16.0 // indirect
