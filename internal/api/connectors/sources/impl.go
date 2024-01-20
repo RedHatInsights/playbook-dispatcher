@@ -4,8 +4,10 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/url"
 	"playbook-dispatcher/internal/common/constants"
 	"playbook-dispatcher/internal/common/utils"
+	"strings"
 	"time"
 
 	"github.com/redhatinsights/platform-go-middlewares/request_id"
@@ -32,6 +34,21 @@ func NewSourcesClientWithHttpRequestDoer(cfg *viper.Viper, doer HttpRequestDoer)
 				if identity, ok := ctx.Value(constants.HeaderIdentity).(string); ok {
 					req.Header.Set(constants.HeaderIdentity, identity)
 				}
+
+				originalUrl := req.URL.String()
+				if strings.Contains(originalUrl, "filter=filter[") {
+					// Remove the extra filter parameter name
+					correctedUrl := strings.Replace(req.URL.String(), "filter=", "", -1)
+
+					newUrl, err := url.Parse(correctedUrl)
+					if err != nil {
+						return err
+					}
+
+					req.URL = newUrl
+				}
+
+				fmt.Println("sources url:", req.URL)
 
 				return nil
 			},
