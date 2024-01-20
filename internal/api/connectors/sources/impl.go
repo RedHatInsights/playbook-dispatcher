@@ -4,8 +4,10 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/url"
 	"playbook-dispatcher/internal/common/constants"
 	"playbook-dispatcher/internal/common/utils"
+	"strings"
 	"time"
 
 	"github.com/redhatinsights/platform-go-middlewares/request_id"
