@@ -48,6 +48,8 @@ func NewSourcesClientWithHttpRequestDoer(cfg *viper.Viper, doer HttpRequestDoer)
 					req.URL = newUrl
 				}
 
+				fmt.Println("sources url:", req.URL)
+
 				return nil
 			},
 		},
