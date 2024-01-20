@@ -33,6 +33,19 @@ func NewSourcesClientWithHttpRequestDoer(cfg *viper.Viper, doer HttpRequestDoer)
 					req.Header.Set(constants.HeaderIdentity, identity)
 				}
 
+				originalUrl := req.URL.String()
+				if strings.Contains(originalUrl, "filter=filter[") {
+					// Remove the extra filter parameter name
+					correctedUrl := strings.Replace(req.URL.String(), "filter=", "", -1)
+
+					newUrl, err := url.Parse(correctedUrl)
+					if err != nil {
+						return err
+					}
+
+					req.URL = newUrl
+				}
+
 				return nil
 			},
 		},
