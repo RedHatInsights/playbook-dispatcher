@@ -9966,6 +9966,8 @@ func ParseGetSourcesRhcConnectionResponse(rsp *http.Response) (*GetSourcesRhcCon
 		return nil, err
 	}
 
+	fmt.Println("bodyBytes:", string(bodyBytes))
+
 	response := &GetSourcesRhcConnectionResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
