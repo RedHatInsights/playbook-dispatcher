@@ -76,7 +76,7 @@ func (this *sourcesClientImpl) getRHCConnectionStatus(ctx context.Context, sourc
 
 	ID := ID(sourceId)
 
-	res, err := this.client.GetRhcConnectionWithResponse(ctx, ID)
+	res, err := this.client.GetSourcesRhcConnectionWithResponse(ctx, ID, nil)
 
 	if err != nil {
 		return nil, err
@@ -133,13 +133,18 @@ func (this *sourcesClientImpl) GetSourceConnectionDetails(ctx context.Context, s
 		return SourceConnectionStatus{}, err
 	}
 
-	rhcConnectionResponse, err := this.getRHCConnectionStatus(ctx, sourceID)
+	fmt.Println("sourcesResponse: ", sourcesResponse)
+
+	source := (*sourcesResponse)[0]
+
+	rhcConnectionResponse, err := this.getRHCConnectionStatus(ctx, *source.Id)
 
 	if err != nil {
 		return SourceConnectionStatus{}, err
 	}
 
-	source := (*sourcesResponse)[0]
+	fmt.Println("rhcConnectionResponse: ", rhcConnectionResponse)
+
 	return SourceConnectionStatus{
 		ID:                 string(*source.Id),
 		SourceName:         source.Name,
