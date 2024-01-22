@@ -38,9 +38,12 @@ func NewSourcesClientWithHttpRequestDoer(cfg *viper.Viper, doer HttpRequestDoer)
 				originalUrl := req.URL.String()
 				if strings.Contains(originalUrl, "filter=filter%5B") {
 					// Remove the extra filter parameter name
-					correctedUrl := strings.Replace(req.URL.String(), "filter=", "", -1)
+					urlWithExtraFilterRemoved := strings.Replace(req.URL.String(), "filter=", "", -1)
 
-					newUrl, err := url.Parse(correctedUrl)
+					// Convert the url encoded "=" to unencoded "=" for...otherwise sources returns a 400
+					urlWithEqualUnencoded := strings.Replace(urlWithExtraFilterRemoved, "%3D", "=", -1)
+
+					newUrl, err := url.Parse(urlWithEqualUnencoded)
 					if err != nil {
 						return err
 					}
