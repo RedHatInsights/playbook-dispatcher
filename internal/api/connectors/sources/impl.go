@@ -77,7 +77,9 @@ func (this *sourcesClientImpl) getRHCConnectionStatus(ctx context.Context, sourc
 
 	ID := ID(sourceId)
 
-	res, err := this.client.GetSourcesRhcConnectionWithResponse(ctx, ID, nil)
+	params := GetSourcesRhcConnectionParams{}
+
+	res, err := this.client.GetSourcesRhcConnectionWithResponse(ctx, ID, &params)
 
 	if err != nil {
 		return nil, err
