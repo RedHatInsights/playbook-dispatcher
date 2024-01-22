@@ -36,7 +36,7 @@ func NewSourcesClientWithHttpRequestDoer(cfg *viper.Viper, doer HttpRequestDoer)
 				}
 
 				originalUrl := req.URL.String()
-				if strings.Contains(originalUrl, "filter=filter[") {
+				if strings.Contains(originalUrl, "filter=filter%5B") {
 					// Remove the extra filter parameter name
 					correctedUrl := strings.Replace(req.URL.String(), "filter=", "", -1)
 
