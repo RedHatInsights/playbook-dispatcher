@@ -7398,7 +7398,7 @@ func (r PauseSourceResponse) StatusCode() int {
 type GetSourcesRhcConnectionResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *[]RhcConnectionCollection
+	JSON200      *RhcConnectionCollection
 	JSON400      *ErrorBadRequest
 	JSON404      *ErrorNotFound
 }
@@ -9975,7 +9975,7 @@ func ParseGetSourcesRhcConnectionResponse(rsp *http.Response) (*GetSourcesRhcCon
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest []RhcConnectionCollection
+		var dest RhcConnectionCollection
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
