@@ -13,7 +13,7 @@ var _ = Describe("Sources", func() {
 		It("interperates response correctly", func() {
 			responses := []test.MockHttpResponse{
 				{StatusCode: 200, Body: `{"data": [{"id": "1", "name": "test", "availability_status": "connected"}]}`},
-				{StatusCode: 200, Body: `{"id": "1", "rhc_id": "6f37c752ba1c48b1bcf74ef8f585d8ee", "availability_status": "connected"}`},
+				{StatusCode: 200, Body: `[{"data": [{"id": "1", "rhc_id": "6f37c752ba1c48b1bcf74ef8f585d8ee", "availability_status": "connected"}]}]`},
 			}
 
 			doer := test.MockMultiResponseHttpClient(responses...)
@@ -37,7 +37,7 @@ var _ = Describe("Sources", func() {
 		It("interperates response correctly if fields are missing", func() {
 			responses := []test.MockHttpResponse{
 				{StatusCode: 200, Body: `{"data": [{"id": "1", "name": "test"}]}`},
-				{StatusCode: 200, Body: `{"id": "1"}`},
+				{StatusCode: 200, Body: `[{"data": [{"id": "1"}]}]`},
 			}
 
 			doer := test.MockMultiResponseHttpClient(responses...)
