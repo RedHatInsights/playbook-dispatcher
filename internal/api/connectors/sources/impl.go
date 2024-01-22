@@ -71,7 +71,8 @@ func NewSourcesClient(cfg *viper.Viper) SourcesConnector {
 	return NewSourcesClientWithHttpRequestDoer(cfg, &doer)
 }
 
-func (this *sourcesClientImpl) getRHCConnectionStatus(ctx context.Context, sourceId string) (status *RhcConnectionRead, err error) {
+func (this *sourcesClientImpl) getRHCConnectionStatus(ctx context.Context, sourceId string) (*[]RhcConnectionCollection, error) {
+
 	utils.GetLogFromContext(ctx).Debugw("Sending Sources RHC Connection Request")
 
 	ID := ID(sourceId)
@@ -137,18 +138,25 @@ func (this *sourcesClientImpl) GetSourceConnectionDetails(ctx context.Context, s
 
 	source := (*sourcesResponse)[0]
 
-	rhcConnectionResponse, err := this.getRHCConnectionStatus(ctx, *source.Id)
+	rhcConnectionResponse, err := this.getRHCConnectionStatus(ctx, string(*source.Id))
 
 	if err != nil {
 		return SourceConnectionStatus{}, err
 	}
 
 	fmt.Println("rhcConnectionResponse: ", rhcConnectionResponse)
+	fmt.Println("rhcConnectionResponse[0]: ", (*rhcConnectionResponse)[0])
+	fmt.Println("rhcConnectionResponse[0].Data: ", (*rhcConnectionResponse)[0].Data)
+
+	rhcInfo := (*rhcConnectionResponse)[0].Data
+
+	fmt.Println("rhcInfo: ", rhcInfo)
+	fmt.Println("rhcInfo[0]: ", (*rhcInfo)[0])
 
 	return SourceConnectionStatus{
 		ID:                 string(*source.Id),
 		SourceName:         source.Name,
-		RhcID:              rhcConnectionResponse.RhcId,
-		AvailabilityStatus: rhcConnectionResponse.AvailabilityStatus,
+		RhcID:              (*rhcInfo)[0].RhcId,
+		AvailabilityStatus: (*rhcInfo)[0].AvailabilityStatus,
 	}, err
 }
