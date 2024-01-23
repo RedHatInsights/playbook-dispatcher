@@ -235,7 +235,7 @@ func createSatelliteConnectionResponses(ctx echo.Context, hostsGroupedBySatellit
 				connectionStatus = "disconnected"
 			}
 
-			responses = append(responses, formatConnectionResponse(&satellite.SourceID, &satellite.SatelliteOrgID, satellite.RhcClientID, orgId, satellite.Hosts, string(RecipientType_satellite), connectionStatus))
+			responses = append(responses, formatConnectionResponse(&satellite.SatelliteInstanceID, &satellite.SatelliteOrgID, satellite.RhcClientID, orgId, satellite.Hosts, string(RecipientType_satellite), connectionStatus))
 		}
 	}
 
