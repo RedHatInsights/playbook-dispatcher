@@ -51,8 +51,6 @@ func NewSourcesClientWithHttpRequestDoer(cfg *viper.Viper, doer HttpRequestDoer)
 					req.URL = newUrl
 				}
 
-				fmt.Println("sources url:", req.URL)
-
 				return nil
 			},
 		},
@@ -136,8 +134,6 @@ func (this *sourcesClientImpl) GetSourceConnectionDetails(ctx context.Context, s
 		return SourceConnectionStatus{}, err
 	}
 
-	fmt.Println("sourcesResponse: ", sourcesResponse)
-
 	source := (*sourcesResponse)[0]
 
 	rhcConnectionResponse, err := this.getRHCConnectionStatus(ctx, string(*source.Id))
@@ -145,17 +141,6 @@ func (this *sourcesClientImpl) GetSourceConnectionDetails(ctx context.Context, s
 	if err != nil {
 		return SourceConnectionStatus{}, err
 	}
-
-	fmt.Println("rhcConnectionResponse: ", rhcConnectionResponse)
-	/*
-		fmt.Println("rhcConnectionResponse[0]: ", (*rhcConnectionResponse)[0])
-		fmt.Println("rhcConnectionResponse[0].Data: ", (*rhcConnectionResponse)[0].Data)
-
-		rhcInfo := (*rhcConnectionResponse)[0].Data
-
-		fmt.Println("rhcInfo: ", rhcInfo)
-		fmt.Println("rhcInfo[0]: ", (*rhcInfo)[0])
-	*/
 
 	rhcInfo := (*rhcConnectionResponse).Data
 
