@@ -35,6 +35,7 @@ var _ = Describe("Identity type middleware", func() {
 		},
 
 		Entry("User", "User", 200, ""),
+		Entry("ServiceAccount", "ServiceAccount", 200, ""),
 		Entry("System", "System", 403, "unauthorized principal type: system\n"),
 		Entry("Random", "salad", 403, "unauthorized principal type: salad\n"),
 	)
