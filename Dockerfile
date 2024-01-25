@@ -7,7 +7,8 @@ USER 0
 
 RUN go build -v -o app main.go
 
-FROM registry.access.redhat.com/ubi-minimal:latest
+FROM registry.access.redhat.com/ubi8-minimal:latest
+
 ARG BUILD_COMMIT=unknown
 
 COPY --from=builder /go/src/app/app .
