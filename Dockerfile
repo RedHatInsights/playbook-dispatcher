@@ -7,7 +7,7 @@ USER 0
 
 RUN go build -v -o app main.go
 
-FROM registry.access.redhat.com/ubi8-minimal:latest
+FROM registry.access.redhat.com/ubi-minimal:8.9-1108.1705420507
 
 ARG BUILD_COMMIT=unknown
 
