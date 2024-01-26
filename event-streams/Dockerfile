@@ -1,4 +1,4 @@
-FROM registry.redhat.io/ubi8/openjdk-11 as builder
+FROM registry.redhat.io/ubi8/openjdk-17 as builder
 USER root
 
 ENV EXTRA_PLUGINS=/deps/plugins \
@@ -26,7 +26,7 @@ RUN ./mvnw -Dschema.event.run=/src/run.event.yaml -Dschema.event.run.host=/src/r
 
 
 # https://access.redhat.com/documentation/en-us/red_hat_amq/2021.q3/html-single/deploying_and_upgrading_amq_streams_on_openshift/index#creating-new-image-from-base-str
-FROM registry.redhat.io/amq7/amq-streams-kafka-33-rhel8:2.4.0
+FROM registry.redhat.io/amq-streams/kafka-34-rhel8:2.6.0-4.0
 
 ARG BUILD_COMMIT=unknown
 
