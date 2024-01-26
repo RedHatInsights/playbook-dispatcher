@@ -26,7 +26,7 @@ RUN ./mvnw -Dschema.event.run=/src/run.event.yaml -Dschema.event.run.host=/src/r
 
 
 # https://access.redhat.com/documentation/en-us/red_hat_amq/2021.q3/html-single/deploying_and_upgrading_amq_streams_on_openshift/index#creating-new-image-from-base-str
-FROM registry.redhat.io/amq-streams/kafka-34-rhel8
+FROM registry.redhat.io/amq-streams/kafka-34-rhel8:2.5.1-2
 
 ARG BUILD_COMMIT=unknown
 
