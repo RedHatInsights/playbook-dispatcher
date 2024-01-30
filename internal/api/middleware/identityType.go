@@ -9,6 +9,7 @@ import (
 )
 
 const userType = "user"
+const serviceAccountType = "serviceaccount"
 
 func EnforceIdentityType(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -20,7 +21,9 @@ func EnforceIdentityType(next http.Handler) http.Handler {
 			return
 		}
 
-		if principalType := strings.ToLower(identity.Identity.Type); principalType != userType {
+		principalType := strings.ToLower(identity.Identity.Type)
+
+		if principalType != userType && principalType != serviceAccountType {
 			http.Error(w, fmt.Sprintf("unauthorized principal type: %s", principalType), 403)
 			return
 		}
