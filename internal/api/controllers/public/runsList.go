@@ -96,7 +96,7 @@ func (this *controllers) ApiRunsList(ctx echo.Context, params ApiRunsListParams)
 	}
 
 	var total int64
-	countResult := queryBuilder.Count(&total)
+	countResult := queryBuilder.Model(&dbRuns).Count(&total)
 
 	if countResult.Error != nil {
 		instrumentation.PlaybookRunReadError(ctx, countResult.Error)
