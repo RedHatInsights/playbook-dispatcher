@@ -49,6 +49,13 @@ func (this *controllers) ApiInternalHighlevelConnectionStatus(ctx echo.Context) 
 		return ctx.NoContent(http.StatusBadRequest)
 	}
 
+	if len(hostConnectorDetails) == 0 {
+		// FIXME: I'm not sure that this is right.  Basically, we need to return a response that says the host was not available....
+		// This could happen if the host was deleted from inventory or an error (404) came back from inventory
+		// Think through this a bit more and build a test around this at the API level
+		return ctx.JSON(http.StatusOK, noRHCResponses)
+	}
+
 	satellite, directConnected, noRhc := sortHostsByRecipient(hostConnectorDetails)
 
 	// Return noRHC If no Satellite or Direct Connected hosts exist

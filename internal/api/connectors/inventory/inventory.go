@@ -142,6 +142,10 @@ func (this *inventoryConnectorImpl) getHostDetails(
 		return nil, err
 	}
 
+	if response.StatusCode() == http.StatusNotFound {
+		return []HostOut{}, nil
+	}
+
 	if response.JSON200 == nil {
 		return nil, utils.UnexpectedResponse(response.HTTPResponse)
 	}
@@ -184,7 +188,7 @@ func (this *inventoryConnectorImpl) GetHostConnectionDetails(ctx context.Context
 	}
 
 	if len(hostResults) == 0 {
-		return nil, nil
+		return []HostDetails{}, nil
 	}
 
 	systemProfileResults, err := this.getSystemProfileDetails(ctx, IDs, order_by, order_how, limit, offset)
