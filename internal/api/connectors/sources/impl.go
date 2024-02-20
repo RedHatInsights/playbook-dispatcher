@@ -134,12 +134,20 @@ func (this *sourcesClientImpl) GetSourceConnectionDetails(ctx context.Context, s
 		return SourceConnectionStatus{}, err
 	}
 
+	if sourcesResponse == nil {
+		return SourceConnectionStatus{}, fmt.Errorf("GetSources returned an empty response")
+	}
+
 	source := (*sourcesResponse)[0]
 
 	rhcConnectionResponse, err := this.getRHCConnectionStatus(ctx, string(*source.Id))
 
 	if err != nil {
 		return SourceConnectionStatus{}, err
+	}
+
+	if rhcConnectionResponse == nil || rhcConnectionResponse.Data == nil {
+		return SourceConnectionStatus{}, fmt.Errorf("GetRHCConnectionStatus returned an empty response")
 	}
 
 	rhcInfo := (*rhcConnectionResponse).Data
