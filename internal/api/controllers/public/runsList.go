@@ -1,6 +1,7 @@
 package public
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"playbook-dispatcher/internal/api/instrumentation"
@@ -12,6 +13,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 	identityMiddleware "github.com/redhatinsights/platform-go-middlewares/identity"
+	"gorm.io/gorm"
 )
 
 func getOrderBy(params ApiRunsListParams) string {
@@ -88,11 +90,7 @@ func (this *controllers) ApiRunsList(ctx echo.Context, params ApiRunsListParams)
 	}
 
 	if labelFilters := middleware.GetDeepObject(ctx, "filter", "labels"); len(labelFilters) > 0 {
-		for key, values := range labelFilters {
-			for _, value := range values {
-				queryBuilder.Where("runs.labels ->> ? = ?", key, value)
-			}
-		}
+		queryBuilder = convertLabelFilterToLabelWhereClause(queryBuilder, labelFilters)
 	}
 
 	var total int64
@@ -132,4 +130,34 @@ func (this *controllers) ApiRunsList(ctx echo.Context, params ApiRunsListParams)
 		},
 		Links: createLinks("/api/playbook-dispatcher/v1/runs", middleware.GetQueryString(ctx), getLimit(params.Limit), getOffset(params.Offset), int(total)),
 	})
+}
+
+func convertLabelFilterToLabelWhereClause(queryBuilder *gorm.DB, labelFilters map[string][]string) *gorm.DB {
+	labels := make(map[string]interface{})
+
+	for key, values := range labelFilters {
+		if len(values) == 1 {
+			labels[key] = values[0]
+		} else {
+			// FIXME:  Do the labels actually support arrays??
+			labelsList := make([]string, 0, len(values))
+			for i, value := range values {
+				labelsList[i] = value
+			}
+			labels[key] = labelsList
+		}
+	}
+
+	if len(labels) > 0 {
+		labelsJson, err := json.Marshal(labels)
+		if err != nil {
+			// log the error but eat it?? or throw an error all the way back out to
+			// the user out??  Probably should throw it all the way back
+			fmt.Println("error marshalling lables into json - error:", err)
+		} else {
+			queryBuilder.Where("runs.labels @> ?", string(labelsJson))
+		}
+	}
+
+	return queryBuilder
 }
