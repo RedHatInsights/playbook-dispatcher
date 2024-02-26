@@ -90,8 +90,11 @@ func (this *controllers) ApiRunsList(ctx echo.Context, params ApiRunsListParams)
 	}
 
 	if labelFilters := middleware.GetDeepObject(ctx, "filter", "labels"); len(labelFilters) > 0 {
-		queryBuilder, _ = addLabelFilterToQueryAsWhereClause(queryBuilder, labelFilters)
-		// FIXME:  Don't eat the error!
+		queryBuilder, err = addLabelFilterToQueryAsWhereClause(queryBuilder, labelFilters)
+		if err != nil {
+			instrumentation.PlaybookApiRequestError(ctx, err)
+			return echo.NewHTTPError(http.StatusInternalServerError, "Unable to handle labels query!")
+		}
 	}
 
 	var total int64
@@ -154,13 +157,10 @@ func addLabelFilterToQueryAsWhereClause(queryBuilder *gorm.DB, labelFilters map[
 
 	labelsJson, err := json.Marshal(labels)
 	if err != nil {
-		// log the error but eat it?? or throw an error all the way back out to
-		// the user out??  Probably should throw it all the way back
 		return queryBuilder, fmt.Errorf("unable to marshal labels into json: %w", err)
 	}
 
 	queryBuilder.Where("runs.labels @> ?", string(labelsJson))
-	fmt.Println("labels json: ", string(labelsJson))
 
 	return queryBuilder, nil
 }

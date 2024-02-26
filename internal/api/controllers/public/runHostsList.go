@@ -61,8 +61,11 @@ func (this *controllers) ApiRunHostsList(ctx echo.Context, params ApiRunHostsLis
 		}
 
 		if labelFilters := middleware.GetDeepObject(ctx, "filter", "run", "labels"); len(labelFilters) > 0 {
-			queryBuilder, _ = addLabelFilterToQueryAsWhereClause(queryBuilder, labelFilters)
-			// FIXME:  Don't eat the error!
+			queryBuilder, err = addLabelFilterToQueryAsWhereClause(queryBuilder, labelFilters)
+			if err != nil {
+				instrumentation.PlaybookApiRequestError(ctx, err)
+				return echo.NewHTTPError(http.StatusInternalServerError, "Unable to handle labels query!")
+			}
 		}
 
 		if params.Filter.InventoryId != nil {
