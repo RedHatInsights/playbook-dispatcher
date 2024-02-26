@@ -90,7 +90,8 @@ func (this *controllers) ApiRunsList(ctx echo.Context, params ApiRunsListParams)
 	}
 
 	if labelFilters := middleware.GetDeepObject(ctx, "filter", "labels"); len(labelFilters) > 0 {
-		queryBuilder = convertLabelFilterToLabelWhereClause(queryBuilder, labelFilters)
+		queryBuilder, _ = addLabelFilterToQueryAsWhereClause(queryBuilder, labelFilters)
+		// FIXME:  Don't eat the error!
 	}
 
 	var total int64
@@ -132,32 +133,34 @@ func (this *controllers) ApiRunsList(ctx echo.Context, params ApiRunsListParams)
 	})
 }
 
-func convertLabelFilterToLabelWhereClause(queryBuilder *gorm.DB, labelFilters map[string][]string) *gorm.DB {
-	labels := make(map[string]interface{})
+func addLabelFilterToQueryAsWhereClause(queryBuilder *gorm.DB, labelFilters map[string][]string) (*gorm.DB, error) {
+	labels := make(map[string]string)
 
 	for key, values := range labelFilters {
-		if len(values) == 1 {
-			labels[key] = values[0]
-		} else {
-			// FIXME:  Do the labels actually support arrays??
-			labelsList := make([]string, 0, len(values))
-			for i, value := range values {
-				labelsList[i] = value
-			}
-			labels[key] = labelsList
+		// The inner for loop seems kind of odd.  The labels are basically a
+		// hash map. As a result, you cannot have duplicate keys.  However, it
+		// seems to be possible to pass in multiple values for the same key in
+		// the web request url.  With the approach below, we will take the last
+		// value for duplicate keys that are passed in on the url.
+		// example:  api/playbook-dispatcher/v1/runs?filter[labels][bar]=5678&filter[labels][bar]=1234"
+		for _, value := range values {
+			labels[key] = value
 		}
 	}
 
-	if len(labels) > 0 {
-		labelsJson, err := json.Marshal(labels)
-		if err != nil {
-			// log the error but eat it?? or throw an error all the way back out to
-			// the user out??  Probably should throw it all the way back
-			fmt.Println("error marshalling lables into json - error:", err)
-		} else {
-			queryBuilder.Where("runs.labels @> ?", string(labelsJson))
-		}
+	if len(labels) == 0 {
+		return queryBuilder, nil
 	}
 
-	return queryBuilder
+	labelsJson, err := json.Marshal(labels)
+	if err != nil {
+		// log the error but eat it?? or throw an error all the way back out to
+		// the user out??  Probably should throw it all the way back
+		return queryBuilder, fmt.Errorf("unable to marshal labels into json: %w", err)
+	}
+
+	queryBuilder.Where("runs.labels @> ?", string(labelsJson))
+	fmt.Println("labels json: ", string(labelsJson))
+
+	return queryBuilder, nil
 }

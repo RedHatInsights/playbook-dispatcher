@@ -61,7 +61,8 @@ func (this *controllers) ApiRunHostsList(ctx echo.Context, params ApiRunHostsLis
 		}
 
 		if labelFilters := middleware.GetDeepObject(ctx, "filter", "run", "labels"); len(labelFilters) > 0 {
-			queryBuilder = convertLabelFilterToLabelWhereClause(queryBuilder, labelFilters)
+			queryBuilder, _ = addLabelFilterToQueryAsWhereClause(queryBuilder, labelFilters)
+			// FIXME:  Don't eat the error!
 		}
 
 		if params.Filter.InventoryId != nil {
