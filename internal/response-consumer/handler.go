@@ -115,6 +115,9 @@ func (this *handler) onMessage(ctx context.Context, msg *k.Message) {
 			Events: eventsSerialized,
 		}
 
+		// We retrieved the run id (primary key) above...lets use it here during the update to speed up the query
+		baseQuery = baseQuery.Where("id = ?", run.ID)
+
 		// Only update if the run is not marked as complete
 		updateResult := baseQuery.Where("status not in ?", []string{db.RunStatusSuccess, db.RunStatusFailure}).Select("status", "events").Updates(toUpdate)
 		if updateResult.Error != nil {
