@@ -1,6 +1,7 @@
 package public
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"playbook-dispatcher/internal/api/instrumentation"
@@ -12,6 +13,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 	identityMiddleware "github.com/redhatinsights/platform-go-middlewares/identity"
+	"gorm.io/gorm"
 )
 
 func getOrderBy(params ApiRunsListParams) string {
@@ -88,10 +90,10 @@ func (this *controllers) ApiRunsList(ctx echo.Context, params ApiRunsListParams)
 	}
 
 	if labelFilters := middleware.GetDeepObject(ctx, "filter", "labels"); len(labelFilters) > 0 {
-		for key, values := range labelFilters {
-			for _, value := range values {
-				queryBuilder.Where("runs.labels ->> ? = ?", key, value)
-			}
+		queryBuilder, err = addLabelFilterToQueryAsWhereClause(queryBuilder, labelFilters)
+		if err != nil {
+			instrumentation.PlaybookApiRequestError(ctx, err)
+			return echo.NewHTTPError(http.StatusInternalServerError, "Unable to handle labels query!")
 		}
 	}
 
@@ -132,4 +134,33 @@ func (this *controllers) ApiRunsList(ctx echo.Context, params ApiRunsListParams)
 		},
 		Links: createLinks("/api/playbook-dispatcher/v1/runs", middleware.GetQueryString(ctx), getLimit(params.Limit), getOffset(params.Offset), int(total)),
 	})
+}
+
+func addLabelFilterToQueryAsWhereClause(queryBuilder *gorm.DB, labelFilters map[string][]string) (*gorm.DB, error) {
+	labels := make(map[string]string)
+
+	for key, values := range labelFilters {
+		// The inner for loop seems kind of odd.  The labels are basically a
+		// hash map. As a result, you cannot have duplicate keys.  However, it
+		// seems to be possible to pass in multiple values for the same key in
+		// the web request url.  With the approach below, we will take the last
+		// value for duplicate keys that are passed in on the url.
+		// example:  api/playbook-dispatcher/v1/runs?filter[labels][bar]=5678&filter[labels][bar]=1234"
+		for _, value := range values {
+			labels[key] = value
+		}
+	}
+
+	if len(labels) == 0 {
+		return queryBuilder, nil
+	}
+
+	labelsJson, err := json.Marshal(labels)
+	if err != nil {
+		return queryBuilder, fmt.Errorf("unable to marshal labels into json: %w", err)
+	}
+
+	queryBuilder.Where("runs.labels @> ?", string(labelsJson))
+
+	return queryBuilder, nil
 }
