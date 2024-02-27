@@ -332,6 +332,8 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/HostId'
+        ansible_host:
+          $ref: '#/components/schemas/AnsibleHost'
         status:
           description: Indicates the current run status of the recipient
           type: string
@@ -373,6 +375,13 @@ components:
       type: string
       enum: [satellite, directConnect, none]
       minLength: 1
+    
+    AnsibleHost:
+      description: >-
+        From inventory: the ansible host name for remediations
+      type: string
+      example: host1.mydomain.com
+      nullable: true
 
     OrgId:
       description: Identifies the organization that the given resource belongs to
