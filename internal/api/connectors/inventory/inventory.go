@@ -198,6 +198,7 @@ func (this *inventoryConnectorImpl) GetHostConnectionDetails(ctx context.Context
 		satelliteFacts := getSatelliteFacts(host.Facts)
 		hostConnectionDetails[i] = HostDetails{
 			ID:                  *host.Id,
+			AnsibleHost:         host.AnsibleHost,
 			OwnerID:             systemProfileResults[*host.Id].SystemProfile.OwnerId,
 			SatelliteInstanceID: satelliteFacts.SatelliteInstanceID,
 			SatelliteVersion:    satelliteFacts.SatelliteVersion,

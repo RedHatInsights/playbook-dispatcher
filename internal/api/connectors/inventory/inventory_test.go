@@ -31,6 +31,8 @@ var _ = Describe("Inventory", func() {
 			Expect(*resultData.SatelliteVersion).To(Equal("6.11.3"))
 			Expect(*resultData.SatelliteOrgID).To(Equal("5"))
 			Expect(*resultData.RHCClientID).To(Equal("7bc66a39-e719-4bc5-b10a-77bfbd3a0ead"))
+			Expect(resultData.AnsibleHost).ToNot(BeNil())
+			Expect(*resultData.AnsibleHost).To(Equal("host1.mydomain.com"))
 		})
 
 		It("Interperates response correctly on unexpected status code from hostDetails", func() {
@@ -81,6 +83,7 @@ var _ = Describe("Inventory", func() {
 			Expect(resultData.SatelliteInstanceID).To(BeNil())
 			Expect(resultData.SatelliteVersion).To(BeNil())
 			Expect(resultData.SatelliteOrgID).To(BeNil())
+			Expect(resultData.AnsibleHost).To(BeNil())
 			Expect(*resultData.RHCClientID).To(Equal("7bc66a39-e719-4bc5-b10a-77bfbd3a0ead"))
 		})
 
@@ -102,6 +105,7 @@ var _ = Describe("Inventory", func() {
 			Expect(*resultData.SatelliteInstanceID).To(Equal("5678"))
 			Expect(*resultData.SatelliteVersion).To(Equal("6.11.3"))
 			Expect(*resultData.SatelliteOrgID).To(Equal("5"))
+			Expect(*resultData.AnsibleHost).To(Equal("host1.mydomain.com"))
 			Expect(resultData.RHCClientID).To(BeNil())
 		})
 	})

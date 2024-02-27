@@ -17,6 +17,7 @@ type HostDetails struct {
 	SatelliteVersion    *string `json:"satellite_version,omitempty"`
 	SatelliteOrgID      *string `json:"satellite_org_id,omitempty"`
 	RHCClientID         *string `json:"rhc_client_id,omitempty"`
+	AnsibleHost         *string `json:"ansible_host,omitempty"`
 }
 
 type InventoryConnector interface {
