@@ -69,7 +69,7 @@ func NewSourcesClient(cfg *viper.Viper) SourcesConnector {
 	return NewSourcesClientWithHttpRequestDoer(cfg, &doer)
 }
 
-func (this *sourcesClientImpl) getRHCConnectionStatus(ctx context.Context, sourceId string) (*RhcConnectionCollection, error) {
+func (this *sourcesClientImpl) getRHCConnectionStatus(ctx context.Context, sourceId string) (*string, *string, error) {
 
 	utils.GetLogFromContext(ctx).Debugw("Sending Sources RHC Connection Request")
 
@@ -80,28 +80,32 @@ func (this *sourcesClientImpl) getRHCConnectionStatus(ctx context.Context, sourc
 	res, err := this.client.GetSourcesRhcConnectionWithResponse(ctx, ID, &params)
 
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if res.HTTPResponse.StatusCode == 404 {
-		return nil, fmt.Errorf("RHCStatus Not Found")
+		return nil, nil, fmt.Errorf("RHCStatus Not Found")
 	}
 
 	if res.HTTPResponse.StatusCode == 400 {
-		return nil, fmt.Errorf("RHCStatus Bad Request")
+		return nil, nil, fmt.Errorf("RHCStatus Bad Request")
 	}
 
 	if res.JSON200 == nil {
-		return nil, fmt.Errorf(`GetRhcConnectionStatus unexpected status code "%d" or content type "%s"`, res.HTTPResponse.StatusCode, res.HTTPResponse.Header.Get("content-type"))
+		return nil, nil, fmt.Errorf(`GetRhcConnectionStatus unexpected status code "%d" or content type "%s"`, res.HTTPResponse.StatusCode, res.HTTPResponse.Header.Get("content-type"))
 	}
 
-	return res.JSON200, err
+	if res.JSON200.Data == nil || len(*res.JSON200.Data) == 0 {
+		return nil, nil, fmt.Errorf("GetRHCConnectionStatus returned an empty response")
+	}
+
+	return (*res.JSON200.Data)[0].RhcId, (*res.JSON200.Data)[0].AvailabilityStatus, err
 }
 
-func (this *sourcesClientImpl) getSources(ctx context.Context, sourceId string) (sources *[]Source, err error) {
+func (this *sourcesClientImpl) getSourceIdBySatelliteId(ctx context.Context, satelliteId string) (sourceId string, sourceName string, err error) {
 	utils.GetLogFromContext(ctx).Debugw("Sending Sources Request")
 
-	ID := ID(sourceId)
+	ID := ID(satelliteId)
 	queryFilter := filterPath + QueryFilter(ID)
 
 	params := &ListSourcesParams{
@@ -111,51 +115,49 @@ func (this *sourcesClientImpl) getSources(ctx context.Context, sourceId string) 
 	res, err := this.client.ListSourcesWithResponse(ctx, params)
 
 	if err != nil {
-		return nil, err
+		return "", "", err
 	}
 
 	if res.JSON400 != nil {
-		return nil, fmt.Errorf("Source Bad Request")
+		return "", "", fmt.Errorf("Source Bad Request")
 	}
 
 	if res.JSON200 == nil {
-		return nil, fmt.Errorf(`GetSources unexpected status code "%d" or content type "%s"`, res.HTTPResponse.StatusCode, res.HTTPResponse.Header.Get("content-type"))
+		return "", "", fmt.Errorf(`GetSources unexpected status code "%d" or content type "%s"`, res.HTTPResponse.StatusCode, res.HTTPResponse.Header.Get("content-type"))
 	}
 
-	return res.JSON200.Data, err
+	if res.JSON200.Data == nil || len(*res.JSON200.Data) == 0 {
+		return "", "", fmt.Errorf("GetSources returned an empty response")
+	}
+
+	source := (*res.JSON200.Data)[0]
+
+	if source.Id == nil {
+		return "", "", fmt.Errorf("GetSources did not return a valid sources id")
+	}
+
+	return string(*source.Id), *source.Name, nil
 }
 
 func (this *sourcesClientImpl) GetSourceConnectionDetails(ctx context.Context, sourceID string) (details SourceConnectionStatus, err error) {
 	utils.GetLogFromContext(ctx).Debugw("Gathering Source Connection Details")
 
-	sourcesResponse, err := this.getSources(ctx, sourceID)
+	sourceId, sourceName, err := this.getSourceIdBySatelliteId(ctx, sourceID)
 
 	if err != nil {
 		return SourceConnectionStatus{}, err
 	}
 
-	if sourcesResponse == nil {
-		return SourceConnectionStatus{}, fmt.Errorf("GetSources returned an empty response")
-	}
-
-	source := (*sourcesResponse)[0]
-
-	rhcConnectionResponse, err := this.getRHCConnectionStatus(ctx, string(*source.Id))
+	rhcId, availabilityStatus, err := this.getRHCConnectionStatus(ctx, sourceId)
 
 	if err != nil {
 		return SourceConnectionStatus{}, err
 	}
-
-	if rhcConnectionResponse == nil || rhcConnectionResponse.Data == nil {
-		return SourceConnectionStatus{}, fmt.Errorf("GetRHCConnectionStatus returned an empty response")
-	}
-
-	rhcInfo := (*rhcConnectionResponse).Data
 
 	return SourceConnectionStatus{
-		ID:                 string(*source.Id),
-		SourceName:         source.Name,
-		RhcID:              (*rhcInfo)[0].RhcId,
-		AvailabilityStatus: (*rhcInfo)[0].AvailabilityStatus,
+		ID:                 sourceId,
+		SourceName:         &sourceName,
+		RhcID:              rhcId,
+		AvailabilityStatus: availabilityStatus,
 	}, err
 }
