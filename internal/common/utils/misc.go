@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/ghodss/yaml"
-	"github.com/labstack/echo/v4"
+	echo "github.com/labstack/echo/v4"
 	"github.com/qri-io/jsonschema"
 	"github.com/spf13/viper"
 )
