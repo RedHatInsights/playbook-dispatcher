@@ -7,6 +7,8 @@ MKFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
 PROJECT_PATH := $(patsubst %/,%,$(dir $(MKFILE_PATH)))
 LOCAL_BIN_PATH := ${PROJECT_PATH}/bin
 
+GOPATH ?= ${HOME}/go
+
 export PATH := ${LOCAL_BIN_PATH}:${PATH}
 
 
