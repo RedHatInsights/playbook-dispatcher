@@ -49,6 +49,8 @@ jobs:
     # Check that the code generated from the OpenAPI schema is up-to-date (i.e.  make generate-api has been run after changing the openapi schema)
     - name: test openapi schema up to date
       run: make init && cp internal/api/controllers/private/spec.gen.go internal/api/controllers/private/spec.gen.go.bak && make generate-api && diff internal/api/controllers/private/spec.gen.go internal/api/controllers/private/spec.gen.go.bak
+      env:
+        GOPATH: /home/runner/go
 
   java:
     runs-on: ubuntu-latest
