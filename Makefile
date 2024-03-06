@@ -22,42 +22,42 @@ init:
 
 generate-api:
 	# public API
-	~/go/bin/oapi-codegen -generate server,spec -package public -o internal/api/controllers/public/spec.gen.go schema/public.openapi.yaml
-	~/go/bin/oapi-codegen -generate types -package public -o internal/api/controllers/public/types.gen.go schema/public.openapi.yaml
+	${GOPATH}/bin/oapi-codegen -generate server,spec -package public -o internal/api/controllers/public/spec.gen.go schema/public.openapi.yaml
+	${GOPATH}/bin/oapi-codegen -generate types -package public -o internal/api/controllers/public/types.gen.go schema/public.openapi.yaml
 	# internal API
-	~/go/bin/oapi-codegen -generate server,spec -package private -o internal/api/controllers/private/spec.gen.go -import-mapping=./public.openapi.yaml:playbook-dispatcher/internal/api/controllers/public schema/private.openapi.yaml
-	~/go/bin/oapi-codegen -generate types -package private -o internal/api/controllers/private/types.gen.go -import-mapping=./public.openapi.yaml:playbook-dispatcher/internal/api/controllers/public schema/private.openapi.yaml
+	${GOPATH}/bin/oapi-codegen -generate server,spec -package private -o internal/api/controllers/private/spec.gen.go -import-mapping=./public.openapi.yaml:playbook-dispatcher/internal/api/controllers/public schema/private.openapi.yaml
+	${GOPATH}/bin/oapi-codegen -generate types -package private -o internal/api/controllers/private/types.gen.go -import-mapping=./public.openapi.yaml:playbook-dispatcher/internal/api/controllers/public schema/private.openapi.yaml
 
 generate-clients:
-	~/go/bin/oapi-codegen -generate client,types -package public -o internal/api/tests/public/client.gen.go schema/public.openapi.yaml
-	~/go/bin/oapi-codegen -generate client,types -package private -o internal/api/tests/private/client.gen.go -import-mapping=./public.openapi.yaml:playbook-dispatcher/internal/api/controllers/public schema/private.openapi.yaml
+	${GOPATH}/bin/oapi-codegen -generate client,types -package public -o internal/api/tests/public/client.gen.go schema/public.openapi.yaml
+	${GOPATH}/bin/oapi-codegen -generate client,types -package private -o internal/api/tests/private/client.gen.go -import-mapping=./public.openapi.yaml:playbook-dispatcher/internal/api/controllers/public schema/private.openapi.yaml
 
 generate-messages:
-	~/go/bin/gojsonschema --yaml-extension yaml -p message schema/playbookRunResponse.message.yaml > ./internal/common/model/message/runner.types.gen.go
-	~/go/bin/gojsonschema --yaml-extension yaml -p message schema/playbookSatRunResponse.message.yaml > ./internal/common/model/message/rhcsat.types.gen.go
+	${GOPATH}/bin/go-jsonschema --yaml-extension yaml -p message schema/playbookRunResponse.message.yaml > ./internal/common/model/message/runner.types.gen.go
+	${GOPATH}/bin/go-jsonschema --yaml-extension yaml -p message schema/playbookSatRunResponse.message.yaml > ./internal/common/model/message/rhcsat.types.gen.go
 
 generate-cloud-connector:
 	curl -s ${CLOUD_CONNECTOR_SCHEMA} -o cloud-connector.json
 	json2yaml cloud-connector.json cloud-connector.yaml
-	~/go/bin/oapi-codegen -generate client,types -package connectors -o internal/api/connectors/cloudConnector.gen.go cloud-connector.yaml
+	${GOPATH}/bin/oapi-codegen -generate client,types -package connectors -o internal/api/connectors/cloudConnector.gen.go cloud-connector.yaml
 	rm cloud-connector.json cloud-connector.yaml
 
 generate-rbac:
 	curl -s ${RBAC_CONNECTOR_SCHEMA} -o rbac.json
 	json2yaml rbac.json rbac.yaml
-	~/go/bin/oapi-codegen -generate client,types -package rbac -include-tags Access -o internal/api/rbac/rbac.gen.go rbac.yaml
+	${GOPATH}/bin/oapi-codegen -generate client,types -package rbac -include-tags Access -o internal/api/rbac/rbac.gen.go rbac.yaml
 	rm rbac.json rbac.yaml
 
 generate-inventory:
 	curl -s ${INVENTORY_CONNECTOR_SCHEMA} -o inventory.json
 	json2yaml inventory.json inventory.yaml
-	~/go/bin/oapi-codegen -generate client,types -package inventory -o internal/api/connectors/inventory/inventory.gen.go inventory.yaml
+	${GOPATH}/bin/oapi-codegen -generate client,types -package inventory -o internal/api/connectors/inventory/inventory.gen.go inventory.yaml
 	rm inventory.json inventory.yaml
 
 generate-sources:
 	curl -s ${SOURCES_CONNECTOR_SCHEMA} -o sources.json
 	json2yaml sources.json sources.yaml
-	~/go/bin/oapi-codegen -generate client,types -package sources -o internal/api/connectors/sources/sources.gen.go sources.yaml
+	${GOPATH}/bin/oapi-codegen -generate client,types -package sources -o internal/api/connectors/sources/sources.gen.go sources.yaml
 	rm sources.yaml sources.json
 
 generate-utils:
