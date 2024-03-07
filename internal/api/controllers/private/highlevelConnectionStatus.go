@@ -49,6 +49,11 @@ func (this *controllers) ApiInternalHighlevelConnectionStatus(ctx echo.Context) 
 		return ctx.NoContent(http.StatusBadRequest)
 	}
 
+	if len(hostConnectorDetails) == 0 {
+		utils.GetLogFromEcho(ctx).Infow("host(s) not found in inventory", "data", noRHCResponses)
+		return ctx.JSON(http.StatusOK, noRHCResponses)
+	}
+
 	satellite, directConnected, noRhc := sortHostsByRecipient(hostConnectorDetails)
 
 	// Return noRHC If no Satellite or Direct Connected hosts exist
@@ -84,8 +89,6 @@ func (this *controllers) ApiInternalHighlevelConnectionStatus(ctx echo.Context) 
 	highLevelStatus := HighLevelRecipientStatus(concatResponses(satelliteResponses, directConnectedResponses, noRHCResponses))
 	utils.GetLogFromEcho(ctx).Infow("returning high level status", "data", highLevelStatus)
 	return ctx.JSON(http.StatusOK, highLevelStatus)
-
-	//return ctx.JSON(http.StatusOK, HighLevelRecipientStatus(concatResponses(satelliteResponses, directConnectedResponses, noRHCResponses)))
 }
 
 func sortHostsByRecipient(details []inventory.HostDetails) (satelliteDetails []inventory.HostDetails, directConnectedDetails []inventory.HostDetails, noRhc []inventory.HostDetails) {
