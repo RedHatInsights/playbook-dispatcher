@@ -50,9 +50,7 @@ func (this *controllers) ApiInternalHighlevelConnectionStatus(ctx echo.Context) 
 	}
 
 	if len(hostConnectorDetails) == 0 {
-		// FIXME: I'm not sure that this is right.  Basically, we need to return a response that says the host was not available....
-		// This could happen if the host was deleted from inventory or an error (404) came back from inventory
-		// Think through this a bit more and build a test around this at the API level
+		utils.GetLogFromEcho(ctx).Infow("host(s) not found in inventory", "data", noRHCResponses)
 		return ctx.JSON(http.StatusOK, noRHCResponses)
 	}
 
@@ -91,8 +89,6 @@ func (this *controllers) ApiInternalHighlevelConnectionStatus(ctx echo.Context) 
 	highLevelStatus := HighLevelRecipientStatus(concatResponses(satelliteResponses, directConnectedResponses, noRHCResponses))
 	utils.GetLogFromEcho(ctx).Infow("returning high level status", "data", highLevelStatus)
 	return ctx.JSON(http.StatusOK, highLevelStatus)
-
-	//return ctx.JSON(http.StatusOK, HighLevelRecipientStatus(concatResponses(satelliteResponses, directConnectedResponses, noRHCResponses)))
 }
 
 func sortHostsByRecipient(details []inventory.HostDetails) (satelliteDetails []inventory.HostDetails, directConnectedDetails []inventory.HostDetails, noRhc []inventory.HostDetails) {
