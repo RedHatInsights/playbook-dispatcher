@@ -4,11 +4,11 @@
         "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
         "tasks.max": "1",
 
-        "driver.hostname": "${file:/opt/kafka/external-configuration/playbook-dispatcher-db/db.host}",
-        "driver.port": "${file:/opt/kafka/external-configuration/playbook-dispatcher-db/db.port}",
-        "driver.user": "${file:/opt/kafka/external-configuration/playbook-dispatcher-db/db.user}",
-        "driver.password": "${file:/opt/kafka/external-configuration/playbook-dispatcher-db/db.password}",
-        "driver.dbname": "${file:/opt/kafka/external-configuration/playbook-dispatcher-db/db.name}",
+        "database.hostname": "${file:/opt/kafka/external-configuration/playbook-dispatcher-db/db.host}",
+        "database.port": "${file:/opt/kafka/external-configuration/playbook-dispatcher-db/db.port}",
+        "database.user": "${file:/opt/kafka/external-configuration/playbook-dispatcher-db/db.user}",
+        "database.password": "${file:/opt/kafka/external-configuration/playbook-dispatcher-db/db.password}",
+        "database.dbname": "${file:/opt/kafka/external-configuration/playbook-dispatcher-db/db.name}",
 
         "slot.name": "debezium",
         "plugin.name": "pgoutput",
