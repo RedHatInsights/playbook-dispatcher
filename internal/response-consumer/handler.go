@@ -83,6 +83,15 @@ func (this *handler) onMessage(ctx context.Context, msg *k.Message) {
 
 		selectResult := baseQuery.Select("id", "status", "response_full").First(&run)
 
+		if selectResult.Error != nil {
+			if errors.Is(selectResult.Error, gorm.ErrRecordNotFound) {
+				return nil
+			}
+
+			utils.GetLogFromContext(ctx).Errorw("Error fetching run from db", "error", selectResult.Error)
+			return selectResult.Error
+		}
+
 		if requestType == satMessageHeaderValue {
 			satellite.SortSatEvents(value.SatEvents)
 
@@ -99,15 +108,6 @@ func (this *handler) onMessage(ctx context.Context, msg *k.Message) {
 		} else {
 			status = inferStatus(value.RunnerEvents, nil)
 			eventsSerialized = utils.MustMarshal(value.RunnerEvents)
-		}
-
-		if selectResult.Error != nil {
-			if errors.Is(selectResult.Error, gorm.ErrRecordNotFound) {
-				return nil
-			}
-
-			utils.GetLogFromContext(ctx).Errorw("Error fetching run from db", "error", selectResult.Error)
-			return selectResult.Error
 		}
 
 		toUpdate := db.Run{
