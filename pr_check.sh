@@ -30,7 +30,7 @@ source $CICD_ROOT/build.sh
 
 # IMAGE is set to the Connect image, setting dispatcher image as an extra arg
 # hardcode connect to use a ref that works in ephemeral
-EXTRA_DEPLOY_ARGS="--set-image-tag ${IMAGE_DISPATCHER}=${IMAGE_TAG}"
+EXTRA_DEPLOY_ARGS="--set-image-tag ${IMAGE_DISPATCHER}=${IMAGE_TAG} --set-template-ref ${CONNECT_COMPONENT_NAME}=${GIT_COMMIT}"
 
 # Deploy to an ephemeral environment
 source $CICD_ROOT/deploy_ephemeral_env.sh
@@ -48,6 +48,7 @@ bonfire deploy playbook-dispatcher cloud-connector \
     --set-template-ref ${COMPONENT_NAME}=${GIT_COMMIT} \
     --set-image-tag ${IMAGE_DISPATCHER}=${IMAGE_TAG} \
     --set-image-tag ${IMAGE_CONNECT}=${IMAGE_TAG} \
+    --set-template-ref ${CONNECT_COMPONENT_NAME}=${GIT_COMMIT} \
     --namespace ${NAMESPACE} \
     --timeout ${DEPLOY_TIMEOUT} \
     --set-parameter playbook-dispatcher/CLOUD_CONNECTOR_IMPL=impl
