@@ -283,7 +283,7 @@ objects:
         slot.name: debezium
         plugin.name: pgoutput
         slot.max.retries: 999999999
-        database.server.name: playbook-dispatcher
+        topic.prefix: playbook-dispatcher
         table.include.list: public.runs,public.run_hosts
         tombstones.on.delete: false
 
