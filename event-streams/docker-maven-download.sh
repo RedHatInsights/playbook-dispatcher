@@ -84,25 +84,9 @@ maven_apicurio_converter() {
         return
     fi
     APICURIO_CONVERTER_PACKAGE="apicurio-registry-distro-connect-converter"
-    maven_dep $MAVEN_REPO_CENTRAL "io/apicurio" "$APICURIO_CONVERTER_PACKAGE" "$1" "$APICURIO_CONVERTER_PACKAGE-$1.tar.gz" "$2"
+    maven_dep $MAVEN_REPO_CENTRAL "io/apicurio" "$APICURIO_CONVERTER_PACKAGE" "$1" "$APICURIO_CONVERTER_PACKAGE-$1-converter.tar.gz" "$2"
     mkdir "$EXTERNAL_LIBS_DIR/apicurio"
     tar -xzf "$DOWNLOAD_FILE" -C "$EXTERNAL_LIBS_DIR/apicurio" && rm "$DOWNLOAD_FILE"
-}
-
-maven_otel_libs() {
-    if [[ -z "$EXTERNAL_LIBS_DIR" ]] ; then
-        echo "WARNING: EXTERNAL_LIBS_DIR is not set. Skipping loading OTEL libraries ..."
-        return
-    fi
-    if [[ ! -d "$EXTERNAL_LIBS_DIR" ]] ; then
-        echo "WARNING: EXTERNAL_LIBS_DIR is not a directory. Skipping loading OTEL libraries ..."
-        return
-    fi
-    if [[ ! -d "$EXTERNAL_LIBS_DIR/otel" ]] ; then
-	mkdir "$EXTERNAL_LIBS_DIR/otel"
-    fi
-    maven_dep $MAVEN_REPO_CENTRAL $1 $2 $3 "$2-$3.jar" $4
-    mv "$DOWNLOAD_FILE" $EXTERNAL_LIBS_DIR/otel
 }
 
 case $1 in
@@ -126,8 +110,5 @@ case $1 in
             ;;
     "apicurio" ) shift
             maven_apicurio_converter ${@}
-            ;;
-    "otel" ) shift
-            maven_otel_libs ${@}
             ;;
 esac
