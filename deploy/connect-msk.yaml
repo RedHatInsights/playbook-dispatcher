@@ -305,7 +305,7 @@ objects:
         errors.log.include.messages: "true"
 
         heartbeat.interval.ms: 600000
-        heartbeat.topics.prefix: "__debezium-heartbeat-pd"
+        topic.heartbeat.prefix: "__debezium-heartbeat-pd"
         heartbeat.action.query: "INSERT INTO public.runs (id, org_id, recipient, correlation_id, url, service, timeout, created_at, updated_at) VALUES ('98875b33-b37e-4c35-be8b-d74f321bac28', '5318290', '00000000-0000-0000-0000-000000000000', '00000000-0000-0000-0000-000000000000', 'https://redhat.com', 'heartbeat', 3600, NOW(), NOW()) ON CONFLICT(id) DO UPDATE SET updated_at=NOW();"
 
 - apiVersion: apps/v1
