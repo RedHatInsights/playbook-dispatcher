@@ -20,6 +20,9 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+
+    "net/http"
+    _ "net/http/pprof"
 )
 
 const shutdownTimeout = 20 * time.Second
@@ -54,6 +57,8 @@ func run(cmd *cobra.Command, args []string) error {
 	metricsServer.GET("/ready", readinessProbeHandler.Check)
 	metricsServer.GET("/live", livenessProbeHandler.Check)
 	metricsServer.GET(cfg.GetString("metrics.path"), echo.WrapHandler(promhttp.Handler()))
+
+	metricsServer.GET("/debug/*", echo.WrapHandler(http.DefaultServeMux))
 
 	wg := sync.WaitGroup{}
 
