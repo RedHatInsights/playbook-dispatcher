@@ -265,9 +265,5 @@ func ignoreKafkaError(err error) bool {
 
 	kafkaErr := err.(kafka.Error)
 
-	if kafkaErr.Code() == kafka.ErrMsgSizeTooLarge {
-		return true
-	}
-
-	return false
+	return kafkaErr.Code() == kafka.ErrMsgSizeTooLarge
 }
