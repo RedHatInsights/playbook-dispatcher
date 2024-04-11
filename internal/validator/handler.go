@@ -251,7 +251,23 @@ func (this *handler) produceMessage(ctx context.Context, topic string, value int
 	if value != nil {
 		if err := kafkaUtils.Produce(this.producer, topic, value, key, headers...); err != nil {
 			instrumentation.ProducerError(ctx, err, topic)
+
+			if ignoreKafkaError(err) {
+				return
+			}
+
 			this.errors <- err // TODO: is "shutdown-on-error" a good strategy?
 		}
 	}
+}
+
+func ignoreKafkaError(err error) bool {
+
+	kafkaErr := err.(kafka.Error)
+
+	if kafkaErr.Code() == kafka.ErrMsgSizeTooLarge {
+		return true
+	}
+
+	return false
 }
