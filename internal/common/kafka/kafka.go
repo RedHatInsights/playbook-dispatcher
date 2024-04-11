@@ -148,8 +148,9 @@ func Produce(producer *kafka.Producer, topic string, value interface{}, key stri
 	defer close(deliveryChan)
 
 	err = producer.Produce(msg, deliveryChan)
-
-	// FIXME: do we just ignore this err instance and check the delivery channel?  This api is confusing...
+	if err != nil {
+		return err
+	}
 
 	// Reading the delivery channel here makes this a synchronous write (blocking)
 	e := <-deliveryChan
