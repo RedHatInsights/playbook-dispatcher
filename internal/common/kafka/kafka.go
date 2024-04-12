@@ -149,6 +149,7 @@ func Produce(producer *kafka.Producer, topic string, value interface{}, key stri
 
 	err = producer.Produce(msg, deliveryChan)
 	if err != nil {
+		fmt.Printf("Produce failed: %v\n", err)
 		return err
 	}
 
