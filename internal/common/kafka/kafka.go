@@ -149,7 +149,6 @@ func Produce(producer *kafka.Producer, topic string, value interface{}, key stri
 
 	err = producer.Produce(msg, deliveryChan)
 	if err != nil {
-		fmt.Printf("Produce failed: %v\n", err)
 		return err
 	}
 
@@ -158,12 +157,8 @@ func Produce(producer *kafka.Producer, topic string, value interface{}, key stri
 	m := e.(*kafka.Message)
 
 	if m.TopicPartition.Error != nil {
-		fmt.Printf("Delivery failed: %v\n", m.TopicPartition.Error)
 		return m.TopicPartition.Error
 	}
-
-	fmt.Printf("Delivered message to topic %s [%d] at offset %v\n",
-		*m.TopicPartition.Topic, m.TopicPartition.Partition, m.TopicPartition.Offset)
 
 	return nil
 }

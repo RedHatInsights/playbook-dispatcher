@@ -252,7 +252,7 @@ func (this *handler) produceMessage(ctx context.Context, topic string, value int
 		if err := kafkaUtils.Produce(this.producer, topic, value, key, headers...); err != nil {
 			instrumentation.ProducerError(ctx, err, topic)
 
-			if ignoreKafkaError(err) {
+			if ignoreKafkaProduceError(err) {
 				return
 			}
 
@@ -261,7 +261,7 @@ func (this *handler) produceMessage(ctx context.Context, topic string, value int
 	}
 }
 
-func ignoreKafkaError(err error) bool {
+func ignoreKafkaProduceError(err error) bool {
 
 	kafkaErr := err.(kafka.Error)
 
