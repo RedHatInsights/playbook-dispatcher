@@ -144,7 +144,23 @@ func Produce(producer *kafka.Producer, topic string, value interface{}, key stri
 		msg.Headers = headers
 	}
 
-	return producer.Produce(msg, nil)
+	deliveryChan := make(chan kafka.Event)
+	defer close(deliveryChan)
+
+	err = producer.Produce(msg, deliveryChan)
+	if err != nil {
+		return err
+	}
+
+	// Reading the delivery channel here makes this a synchronous write (blocking)
+	e := <-deliveryChan
+	m := e.(*kafka.Message)
+
+	if m.TopicPartition.Error != nil {
+		return m.TopicPartition.Error
+	}
+
+	return nil
 }
 
 type KafkaMessagePredicate func(msg *kafka.Message) bool
