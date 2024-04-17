@@ -28,28 +28,28 @@ RUN ./mvnw -Dschema.event.run=/src/run.event.yaml -Dschema.event.run.host=/src/r
 # https://access.redhat.com/documentation/en-us/red_hat_amq/2021.q3/html-single/deploying_and_upgrading_amq_streams_on_openshift/index#creating-new-image-from-base-str
 FROM registry.redhat.io/amq-streams/kafka-36-rhel8:2.6.0-4
 
-ARG BUILD_COMMIT=unknown
+#ARG BUILD_COMMIT=unknown
 
-ENV CONNECT_PLUGIN_PATH=/opt/kafka/plugins \
-    CONNECT_LIB_PATH=/opt/kafka/libs \
-    BUILD_COMMIT=${BUILD_COMMIT}
+#ENV CONNECT_PLUGIN_PATH=/opt/kafka/plugins \
+#    CONNECT_LIB_PATH=/opt/kafka/libs \
+#    BUILD_COMMIT=${BUILD_COMMIT}
 
-USER root
+#USER root
 
-RUN microdnf install jq
+#RUN microdnf install jq
 
-COPY event-streams/check-connectors.sh /
-COPY examples/connector-local.json /
-COPY event-streams/build_kafka_consumer_config.sh /
+#COPY event-streams/check-connectors.sh /
+#COPY examples/connector-local.json /
+#COPY event-streams/build_kafka_consumer_config.sh /
 
-RUN mkdir -p ${CONNECT_PLUGIN_PATH} /opt/kafka/custom-config/
+#RUN mkdir -p ${CONNECT_PLUGIN_PATH} /opt/kafka/custom-config/
 
-COPY --from=builder /src/target/playbook-dispatcher-smt.jar $CONNECT_PLUGIN_PATH
-COPY --from=builder /deps/plugins $CONNECT_PLUGIN_PATH
+#COPY --from=builder /src/target/playbook-dispatcher-smt.jar $CONNECT_PLUGIN_PATH
+#COPY --from=builder /deps/plugins $CONNECT_PLUGIN_PATH
 
-COPY --from=builder /deps/libs $CONNECT_LIB_PATH
+#COPY --from=builder /deps/libs $CONNECT_LIB_PATH
 
-COPY event-streams/log4j.properties /opt/kafka/custom-config
+#COPY event-streams/log4j.properties /opt/kafka/custom-config
 
 USER 1001
 
