@@ -109,6 +109,10 @@ func PlaybookRunHostCreateError(ctx context.Context, err error, data []dbModel.R
 	errorTotal.WithLabelValues(labelDb, labelPlaybookRunHostCreate, requestType, api.GetApiVersion(ctx)).Inc()
 }
 
+func PlaybookApiRequestError(ctx echo.Context, err error) {
+	utils.GetLogFromEcho(ctx).Errorw("Unable to process api request", "error", err)
+}
+
 func PlaybookRunCancelError(ctx context.Context, err error) {
 	utils.GetLogFromContext(ctx).Errorw("Error canceling run", "error", err)
 	runCanceledErrorTotal.Inc()

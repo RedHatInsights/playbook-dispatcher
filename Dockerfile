@@ -1,7 +1,13 @@
 FROM registry.access.redhat.com/ubi8/go-toolset as builder
 
 WORKDIR /go/src/app
-COPY . .
+
+COPY go.mod go.sum .
+COPY internal/ internal/
+COPY cmd/ cmd/
+COPY main.go main.go
+
+RUN go mod download
 
 USER 0
 

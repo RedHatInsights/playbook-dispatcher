@@ -71,6 +71,51 @@ var _ = Describe("Sources", func() {
 			Expect(err.Error()).To(ContainSubstring("Source Bad Request"))
 		})
 
+		It("interperates response correctly if getSources returns an empty response", func() {
+			responses := []test.MockHttpResponse{
+				{StatusCode: 200, Body: `{}`},
+				{StatusCode: 200, Body: `{}`},
+			}
+
+			doer := test.MockMultiResponseHttpClient(responses...)
+			client := NewSourcesClientWithHttpRequestDoer(config.Get(), doer)
+			ctx := test.TestContext()
+
+			_, err := client.GetSourceConnectionDetails(ctx, "4f37c752-ba1c-48b1-bcf7-4ef8f585d9ee")
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("GetSources returned an empty response"))
+		})
+
+		It("interperates response correctly if getSources returns a response where an entry does not have an id", func() {
+			responses := []test.MockHttpResponse{
+				{StatusCode: 200, Body: `{"data": [{"name": "test", "availability_status": "connected"}]}`},
+				{StatusCode: 200, Body: `{}`},
+			}
+
+			doer := test.MockMultiResponseHttpClient(responses...)
+			client := NewSourcesClientWithHttpRequestDoer(config.Get(), doer)
+			ctx := test.TestContext()
+
+			_, err := client.GetSourceConnectionDetails(ctx, "4f37c752-ba1c-48b1-bcf7-4ef8f585d9ee")
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("GetSources did not return a valid sources id"))
+		})
+
+		It("interperates response correctly if getSources returns a response where the data array is empty", func() {
+			responses := []test.MockHttpResponse{
+				{StatusCode: 200, Body: `{"data": []}`},
+				{StatusCode: 200, Body: `{}`},
+			}
+
+			doer := test.MockMultiResponseHttpClient(responses...)
+			client := NewSourcesClientWithHttpRequestDoer(config.Get(), doer)
+			ctx := test.TestContext()
+
+			_, err := client.GetSourceConnectionDetails(ctx, "4f37c752-ba1c-48b1-bcf7-4ef8f585d9ee")
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("GetSources returned an empty response"))
+		})
+
 		It("interperates response correctly if getRhcConnectionStatus returns a 404", func() {
 			responses := []test.MockHttpResponse{
 				{StatusCode: 200, Body: `{"data": [{"id": "1", "name": "test", "availability_status": "connected"}]}`},
@@ -100,5 +145,21 @@ var _ = Describe("Sources", func() {
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(ContainSubstring("RHCStatus Bad Request"))
 		})
+
+		It("interperates response correctly if getRhcConnectionStatus returns an empty response", func() {
+			responses := []test.MockHttpResponse{
+				{StatusCode: 200, Body: `{"data": [{"id": "1", "name": "test", "availability_status": "connected"}]}`},
+				{StatusCode: 200, Body: `{}`},
+			}
+
+			doer := test.MockMultiResponseHttpClient(responses...)
+			client := NewSourcesClientWithHttpRequestDoer(config.Get(), doer)
+			ctx := test.TestContext()
+
+			_, err := client.GetSourceConnectionDetails(ctx, "4f37c752-ba1c-48b1-bcf7-4ef8f585d9ee")
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("GetRHCConnectionStatus returned an empty response"))
+		})
+
 	})
 })
