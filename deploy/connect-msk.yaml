@@ -214,8 +214,8 @@ objects:
       type: ${KAFKA_SASL_MECHANISM}
       username: ${KAFKA_USERNAME}
       passwordSecret:
-        secretName: app-auth
-        password: client_secret
+        secretName: msk-client
+        password: password
     externalConfiguration:
       volumes:
         - name: rds-client-ca
@@ -358,13 +358,13 @@ objects:
           - name: KAFKA_USERNAME
             valueFrom:
               secretKeyRef:
-                key: client_id
-                name: app-auth
+                key: username
+                name: msk-client
           - name: KAFKA_SECRET
             valueFrom:
               secretKeyRef:
-                key: client_secret
-                name: app-auth
+                key: password
+                name: msk-client
           volumeMounts:
             - name: volume-temp
               mountPath: /tmp/temp-files

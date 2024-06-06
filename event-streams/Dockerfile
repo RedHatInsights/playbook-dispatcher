@@ -36,7 +36,7 @@ ENV CONNECT_PLUGIN_PATH=/opt/kafka/plugins \
 
 USER root
 
-RUN microdnf install jq
+RUN microdnf update -y && microdnf install jq
 
 COPY event-streams/check-connectors.sh /
 COPY examples/connector-local.json /

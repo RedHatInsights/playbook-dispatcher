@@ -366,7 +366,6 @@ components:
       description: Identifier of the organization within Satellite
       type: string
       example: "12345"
-      minLength: 1
 
     RecipientType:
       description: Identifies the type of recipient [Satellite, Direct Connected, None]
