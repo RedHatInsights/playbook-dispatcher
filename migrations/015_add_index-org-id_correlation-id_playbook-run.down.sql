@@ -1,0 +1,1 @@
+DROP INDEX CONCURRENTLY IF EXISTS runs_org_id_correlation_id_run_id_index;
