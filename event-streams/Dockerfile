@@ -13,6 +13,7 @@ ADD event-streams /src
 ADD schema/run.event.yaml /src
 ADD schema/run.host.event.yaml /src
 
+RUN microdnf update -y && microdnf install jq
 RUN microdnf install gzip
 
 # Taken from https://github.com/debezium/docker-images/blob/master/connect-base/1.9/docker-maven-download.sh
@@ -26,7 +27,7 @@ RUN ./mvnw -Dschema.event.run=/src/run.event.yaml -Dschema.event.run.host=/src/r
 
 
 # https://access.redhat.com/documentation/en-us/red_hat_amq/2021.q3/html-single/deploying_and_upgrading_amq_streams_on_openshift/index#creating-new-image-from-base-str
-FROM registry.redhat.io/amq-streams/kafka-36-rhel9
+FROM registry.redhat.io/amq-streams/kafka-36-rhel9:2.7.0-7
 
 ARG BUILD_COMMIT=unknown
 
@@ -35,8 +36,6 @@ ENV CONNECT_PLUGIN_PATH=/opt/kafka/plugins \
     BUILD_COMMIT=${BUILD_COMMIT}
 
 USER root
-
-RUN microdnf update -y && microdnf install jq
 
 COPY event-streams/check-connectors.sh /
 COPY examples/connector-local.json /
