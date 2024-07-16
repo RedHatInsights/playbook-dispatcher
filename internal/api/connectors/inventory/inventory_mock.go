@@ -30,6 +30,7 @@ func (this *inventoryConnectorMock) GetHostConnectionDetails(
 	satelliteOrgID := "5"
 	satelliteVersion := "6.11"
 	rhcClientID := "32af5948-301f-449a-a25b-ff34c83264a2"
+	ansibleHost := "test-ansible-host"
 
 	hostDetails := HostDetails{
 		ID:                  "c484f980-ab8d-401b-90e7-aa1d4ccf8c0e",
@@ -43,6 +44,7 @@ func (this *inventoryConnectorMock) GetHostConnectionDetails(
 		ID:          "fe30b997-c15a-44a9-89df-c236c3b5c540",
 		OwnerID:     &ownerID,
 		RHCClientID: &rhcClientID,
+		AnsibleHost: &ansibleHost,
 	}
 
 	hostDetailsList := []HostDetails{hostDetails, directConnectDetails}

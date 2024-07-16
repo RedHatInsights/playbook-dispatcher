@@ -17,6 +17,9 @@ import (
 	externalRef0 "playbook-dispatcher/internal/api/controllers/public"
 )
 
+// AnsibleHost defines model for AnsibleHost.
+type AnsibleHost string
+
 // CancelInputV2 defines model for CancelInputV2.
 type CancelInputV2 struct {
 
@@ -89,6 +92,10 @@ const (
 
 // RecipientWithConnectionInfo defines model for RecipientWithConnectionInfo.
 type RecipientWithConnectionInfo struct {
+
+	// Host name as known to Ansible inventory.
+	// Used to identify the host in status reports.
+	AnsibleHost AnsibleHost `json:"ansible_host"`
 
 	// Identifies the organization that the given resource belongs to
 	OrgId OrgId `json:"org_id"`
@@ -169,7 +176,7 @@ type RunInputHosts []struct {
 
 	// Host name as known to Ansible inventory.
 	// Used to identify the host in status reports.
-	AnsibleHost *string `json:"ansible_host,omitempty"`
+	AnsibleHost *AnsibleHost `json:"ansible_host,omitempty"`
 
 	// Inventory id of the given host
 	InventoryId *string `json:"inventory_id,omitempty"`

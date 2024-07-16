@@ -17,7 +17,7 @@ import (
 )
 
 var (
-	ansibleHost = "localhost"
+	ansibleHost = AnsibleHost("localhost")
 )
 
 func dispatch(payload *ApiInternalRunsCreateJSONRequestBody) (*RunsCreated, *ApiInternalRunsCreateResponse) {

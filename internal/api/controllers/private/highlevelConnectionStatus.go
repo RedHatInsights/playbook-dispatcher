@@ -110,11 +110,12 @@ func sortHostsByRecipient(details []inventory.HostDetails) (satelliteDetails []i
 	return satelliteConnectedHosts, directConnectedHosts, hostsNotConnected
 }
 
-func formatConnectionResponse(satID *string, satOrgID *string, rhcClientID *string, orgID OrgId, hosts []string, recipientType string, status string) RecipientWithConnectionInfo {
+func formatConnectionResponse(satID *string, satOrgID *string, rhcClientID *string, ansibleHost *string, orgID OrgId, hosts []string, recipientType string, status string) RecipientWithConnectionInfo {
 	formatedHosts := make([]HostId, len(hosts))
 	var formatedSatID SatelliteId
 	var formatedSatOrgID SatelliteOrgId
 	var formatedRHCClientID public.RunRecipient
+	var formatedAnsibleHost AnsibleHost
 
 	if satID != nil {
 		formatedSatID = SatelliteId(*satID)
@@ -126,6 +127,10 @@ func formatConnectionResponse(satID *string, satOrgID *string, rhcClientID *stri
 
 	if rhcClientID != nil {
 		formatedRHCClientID = public.RunRecipient(*rhcClientID)
+	}
+
+	if ansibleHost != nil {
+		formatedAnsibleHost = AnsibleHost(*ansibleHost)
 	}
 
 	for i, host := range hosts {
@@ -140,6 +145,7 @@ func formatConnectionResponse(satID *string, satOrgID *string, rhcClientID *stri
 		SatOrgId:      formatedSatOrgID,
 		Status:        status,
 		Systems:       formatedHosts,
+		AnsibleHost:   formatedAnsibleHost,
 	}
 
 	return connectionInfo
@@ -162,7 +168,7 @@ func getDirectConnectStatus(ctx echo.Context, client connectors.CloudConnectorCl
 			connectionStatus = "disconnected"
 		}
 
-		responses = append(responses, formatConnectionResponse(nil, nil, host.RHCClientID, orgId, []string{host.ID}, string(RecipientType_directConnect), connectionStatus))
+		responses = append(responses, formatConnectionResponse(nil, nil, host.RHCClientID, host.AnsibleHost, orgId, []string{host.ID}, string(RecipientType_directConnect), connectionStatus))
 	}
 
 	return responses, nil
@@ -238,7 +244,7 @@ func createSatelliteConnectionResponses(ctx echo.Context, hostsGroupedBySatellit
 				connectionStatus = "disconnected"
 			}
 
-			responses = append(responses, formatConnectionResponse(&satellite.SatelliteInstanceID, &satellite.SatelliteOrgID, satellite.RhcClientID, orgId, satellite.Hosts, string(RecipientType_satellite), connectionStatus))
+			responses = append(responses, formatConnectionResponse(&satellite.SatelliteInstanceID, &satellite.SatelliteOrgID, satellite.RhcClientID, nil, orgId, satellite.Hosts, string(RecipientType_satellite), connectionStatus))
 		}
 	}
 
@@ -252,7 +258,7 @@ func getRHCStatus(hostDetails []inventory.HostDetails, orgID OrgId) RecipientWit
 		hostIDs[i] = host.ID
 	}
 
-	return formatConnectionResponse(nil, nil, nil, orgID, hostIDs, "none", "rhc_not_configured")
+	return formatConnectionResponse(nil, nil, nil, nil, orgID, hostIDs, "none", "rhc_not_configured")
 }
 
 func concatResponses(satellite []RecipientWithConnectionInfo, directConnect []RecipientWithConnectionInfo, noRHC []RecipientWithConnectionInfo) []RecipientWithConnectionInfo {
