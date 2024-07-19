@@ -36,6 +36,17 @@ type HighLevelRecipientStatus []RecipientWithConnectionInfo
 // HostId defines model for HostId.
 type HostId string
 
+// HostIdWithAnsibleHost defines model for HostIdWithAnsibleHost.
+type HostIdWithAnsibleHost struct {
+
+	// Host name as known to Ansible inventory.
+	// Used to identify the host in status reports.
+	AnsibleHost AnsibleHost `json:"ansible_host"`
+
+	// Identifies a record of the Host-Inventory service
+	HostId HostId `json:"host_id"`
+}
+
 // HostsWithOrgId defines model for HostsWithOrgId.
 type HostsWithOrgId struct {
 	Hosts []string `json:"hosts"`
@@ -83,10 +94,6 @@ const (
 // RecipientWithConnectionInfo defines model for RecipientWithConnectionInfo.
 type RecipientWithConnectionInfo struct {
 
-	// Host name as known to Ansible inventory.
-	// Used to identify the host in status reports.
-	AnsibleHost AnsibleHost `json:"ansible_host"`
-
 	// Identifies the organization that the given resource belongs to
 	OrgId OrgId `json:"org_id"`
 
@@ -103,8 +110,9 @@ type RecipientWithConnectionInfo struct {
 	SatOrgId SatelliteOrgId `json:"sat_org_id"`
 
 	// Indicates the current run status of the recipient
-	Status  string   `json:"status"`
-	Systems []HostId `json:"systems"`
+	Status      string                  `json:"status"`
+	Systems     []HostId                `json:"systems"`
+	SystemsInfo []HostIdWithAnsibleHost `json:"systems_info"`
 }
 
 // RecipientWithOrg defines model for RecipientWithOrg.

@@ -331,8 +331,10 @@ components:
           description: Indicates the current run status of the recipient
           type: string
           enum: [connected, disconnected, rhc_not_configured]
-        ansible_host:
-          $ref: '#/components/schemas/AnsibleHost'
+        systems_info:
+          type: array
+          items:
+            $ref: '#/components/schemas/HostIdWithAnsibleHost'
       required:
       - recipient
       - org_id
@@ -341,7 +343,7 @@ components:
       - sat_org_id
       - systems
       - status
-      - ansible_host
+      - systems_info
 
 
     HighLevelRecipientStatus:
@@ -353,6 +355,18 @@ components:
       description: Identifies a record of the Host-Inventory service
       type: string
       minLength: 1
+
+    HostIdWithAnsibleHost:
+      description: An object containing the host id and the ansible host name
+      type: object
+      properties:
+        host_id:
+          $ref: '#/components/schemas/HostId'
+        ansible_host:
+          $ref: '#/components/schemas/AnsibleHost'
+      required:
+      - host_id
+      - ansible_host
 
     SatelliteId:
       description: Identifier of the Satellite instance in the uuid v4/v5 format

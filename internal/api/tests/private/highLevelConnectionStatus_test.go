@@ -34,7 +34,9 @@ var _ = Describe("high level connection status", func() {
 		satOrgID := SatelliteOrgId("5")
 		satelliteHost := []HostId{"c484f980-ab8d-401b-90e7-aa1d4ccf8c0e"}
 		directConnectHost := []HostId{"fe30b997-c15a-44a9-89df-c236c3b5c540"}
-		ansibleHost := AnsibleHost("test-ansible-host")
+
+		satelliteHostWithAnsibleHost := []HostIdWithAnsibleHost{{HostId: "c484f980-ab8d-401b-90e7-aa1d4ccf8c0e", AnsibleHost: ""}}
+		directConnectHostWithAnsibleHost := []HostIdWithAnsibleHost{{HostId: "fe30b997-c15a-44a9-89df-c236c3b5c540", AnsibleHost: "test-ansible-host"}}
 
 		payload := ApiInternalHighlevelConnectionStatusJSONRequestBody{
 			Hosts: []string{"c484f980-ab8d-401b-90e7-aa1d4ccf8c0e"},
@@ -52,7 +54,7 @@ var _ = Describe("high level connection status", func() {
 		Expect((*result)[0].SatOrgId).To(Equal(satOrgID))
 		Expect((*result)[0].Status).To(Equal("connected"))
 		Expect((*result)[0].Systems).To(Equal(satelliteHost))
-		Expect((*result)[0].AnsibleHost).To(BeEmpty())
+		Expect((*result)[0].SystemsInfo).To(Equal(satelliteHostWithAnsibleHost))
 
 		Expect((*result)[1].Recipient).To(Equal(public.RunRecipient("32af5948-301f-449a-a25b-ff34c83264a2")))
 		Expect((*result)[1].RecipientType).To(Equal(RecipientType_directConnect))
@@ -61,6 +63,6 @@ var _ = Describe("high level connection status", func() {
 		Expect((*result)[1].SatOrgId).To(BeEmpty())
 		Expect((*result)[1].Status).To(Equal("connected"))
 		Expect((*result)[1].Systems).To(Equal(directConnectHost))
-		Expect((*result)[1].AnsibleHost).To(Equal(ansibleHost))
+		Expect((*result)[1].SystemsInfo).To(Equal(directConnectHostWithAnsibleHost))
 	})
 })

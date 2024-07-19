@@ -115,7 +115,9 @@ func formatConnectionResponse(satID *string, satOrgID *string, rhcClientID *stri
 	var formatedSatID SatelliteId
 	var formatedSatOrgID SatelliteOrgId
 	var formatedRHCClientID public.RunRecipient
-	var formatedAnsibleHost AnsibleHost
+
+	var formattedAnsibleHost AnsibleHost
+	formattedHostWithAnsibleHost := make([]HostIdWithAnsibleHost, len(hosts))
 
 	if satID != nil {
 		formatedSatID = SatelliteId(*satID)
@@ -130,11 +132,12 @@ func formatConnectionResponse(satID *string, satOrgID *string, rhcClientID *stri
 	}
 
 	if ansibleHost != nil {
-		formatedAnsibleHost = AnsibleHost(*ansibleHost)
+		formattedAnsibleHost = AnsibleHost(*ansibleHost)
 	}
 
 	for i, host := range hosts {
 		formatedHosts[i] = HostId(host)
+		formattedHostWithAnsibleHost[i] = HostIdWithAnsibleHost{HostId: HostId(host), AnsibleHost: formattedAnsibleHost}
 	}
 
 	connectionInfo := RecipientWithConnectionInfo{
@@ -145,7 +148,7 @@ func formatConnectionResponse(satID *string, satOrgID *string, rhcClientID *stri
 		SatOrgId:      formatedSatOrgID,
 		Status:        status,
 		Systems:       formatedHosts,
-		AnsibleHost:   formatedAnsibleHost,
+		SystemsInfo:   formattedHostWithAnsibleHost,
 	}
 
 	return connectionInfo
