@@ -138,6 +138,10 @@ func handleRunCreateError(err error) *RunCreated {
 		return runCreateError(http.StatusNotFound)
 	}
 
+	if _, ok := err.(*utils.BlocklistedOrgIdError); ok {
+		return runCreateError(http.StatusBadRequest)
+	}
+
 	return runCreateError(http.StatusInternalServerError)
 }
 

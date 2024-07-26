@@ -22,6 +22,7 @@ services:
       CLOWDER_ENABLED: "false"
       DB_HOST: "db"
       PSK_AUTH_TEST: "xwKhCUzgJ8"
+      BLOCKLIST_ORGIDS: "1337,7331"
     restart: unless-stopped
 
   zookeeper:

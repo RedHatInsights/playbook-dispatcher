@@ -156,6 +156,10 @@ func (this *handler) validateRequest(request *messageModel.IngressValidationRequ
 		return fmt.Errorf("Rejecting payload due to file size: %d", request.Size)
 	}
 
+	if utils.IsOrgIdBlocklisted(cfg, request.OrgID) {
+		return fmt.Errorf("Rejecting payload because the org_id is blocklisted: %s", request.OrgID)
+	}
+
 	return
 }
 
