@@ -56,6 +56,20 @@ var _ = Describe("Handler", func() {
 		})
 	})
 
+	Describe("Blocklisted OrgIDs", func() {
+		It("Rejects archives if org_id is blocklisted", func() {
+			cfg.Set("blocklist.orgids", "1337")
+
+			req := &messageModel.IngressValidationRequest{
+				OrgID: "1337",
+				Size:  1024,
+			}
+
+			err := instance.validateRequest(req)
+			Expect(err).To(HaveOccurred())
+		})
+	})
+
 	Describe("Validation", func() {
 
 		DescribeTable("Rejects invalid files",

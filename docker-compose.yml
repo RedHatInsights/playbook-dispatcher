@@ -78,7 +78,7 @@ services:
       - '8080:3000'
     environment:
       - INGRESS_STAGEBUCKET=insights-upload-perma
-      - INGRESS_VALIDTOPICS=playbook,playbook-sat
+      - INGRESS_VALID_UPLOAD_TYPES=playbook,playbook-sat
       - OPENSHIFT_BUILD_COMMIT=somestring
       - INGRESS_MAXSIZE=104857600
       - INGRESS_MINIODEV=true
