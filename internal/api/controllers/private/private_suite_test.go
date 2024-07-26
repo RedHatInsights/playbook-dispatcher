@@ -7,6 +7,8 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
+
+	"playbook-dispatcher/internal/common/utils"
 )
 
 func TestConfig(t *testing.T) {
@@ -52,6 +54,34 @@ var _ = Describe("Validation", func() {
 		Entry("satellite - hosts empty",
 			`{"org_id": "123","recipient": "dd018b96-da04-4651-84d1-187fa5c23f6c","url": "http://example.com","playbook_name":"test-playbook","playbook_run_url": "http://example.com","recipient_config": {"sat_id":"16372e6f-1c18-4cdb-b780-50ab4b88e74b","sat_org_id":"456"},"principal": "test-user", "hosts": []}`,
 			false,
+		),
+	)
+})
+
+var _ = Describe("Blocklisted OrgIDs", func() {
+	DescribeTable("validateFields",
+		func(orgID string, result bool) {
+			cfg.Set("blocklist.orgids", "1337,1234")
+
+			isBlocked := utils.IsOrgIdBlocklisted(cfg, orgID)
+
+			Expect(isBlocked).To(Equal(result))
+		},
+
+		Entry(
+			"unblocked orgid",
+			"01234",
+			false,
+		),
+		Entry(
+			"blocked org_id - 1",
+			"1337",
+			true,
+		),
+		Entry(
+			"blocked org_id - 2",
+			"1234",
+			true,
 		),
 	)
 })
