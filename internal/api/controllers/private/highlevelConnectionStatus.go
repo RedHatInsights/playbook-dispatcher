@@ -15,7 +15,7 @@ type rhcSatellite struct {
 	SatelliteInstanceID      string
 	SatelliteOrgID           string
 	SatelliteVersion         string
-	HostsWithAnsibleHosts    []HostIdWithAnsibleHost
+	HostsWithAnsibleHosts    []HostAttribute
 	SourceID                 string
 	RhcClientID              *string
 	SourceAvailabilityStatus *string
@@ -110,7 +110,7 @@ func sortHostsByRecipient(details []inventory.HostDetails) (satelliteDetails []i
 	return satelliteConnectedHosts, directConnectedHosts, hostsNotConnected
 }
 
-func formatConnectionResponse(satID *string, satOrgID *string, rhcClientID *string, orgID OrgId, hosts []HostIdWithAnsibleHost, recipientType string, status string) RecipientWithConnectionInfo {
+func formatConnectionResponse(satID *string, satOrgID *string, rhcClientID *string, orgID OrgId, hosts []HostAttribute, recipientType string, status string) RecipientWithConnectionInfo {
 	formatedHosts := make([]HostId, len(hosts))
 	var formatedSatID SatelliteId
 	var formatedSatOrgID SatelliteOrgId
@@ -167,7 +167,7 @@ func getDirectConnectStatus(ctx echo.Context, client connectors.CloudConnectorCl
 		if host.AnsibleHost != nil {
 			ansibleHost = AnsibleHost(*host.AnsibleHost)
 		}
-		hostWithAnsibleHost := []HostIdWithAnsibleHost{{ansibleHost, HostId(host.ID)}}
+		hostWithAnsibleHost := []HostAttribute{{ansibleHost, HostId(host.ID)}}
 
 		responses = append(responses, formatConnectionResponse(nil, nil, host.RHCClientID, orgId, hostWithAnsibleHost, string(RecipientType_directConnect), connectionStatus))
 	}
@@ -200,7 +200,7 @@ func groupHostsBySatellite(hostDetails []inventory.HostDetails) map[string]*rhcS
 		if host.AnsibleHost != nil {
 			ansibleHost = AnsibleHost(*host.AnsibleHost)
 		}
-		hostWithAnsibleHost := HostIdWithAnsibleHost{ansibleHost, HostId(host.ID)}
+		hostWithAnsibleHost := HostAttribute{ansibleHost, HostId(host.ID)}
 
 		if exists {
 			hostsGroupedBySatellite[satInstanceAndOrg].HostsWithAnsibleHosts = append(hostsGroupedBySatellite[satInstanceAndOrg].HostsWithAnsibleHosts, hostWithAnsibleHost)
@@ -209,7 +209,7 @@ func groupHostsBySatellite(hostDetails []inventory.HostDetails) map[string]*rhcS
 				SatelliteInstanceID:   *host.SatelliteInstanceID,
 				SatelliteOrgID:        *host.SatelliteOrgID,
 				SatelliteVersion:      *host.SatelliteVersion,
-				HostsWithAnsibleHosts: []HostIdWithAnsibleHost{hostWithAnsibleHost},
+				HostsWithAnsibleHosts: []HostAttribute{hostWithAnsibleHost},
 			}
 		}
 	}
@@ -259,10 +259,10 @@ func createSatelliteConnectionResponses(ctx echo.Context, hostsGroupedBySatellit
 }
 
 func getRHCStatus(hostDetails []inventory.HostDetails, orgID OrgId) RecipientWithConnectionInfo {
-	hostIDs := make([]HostIdWithAnsibleHost, len(hostDetails))
+	hostIDs := make([]HostAttribute, len(hostDetails))
 
 	for i, host := range hostDetails {
-		hostIDs[i] = HostIdWithAnsibleHost{AnsibleHost(*host.AnsibleHost), HostId(host.ID)}
+		hostIDs[i] = HostAttribute{AnsibleHost(*host.AnsibleHost), HostId(host.ID)}
 	}
 
 	return formatConnectionResponse(nil, nil, nil, orgID, hostIDs, "none", "rhc_not_configured")

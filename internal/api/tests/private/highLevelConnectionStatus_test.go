@@ -35,8 +35,8 @@ var _ = Describe("high level connection status", func() {
 		satelliteHost := []HostId{"c484f980-ab8d-401b-90e7-aa1d4ccf8c0e"}
 		directConnectHost := []HostId{"fe30b997-c15a-44a9-89df-c236c3b5c540"}
 
-		satelliteHostWithAnsibleHost := []HostIdWithAnsibleHost{{HostId: "c484f980-ab8d-401b-90e7-aa1d4ccf8c0e", AnsibleHost: ""}}
-		directConnectHostWithAnsibleHost := []HostIdWithAnsibleHost{{HostId: "fe30b997-c15a-44a9-89df-c236c3b5c540", AnsibleHost: "test-ansible-host"}}
+		satelliteHostWithAnsibleHost := []HostAttribute{{HostId: "c484f980-ab8d-401b-90e7-aa1d4ccf8c0e", AnsibleHost: ""}}
+		directConnectHostWithAnsibleHost := []HostAttribute{{HostId: "fe30b997-c15a-44a9-89df-c236c3b5c540", AnsibleHost: "test-ansible-host"}}
 
 		payload := ApiInternalHighlevelConnectionStatusJSONRequestBody{
 			Hosts: []string{"c484f980-ab8d-401b-90e7-aa1d4ccf8c0e"},
