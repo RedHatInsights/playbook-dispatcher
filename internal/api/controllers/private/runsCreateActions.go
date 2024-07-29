@@ -37,8 +37,13 @@ func parseRunHosts(input *RunInputHosts) []generic.RunHostsInput {
 	result := make([]generic.RunHostsInput, len(*input))
 
 	for i, host := range *input {
+		var ansibleHost *string
+		if host.AnsibleHost != nil {
+			ansibleHostString := string(*host.AnsibleHost)
+			ansibleHost = &ansibleHostString
+		}
 		result[i] = generic.RunHostsInput{
-			AnsibleHost: host.AnsibleHost,
+			AnsibleHost: ansibleHost,
 		}
 
 		if host.InventoryId != nil {

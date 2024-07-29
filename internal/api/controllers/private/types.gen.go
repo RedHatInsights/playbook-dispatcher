@@ -7,6 +7,9 @@ import (
 	externalRef0 "playbook-dispatcher/internal/api/controllers/public"
 )
 
+// AnsibleHost defines model for AnsibleHost.
+type AnsibleHost string
+
 // CancelInputV2 defines model for CancelInputV2.
 type CancelInputV2 struct {
 
@@ -29,6 +32,17 @@ type Error struct {
 
 // HighLevelRecipientStatus defines model for HighLevelRecipientStatus.
 type HighLevelRecipientStatus []RecipientWithConnectionInfo
+
+// HostAttribute defines model for HostAttribute.
+type HostAttribute struct {
+
+	// Host name as known to Ansible inventory.
+	// Used to identify the host in status reports.
+	AnsibleHost AnsibleHost `json:"ansible_host"`
+
+	// Identifies a record of the Host-Inventory service
+	HostId HostId `json:"host_id"`
+}
 
 // HostId defines model for HostId.
 type HostId string
@@ -96,8 +110,9 @@ type RecipientWithConnectionInfo struct {
 	SatOrgId SatelliteOrgId `json:"sat_org_id"`
 
 	// Indicates the current run status of the recipient
-	Status  string   `json:"status"`
-	Systems []HostId `json:"systems"`
+	Status      string          `json:"status"`
+	Systems     []HostId        `json:"systems"`
+	SystemsInfo []HostAttribute `json:"systems_info"`
 }
 
 // RecipientWithOrg defines model for RecipientWithOrg.
@@ -159,7 +174,7 @@ type RunInputHosts []struct {
 
 	// Host name as known to Ansible inventory.
 	// Used to identify the host in status reports.
-	AnsibleHost *string `json:"ansible_host,omitempty"`
+	AnsibleHost *AnsibleHost `json:"ansible_host,omitempty"`
 
 	// Inventory id of the given host
 	InventoryId *string `json:"inventory_id,omitempty"`

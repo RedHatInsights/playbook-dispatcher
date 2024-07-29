@@ -229,12 +229,7 @@ components:
         type: object
         properties:
           ansible_host:
-            type: string
-            description: |
-              Host name as known to Ansible inventory.
-              Used to identify the host in status reports.
-            example: localhost
-            minLength: 1
+            $ref: '#/components/schemas/AnsibleHost'
           inventory_id:
             type: string
             format: uuid
@@ -336,6 +331,10 @@ components:
           description: Indicates the current run status of the recipient
           type: string
           enum: [connected, disconnected, rhc_not_configured]
+        systems_info:
+          type: array
+          items:
+            $ref: '#/components/schemas/HostAttribute'
       required:
       - recipient
       - org_id
@@ -344,6 +343,7 @@ components:
       - sat_org_id
       - systems
       - status
+      - systems_info
 
 
     HighLevelRecipientStatus:
@@ -355,6 +355,18 @@ components:
       description: Identifies a record of the Host-Inventory service
       type: string
       minLength: 1
+
+    HostAttribute:
+      description: An object containing the host id and the ansible host name
+      type: object
+      properties:
+        host_id:
+          $ref: '#/components/schemas/HostId'
+        ansible_host:
+          $ref: '#/components/schemas/AnsibleHost'
+      required:
+      - host_id
+      - ansible_host
 
     SatelliteId:
       description: Identifier of the Satellite instance in the uuid v4/v5 format
@@ -383,6 +395,14 @@ components:
       description: Username of the user interacting with the service
       type: string
       example: jharting
+      minLength: 1
+
+    AnsibleHost:
+      type: string
+      description: |
+        Host name as known to Ansible inventory.
+        Used to identify the host in status reports.
+      example: localhost
       minLength: 1
 
     Version:

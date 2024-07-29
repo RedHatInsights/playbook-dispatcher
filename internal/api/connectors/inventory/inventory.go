@@ -207,6 +207,7 @@ func (this *inventoryConnectorImpl) GetHostConnectionDetails(ctx context.Context
 			SatelliteVersion:    satelliteFacts.SatelliteVersion,
 			SatelliteOrgID:      satelliteFacts.SatelliteOrgID,
 			RHCClientID:         systemProfileResults[*host.Id].SystemProfile.RhcClientId,
+			AnsibleHost:         host.AnsibleHost,
 		}
 	}
 
