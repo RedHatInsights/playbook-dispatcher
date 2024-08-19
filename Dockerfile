@@ -25,6 +25,8 @@ COPY migrations /migrations
 
 ENV BUILD_COMMIT=${BUILD_COMMIT}
 
+COPY licenses/LICENSE /licenses/LICENSE
+
 USER 1001
 
 ENTRYPOINT [ "/app" ]
