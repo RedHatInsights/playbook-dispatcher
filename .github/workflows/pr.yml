@@ -11,7 +11,7 @@ jobs:
     container: node:12-slim
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - run: npx @stoplight/spectral@6.0.0 lint schema/public.openapi.yaml
     - run: npx @stoplight/spectral@6.0.0 lint schema/private.openapi.yaml
 
@@ -32,7 +32,7 @@ jobs:
         ports:
           - 5432:5432
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
 
     - uses: actions/setup-go@v1
       with:
@@ -55,7 +55,7 @@ jobs:
   java:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Cache Maven dependencies
         uses: actions/cache@v1
