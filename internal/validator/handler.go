@@ -163,12 +163,20 @@ func (this *handler) validateContent(ctx context.Context, requestType string, da
 	events = &messageModel.ValidatedMessages{}
 	events.PlaybookType = requestType
 
+	truncateData := len(data) >= 1*1024*1024
+
 	lines := strings.Split(string(data), "\n")
 
-	for _, line := range lines {
+	for i, line := range lines {
 		if len(strings.TrimSpace(line)) == 0 {
 			continue
 		}
+
+		if truncateData && i > 2 && i < len(lines)-2 {
+			fmt.Println("Discarding line of output data...")
+			continue
+		}
+
 		if requestType == playbookSatPayloadHeaderValue {
 			err = validateWithSchema(ctx, this.schemas[1], true, line, events)
 			if err == nil {
