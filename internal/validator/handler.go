@@ -164,30 +164,96 @@ func (this *handler) validateContent(ctx context.Context, requestType string, da
 	events.PlaybookType = requestType
 
 	truncateData := len(data) >= 1*1024*1024
+	if truncateData {
+		utils.GetLogFromContext(ctx).Debugw("Payload too big.  Truncating payload.")
+	}
+
+	eventTypeCount := make(map[string]int)
+	hostRunningPlaybook := make(map[string]int)
 
 	lines := strings.Split(string(data), "\n")
 
-	for i, line := range lines {
+	for _, line := range lines {
 		if len(strings.TrimSpace(line)) == 0 {
 			continue
 		}
 
-		if truncateData && i > 2 && i < len(lines)-2 {
-			fmt.Println("Discarding line of output data...")
-			continue
-		}
-
 		if requestType == playbookSatPayloadHeaderValue {
-			err = validateWithSchema(ctx, this.schemas[1], true, line, events)
-			if err == nil {
-				err = validateSatHostUUID(line)
-			}
-		} else {
-			err = validateWithSchema(ctx, this.schemas[0], false, line, events)
-		}
+			validatedEvent, err := validateSatRunResponseWithSchema(ctx, this.schemas[1], line)
 
-		if err != nil {
-			return nil, err
+			if err == nil {
+				err = validateSatHostUUID(validatedEvent)
+			}
+
+			if err != nil {
+				return nil, err
+			}
+
+			var storeEvent bool = true
+
+			if truncateData {
+
+				storeEvent = false
+				/*
+					EventSatPlaybookFinished  = "playbook_run_finished"
+					EventSatPlaybookCompleted = "playbook_run_completed"
+				*/
+
+				if validatedEvent.Type == "playbook_run_completed" || validatedEvent.Type == "playbook_run_finished" {
+					storeEvent = true
+					fmt.Println("storing run complete/finished for host " /*, *validatedEvent.Host*/)
+				}
+
+				/*
+				   , "version": 3, "correlation_id": "00000000-0000-0000-0000-000000000000", "host": "aec36412-5918-45f1-a66b-5560a265bfdd", "status": "success", "connection_code": 0, "execution_code": 0}
+				*/
+
+				if validatedEvent.Type == "playbook_run_update" {
+
+					if validatedEvent.Host != nil {
+						if _, ok := hostRunningPlaybook[*validatedEvent.Host]; !ok {
+							storeEvent = true
+							fmt.Println("storing run update for host ", *validatedEvent.Host)
+						} else {
+							fmt.Println("discarding run update for host ", *validatedEvent.Host)
+						}
+
+						hostRunningPlaybook[*validatedEvent.Host]++
+					}
+				}
+				/*
+				   {"type": "playbook_run_update", "version": 3, "correlation_id": "00000000-0000-0000-0000-000000000000", "sequence": 1, "host": "aec36412-5918-45f1-a66b-5560a265bfdd", "console": "aec36412-5918-45f1-a66b-5560a265bfdd | SUCCESS => {\n    \"changed\": false,\n    \"ping\": \"pong\"\n}"}
+				*/
+
+			}
+
+			if storeEvent {
+				events.PlaybookSat = append(events.PlaybookSat, *validatedEvent)
+			}
+
+		} else {
+			validatedEvent, err := validateRunResponseWithSchema(ctx, this.schemas[0], line)
+			if err != nil {
+				return nil, err
+			}
+
+			var storeEvent bool = true
+
+			if truncateData {
+				storeEvent = false
+				fmt.Println("validateEvent.Event: ", validatedEvent.Event)
+
+				// FIXME:  hardcoded  :(
+				if validatedEvent.Event == "executor_on_start" || validatedEvent.Event == "playbook_on_stats" || validatedEvent.Event == "runner_on_failed" || validatedEvent.Event == "executor_on_failed" {
+					eventTypeCount[validatedEvent.Event]++
+					storeEvent = eventTypeCount[validatedEvent.Event] <= 1
+					fmt.Println("storeEvent: ", storeEvent)
+				}
+			}
+
+			if storeEvent {
+				events.Playbook = append(events.Playbook, *validatedEvent)
+			}
 		}
 
 	}
@@ -199,14 +265,7 @@ func (this *handler) validateContent(ctx context.Context, requestType string, da
 	return events, nil
 }
 
-func validateSatHostUUID(line string) (err error) {
-	event := &messageModel.PlaybookSatRunResponseMessageYamlEventsElem{}
-	err = json.Unmarshal([]byte(line), &event)
-
-	if err != nil {
-		return err
-	}
-
+func validateSatHostUUID(event *messageModel.PlaybookSatRunResponseMessageYamlEventsElem) (err error) {
 	if event.Host != nil {
 		_, err = uuid.Parse(*event.Host)
 		if err != nil {
@@ -216,33 +275,40 @@ func validateSatHostUUID(line string) (err error) {
 	return nil
 }
 
-func validateWithSchema(ctx context.Context, schema *jsonschema.Schema, rhcsatRequest bool, line string, events *messageModel.ValidatedMessages) (err error) {
+func validateRunResponseWithSchema(ctx context.Context, schema *jsonschema.Schema, line string) (validatedEvent *messageModel.PlaybookRunResponseMessageYamlEventsElem, err error) {
+
 	errors, parserError := schema.ValidateBytes(ctx, []byte(line))
 	if parserError != nil {
-		return parserError
+		return nil, parserError
 	} else if len(errors) > 0 {
-		return errors[0]
-	}
-
-	if rhcsatRequest {
-		event := &messageModel.PlaybookSatRunResponseMessageYamlEventsElem{}
-		err = json.Unmarshal([]byte(line), &event)
-		if err != nil {
-			return err
-		}
-
-		events.PlaybookSat = append(events.PlaybookSat, *event)
-		return
+		return nil, errors[0]
 	}
 
 	event := &messageModel.PlaybookRunResponseMessageYamlEventsElem{}
 	err = json.Unmarshal([]byte(line), &event)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	events.Playbook = append(events.Playbook, *event)
-	return
+	return event, nil
+}
+
+func validateSatRunResponseWithSchema(ctx context.Context, schema *jsonschema.Schema, line string) (validatedEvent *messageModel.PlaybookSatRunResponseMessageYamlEventsElem, err error) {
+
+	errors, parserError := schema.ValidateBytes(ctx, []byte(line))
+	if parserError != nil {
+		return nil, parserError
+	} else if len(errors) > 0 {
+		return nil, errors[0]
+	}
+
+	event := &messageModel.PlaybookSatRunResponseMessageYamlEventsElem{}
+	err = json.Unmarshal([]byte(line), &event)
+	if err != nil {
+		return nil, err
+	}
+
+	return event, nil
 }
 
 func (this *handler) validationFailed(ctx context.Context, err error, requestType string, request *messageModel.IngressValidationRequest) {
