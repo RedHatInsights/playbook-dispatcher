@@ -150,9 +150,6 @@ objects:
           - name: RBAC_HOST
             value: ${RBAC_HOST}
 
-          - name: STORAGE_MAX_CONCURRENCY
-            value: ${STORAGE_MAX_CONCURRENCY}
-
           - name: TENANT_TRANSLATOR_IMPL
             value: ${TENANT_TRANSLATOR_IMPL}
           - name: TENANT_TRANSLATOR_HOST
@@ -265,6 +262,10 @@ objects:
             value: ${LOG_LEVEL}
           - name: DB_SSLMODE
             value: ${DB_SSLMODE}
+          - name: STORAGE_MAX_CONCURRENCY
+            value: ${STORAGE_MAX_CONCURRENCY}
+          - name: ARTIFACT_MAX_SIZE
+            value: ${ARTIFACT_MAX_SIZE}
         resources:
           limits:
             cpu: ${CPU_LIMIT}
@@ -341,6 +342,8 @@ parameters:
 
 - name: STORAGE_MAX_CONCURRENCY
   value: "5"
+- name: ARTIFACT_MAX_SIZE
+  value: '3145728'
 
 - name: RETURN_URL
   value: TBD
