@@ -163,9 +163,12 @@ func (this *handler) validateContent(ctx context.Context, requestType string, da
 	events = &messageModel.ValidatedMessages{}
 	events.PlaybookType = requestType
 
+	log := utils.GetLogFromContext(ctx)
+
+	// FIXME:  make this configurable
 	truncateData := len(data) >= 1*1024*1024
 	if truncateData {
-		utils.GetLogFromContext(ctx).Debugw("Payload too big.  Truncating payload.")
+		log.Debugw("Payload too big.  Truncating payload.")
 	}
 
 	eventTypeCount := make(map[string]int)
@@ -194,40 +197,27 @@ func (this *handler) validateContent(ctx context.Context, requestType string, da
 			if truncateData {
 
 				storeEvent = false
-				/*
-					EventSatPlaybookFinished  = "playbook_run_finished"
-					EventSatPlaybookCompleted = "playbook_run_completed"
-				*/
 
 				if validatedEvent.Type == "playbook_run_completed" || validatedEvent.Type == "playbook_run_finished" {
 					storeEvent = true
-					fmt.Println("storing run complete/finished for host " /*, *validatedEvent.Host*/)
+					log.Debugw("storing run complete/finished for host " /*, *validatedEvent.Host*/)
 				}
-
-				/*
-				   , "version": 3, "correlation_id": "00000000-0000-0000-0000-000000000000", "host": "aec36412-5918-45f1-a66b-5560a265bfdd", "status": "success", "connection_code": 0, "execution_code": 0}
-				*/
 
 				if validatedEvent.Type == "playbook_run_update" {
 
 					if validatedEvent.Host != nil {
 						if _, ok := hostRunningPlaybook[*validatedEvent.Host]; !ok {
 							storeEvent = true
-							fmt.Println("storing run update for host ", *validatedEvent.Host)
-						} else {
-							fmt.Println("discarding run update for host ", *validatedEvent.Host)
+							log.Debugw("storing run update for host ", *validatedEvent.Host)
 						}
 
 						hostRunningPlaybook[*validatedEvent.Host]++
 					}
 				}
-				/*
-				   {"type": "playbook_run_update", "version": 3, "correlation_id": "00000000-0000-0000-0000-000000000000", "sequence": 1, "host": "aec36412-5918-45f1-a66b-5560a265bfdd", "console": "aec36412-5918-45f1-a66b-5560a265bfdd | SUCCESS => {\n    \"changed\": false,\n    \"ping\": \"pong\"\n}"}
-				*/
-
 			}
 
 			if storeEvent {
+				log.Debugw("storing event ", validatedEvent.Type)
 				events.PlaybookSat = append(events.PlaybookSat, *validatedEvent)
 			}
 
@@ -241,17 +231,16 @@ func (this *handler) validateContent(ctx context.Context, requestType string, da
 
 			if truncateData {
 				storeEvent = false
-				fmt.Println("validateEvent.Event: ", validatedEvent.Event)
 
 				// FIXME:  hardcoded  :(
 				if validatedEvent.Event == "executor_on_start" || validatedEvent.Event == "playbook_on_stats" || validatedEvent.Event == "runner_on_failed" || validatedEvent.Event == "executor_on_failed" {
 					eventTypeCount[validatedEvent.Event]++
 					storeEvent = eventTypeCount[validatedEvent.Event] <= 1
-					fmt.Println("storeEvent: ", storeEvent)
 				}
 			}
 
 			if storeEvent {
+				log.Debugw("storing event ", validatedEvent.Event)
 				events.Playbook = append(events.Playbook, *validatedEvent)
 			}
 		}
