@@ -168,7 +168,7 @@ func (this *handler) validateContent(ctx context.Context, requestType string, da
 	// FIXME:  make this configurable
 	truncateData := len(data) >= 1*1024*1024
 	if truncateData {
-		log.Debugw("Payload too big.  Truncating payload.")
+		log.Debug("Payload too big.  Truncating payload.")
 	}
 
 	eventTypeCount := make(map[string]int)
@@ -200,7 +200,7 @@ func (this *handler) validateContent(ctx context.Context, requestType string, da
 
 				if validatedEvent.Type == "playbook_run_completed" || validatedEvent.Type == "playbook_run_finished" {
 					storeEvent = true
-					log.Debugw("storing run complete/finished for host " /*, *validatedEvent.Host*/)
+					log.Debug("storing run complete/finished for host " /*, *validatedEvent.Host*/)
 				}
 
 				if validatedEvent.Type == "playbook_run_update" {
@@ -208,7 +208,7 @@ func (this *handler) validateContent(ctx context.Context, requestType string, da
 					if validatedEvent.Host != nil {
 						if _, ok := hostRunningPlaybook[*validatedEvent.Host]; !ok {
 							storeEvent = true
-							log.Debugw("storing run update for host ", *validatedEvent.Host)
+							log.Debugf("storing run update for host %s", *validatedEvent.Host)
 						}
 
 						hostRunningPlaybook[*validatedEvent.Host]++
@@ -217,7 +217,7 @@ func (this *handler) validateContent(ctx context.Context, requestType string, da
 			}
 
 			if storeEvent {
-				log.Debugw("storing event ", validatedEvent.Type)
+				log.Debugf("storing event %s ", validatedEvent.Type)
 				events.PlaybookSat = append(events.PlaybookSat, *validatedEvent)
 			}
 
@@ -240,7 +240,7 @@ func (this *handler) validateContent(ctx context.Context, requestType string, da
 			}
 
 			if storeEvent {
-				log.Debugw("storing event ", validatedEvent.Event)
+				log.Debugf("storing event %s", validatedEvent.Event)
 				events.Playbook = append(events.Playbook, *validatedEvent)
 			}
 		}
