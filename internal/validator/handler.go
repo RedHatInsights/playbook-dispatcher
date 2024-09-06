@@ -173,6 +173,8 @@ func (this *handler) validateContent(ctx context.Context, requestType string, da
 		log.Debug("Payload too big.  Truncating payload.")
 	}
 
+	var truncated string = "Truncated..."
+
 	lines := strings.Split(string(data), "\n")
 
 	for i, line := range lines {
@@ -193,8 +195,8 @@ func (this *handler) validateContent(ctx context.Context, requestType string, da
 
 			if i > 500 && truncateData {
 				if validatedEvent.Console != nil || *validatedEvent.Console != "" {
-					var truncated string = "Truncated..."
 					validatedEvent.Console = &truncated
+					truncated = ""
 				}
 			}
 
@@ -207,8 +209,8 @@ func (this *handler) validateContent(ctx context.Context, requestType string, da
 			}
 
 			if i > 500 && i < len(lines)-2 && truncateData {
-				var truncated string = "Truncated..."
 				validatedEvent.Stdout = &truncated
+				truncated = ""
 			}
 
 			events.Playbook = append(events.Playbook, *validatedEvent)
