@@ -165,23 +165,22 @@ func (this *handler) validateContent(ctx context.Context, requestType string, da
 
 	log := utils.GetLogFromContext(ctx)
 
+	maxMessageSize := 1 * 1024 * 1024
+
 	// FIXME:  make this configurable
-	truncateData := len(data) >= 1*1024*1024
+	truncateData := len(data) >= maxMessageSize
 	if truncateData {
 		log.Debug("Payload too big.  Truncating payload.")
 	}
 
-	eventTypeCount := make(map[string]int)
-	hostRunningPlaybook := make(map[string]int)
-
 	lines := strings.Split(string(data), "\n")
 
-	for _, line := range lines {
+	for i, line := range lines {
 		if len(strings.TrimSpace(line)) == 0 {
 			continue
 		}
 
-		if requestType == playbookSatPayloadHeaderValue {
+		if requestType == "playbookSatPayloadHeaderValue" {
 			validatedEvent, err := validateSatRunResponseWithSchema(ctx, this.schemas[1], line)
 
 			if err == nil {
@@ -192,34 +191,14 @@ func (this *handler) validateContent(ctx context.Context, requestType string, da
 				return nil, err
 			}
 
-			var storeEvent bool = true
-
-			if truncateData {
-
-				storeEvent = false
-
-				if validatedEvent.Type == "playbook_run_completed" || validatedEvent.Type == "playbook_run_finished" {
-					storeEvent = true
-					log.Debug("storing run complete/finished for host " /*, *validatedEvent.Host*/)
-				}
-
-				if validatedEvent.Type == "playbook_run_update" {
-
-					if validatedEvent.Host != nil {
-						if _, ok := hostRunningPlaybook[*validatedEvent.Host]; !ok {
-							storeEvent = true
-							log.Debugf("storing run update for host %s", *validatedEvent.Host)
-						}
-
-						hostRunningPlaybook[*validatedEvent.Host]++
-					}
+			if i > 500 && truncateData {
+				if validatedEvent.Console != nil || *validatedEvent.Console != "" {
+					var truncated string = "Truncated..."
+					validatedEvent.Console = &truncated
 				}
 			}
 
-			if storeEvent {
-				log.Debugf("storing event %s ", validatedEvent.Type)
-				events.PlaybookSat = append(events.PlaybookSat, *validatedEvent)
-			}
+			events.PlaybookSat = append(events.PlaybookSat, *validatedEvent)
 
 		} else {
 			validatedEvent, err := validateRunResponseWithSchema(ctx, this.schemas[0], line)
@@ -227,24 +206,13 @@ func (this *handler) validateContent(ctx context.Context, requestType string, da
 				return nil, err
 			}
 
-			var storeEvent bool = true
-
-			if truncateData {
-				storeEvent = false
-
-				// FIXME:  hardcoded  :(
-				if validatedEvent.Event == "executor_on_start" || validatedEvent.Event == "playbook_on_stats" || validatedEvent.Event == "runner_on_failed" || validatedEvent.Event == "executor_on_failed" {
-					eventTypeCount[validatedEvent.Event]++
-					storeEvent = eventTypeCount[validatedEvent.Event] <= 1
-				}
+			if i > 500 && i < len(lines)-2 && truncateData {
+				var truncated string = "Truncated..."
+				validatedEvent.Stdout = &truncated
 			}
 
-			if storeEvent {
-				log.Debugf("storing event %s", validatedEvent.Event)
-				events.Playbook = append(events.Playbook, *validatedEvent)
-			}
+			events.Playbook = append(events.Playbook, *validatedEvent)
 		}
-
 	}
 
 	if len(events.PlaybookSat) == 0 && len(events.Playbook) == 0 {
