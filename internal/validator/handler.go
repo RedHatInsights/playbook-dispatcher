@@ -180,7 +180,7 @@ func (this *handler) validateContent(ctx context.Context, requestType string, da
 			continue
 		}
 
-		if requestType == "playbookSatPayloadHeaderValue" {
+		if requestType == playbookSatPayloadHeaderValue {
 			validatedEvent, err := validateSatRunResponseWithSchema(ctx, this.schemas[1], line)
 
 			if err == nil {
