@@ -7,6 +7,7 @@ COMPONENT_NAME="playbook-dispatcher"  # name of app-sre "resourceTemplate" in de
 CONNECT_COMPONENT_NAME="playbook-dispatcher-connect"
 IMAGE="quay.io/cloudservices/playbook-dispatcher"
 IQE_CJI_TIMEOUT="30m"
+IQE_ENV_VARS="DYNACONF_USER_PROVIDER__rbac_enabled=false"
 REF_ENV="insights-stage"
 
 # Install bonfire repository/initialize
