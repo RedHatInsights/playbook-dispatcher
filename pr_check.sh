@@ -38,7 +38,7 @@ source $CICD_ROOT/deploy_ephemeral_env.sh
 
 # Re-deploy Playbook Dispatcher to an ephemeral environment, this time enabling the communication with Cloud Connector
 # The connect image template is overridden to make use of the connect.yaml file from before managed kafka was put in place
-bonfire deploy playbook-dispatcher cloud-connector \
+bonfire deploy playbook-dispatcher cloud-connector host-inventory \
     --source=appsre \
     --ref-env ${REF_ENV} \
     --set-template-ref ${COMPONENT_NAME}=${GIT_COMMIT} \
