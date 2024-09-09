@@ -7,6 +7,7 @@ COMPONENT_NAME="playbook-dispatcher"  # name of app-sre "resourceTemplate" in de
 CONNECT_COMPONENT_NAME="playbook-dispatcher-connect"
 IMAGE="quay.io/cloudservices/playbook-dispatcher"
 IQE_CJI_TIMEOUT="30m"
+IQE_ENV_VARS="DYNACONF_USER_PROVIDER__rbac_enabled=false"
 REF_ENV="insights-stage"
 
 # Install bonfire repository/initialize
@@ -35,14 +36,9 @@ EXTRA_DEPLOY_ARGS="--set-image-tag ${IMAGE_DISPATCHER}=${IMAGE_TAG} --set-templa
 # Deploy to an ephemeral environment
 source $CICD_ROOT/deploy_ephemeral_env.sh
 
-# Run Playbook Dispatcher isolated tests
-IQE_PLUGINS="playbook-dispatcher"
-IQE_MARKER_EXPRESSION="smoke"
-source $CICD_ROOT/cji_smoke_test.sh
-
 # Re-deploy Playbook Dispatcher to an ephemeral environment, this time enabling the communication with Cloud Connector
 # The connect image template is overridden to make use of the connect.yaml file from before managed kafka was put in place
-bonfire deploy playbook-dispatcher cloud-connector \
+bonfire deploy playbook-dispatcher cloud-connector host-inventory \
     --source=appsre \
     --ref-env ${REF_ENV} \
     --set-template-ref ${COMPONENT_NAME}=${GIT_COMMIT} \
@@ -52,6 +48,11 @@ bonfire deploy playbook-dispatcher cloud-connector \
     --namespace ${NAMESPACE} \
     --timeout ${DEPLOY_TIMEOUT} \
     --set-parameter playbook-dispatcher/CLOUD_CONNECTOR_IMPL=impl
+
+# Run Playbook Dispatcher isolated tests
+IQE_PLUGINS="playbook-dispatcher"
+IQE_MARKER_EXPRESSION="smoke"
+source $CICD_ROOT/cji_smoke_test.sh
 
 # Run RHC Contract integration tests
 COMPONENT_NAME="cloud-connector"
