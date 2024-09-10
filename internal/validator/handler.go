@@ -221,14 +221,12 @@ func (this *handler) validateContent(ctx context.Context, requestType string, da
 				// There could be one big stdout
 				if validatedEvent.Stdout != nil && len(*validatedEvent.Stdout) > maxStdoutSize {
 					*validatedEvent.Stdout = (*validatedEvent.Stdout)[0:maxStdoutSize] + "..."
-					fmt.Println("TRUNCATED sliced")
 				}
 
 				// There could also be too many stdouts
 				if i > 500 && i < len(lines)-2 {
 					validatedEvent.Stdout = &truncated
 					truncated = ""
-					fmt.Println("TRUNCATED")
 				}
 			}
 
