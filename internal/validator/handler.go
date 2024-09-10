@@ -171,10 +171,10 @@ func (this *handler) validateContent(ctx context.Context, requestType string, da
 
 	log := utils.GetLogFromContext(ctx)
 
-	maxMessageSize := 1 * 1024 * 1024
-	maxStdoutSize := 1024
+	maxMessageSize := cfg.GetInt("artifact.max.kafka.message.size")
+	maxStdoutSize := cfg.GetInt("artifact.max.stdout.field.size")
+	truncateAfterNumberOfLines := cfg.GetInt("artifact.truncate.stdout.field.after.lines")
 
-	// FIXME:  make this configurable
 	truncateData := len(data) >= maxMessageSize
 	if truncateData {
 		log.Debug("Payload too big.  Truncating payload.")
@@ -207,7 +207,7 @@ func (this *handler) validateContent(ctx context.Context, requestType string, da
 				}
 
 				// There could also be too many console strings
-				if i > 500 {
+				if i > truncateAfterNumberOfLines {
 					if validatedEvent.Console != nil || *validatedEvent.Console != "" {
 						validatedEvent.Console = &truncated
 						truncated = ""
@@ -229,8 +229,9 @@ func (this *handler) validateContent(ctx context.Context, requestType string, da
 					*validatedEvent.Stdout = (*validatedEvent.Stdout)[0:maxStdoutSize] + "..."
 				}
 
-				// There could also be too many stdouts
-				if i > 500 && i < len(lines)-2 {
+				// There could also be too many stdouts, but try to preserve the last lines of
+				// the output as it contains a summary
+				if i > truncateAfterNumberOfLines && i < len(lines)-2 {
 					validatedEvent.Stdout = &truncated
 					truncated = ""
 				}
