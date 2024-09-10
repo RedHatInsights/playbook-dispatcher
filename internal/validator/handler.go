@@ -166,6 +166,7 @@ func (this *handler) validateContent(ctx context.Context, requestType string, da
 	log := utils.GetLogFromContext(ctx)
 
 	maxMessageSize := 1 * 1024 * 1024
+	maxStdoutSize := 1024
 
 	// FIXME:  make this configurable
 	truncateData := len(data) >= maxMessageSize
@@ -193,10 +194,18 @@ func (this *handler) validateContent(ctx context.Context, requestType string, da
 				return nil, err
 			}
 
-			if i > 500 && truncateData {
-				if validatedEvent.Console != nil || *validatedEvent.Console != "" {
-					validatedEvent.Console = &truncated
-					truncated = ""
+			if truncateData {
+				// There could be one big console string
+				if validatedEvent.Console != nil && len(*validatedEvent.Console) > maxStdoutSize {
+					*validatedEvent.Console = (*validatedEvent.Console)[0:maxStdoutSize] + "..."
+				}
+
+				// There could also be too many console strings
+				if i > 500 {
+					if validatedEvent.Console != nil || *validatedEvent.Console != "" {
+						validatedEvent.Console = &truncated
+						truncated = ""
+					}
 				}
 			}
 
@@ -208,9 +217,17 @@ func (this *handler) validateContent(ctx context.Context, requestType string, da
 				return nil, err
 			}
 
-			if i > 500 && i < len(lines)-2 && truncateData {
-				validatedEvent.Stdout = &truncated
-				truncated = ""
+			if truncateData {
+				// There could be one big stdout
+				if validatedEvent.Stdout != nil && len(*validatedEvent.Stdout) > maxStdoutSize {
+					*validatedEvent.Stdout = (*validatedEvent.Stdout)[0:maxStdoutSize] + "..."
+				}
+
+				// There could also be too many stdouts
+				if i > 500 && i < len(lines)-2 {
+					validatedEvent.Stdout = &truncated
+					truncated = ""
+				}
 			}
 
 			events.Playbook = append(events.Playbook, *validatedEvent)
