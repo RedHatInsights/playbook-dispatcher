@@ -15,7 +15,7 @@ type rhcSatellite struct {
 	SatelliteInstanceID      string
 	SatelliteOrgID           string
 	SatelliteVersion         string
-	Hosts                    []string
+	HostsWithAnsibleHosts    []HostAttribute
 	SourceID                 string
 	RhcClientID              *string
 	SourceAvailabilityStatus *string
@@ -110,7 +110,7 @@ func sortHostsByRecipient(details []inventory.HostDetails) (satelliteDetails []i
 	return satelliteConnectedHosts, directConnectedHosts, hostsNotConnected
 }
 
-func formatConnectionResponse(satID *string, satOrgID *string, rhcClientID *string, orgID OrgId, hosts []string, recipientType string, status string) RecipientWithConnectionInfo {
+func formatConnectionResponse(satID *string, satOrgID *string, rhcClientID *string, orgID OrgId, hosts []HostAttribute, recipientType string, status string) RecipientWithConnectionInfo {
 	formatedHosts := make([]HostId, len(hosts))
 	var formatedSatID SatelliteId
 	var formatedSatOrgID SatelliteOrgId
@@ -129,7 +129,7 @@ func formatConnectionResponse(satID *string, satOrgID *string, rhcClientID *stri
 	}
 
 	for i, host := range hosts {
-		formatedHosts[i] = HostId(host)
+		formatedHosts[i] = host.HostId
 	}
 
 	connectionInfo := RecipientWithConnectionInfo{
@@ -140,6 +140,7 @@ func formatConnectionResponse(satID *string, satOrgID *string, rhcClientID *stri
 		SatOrgId:      formatedSatOrgID,
 		Status:        status,
 		Systems:       formatedHosts,
+		SystemsInfo:   hosts,
 	}
 
 	return connectionInfo
@@ -162,7 +163,13 @@ func getDirectConnectStatus(ctx echo.Context, client connectors.CloudConnectorCl
 			connectionStatus = "disconnected"
 		}
 
-		responses = append(responses, formatConnectionResponse(nil, nil, host.RHCClientID, orgId, []string{host.ID}, string(RecipientType_directConnect), connectionStatus))
+		ansibleHost := AnsibleHost("")
+		if host.AnsibleHost != nil {
+			ansibleHost = AnsibleHost(*host.AnsibleHost)
+		}
+		hostWithAnsibleHost := []HostAttribute{{ansibleHost, HostId(host.ID)}}
+
+		responses = append(responses, formatConnectionResponse(nil, nil, host.RHCClientID, orgId, hostWithAnsibleHost, string(RecipientType_directConnect), connectionStatus))
 	}
 
 	return responses, nil
@@ -189,14 +196,20 @@ func groupHostsBySatellite(hostDetails []inventory.HostDetails) map[string]*rhcS
 		satInstanceAndOrg := *host.SatelliteInstanceID + *host.SatelliteOrgID
 		_, exists := hostsGroupedBySatellite[satInstanceAndOrg]
 
+		ansibleHost := AnsibleHost("")
+		if host.AnsibleHost != nil {
+			ansibleHost = AnsibleHost(*host.AnsibleHost)
+		}
+		hostWithAnsibleHost := HostAttribute{ansibleHost, HostId(host.ID)}
+
 		if exists {
-			hostsGroupedBySatellite[satInstanceAndOrg].Hosts = append(hostsGroupedBySatellite[satInstanceAndOrg].Hosts, host.ID)
+			hostsGroupedBySatellite[satInstanceAndOrg].HostsWithAnsibleHosts = append(hostsGroupedBySatellite[satInstanceAndOrg].HostsWithAnsibleHosts, hostWithAnsibleHost)
 		} else {
 			hostsGroupedBySatellite[satInstanceAndOrg] = &rhcSatellite{
-				SatelliteInstanceID: *host.SatelliteInstanceID,
-				SatelliteOrgID:      *host.SatelliteOrgID,
-				SatelliteVersion:    *host.SatelliteVersion,
-				Hosts:               []string{host.ID},
+				SatelliteInstanceID:   *host.SatelliteInstanceID,
+				SatelliteOrgID:        *host.SatelliteOrgID,
+				SatelliteVersion:      *host.SatelliteVersion,
+				HostsWithAnsibleHosts: []HostAttribute{hostWithAnsibleHost},
 			}
 		}
 	}
@@ -238,7 +251,7 @@ func createSatelliteConnectionResponses(ctx echo.Context, hostsGroupedBySatellit
 				connectionStatus = "disconnected"
 			}
 
-			responses = append(responses, formatConnectionResponse(&satellite.SatelliteInstanceID, &satellite.SatelliteOrgID, satellite.RhcClientID, orgId, satellite.Hosts, string(RecipientType_satellite), connectionStatus))
+			responses = append(responses, formatConnectionResponse(&satellite.SatelliteInstanceID, &satellite.SatelliteOrgID, satellite.RhcClientID, orgId, satellite.HostsWithAnsibleHosts, string(RecipientType_satellite), connectionStatus))
 		}
 	}
 
@@ -246,10 +259,10 @@ func createSatelliteConnectionResponses(ctx echo.Context, hostsGroupedBySatellit
 }
 
 func getRHCStatus(hostDetails []inventory.HostDetails, orgID OrgId) RecipientWithConnectionInfo {
-	hostIDs := make([]string, len(hostDetails))
+	hostIDs := make([]HostAttribute, len(hostDetails))
 
 	for i, host := range hostDetails {
-		hostIDs[i] = host.ID
+		hostIDs[i] = HostAttribute{AnsibleHost(*host.AnsibleHost), HostId(host.ID)}
 	}
 
 	return formatConnectionResponse(nil, nil, nil, orgID, hostIDs, "none", "rhc_not_configured")
