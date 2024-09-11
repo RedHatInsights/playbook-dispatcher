@@ -3,8 +3,8 @@ USER root
 
 ENV EXTRA_PLUGINS=/deps/plugins \
     EXTRA_LIBS=/deps/libs \
-    DEBEZIUM_VERSION=2.5.4.Final \
-    DEBEZIUM_CHECKSUM=8812d2336d876f474103e7079cc82a31 \
+    DEBEZIUM_VERSION=2.7.2.Final \
+    DEBEZIUM_CHECKSUM=1612a63ca911b17eaec6a52cf3e2c84b \
     CONFIG_PROVIDERS_VERSION=0.1.0 \
     CONFIG_PROVIDERS_CHECKSUM=108e0bf4148a37676bed866ff45e1199
 
@@ -16,7 +16,7 @@ ADD schema/run.host.event.yaml /src
 RUN microdnf update -y && microdnf install jq && microdnf install gzip
 
 # Taken from https://github.com/debezium/docker-images/blob/master/connect-base/1.9/docker-maven-download.sh
-# Debezium PostgreSQL checksum from https://github.com/debezium/container-images/blob/main/connect/2.5/Dockerfile
+# Debezium PostgreSQL checksum from https://github.com/debezium/container-images/blob/main/connect/2.7/Dockerfile
 RUN mkdir -p $EXTRA_PLUGINS $EXTRA_LIBS && \
     MAVEN_DEP_DESTINATION=$EXTRA_PLUGINS /src/docker-maven-download.sh debezium postgres ${DEBEZIUM_VERSION} ${DEBEZIUM_CHECKSUM} && \
     MAVEN_DEP_DESTINATION=$EXTRA_LIBS /src/docker-maven-download.sh central com/redhat/insights/kafka config-providers ${CONFIG_PROVIDERS_VERSION} ${CONFIG_PROVIDERS_CHECKSUM}
@@ -26,7 +26,7 @@ RUN ./mvnw -Dschema.event.run=/src/run.event.yaml -Dschema.event.run.host=/src/r
 
 
 # https://access.redhat.com/documentation/en-us/red_hat_amq/2021.q3/html-single/deploying_and_upgrading_amq_streams_on_openshift/index#creating-new-image-from-base-str
-FROM registry.redhat.io/amq-streams/kafka-36-rhel9:2.7.0-7
+FROM registry.redhat.io/amq-streams/kafka-36-rhel9:2.7.0-17
 
 ARG BUILD_COMMIT=unknown
 
