@@ -69,11 +69,17 @@ func (this *handler) onMessage(ctx context.Context, msg *kafka.Message) {
 	ctx = utils.SetLog(ctx, utils.GetLogFromContext(ctx).With("url", request.URL))
 	utils.GetLogFromContext(ctx).Debugw("Processing request",
 		"account", request.Account,
+		"org_id", request.OrgID,
 		"topic", *msg.TopicPartition.Topic,
 		"partition", msg.TopicPartition.Partition,
 		"offset", msg.TopicPartition.Offset.String(),
 		"size", request.Size,
 	)
+
+	if utils.IsOrgIdBlocklisted(cfg, request.OrgID) {
+		utils.GetLogFromContext(ctx).Debugw("Rejecting payload because the org_id is blocklisted")
+		return
+	}
 
 	if err := this.validateRequest(&request); err != nil {
 		this.validationFailed(ctx, err, requestType, &request)
@@ -154,10 +160,6 @@ func (this *handler) validationSteps(
 func (this *handler) validateRequest(request *messageModel.IngressValidationRequest) (err error) {
 	if request.Size == 0 || request.Size > cfg.GetInt64("artifact.max.size") {
 		return fmt.Errorf("Rejecting payload due to file size: %d", request.Size)
-	}
-
-	if utils.IsOrgIdBlocklisted(cfg, request.OrgID) {
-		return fmt.Errorf("Rejecting payload because the org_id is blocklisted: %s", request.OrgID)
 	}
 
 	return
