@@ -4,15 +4,10 @@ import (
 	"net/http"
 	"playbook-dispatcher/internal/api/instrumentation"
 	"playbook-dispatcher/internal/api/middleware"
-	"playbook-dispatcher/internal/common/config"
 	"playbook-dispatcher/internal/common/utils"
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
-)
-
-var (
-	cfg = config.Get()
 )
 
 //go:generate fungen -types RunInputV2,*RunCreated -methods PMap -package private -filename utils.v2.gen.go
@@ -38,7 +33,7 @@ func (this *controllers) ApiInternalV2RunsCreate(ctx echo.Context) error {
 		context := utils.WithOrgId(ctx.Request().Context(), string(runInputV2.OrgId))
 		context = utils.WithRequestType(context, getRequestTypeLabel(runInputV2))
 
-		if utils.IsOrgIdBlocklisted(cfg, string(runInputV2.OrgId)) {
+		if utils.IsOrgIdBlocklisted(this.config, string(runInputV2.OrgId)) {
 			return handleRunCreateError(&utils.BlocklistedOrgIdError{OrgID: string(runInputV2.OrgId)})
 		}
 

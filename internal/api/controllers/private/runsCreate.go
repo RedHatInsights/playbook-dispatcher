@@ -32,7 +32,7 @@ func (this *controllers) ApiInternalRunsCreate(ctx echo.Context) error {
 			return handleRunCreateError(err)
 		}
 
-		if utils.IsOrgIdBlocklisted(cfg, orgIdString) {
+		if utils.IsOrgIdBlocklisted(this.config, orgIdString) {
 			return handleRunCreateError(&utils.BlocklistedOrgIdError{OrgID: orgIdString})
 		}
 
