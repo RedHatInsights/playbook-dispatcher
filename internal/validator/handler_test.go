@@ -58,7 +58,7 @@ var _ = Describe("Handler", func() {
 
 	Describe("Blocklisted OrgIDs", func() {
 		It("Rejects archives if org_id is blocklisted", func() {
-			cfg.Set("blocklist.orgids", "1337")
+			cfg.Set("blocklist.org.ids", "1337")
 
 			req := &messageModel.IngressValidationRequest{
 				OrgID: "1337",

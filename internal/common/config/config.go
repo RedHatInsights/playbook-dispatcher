@@ -103,7 +103,7 @@ func Get() *viper.Viper {
 
 	options.SetDefault("db.sslmode", "disable")
 
-	options.SetDefault("blocklist.orgids", "")
+	options.SetDefault("blocklist.org.ids", "")
 
 	if clowder.IsClowderEnabled() {
 

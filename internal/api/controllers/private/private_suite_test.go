@@ -61,7 +61,7 @@ var _ = Describe("Validation", func() {
 var _ = Describe("Blocklisted OrgIDs", func() {
 	DescribeTable("validateFields",
 		func(orgID string, result bool) {
-			cfg.Set("blocklist.orgids", "1337,1234")
+			cfg.Set("blocklist.org.ids", "1337,1234")
 
 			isBlocked := utils.IsOrgIdBlocklisted(cfg, orgID)
 
