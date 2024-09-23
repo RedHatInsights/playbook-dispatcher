@@ -3,9 +3,14 @@ package validator
 import (
 	"bytes"
 	"encoding/base64"
+	"encoding/json"
 	"io/ioutil"
+	"playbook-dispatcher/internal/common/constants"
+	kafkaUtils "playbook-dispatcher/internal/common/kafka"
 	messageModel "playbook-dispatcher/internal/common/model/message"
 	"playbook-dispatcher/internal/common/utils/test"
+
+	k "github.com/confluentinc/confluent-kafka-go/kafka"
 
 	"github.com/ghodss/yaml"
 	. "github.com/onsi/ginkgo"
@@ -61,12 +66,14 @@ var _ = Describe("Handler", func() {
 			cfg.Set("blocklist.org.ids", "1337")
 
 			req := &messageModel.IngressValidationRequest{
-				OrgID: "1337",
-				Size:  1024,
+				OrgID:     "1337",
+				Size:      1024,
+				RequestID: "1234-56789",
 			}
 
-			err := instance.validateRequest(req)
-			Expect(err).To(HaveOccurred())
+			kafkaMessage := newKafkaMessage(req, playbookPayloadHeaderValue)
+
+			instance.onMessage(test.TestContext(), kafkaMessage)
 		})
 	})
 
@@ -199,3 +206,20 @@ fdqPl7IwpOzJmfqrZ1duqTJ62NbTeDDPjOvQ6F70PsJi4KXiLSqngthpIkJLtF3l
 
 	// TODO: test parsing (timestamps, etc.)
 })
+
+func newKafkaMessage(value interface{}, requestType string) *k.Message {
+	marshalled, err := json.Marshal(value)
+	Expect(err).ToNot(HaveOccurred())
+
+	topic := "platform.upload.announce"
+
+	return &k.Message{
+		Value:   marshalled,
+		Headers: kafkaUtils.Headers(constants.HeaderRequestId, "test", constants.HeaderRequestType, requestType),
+		TopicPartition: k.TopicPartition{
+			Topic:     &topic,
+			Partition: 0,
+			Offset:    k.Offset(0),
+		},
+	}
+}
