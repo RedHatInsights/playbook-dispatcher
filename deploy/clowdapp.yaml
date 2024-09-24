@@ -175,6 +175,9 @@ objects:
           - name: SOURCES_PORT
             value: ${SOURCES_CONNECTOR_PORT}
 
+          - name: BLOCKLIST_ORG_IDS
+            value: ${BLOCKLIST_ORG_IDS}
+
         resources:
           limits:
             cpu: ${CPU_LIMIT}
@@ -266,6 +269,8 @@ objects:
             value: ${STORAGE_MAX_CONCURRENCY}
           - name: ARTIFACT_MAX_SIZE
             value: ${ARTIFACT_MAX_SIZE}
+          - name: BLOCKLIST_ORG_IDS
+            value: ${BLOCKLIST_ORG_IDS}
         resources:
           limits:
             cpu: ${CPU_LIMIT}
@@ -377,6 +382,9 @@ parameters:
   required: true
 - name: SOURCES_CONNECTOR_PORT
   value: '8080'
+
+- name: BLOCKLIST_ORG_IDS
+  value: ""
 
 # Used for testing in ephemeral environments only.
 - name: PSK_AUTH_TEST
