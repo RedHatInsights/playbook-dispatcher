@@ -69,11 +69,17 @@ func (this *handler) onMessage(ctx context.Context, msg *kafka.Message) {
 	ctx = utils.SetLog(ctx, utils.GetLogFromContext(ctx).With("url", request.URL))
 	utils.GetLogFromContext(ctx).Debugw("Processing request",
 		"account", request.Account,
+		"org_id", request.OrgID,
 		"topic", *msg.TopicPartition.Topic,
 		"partition", msg.TopicPartition.Partition,
 		"offset", msg.TopicPartition.Offset.String(),
 		"size", request.Size,
 	)
+
+	if utils.IsOrgIdBlocklisted(cfg, request.OrgID) {
+		utils.GetLogFromContext(ctx).Debugw("Rejecting payload because the org_id is blocklisted")
+		return
+	}
 
 	if err := this.validateRequest(&request); err != nil {
 		this.validationFailed(ctx, err, requestType, &request)

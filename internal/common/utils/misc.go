@@ -109,3 +109,14 @@ func LoadSchemas(cfg *viper.Viper, schemaNames []string) (schemas []*jsonschema.
 	}
 	return
 }
+
+func IsOrgIdBlocklisted(cfg *viper.Viper, orgId string) bool {
+	blocklistedOrgIds := strings.Split(cfg.GetString("blocklist.org.ids"), ",")
+	for _, blockedOrgId := range blocklistedOrgIds {
+		if blockedOrgId == orgId {
+			return true
+		}
+	}
+
+	return false
+}

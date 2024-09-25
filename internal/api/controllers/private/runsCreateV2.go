@@ -33,6 +33,11 @@ func (this *controllers) ApiInternalV2RunsCreate(ctx echo.Context) error {
 		context := utils.WithOrgId(ctx.Request().Context(), string(runInputV2.OrgId))
 		context = utils.WithRequestType(context, getRequestTypeLabel(runInputV2))
 
+		if utils.IsOrgIdBlocklisted(this.config, string(runInputV2.OrgId)) {
+			utils.GetLogFromEcho(ctx).Debugw("Rejecting request because the org_id is blocklisted")
+			return handleRunCreateError(&utils.BlocklistedOrgIdError{OrgID: string(runInputV2.OrgId)})
+		}
+
 		recipient := parseValidatedUUID(string(runInputV2.Recipient))
 
 		hosts := parseRunHosts(runInputV2.Hosts)
