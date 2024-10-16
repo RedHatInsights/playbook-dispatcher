@@ -43,6 +43,14 @@ parameters:
   value: 2Gi
 - name: MEMORY_LIMITS
   value: 4Gi
+- name: EVENT_CONSUMER_CPU_REQUESTS
+  value: 100m
+- name: EVENT_CONSUMER_CPU_LIMITS
+  value: 200m
+- name: EVENT_CONSUMER_MEMORY_REQUESTS
+  value: 128Mi
+- name: EVENT_CONSUMER_MEMORY_LIMITS
+  value: 256Mi
 - name: XMX
   value: 4G
 - name: XMS
@@ -336,11 +344,11 @@ objects:
           name: playbook-dispatcher-event-consumer
           resources:
             requests:
-              cpu: 100m
-              memory: 128Mi
+              cpu: ${EVENT_CONSUMER_CPU_REQUESTS}
+              memory: ${EVENT_CONSUMER_MEMORY_REQUESTS}
             limits:
-              cpu: 200m
-              memory: 256Mi
+              cpu: ${EVENT_CONSUMER_CPU_LIMITS}
+              memory: ${EVENT_CONSUMER_MEMORY_LIMITS}
 
 # this service is only used in ephemeral to give the ephemeral kafka a stable address
 - apiVersion: v1
