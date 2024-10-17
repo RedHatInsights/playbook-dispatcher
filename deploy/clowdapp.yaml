@@ -180,11 +180,11 @@ objects:
 
         resources:
           limits:
-            cpu: ${CPU_LIMIT}
-            memory: ${MEMORY_LIMIT}
+            cpu: ${API_CPU_LIMIT}
+            memory: ${API_MEMORY_LIMIT}
           requests:
-            cpu: ${CPU_REQUEST}
-            memory: ${MEMORY_REQUEST}
+            cpu: ${API_CPU_REQUEST}
+            memory: ${API_MEMORY_REQUEST}
 
     - name: response-consumer
       minReplicas: ${{REPLICAS_RESPONSE_CONSUMER}}
@@ -226,11 +226,11 @@ objects:
             value: ${DB_SSLMODE}
         resources:
           limits:
-            cpu: ${CPU_LIMIT}
-            memory: ${MEMORY_LIMIT}
+            cpu: ${RESPONSE_CONSUMER_CPU_LIMIT}
+            memory: ${RESPONSE_CONSUMER_MEMORY_LIMIT}
           requests:
-            cpu: ${CPU_REQUEST}
-            memory: ${MEMORY_REQUEST}
+            cpu: ${RESPONSE_CONSUMER_CPU_REQUEST}
+            memory: ${RESPONSE_CONSUMER_MEMORY_REQUEST}
 
     - name: validator
       minReplicas: ${{REPLICAS_VALIDATOR}}
@@ -273,11 +273,11 @@ objects:
             value: ${BLOCKLIST_ORG_IDS}
         resources:
           limits:
-            cpu: ${CPU_LIMIT}
-            memory: ${MEMORY_LIMIT}
+            cpu: ${VALIDATOR_CPU_LIMIT}
+            memory: ${VALIDATOR_MEMORY_LIMIT}
           requests:
-            cpu: ${CPU_REQUEST}
-            memory: ${MEMORY_REQUEST}
+            cpu: ${VALIDATOR_CPU_REQUEST}
+            memory: ${VALIDATOR_MEMORY_REQUEST}
 
     jobs:
     - name: cleaner
@@ -312,13 +312,29 @@ parameters:
 
 - name: LOG_LEVEL
   value: INFO
-- name: CPU_LIMIT
+- name: API_CPU_LIMIT
   value: 500m
-- name: CPU_REQUEST
+- name: API_CPU_REQUEST
   value: 250m
-- name: MEMORY_LIMIT
+- name: API_MEMORY_LIMIT
   value: 512Mi
-- name: MEMORY_REQUEST
+- name: API_MEMORY_REQUEST
+  value: 256Mi
+- name: RESPONSE_CONSUMER_CPU_LIMIT
+  value: 500m
+- name: RESPONSE_CONSUMER_CPU_REQUEST
+  value: 250m
+- name: RESPONSE_CONSUMER_MEMORY_LIMIT
+  value: 512Mi
+- name: RESPONSE_CONSUMER_MEMORY_REQUEST
+  value: 256Mi
+- name: VALIDATOR_CPU_LIMIT
+  value: 500m
+- name: VALIDATOR_CPU_REQUEST
+  value: 250m
+- name: VALIDATOR_MEMORY_LIMIT
+  value: 512Mi
+- name: VALIDATOR_MEMORY_REQUEST
   value: 256Mi
 
 - name: REPLICAS_API
