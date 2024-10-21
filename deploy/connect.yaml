@@ -35,14 +35,22 @@ parameters:
   value: '1'
 - name: VERSION
   value: '2.7.1'
-- name: CPU_REQUESTS
+- name: CPU_REQUEST
   value: 500m
-- name: CPU_LIMITS
+- name: CPU_LIMIT
   value: '1'
-- name: MEMORY_REQUESTS
+- name: MEMORY_REQUEST
   value: 2Gi
-- name: MEMORY_LIMITS
+- name: MEMORY_LIMIT
   value: 4Gi
+- name: EVENT_CONSUMER_CPU_REQUEST
+  value: 100m
+- name: EVENT_CONSUMER_CPU_LIMIT
+  value: 200m
+- name: EVENT_CONSUMER_MEMORY_REQUEST
+  value: 128Mi
+- name: EVENT_CONSUMER_MEMORY_LIMIT
+  value: 256Mi
 - name: XMX
   value: 4G
 - name: XMS
@@ -187,11 +195,11 @@ objects:
     replicas: ${{NUM_REPLICAS}}
     resources:
       limits:
-        cpu: ${CPU_LIMITS}
-        memory: ${MEMORY_LIMITS}
+        cpu: ${CPU_LIMIT}
+        memory: ${MEMORY_LIMIT}
       requests:
-        cpu: ${CPU_REQUESTS}
-        memory: ${MEMORY_REQUESTS}
+        cpu: ${CPU_REQUEST}
+        memory: ${MEMORY_REQUEST}
     jvmOptions:
       "-Xmx": ${XMX}
       "-Xms": ${XMS}
@@ -336,11 +344,11 @@ objects:
           name: playbook-dispatcher-event-consumer
           resources:
             requests:
-              cpu: 100m
-              memory: 128Mi
+              cpu: ${EVENT_CONSUMER_CPU_REQUEST}
+              memory: ${EVENT_CONSUMER_MEMORY_REQUEST}
             limits:
-              cpu: 200m
-              memory: 256Mi
+              cpu: ${EVENT_CONSUMER_CPU_LIMIT}
+              memory: ${EVENT_CONSUMER_MEMORY_LIMIT}
 
 # this service is only used in ephemeral to give the ephemeral kafka a stable address
 - apiVersion: v1
