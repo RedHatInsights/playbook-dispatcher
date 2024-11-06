@@ -126,6 +126,9 @@ type RunCreated struct {
 	// status code of the request
 	Code int `json:"code"`
 
+	//Message for Error
+	Message string `json:"message"`
+
 	// Unique identifier of a Playbook run
 	Id *externalRef0.RunId `json:"id,omitempty"`
 }
