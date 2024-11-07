@@ -142,7 +142,7 @@ func handleRunCreateError(err error) *RunCreated {
 		return runCreateError(http.StatusBadRequest,"Block listed org")
 	}
 
-	return runCreateError(http.StatusInternalServerError,"Host Disconnected")
+	return runCreateError(http.StatusInternalServerError,"Unexpected error during processing")
 }
 
 func runCreated(runID uuid.UUID) *RunCreated {
