@@ -1,4 +1,5 @@
 FROM registry.access.redhat.com/ubi8/go-toolset as builder
+USER 0
 
 WORKDIR /go/src/app
 
@@ -8,8 +9,6 @@ COPY cmd/ cmd/
 COPY main.go main.go
 
 RUN go mod download
-
-USER 0
 
 RUN go build -v -o app main.go
 
