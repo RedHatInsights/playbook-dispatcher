@@ -2,8 +2,6 @@ module playbook-dispatcher
 
 go 1.22
 
-toolchain go1.22.9
-
 require (
 	github.com/RedHatInsights/tenant-utils v1.0.0
 	github.com/aws/aws-sdk-go v1.38.51
