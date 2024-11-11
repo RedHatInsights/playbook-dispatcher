@@ -125,7 +125,7 @@ func validateSatelliteFields(runInput RunInputV2) error {
 func runCreateError(code int, message string) *RunCreated {
 	return &RunCreated{
 		Code: 	code,
-		Message: message,
+		Message: &message,
 	}
 }
 
