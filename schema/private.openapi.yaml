@@ -248,6 +248,10 @@ components:
           type: integer
           example: 201
           description: status code of the request
+        message: 
+          type: string
+          example: "Unexpected error during processing"
+          description: Error Message
         id:
           $ref: './public.openapi.yaml#/components/schemas/RunId'
       required:
