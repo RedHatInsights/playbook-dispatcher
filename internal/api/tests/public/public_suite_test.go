@@ -17,10 +17,20 @@ var (
 func TestConfig(t *testing.T) {
 	RegisterFailHandler(Fail)
 
+/*
 	cfg := config.Get()
 	cfg.Set("web.port", 9002)
 
 	api.WithApi(cfg)
+*/
 
 	RunSpecs(t, "Public Controller Suite")
 }
+
+
+var _ = BeforeSuite(func() {
+	cfg := config.Get()
+	cfg.Set("web.port", 9002)
+
+	api.WithApi(cfg)
+})
