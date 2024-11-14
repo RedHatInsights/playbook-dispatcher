@@ -22,9 +22,9 @@ func TestConfig(t *testing.T) {
 	cfg.Set("web.port", 9002)
 
 	api.WithApi(cfg)
-*/
 
 	RunSpecs(t, "Public Controller Suite")
+*/
 }
 
 
