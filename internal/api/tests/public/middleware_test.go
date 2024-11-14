@@ -23,7 +23,7 @@ var _ = Describe("Middleware", func() {
 			req.Header.Add(requestIdHeader, requestId)
 
 			res, err := test.Client.Do(req)
-			Expect(err).ToNot(HaveOccurred())
+			Expect(err).To(HaveOccurred())
 			Expect(res.Header.Get(requestIdHeader)).To(Equal(requestId))
 		})
 	})
@@ -33,7 +33,7 @@ var _ = Describe("Middleware", func() {
 			req, err := http.NewRequest(http.MethodGet, "http://localhost:9002/api/playbook-dispatcher/v1/openapi.json", nil)
 			Expect(err).ToNot(HaveOccurred())
 			res, err := test.Client.Do(req)
-			Expect(err).ToNot(HaveOccurred())
+			Expect(err).To(HaveOccurred())
 
 			Expect(res.StatusCode).To(Equal(http.StatusOK))
 		})
