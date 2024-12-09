@@ -39,6 +39,9 @@ func GetStdout(events []messageModel.PlaybookRunResponseMessageYamlEventsElem, h
 
 		if event.Stdout != nil {
 			result += *event.Stdout
+			if event.EndLine > event.StartLine {
+				result += "\n"
+			}
 		}
 	}
 
