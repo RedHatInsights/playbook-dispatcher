@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/url"
 	"strings"
 	"sync"
@@ -100,7 +100,7 @@ func SetRequestContextValue(c echo.Context, key interface{}, value interface{}) 
 func LoadSchemas(cfg *viper.Viper, schemaNames []string) (schemas []*jsonschema.Schema) {
 	for _, schemaName := range schemaNames {
 		var schema jsonschema.Schema
-		file, err := ioutil.ReadFile(cfg.GetString(schemaName))
+		file, err := io.ReadFile(cfg.GetString(schemaName))
 		DieOnError(err)
 		err = yaml.Unmarshal(file, &schema)
 		DieOnError(err)
