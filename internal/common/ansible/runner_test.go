@@ -73,7 +73,7 @@ var _ = Describe("Ansible", func() {
 		It("determines stdout from a successful run", func() {
 			events := loadFile("./test-events1.jsonl")
 			stdout := GetStdout(events, nil)
-			Expect(stdout).To(Equal("\r\nPLAY [ping] ********************************************************************\r\n\nTASK [ping] ********************************************************************\n\x1b[0;32mok: [localhost]\x1b[0m\r\n\nPLAY RECAP *********************************************************************\r\n\x1b[0;32mlocalhost\x1b[0m                  : \x1b[0;32mok=1   \x1b[0m changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   \r\n\n"))
+			Expect(stdout).To(Equal("\r\nPLAY [ping] ********************************************************************\n\r\nTASK [ping] ********************************************************************\n\x1b[0;32mok: [localhost]\x1b[0m\n\r\nPLAY RECAP *********************************************************************\r\n\x1b[0;32mlocalhost\x1b[0m                  : \x1b[0;32mok=1   \x1b[0m changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   \r\n\n"))
 		})
 
 		It("determines stdout from a failed run", func() {
