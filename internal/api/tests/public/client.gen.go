@@ -7,7 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
@@ -821,7 +821,7 @@ func (c *ClientWithResponses) ApiRunsListWithResponse(ctx context.Context, param
 
 // ParseApiRunHostsListResponse parses an HTTP response from a ApiRunHostsListWithResponse call
 func ParseApiRunHostsListResponse(rsp *http.Response) (*ApiRunHostsListResponse, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -861,7 +861,7 @@ func ParseApiRunHostsListResponse(rsp *http.Response) (*ApiRunHostsListResponse,
 
 // ParseApiRunsListResponse parses an HTTP response from a ApiRunsListWithResponse call
 func ParseApiRunsListResponse(rsp *http.Response) (*ApiRunsListResponse, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
