@@ -2,7 +2,7 @@ package test
 
 import (
 	"bytes"
-	"io/ioutil"
+	"io"
 	"net/http"
 )
 
@@ -31,7 +31,7 @@ func MockMultiResponseHttpClient(mockResponses ...MockHttpResponse) *mockMultiRe
 	for i := range mockResponses {
 		response := http.Response{
 			StatusCode: mockResponses[i].StatusCode,
-			Body:       ioutil.NopCloser(bytes.NewReader([]byte(mockResponses[i].Body))),
+			Body:       io.NopCloser(bytes.NewReader([]byte(mockResponses[i].Body))),
 			Header: http.Header{
 				"Content-Type": []string{"application/json"},
 			},

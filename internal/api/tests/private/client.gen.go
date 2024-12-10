@@ -9,7 +9,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
@@ -1038,7 +1037,7 @@ func (c *ClientWithResponses) ApiInternalVersionWithResponse(ctx context.Context
 
 // ParseApiInternalRunsCreateResponse parses an HTTP response from a ApiInternalRunsCreateWithResponse call
 func ParseApiInternalRunsCreateResponse(rsp *http.Response) (*ApiInternalRunsCreateResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -1071,7 +1070,7 @@ func ParseApiInternalRunsCreateResponse(rsp *http.Response) (*ApiInternalRunsCre
 
 // ParseApiInternalV2RunsCancelResponse parses an HTTP response from a ApiInternalV2RunsCancelWithResponse call
 func ParseApiInternalV2RunsCancelResponse(rsp *http.Response) (*ApiInternalV2RunsCancelResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -1104,7 +1103,7 @@ func ParseApiInternalV2RunsCancelResponse(rsp *http.Response) (*ApiInternalV2Run
 
 // ParseApiInternalHighlevelConnectionStatusResponse parses an HTTP response from a ApiInternalHighlevelConnectionStatusWithResponse call
 func ParseApiInternalHighlevelConnectionStatusResponse(rsp *http.Response) (*ApiInternalHighlevelConnectionStatusResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -1137,7 +1136,7 @@ func ParseApiInternalHighlevelConnectionStatusResponse(rsp *http.Response) (*Api
 
 // ParseApiInternalV2RunsCreateResponse parses an HTTP response from a ApiInternalV2RunsCreateWithResponse call
 func ParseApiInternalV2RunsCreateResponse(rsp *http.Response) (*ApiInternalV2RunsCreateResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -1163,7 +1162,7 @@ func ParseApiInternalV2RunsCreateResponse(rsp *http.Response) (*ApiInternalV2Run
 
 // ParseApiInternalV2RecipientsStatusResponse parses an HTTP response from a ApiInternalV2RecipientsStatusWithResponse call
 func ParseApiInternalV2RecipientsStatusResponse(rsp *http.Response) (*ApiInternalV2RecipientsStatusResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -1196,7 +1195,7 @@ func ParseApiInternalV2RecipientsStatusResponse(rsp *http.Response) (*ApiInterna
 
 // ParseApiInternalVersionResponse parses an HTTP response from a ApiInternalVersionWithResponse call
 func ParseApiInternalVersionResponse(rsp *http.Response) (*ApiInternalVersionResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
