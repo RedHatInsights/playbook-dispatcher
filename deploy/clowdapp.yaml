@@ -41,7 +41,7 @@ objects:
 
     database:
       name: playbook-dispatcher
-      version: 12
+      version: 16
 
     kafkaTopics:
     - replicas: 3
