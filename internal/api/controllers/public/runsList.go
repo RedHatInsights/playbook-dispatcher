@@ -57,7 +57,11 @@ func (this *controllers) ApiRunsList(ctx echo.Context, params ApiRunsListParams)
 
 	// rbac
 	permissions := middleware.GetPermissions(ctx)
-	if allowedServices := rbac.GetPredicateValues(permissions, "service"); len(allowedServices) > 0 {
+	if allowedServices, err := rbac.GetPredicateValues(permissions, "service"); len(allowedServices) > 0 {
+		if err != nil {
+			instrumentation.RbacError(ctx, err)
+			return echo.NewHTTPError(http.StatusInternalServerError, "error getting permissions from RBAC")
+		}
 		queryBuilder.Where("service IN ?", allowedServices)
 	}
 

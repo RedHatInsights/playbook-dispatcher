@@ -2,7 +2,7 @@ package private
 
 import (
 	"context"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"playbook-dispatcher/internal/api/controllers/public"
 	dbModel "playbook-dispatcher/internal/common/model/db"
@@ -16,9 +16,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var (
-	ansibleHost = "localhost"
-)
+var ansibleHost = "localhost"
 
 func dispatch(payload *ApiInternalRunsCreateJSONRequestBody) (*RunsCreated, *ApiInternalRunsCreateResponse) {
 	resp, err := client.ApiInternalRunsCreate(test.TestContext(), *payload)
@@ -111,7 +109,6 @@ var _ = Describe("runsCreate V1", func() {
 			Expect(run.Status).To(Equal("running"))
 			Expect(run.Labels).To(BeEmpty())
 			Expect(run.Timeout).To(Equal(3600))
-
 		})
 
 		It("404s if the OrgID is not found", func() {
@@ -212,7 +209,7 @@ var _ = Describe("runsCreate V1", func() {
 			resp, err := client.ApiInternalRunsCreateWithBody(test.TestContext(), "application/json", strings.NewReader(payload))
 			Expect(err).ToNot(HaveOccurred())
 			Expect(resp.StatusCode).To(Equal(http.StatusBadRequest))
-			body, err := ioutil.ReadAll(resp.Body)
+			body, err := io.ReadAll(resp.Body)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(string(body)).To(ContainSubstring(expected))
 		},

@@ -8,6 +8,7 @@ import (
 	"playbook-dispatcher/internal/api/controllers/public"
 	"playbook-dispatcher/internal/common/utils"
 
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 )
 
@@ -110,7 +111,7 @@ func sortHostsByRecipient(details []inventory.HostDetails) (satelliteDetails []i
 	return satelliteConnectedHosts, directConnectedHosts, hostsNotConnected
 }
 
-func formatConnectionResponse(satID *string, satOrgID *string, rhcClientID *string, orgID OrgId, hosts []string, recipientType string, status string) RecipientWithConnectionInfo {
+func formatConnectionResponse(satID *string, satOrgID *string, rhcClientID *string, orgID OrgId, hosts []string, recipientType string, status RecipientWithConnectionInfoStatus) RecipientWithConnectionInfo {
 	formatedHosts := make([]HostId, len(hosts))
 	var formatedSatID SatelliteId
 	var formatedSatOrgID SatelliteOrgId
@@ -125,7 +126,9 @@ func formatConnectionResponse(satID *string, satOrgID *string, rhcClientID *stri
 	}
 
 	if rhcClientID != nil {
-		formatedRHCClientID = public.RunRecipient(*rhcClientID)
+		rhcClientUUID, _ := uuid.Parse(*rhcClientID)
+
+		formatedRHCClientID = public.RunRecipient(rhcClientUUID)
 	}
 
 	for i, host := range hosts {
@@ -148,21 +151,20 @@ func formatConnectionResponse(satID *string, satOrgID *string, rhcClientID *stri
 func getDirectConnectStatus(ctx echo.Context, client connectors.CloudConnectorClient, orgId OrgId, hostDetails []inventory.HostDetails) ([]RecipientWithConnectionInfo, error) {
 	responses := []RecipientWithConnectionInfo{}
 	for _, host := range hostDetails {
-		status, err := client.GetConnectionStatus(ctx.Request().Context(), string(orgId), *host.RHCClientID)
-
+		status, err := client.GetConnectionStatus(ctx.Request().Context(), orgId, *host.RHCClientID)
 		if err != nil {
 			utils.GetLogFromEcho(ctx).Error(err)
 			return nil, ctx.NoContent(http.StatusInternalServerError)
 		}
 
 		var connectionStatus string
-		if status == connectors.ConnectionStatus_connected {
+		if string(status) == string(Connected) {
 			connectionStatus = "connected"
 		} else {
 			connectionStatus = "disconnected"
 		}
 
-		responses = append(responses, formatConnectionResponse(nil, nil, host.RHCClientID, orgId, []string{host.ID}, string(RecipientType_directConnect), connectionStatus))
+		responses = append(responses, formatConnectionResponse(nil, nil, host.RHCClientID, orgId, []string{host.ID}, string(DirectConnect), connectionStatus))
 	}
 
 	return responses, nil

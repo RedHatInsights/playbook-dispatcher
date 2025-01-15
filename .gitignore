@@ -1,2 +1,3 @@
 pd
 bin
+*.gen.go

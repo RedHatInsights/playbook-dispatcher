@@ -8,6 +8,7 @@ import (
 	"playbook-dispatcher/internal/common/utils"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/redhatinsights/platform-go-middlewares/request_id"
 	"github.com/spf13/viper"
 )
@@ -16,6 +17,20 @@ const basePath = "/api/inventory/v1/hosts"
 
 type inventoryConnectorImpl struct {
 	client ClientWithResponsesInterface
+}
+
+func strToUUID(strSlice []string) ([]uuid.UUID, error) {
+	var uuidSlice []uuid.UUID
+	for _, str := range strSlice {
+		uuid, err := uuid.Parse(str)
+		if err != nil {
+			return nil, err
+		}
+
+		uuidSlice = append(uuidSlice, uuid)
+	}
+
+	return uuidSlice, nil
 }
 
 func keySystemProfileResults(systemProfileResults []HostSystemProfileOut) map[string]HostSystemProfileOut {
@@ -68,8 +83,8 @@ func convertInterfaceToString(v interface{}) string {
 }
 
 func createHostGetHostByIdParams(orderBy string, orderHow string) *ApiHostGetHostByIdParams {
-	orderByParam := OrderByParam(orderBy)
-	orderHowParam := OrderHowParam(OrderHowParam_ASC)
+	orderByParam := ApiHostGetHostByIdParamsOrderBy(orderBy)
+	orderHowParam := ApiHostGetHostByIdParamsOrderHowASC
 
 	return &ApiHostGetHostByIdParams{
 		OrderBy:  &orderByParam,
@@ -78,12 +93,13 @@ func createHostGetHostByIdParams(orderBy string, orderHow string) *ApiHostGetHos
 }
 
 func createHostGetHostSystemProfileByIdParams(orderBy string, orderHow string) *ApiHostGetHostSystemProfileByIdParams {
-	orderByParam := OrderByParam(orderBy)
-	orderHowParam := OrderHowParam(orderHow)
+	orderByParam := ApiHostGetHostSystemProfileByIdParamsOrderBy(orderBy)
+	orderHowParam := ApiHostGetHostSystemProfileByIdParamsOrderHow(orderHow)
+
 	fields := FieldsParam(
 		SystemProfileNestedObject{
-			AdditionalProperties: map[string]interface{}{
-				"fields[system_profile]": []string{"rhc_client_id", "owner_id"},
+			"AdditionalProperties": SystemProfileNestedObject_AdditionalProperties{
+				[]byte(`{"fields": {"system_profile": ["rhc_client_id", "owner_id"]}}`),
 			},
 		},
 	)
@@ -100,7 +116,7 @@ func NewInventoryClientWithHttpRequestDoer(cfg *viper.Viper, doer HttpRequestDoe
 		ClientInterface: &Client{
 			Server: fmt.Sprintf("%s://%s:%d%s", cfg.GetString("inventory.connector.scheme"), cfg.GetString("inventory.connector.host"), cfg.GetInt("inventory.connector.port"), basePath),
 			Client: utils.NewMeasuredHttpRequestDoer(doer, "inventory", "GetHostConnectionDetails"),
-			RequestEditor: func(ctx context.Context, req *http.Request) error {
+			RequestEditors: []RequestEditorFn{func(ctx context.Context, req *http.Request) error {
 				req.Header.Set(constants.HeaderRequestId, request_id.GetReqID(ctx))
 
 				if identity, ok := ctx.Value(constants.HeaderIdentity).(string); ok {
@@ -108,7 +124,7 @@ func NewInventoryClientWithHttpRequestDoer(cfg *viper.Viper, doer HttpRequestDoe
 				}
 
 				return nil
-			},
+			}},
 		},
 	}
 
@@ -133,11 +149,14 @@ func (this *inventoryConnectorImpl) getHostDetails(
 	limit int,
 	offset int,
 ) (details []HostOut, err error) {
-
 	params := createHostGetHostByIdParams(orderBy, orderHow)
 
-	response, err := this.client.ApiHostGetHostByIdWithResponse(ctx, IDs, params)
+	uuidIDs, err := strToUUID(IDs)
+	if err != nil {
+		return nil, err
+	}
 
+	response, err := this.client.ApiHostGetHostByIdWithResponse(ctx, uuidIDs, params)
 	if err != nil {
 		return nil, err
 	}
@@ -161,11 +180,14 @@ func (this *inventoryConnectorImpl) getSystemProfileDetails(
 	limit int,
 	offset int,
 ) (details map[string]HostSystemProfileOut, err error) {
-
 	params := createHostGetHostSystemProfileByIdParams(orderBy, orderHow)
 
-	response, err := this.client.ApiHostGetHostSystemProfileByIdWithResponse(ctx, IDs, params)
+	uuidIDs, err := strToUUID(IDs)
+	if err != nil {
+		return nil, err
+	}
 
+	response, err := this.client.ApiHostGetHostSystemProfileByIdWithResponse(ctx, uuidIDs, params)
 	if err != nil {
 		return nil, err
 	}
@@ -180,9 +202,7 @@ func (this *inventoryConnectorImpl) getSystemProfileDetails(
 }
 
 func (this *inventoryConnectorImpl) GetHostConnectionDetails(ctx context.Context, IDs []string, order_by string, order_how string, limit int, offset int) (details []HostDetails, err error) {
-
 	hostResults, err := this.getHostDetails(ctx, IDs, order_by, order_how, limit, offset)
-
 	if err != nil {
 		return nil, err
 	}
@@ -192,7 +212,6 @@ func (this *inventoryConnectorImpl) GetHostConnectionDetails(ctx context.Context
 	}
 
 	systemProfileResults, err := this.getSystemProfileDetails(ctx, IDs, order_by, order_how, limit, offset)
-
 	if err != nil {
 		return nil, err
 	}

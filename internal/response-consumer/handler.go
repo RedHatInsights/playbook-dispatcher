@@ -46,7 +46,6 @@ func (this *handler) BeforeUpdate(ctx context.Context, tx *gorm.DB) (err error) 
 
 func (this *handler) onMessage(ctx context.Context, msg *k.Message) {
 	requestId, correlationId, requestType, err := getHeaders(msg)
-
 	if err != nil {
 		instrumentation.CannotReadHeaders(ctx, err)
 		return
@@ -219,7 +218,6 @@ func satUpdateRecord(ctx context.Context, tx *gorm.DB, responseFull bool, toUpda
 }
 
 func createRecord(ctx context.Context, tx *gorm.DB, toCreate []db.RunHost) error {
-
 	successOrFailure := clause.OrConditions{Exprs: []clause.Expression{
 		clause.Eq{Column: "run_hosts.status", Value: db.RunStatusSuccess},
 		clause.Eq{Column: "run_hosts.status", Value: db.RunStatusFailure},
@@ -379,7 +377,7 @@ func parseMessage(ctx context.Context, requestType string, msg *k.Message) *pars
 		return &parsedMessageInfo{
 			OrgId:           value.OrgId,
 			B64Identity:     value.B64Identity,
-			UploadTimestamp: value.UploadTimestamp,
+			UploadTimestamp: value.UploadTimestamp.String(),
 			RunnerEvents:    &value.Events,
 		}
 	} else {
@@ -393,7 +391,7 @@ func parseMessage(ctx context.Context, requestType string, msg *k.Message) *pars
 		return &parsedMessageInfo{
 			OrgId:           value.OrgId,
 			B64Identity:     value.B64Identity,
-			UploadTimestamp: value.UploadTimestamp,
+			UploadTimestamp: value.UploadTimestamp.String(),
 			SatEvents:       &value.Events,
 		}
 	}
