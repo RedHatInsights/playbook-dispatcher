@@ -20,7 +20,8 @@ import (
 
 	"github.com/RedHatInsights/tenant-utils/pkg/tenantid"
 
-	oapiMiddleware "github.com/deepmap/oapi-codegen/pkg/middleware"
+	oapiMiddleware "github.com/oapi-codegen/gin-middleware"
+
 	"github.com/getkin/kin-openapi/openapi3"
 	echoPrometheus "github.com/globocom/echo-prometheus"
 	"github.com/labstack/echo/v4"
@@ -30,8 +31,10 @@ import (
 	"github.com/spf13/viper"
 )
 
-const specFile = "/api/playbook-dispatcher/v1/openapi.json"
-const apiShutdownTimeout = 10 * time.Second
+const (
+	specFile           = "/api/playbook-dispatcher/v1/openapi.json"
+	apiShutdownTimeout = 10 * time.Second
+)
 
 func init() {
 	openapi3.DefineStringFormat("uuid", `^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89aAbB][a-f0-9]{3}-[a-f0-9]{12}$`)
