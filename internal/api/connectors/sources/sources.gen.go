@@ -9,7 +9,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
@@ -20,7 +19,6 @@ import (
 
 // AppMetaData defines model for AppMetaData.
 type AppMetaData struct {
-
 	// The ID of the application the metadata belongs to
 	ApplicationTypeId *string `json:"application_type_id,omitempty"`
 
@@ -49,7 +47,6 @@ type AppMetaDataCollection struct {
 
 // Application defines model for Application.
 type Application struct {
-
 	// ID of the resource
 	ApplicationTypeId *ID `json:"application_type_id,omitempty"`
 
@@ -86,7 +83,6 @@ type Application struct {
 
 // ApplicationAuthentication defines model for ApplicationAuthentication.
 type ApplicationAuthentication struct {
-
 	// ID of the resource
 	ApplicationId *ID `json:"application_id,omitempty"`
 
@@ -101,7 +97,6 @@ type ApplicationAuthentication struct {
 
 // ApplicationAuthenticationCreate defines model for ApplicationAuthenticationCreate.
 type ApplicationAuthenticationCreate struct {
-
 	// ID of the resource. Not "readonly", since it might be used for create/update payloads
 	ApplicationId *IDW `json:"application_id,omitempty"`
 
@@ -111,7 +106,6 @@ type ApplicationAuthenticationCreate struct {
 
 // ApplicationAuthenticationRead defines model for ApplicationAuthenticationRead.
 type ApplicationAuthenticationRead struct {
-
 	// ID of the resource
 	ApplicationId *ID `json:"application_id,omitempty"`
 
@@ -137,7 +131,6 @@ type ApplicationAuthenticationsCollection struct {
 
 // ApplicationCreate defines model for ApplicationCreate.
 type ApplicationCreate struct {
-
 	// ID of the resource. Not "readonly", since it might be used for create/update payloads
 	ApplicationTypeId *IDW `json:"application_type_id,omitempty"`
 
@@ -150,7 +143,6 @@ type ApplicationCreate struct {
 
 // ApplicationType defines model for ApplicationType.
 type ApplicationType struct {
-
 	// The timestamp of the creation of the application type
 	CreatedAt *time.Time `json:"created_at,omitempty"`
 
@@ -185,7 +177,6 @@ type ApplicationTypesCollection struct {
 
 // ApplicationUpdate defines model for ApplicationUpdate.
 type ApplicationUpdate struct {
-
 	// The availability status of the application
 	AvailabilityStatus *string `json:"availability_status,omitempty"`
 
@@ -211,7 +202,6 @@ type ApplicationsCollection struct {
 
 // AuthenticationCreate defines model for AuthenticationCreate.
 type AuthenticationCreate struct {
-
 	// The type of the authentication
 	Authtype *interface{} `json:"authtype,omitempty"`
 
@@ -239,7 +229,6 @@ type AuthenticationCreate struct {
 
 // AuthenticationEdit defines model for AuthenticationEdit.
 type AuthenticationEdit struct {
-
 	// The type of the authentication
 	Authtype *interface{} `json:"authtype,omitempty"`
 
@@ -264,7 +253,6 @@ type AuthenticationEdit struct {
 
 // AuthenticationRead defines model for AuthenticationRead.
 type AuthenticationRead struct {
-
 	// The type of the authentication
 	Authtype *interface{} `json:"authtype,omitempty"`
 
@@ -282,7 +270,6 @@ type AuthenticationRead struct {
 
 		// If the authentication is of the "marketplace-token" type, then this key will contain an unexpired token for the API key that the authentication stores.
 		Marketplace *struct {
-
 			// The authorization token
 			AccessToken *string `json:"access_token,omitempty"`
 
@@ -316,10 +303,8 @@ type AuthenticationsCollection struct {
 
 // BulkCreatePayload defines model for BulkCreatePayload.
 type BulkCreatePayload struct {
-
 	// Array of application objects to create. The operation looks up the parent Source by the `source_name` attribute so the `source_name` must match one of the `source` names in the payload. You can specify the application type by using either the `application_type_name` or the `application_type_id`.
 	Applications *[]struct {
-
 		// The ID of the application type
 		ApplicationTypeId *string `json:"application_type_id,omitempty"`
 
@@ -339,7 +324,6 @@ type BulkCreatePayload struct {
 	// Array of authentications to create. `resource_type` tells the action where to look for the parent, must be either application, endpoint or source.
 	// If the parent is a source, it looks up by name. If the parent is an endpoint, it looks up via host so the hostname must match. If the parent is an application, it looks up via application type so the value must match the application type which matches.
 	Authentications *[]struct {
-
 		// The type of the authentication. You can find this by listing the source types or the application types
 		Authtype *string `json:"authtype,omitempty"`
 
@@ -361,7 +345,6 @@ type BulkCreatePayload struct {
 
 	// Array of endpoint objects to create. The operation looks up the parent source by the `source_name` attribute so the `source_name` must match one of the `source`'s names in the payload.
 	Endpoints *[]struct {
-
 		// URI host component of the endpoint.
 		Host *string `json:"host,omitempty"`
 
@@ -383,7 +366,6 @@ type BulkCreatePayload struct {
 
 	// Array of source objects to create
 	Sources *[]struct {
-
 		// The name of the source
 		Name string `json:"name"`
 
@@ -394,7 +376,6 @@ type BulkCreatePayload struct {
 
 // BulkCreateResponse defines model for BulkCreateResponse.
 type BulkCreateResponse struct {
-
 	// An array containing the created applications
 	Applications *[]Application `json:"applications,omitempty"`
 
@@ -410,7 +391,6 @@ type BulkCreateResponse struct {
 
 // CollectionLinks defines model for CollectionLinks.
 type CollectionLinks struct {
-
 	// The link to the first object of the list
 	First *string `json:"first,omitempty"`
 
@@ -426,7 +406,6 @@ type CollectionLinks struct {
 
 // CollectionMetadata defines model for CollectionMetadata.
 type CollectionMetadata struct {
-
 	// The total amount of objects in the database
 	Count *int `json:"count,omitempty"`
 
@@ -439,7 +418,6 @@ type CollectionMetadata struct {
 
 // Endpoint defines model for Endpoint.
 type Endpoint struct {
-
 	// The availability status of the endpoint.
 	AvailabilityStatus *string `json:"availability_status,omitempty"`
 
@@ -497,7 +475,6 @@ type Endpoint struct {
 
 // EndpointCreate defines model for EndpointCreate.
 type EndpointCreate struct {
-
 	// The availability status of the endpoint.
 	AvailabilityStatus *string `json:"availability_status,omitempty"`
 
@@ -534,7 +511,6 @@ type EndpointCreate struct {
 
 // EndpointEdit defines model for EndpointEdit.
 type EndpointEdit struct {
-
 	// The availability status of the endpoint.
 	AvailabilityStatus *string `json:"availability_status,omitempty"`
 
@@ -577,7 +553,6 @@ type EndpointEdit struct {
 
 // EndpointRead defines model for EndpointRead.
 type EndpointRead struct {
-
 	// The availability status of the endpoint.
 	AvailabilityStatus *string `json:"availability_status,omitempty"`
 
@@ -643,7 +618,6 @@ type EndpointsCollection struct {
 // ErrorBadRequest defines model for ErrorBadRequest.
 type ErrorBadRequest struct {
 	Errors *[]struct {
-
 		// Detail of the error
 		Detail *string `json:"detail,omitempty"`
 
@@ -655,7 +629,6 @@ type ErrorBadRequest struct {
 // ErrorNotFound defines model for ErrorNotFound.
 type ErrorNotFound struct {
 	Errors *[]struct {
-
 		// Detail of the error
 		Detail *string `json:"detail,omitempty"`
 
@@ -666,7 +639,6 @@ type ErrorNotFound struct {
 
 // GraphQLRequest defines model for GraphQLRequest.
 type GraphQLRequest struct {
-
 	// If the Query contains several named operations, the operationName controls which one should be executed
 	OperationName *string `json:"operationName,omitempty"`
 
@@ -679,7 +651,6 @@ type GraphQLRequest struct {
 
 // GraphQLResponse defines model for GraphQLResponse.
 type GraphQLResponse struct {
-
 	// Results from the GraphQL query
 	Data *map[string]interface{} `json:"data,omitempty"`
 
@@ -702,7 +673,6 @@ type RhcConnectionCollection struct {
 
 // RhcConnectionCreate defines model for RhcConnectionCreate.
 type RhcConnectionCreate struct {
-
 	// Extra data in JSON format
 	Extra *map[string]interface{} `json:"extra,omitempty"`
 
@@ -715,7 +685,6 @@ type RhcConnectionCreate struct {
 
 // RhcConnectionRead defines model for RhcConnectionRead.
 type RhcConnectionRead struct {
-
 	// The availability status of the connection
 	AvailabilityStatus *string `json:"availability_status,omitempty"`
 
@@ -743,7 +712,6 @@ type RhcConnectionRead struct {
 
 // RhcConnectionUpdate defines model for RhcConnectionUpdate.
 type RhcConnectionUpdate struct {
-
 	// Extra data in JSON format
 	Extra *map[string]interface{} `json:"extra,omitempty"`
 }
@@ -794,7 +762,6 @@ type Source struct {
 
 // SourceCreate defines model for SourceCreate.
 type SourceCreate struct {
-
 	// The way the source is going to be created: manually, or using superkey?
 	AppCreationWorkflow *string `json:"app_creation_workflow,omitempty"`
 
@@ -822,7 +789,6 @@ type SourceCreate struct {
 
 // SourceEdit defines model for SourceEdit.
 type SourceEdit struct {
-
 	// The availability status of the source
 	AvailabilityStatus *string `json:"availability_status,omitempty"`
 
@@ -847,7 +813,6 @@ type SourceEdit struct {
 
 // SourceType defines model for SourceType.
 type SourceType struct {
-
 	// The category of this source type
 	Category  *string    `json:"category,omitempty"`
 	CreatedAt *time.Time `json:"created_at,omitempty"`
@@ -906,7 +871,6 @@ type NotFound ErrorNotFound
 
 // ListAllAppMetaDataParams defines parameters for ListAllAppMetaData.
 type ListAllAppMetaDataParams struct {
-
 	// The numbers of items to return per page.
 	Limit *QueryLimit `json:"limit,omitempty"`
 
@@ -922,7 +886,6 @@ type ListAllAppMetaDataParams struct {
 
 // ListAllApplicationAuthenticationsParams defines parameters for ListAllApplicationAuthentications.
 type ListAllApplicationAuthenticationsParams struct {
-
 	// The numbers of items to return per page.
 	Limit *QueryLimit `json:"limit,omitempty"`
 
@@ -941,7 +904,6 @@ type CreateApplicationAuthenticationJSONBody ApplicationAuthenticationCreate
 
 // ListApplicationTypesParams defines parameters for ListApplicationTypes.
 type ListApplicationTypesParams struct {
-
 	// The numbers of items to return per page.
 	Limit *QueryLimit `json:"limit,omitempty"`
 
@@ -957,7 +919,6 @@ type ListApplicationTypesParams struct {
 
 // ListApplicationTypeAppMetaDataParams defines parameters for ListApplicationTypeAppMetaData.
 type ListApplicationTypeAppMetaDataParams struct {
-
 	// The numbers of items to return per page.
 	Limit *QueryLimit `json:"limit,omitempty"`
 
@@ -973,7 +934,6 @@ type ListApplicationTypeAppMetaDataParams struct {
 
 // ListApplicationTypeSourcesParams defines parameters for ListApplicationTypeSources.
 type ListApplicationTypeSourcesParams struct {
-
 	// The numbers of items to return per page.
 	Limit *QueryLimit `json:"limit,omitempty"`
 
@@ -989,7 +949,6 @@ type ListApplicationTypeSourcesParams struct {
 
 // ListApplicationsParams defines parameters for ListApplications.
 type ListApplicationsParams struct {
-
 	// The numbers of items to return per page.
 	Limit *QueryLimit `json:"limit,omitempty"`
 
@@ -1011,7 +970,6 @@ type UpdateApplicationJSONBody ApplicationUpdate
 
 // ListApplicationAuthenticationsParams defines parameters for ListApplicationAuthentications.
 type ListApplicationAuthenticationsParams struct {
-
 	// The numbers of items to return per page.
 	Limit *QueryLimit `json:"limit,omitempty"`
 
@@ -1027,7 +985,6 @@ type ListApplicationAuthenticationsParams struct {
 
 // ListApplicationAuthenticationsAuthenticationsParams defines parameters for ListApplicationAuthenticationsAuthentications.
 type ListApplicationAuthenticationsAuthenticationsParams struct {
-
 	// The numbers of items to return per page.
 	Limit *QueryLimit `json:"limit,omitempty"`
 
@@ -1043,7 +1000,6 @@ type ListApplicationAuthenticationsAuthenticationsParams struct {
 
 // ListAuthenticationsParams defines parameters for ListAuthentications.
 type ListAuthenticationsParams struct {
-
 	// The numbers of items to return per page.
 	Limit *QueryLimit `json:"limit,omitempty"`
 
@@ -1068,7 +1024,6 @@ type ApiBulkCreateJSONBody BulkCreatePayload
 
 // ListEndpointsParams defines parameters for ListEndpoints.
 type ListEndpointsParams struct {
-
 	// The numbers of items to return per page.
 	Limit *QueryLimit `json:"limit,omitempty"`
 
@@ -1090,7 +1045,6 @@ type UpdateEndpointJSONBody EndpointEdit
 
 // ListEndpointAuthenticationsParams defines parameters for ListEndpointAuthentications.
 type ListEndpointAuthenticationsParams struct {
-
 	// The numbers of items to return per page.
 	Limit *QueryLimit `json:"limit,omitempty"`
 
@@ -1109,7 +1063,6 @@ type PostGraphQLJSONBody GraphQLRequest
 
 // GetRhcConnectionsParams defines parameters for GetRhcConnections.
 type GetRhcConnectionsParams struct {
-
 	// The numbers of items to return per page.
 	Limit *QueryLimit `json:"limit,omitempty"`
 
@@ -1131,7 +1084,6 @@ type UpdateRhcConnectionJSONBody RhcConnectionUpdate
 
 // GetRhcConnectionSourcesParams defines parameters for GetRhcConnectionSources.
 type GetRhcConnectionSourcesParams struct {
-
 	// The numbers of items to return per page.
 	Limit *QueryLimit `json:"limit,omitempty"`
 
@@ -1147,7 +1099,6 @@ type GetRhcConnectionSourcesParams struct {
 
 // ListSourceTypesParams defines parameters for ListSourceTypes.
 type ListSourceTypesParams struct {
-
 	// The numbers of items to return per page.
 	Limit *QueryLimit `json:"limit,omitempty"`
 
@@ -1163,7 +1114,6 @@ type ListSourceTypesParams struct {
 
 // ListSourceTypeSourcesParams defines parameters for ListSourceTypeSources.
 type ListSourceTypeSourcesParams struct {
-
 	// The numbers of items to return per page.
 	Limit *QueryLimit `json:"limit,omitempty"`
 
@@ -1179,7 +1129,6 @@ type ListSourceTypeSourcesParams struct {
 
 // ListSourcesParams defines parameters for ListSources.
 type ListSourcesParams struct {
-
 	// The numbers of items to return per page.
 	Limit *QueryLimit `json:"limit,omitempty"`
 
@@ -1201,7 +1150,6 @@ type UpdateSourceJSONBody SourceEdit
 
 // ListSourceApplicationTypesParams defines parameters for ListSourceApplicationTypes.
 type ListSourceApplicationTypesParams struct {
-
 	// The numbers of items to return per page.
 	Limit *QueryLimit `json:"limit,omitempty"`
 
@@ -1217,7 +1165,6 @@ type ListSourceApplicationTypesParams struct {
 
 // ListSourceApplicationsParams defines parameters for ListSourceApplications.
 type ListSourceApplicationsParams struct {
-
 	// The numbers of items to return per page.
 	Limit *QueryLimit `json:"limit,omitempty"`
 
@@ -1233,7 +1180,6 @@ type ListSourceApplicationsParams struct {
 
 // ListSourceAuthenticationsParams defines parameters for ListSourceAuthentications.
 type ListSourceAuthenticationsParams struct {
-
 	// The numbers of items to return per page.
 	Limit *QueryLimit `json:"limit,omitempty"`
 
@@ -1249,7 +1195,6 @@ type ListSourceAuthenticationsParams struct {
 
 // ListSourceEndpointsParams defines parameters for ListSourceEndpoints.
 type ListSourceEndpointsParams struct {
-
 	// The numbers of items to return per page.
 	Limit *QueryLimit `json:"limit,omitempty"`
 
@@ -1265,7 +1210,6 @@ type ListSourceEndpointsParams struct {
 
 // GetSourcesRhcConnectionParams defines parameters for GetSourcesRhcConnection.
 type GetSourcesRhcConnectionParams struct {
-
 	// The numbers of items to return per page.
 	Limit *QueryLimit `json:"limit,omitempty"`
 
@@ -2625,7 +2569,6 @@ func NewListAllAppMetaDataRequest(server string, params *ListAllAppMetaDataParam
 	queryValues := queryUrl.Query()
 
 	if params.Limit != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "limit", *params.Limit); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -2637,11 +2580,9 @@ func NewListAllAppMetaDataRequest(server string, params *ListAllAppMetaDataParam
 				}
 			}
 		}
-
 	}
 
 	if params.Offset != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "offset", *params.Offset); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -2653,11 +2594,9 @@ func NewListAllAppMetaDataRequest(server string, params *ListAllAppMetaDataParam
 				}
 			}
 		}
-
 	}
 
 	if params.Filter != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "filter", *params.Filter); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -2669,11 +2608,9 @@ func NewListAllAppMetaDataRequest(server string, params *ListAllAppMetaDataParam
 				}
 			}
 		}
-
 	}
 
 	if params.SortBy != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "sort_by", *params.SortBy); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -2685,7 +2622,6 @@ func NewListAllAppMetaDataRequest(server string, params *ListAllAppMetaDataParam
 				}
 			}
 		}
-
 	}
 
 	queryUrl.RawQuery = queryValues.Encode()
@@ -2754,7 +2690,6 @@ func NewListAllApplicationAuthenticationsRequest(server string, params *ListAllA
 	queryValues := queryUrl.Query()
 
 	if params.Limit != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "limit", *params.Limit); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -2766,11 +2701,9 @@ func NewListAllApplicationAuthenticationsRequest(server string, params *ListAllA
 				}
 			}
 		}
-
 	}
 
 	if params.Offset != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "offset", *params.Offset); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -2782,11 +2715,9 @@ func NewListAllApplicationAuthenticationsRequest(server string, params *ListAllA
 				}
 			}
 		}
-
 	}
 
 	if params.Filter != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "filter", *params.Filter); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -2798,11 +2729,9 @@ func NewListAllApplicationAuthenticationsRequest(server string, params *ListAllA
 				}
 			}
 		}
-
 	}
 
 	if params.SortBy != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "sort_by", *params.SortBy); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -2814,7 +2743,6 @@ func NewListAllApplicationAuthenticationsRequest(server string, params *ListAllA
 				}
 			}
 		}
-
 	}
 
 	queryUrl.RawQuery = queryValues.Encode()
@@ -2956,7 +2884,6 @@ func NewListApplicationTypesRequest(server string, params *ListApplicationTypesP
 	queryValues := queryUrl.Query()
 
 	if params.Limit != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "limit", *params.Limit); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -2968,11 +2895,9 @@ func NewListApplicationTypesRequest(server string, params *ListApplicationTypesP
 				}
 			}
 		}
-
 	}
 
 	if params.Offset != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "offset", *params.Offset); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -2984,11 +2909,9 @@ func NewListApplicationTypesRequest(server string, params *ListApplicationTypesP
 				}
 			}
 		}
-
 	}
 
 	if params.Filter != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "filter", *params.Filter); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -3000,11 +2923,9 @@ func NewListApplicationTypesRequest(server string, params *ListApplicationTypesP
 				}
 			}
 		}
-
 	}
 
 	if params.SortBy != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "sort_by", *params.SortBy); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -3016,7 +2937,6 @@ func NewListApplicationTypesRequest(server string, params *ListApplicationTypesP
 				}
 			}
 		}
-
 	}
 
 	queryUrl.RawQuery = queryValues.Encode()
@@ -3092,7 +3012,6 @@ func NewListApplicationTypeAppMetaDataRequest(server string, id ID, params *List
 	queryValues := queryUrl.Query()
 
 	if params.Limit != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "limit", *params.Limit); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -3104,11 +3023,9 @@ func NewListApplicationTypeAppMetaDataRequest(server string, id ID, params *List
 				}
 			}
 		}
-
 	}
 
 	if params.Offset != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "offset", *params.Offset); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -3120,11 +3037,9 @@ func NewListApplicationTypeAppMetaDataRequest(server string, id ID, params *List
 				}
 			}
 		}
-
 	}
 
 	if params.Filter != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "filter", *params.Filter); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -3136,11 +3051,9 @@ func NewListApplicationTypeAppMetaDataRequest(server string, id ID, params *List
 				}
 			}
 		}
-
 	}
 
 	if params.SortBy != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "sort_by", *params.SortBy); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -3152,7 +3065,6 @@ func NewListApplicationTypeAppMetaDataRequest(server string, id ID, params *List
 				}
 			}
 		}
-
 	}
 
 	queryUrl.RawQuery = queryValues.Encode()
@@ -3194,7 +3106,6 @@ func NewListApplicationTypeSourcesRequest(server string, id ID, params *ListAppl
 	queryValues := queryUrl.Query()
 
 	if params.Limit != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "limit", *params.Limit); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -3206,11 +3117,9 @@ func NewListApplicationTypeSourcesRequest(server string, id ID, params *ListAppl
 				}
 			}
 		}
-
 	}
 
 	if params.Offset != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "offset", *params.Offset); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -3222,11 +3131,9 @@ func NewListApplicationTypeSourcesRequest(server string, id ID, params *ListAppl
 				}
 			}
 		}
-
 	}
 
 	if params.Filter != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "filter", *params.Filter); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -3238,11 +3145,9 @@ func NewListApplicationTypeSourcesRequest(server string, id ID, params *ListAppl
 				}
 			}
 		}
-
 	}
 
 	if params.SortBy != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "sort_by", *params.SortBy); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -3254,7 +3159,6 @@ func NewListApplicationTypeSourcesRequest(server string, id ID, params *ListAppl
 				}
 			}
 		}
-
 	}
 
 	queryUrl.RawQuery = queryValues.Encode()
@@ -3289,7 +3193,6 @@ func NewListApplicationsRequest(server string, params *ListApplicationsParams) (
 	queryValues := queryUrl.Query()
 
 	if params.Limit != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "limit", *params.Limit); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -3301,11 +3204,9 @@ func NewListApplicationsRequest(server string, params *ListApplicationsParams) (
 				}
 			}
 		}
-
 	}
 
 	if params.Offset != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "offset", *params.Offset); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -3317,11 +3218,9 @@ func NewListApplicationsRequest(server string, params *ListApplicationsParams) (
 				}
 			}
 		}
-
 	}
 
 	if params.Filter != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "filter", *params.Filter); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -3333,11 +3232,9 @@ func NewListApplicationsRequest(server string, params *ListApplicationsParams) (
 				}
 			}
 		}
-
 	}
 
 	if params.SortBy != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "sort_by", *params.SortBy); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -3349,7 +3246,6 @@ func NewListApplicationsRequest(server string, params *ListApplicationsParams) (
 				}
 			}
 		}
-
 	}
 
 	queryUrl.RawQuery = queryValues.Encode()
@@ -3544,7 +3440,6 @@ func NewListApplicationAuthenticationsRequest(server string, id ID, params *List
 	queryValues := queryUrl.Query()
 
 	if params.Limit != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "limit", *params.Limit); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -3556,11 +3451,9 @@ func NewListApplicationAuthenticationsRequest(server string, id ID, params *List
 				}
 			}
 		}
-
 	}
 
 	if params.Offset != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "offset", *params.Offset); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -3572,11 +3465,9 @@ func NewListApplicationAuthenticationsRequest(server string, id ID, params *List
 				}
 			}
 		}
-
 	}
 
 	if params.Filter != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "filter", *params.Filter); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -3588,11 +3479,9 @@ func NewListApplicationAuthenticationsRequest(server string, id ID, params *List
 				}
 			}
 		}
-
 	}
 
 	if params.SortBy != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "sort_by", *params.SortBy); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -3604,7 +3493,6 @@ func NewListApplicationAuthenticationsRequest(server string, id ID, params *List
 				}
 			}
 		}
-
 	}
 
 	queryUrl.RawQuery = queryValues.Encode()
@@ -3714,7 +3602,6 @@ func NewListApplicationAuthenticationsAuthenticationsRequest(server string, id I
 	queryValues := queryUrl.Query()
 
 	if params.Limit != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "limit", *params.Limit); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -3726,11 +3613,9 @@ func NewListApplicationAuthenticationsAuthenticationsRequest(server string, id I
 				}
 			}
 		}
-
 	}
 
 	if params.Offset != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "offset", *params.Offset); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -3742,11 +3627,9 @@ func NewListApplicationAuthenticationsAuthenticationsRequest(server string, id I
 				}
 			}
 		}
-
 	}
 
 	if params.Filter != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "filter", *params.Filter); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -3758,11 +3641,9 @@ func NewListApplicationAuthenticationsAuthenticationsRequest(server string, id I
 				}
 			}
 		}
-
 	}
 
 	if params.SortBy != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "sort_by", *params.SortBy); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -3774,7 +3655,6 @@ func NewListApplicationAuthenticationsAuthenticationsRequest(server string, id I
 				}
 			}
 		}
-
 	}
 
 	queryUrl.RawQuery = queryValues.Encode()
@@ -3809,7 +3689,6 @@ func NewListAuthenticationsRequest(server string, params *ListAuthenticationsPar
 	queryValues := queryUrl.Query()
 
 	if params.Limit != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "limit", *params.Limit); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -3821,11 +3700,9 @@ func NewListAuthenticationsRequest(server string, params *ListAuthenticationsPar
 				}
 			}
 		}
-
 	}
 
 	if params.Offset != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "offset", *params.Offset); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -3837,11 +3714,9 @@ func NewListAuthenticationsRequest(server string, params *ListAuthenticationsPar
 				}
 			}
 		}
-
 	}
 
 	if params.Filter != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "filter", *params.Filter); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -3853,11 +3728,9 @@ func NewListAuthenticationsRequest(server string, params *ListAuthenticationsPar
 				}
 			}
 		}
-
 	}
 
 	if params.SortBy != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "sort_by", *params.SortBy); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -3869,7 +3742,6 @@ func NewListAuthenticationsRequest(server string, params *ListAuthenticationsPar
 				}
 			}
 		}
-
 	}
 
 	queryUrl.RawQuery = queryValues.Encode()
@@ -4096,7 +3968,6 @@ func NewListEndpointsRequest(server string, params *ListEndpointsParams) (*http.
 	queryValues := queryUrl.Query()
 
 	if params.Limit != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "limit", *params.Limit); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -4108,11 +3979,9 @@ func NewListEndpointsRequest(server string, params *ListEndpointsParams) (*http.
 				}
 			}
 		}
-
 	}
 
 	if params.Offset != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "offset", *params.Offset); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -4124,11 +3993,9 @@ func NewListEndpointsRequest(server string, params *ListEndpointsParams) (*http.
 				}
 			}
 		}
-
 	}
 
 	if params.Filter != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "filter", *params.Filter); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -4140,11 +4007,9 @@ func NewListEndpointsRequest(server string, params *ListEndpointsParams) (*http.
 				}
 			}
 		}
-
 	}
 
 	if params.SortBy != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "sort_by", *params.SortBy); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -4156,7 +4021,6 @@ func NewListEndpointsRequest(server string, params *ListEndpointsParams) (*http.
 				}
 			}
 		}
-
 	}
 
 	queryUrl.RawQuery = queryValues.Encode()
@@ -4351,7 +4215,6 @@ func NewListEndpointAuthenticationsRequest(server string, id ID, params *ListEnd
 	queryValues := queryUrl.Query()
 
 	if params.Limit != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "limit", *params.Limit); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -4363,11 +4226,9 @@ func NewListEndpointAuthenticationsRequest(server string, id ID, params *ListEnd
 				}
 			}
 		}
-
 	}
 
 	if params.Offset != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "offset", *params.Offset); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -4379,11 +4240,9 @@ func NewListEndpointAuthenticationsRequest(server string, id ID, params *ListEnd
 				}
 			}
 		}
-
 	}
 
 	if params.Filter != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "filter", *params.Filter); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -4395,11 +4254,9 @@ func NewListEndpointAuthenticationsRequest(server string, id ID, params *ListEnd
 				}
 			}
 		}
-
 	}
 
 	if params.SortBy != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "sort_by", *params.SortBy); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -4411,7 +4268,6 @@ func NewListEndpointAuthenticationsRequest(server string, id ID, params *ListEnd
 				}
 			}
 		}
-
 	}
 
 	queryUrl.RawQuery = queryValues.Encode()
@@ -4512,7 +4368,6 @@ func NewGetRhcConnectionsRequest(server string, params *GetRhcConnectionsParams)
 	queryValues := queryUrl.Query()
 
 	if params.Limit != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "limit", *params.Limit); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -4524,11 +4379,9 @@ func NewGetRhcConnectionsRequest(server string, params *GetRhcConnectionsParams)
 				}
 			}
 		}
-
 	}
 
 	if params.Offset != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "offset", *params.Offset); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -4540,11 +4393,9 @@ func NewGetRhcConnectionsRequest(server string, params *GetRhcConnectionsParams)
 				}
 			}
 		}
-
 	}
 
 	if params.Filter != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "filter", *params.Filter); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -4556,11 +4407,9 @@ func NewGetRhcConnectionsRequest(server string, params *GetRhcConnectionsParams)
 				}
 			}
 		}
-
 	}
 
 	if params.SortBy != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "sort_by", *params.SortBy); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -4572,7 +4421,6 @@ func NewGetRhcConnectionsRequest(server string, params *GetRhcConnectionsParams)
 				}
 			}
 		}
-
 	}
 
 	queryUrl.RawQuery = queryValues.Encode()
@@ -4767,7 +4615,6 @@ func NewGetRhcConnectionSourcesRequest(server string, id ID, params *GetRhcConne
 	queryValues := queryUrl.Query()
 
 	if params.Limit != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "limit", *params.Limit); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -4779,11 +4626,9 @@ func NewGetRhcConnectionSourcesRequest(server string, id ID, params *GetRhcConne
 				}
 			}
 		}
-
 	}
 
 	if params.Offset != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "offset", *params.Offset); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -4795,11 +4640,9 @@ func NewGetRhcConnectionSourcesRequest(server string, id ID, params *GetRhcConne
 				}
 			}
 		}
-
 	}
 
 	if params.Filter != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "filter", *params.Filter); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -4811,11 +4654,9 @@ func NewGetRhcConnectionSourcesRequest(server string, id ID, params *GetRhcConne
 				}
 			}
 		}
-
 	}
 
 	if params.SortBy != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "sort_by", *params.SortBy); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -4827,7 +4668,6 @@ func NewGetRhcConnectionSourcesRequest(server string, id ID, params *GetRhcConne
 				}
 			}
 		}
-
 	}
 
 	queryUrl.RawQuery = queryValues.Encode()
@@ -4862,7 +4702,6 @@ func NewListSourceTypesRequest(server string, params *ListSourceTypesParams) (*h
 	queryValues := queryUrl.Query()
 
 	if params.Limit != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "limit", *params.Limit); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -4874,11 +4713,9 @@ func NewListSourceTypesRequest(server string, params *ListSourceTypesParams) (*h
 				}
 			}
 		}
-
 	}
 
 	if params.Offset != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "offset", *params.Offset); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -4890,11 +4727,9 @@ func NewListSourceTypesRequest(server string, params *ListSourceTypesParams) (*h
 				}
 			}
 		}
-
 	}
 
 	if params.Filter != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "filter", *params.Filter); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -4906,11 +4741,9 @@ func NewListSourceTypesRequest(server string, params *ListSourceTypesParams) (*h
 				}
 			}
 		}
-
 	}
 
 	if params.SortBy != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "sort_by", *params.SortBy); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -4922,7 +4755,6 @@ func NewListSourceTypesRequest(server string, params *ListSourceTypesParams) (*h
 				}
 			}
 		}
-
 	}
 
 	queryUrl.RawQuery = queryValues.Encode()
@@ -4998,7 +4830,6 @@ func NewListSourceTypeSourcesRequest(server string, id ID, params *ListSourceTyp
 	queryValues := queryUrl.Query()
 
 	if params.Limit != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "limit", *params.Limit); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -5010,11 +4841,9 @@ func NewListSourceTypeSourcesRequest(server string, id ID, params *ListSourceTyp
 				}
 			}
 		}
-
 	}
 
 	if params.Offset != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "offset", *params.Offset); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -5026,11 +4855,9 @@ func NewListSourceTypeSourcesRequest(server string, id ID, params *ListSourceTyp
 				}
 			}
 		}
-
 	}
 
 	if params.Filter != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "filter", *params.Filter); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -5042,11 +4869,9 @@ func NewListSourceTypeSourcesRequest(server string, id ID, params *ListSourceTyp
 				}
 			}
 		}
-
 	}
 
 	if params.SortBy != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "sort_by", *params.SortBy); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -5058,7 +4883,6 @@ func NewListSourceTypeSourcesRequest(server string, id ID, params *ListSourceTyp
 				}
 			}
 		}
-
 	}
 
 	queryUrl.RawQuery = queryValues.Encode()
@@ -5093,7 +4917,6 @@ func NewListSourcesRequest(server string, params *ListSourcesParams) (*http.Requ
 	queryValues := queryUrl.Query()
 
 	if params.Limit != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "limit", *params.Limit); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -5105,11 +4928,9 @@ func NewListSourcesRequest(server string, params *ListSourcesParams) (*http.Requ
 				}
 			}
 		}
-
 	}
 
 	if params.Offset != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "offset", *params.Offset); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -5121,11 +4942,9 @@ func NewListSourcesRequest(server string, params *ListSourcesParams) (*http.Requ
 				}
 			}
 		}
-
 	}
 
 	if params.Filter != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "filter", *params.Filter); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -5137,11 +4956,9 @@ func NewListSourcesRequest(server string, params *ListSourcesParams) (*http.Requ
 				}
 			}
 		}
-
 	}
 
 	if params.SortBy != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "sort_by", *params.SortBy); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -5153,7 +4970,6 @@ func NewListSourcesRequest(server string, params *ListSourcesParams) (*http.Requ
 				}
 			}
 		}
-
 	}
 
 	queryUrl.RawQuery = queryValues.Encode()
@@ -5348,7 +5164,6 @@ func NewListSourceApplicationTypesRequest(server string, id ID, params *ListSour
 	queryValues := queryUrl.Query()
 
 	if params.Limit != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "limit", *params.Limit); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -5360,11 +5175,9 @@ func NewListSourceApplicationTypesRequest(server string, id ID, params *ListSour
 				}
 			}
 		}
-
 	}
 
 	if params.Offset != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "offset", *params.Offset); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -5376,11 +5189,9 @@ func NewListSourceApplicationTypesRequest(server string, id ID, params *ListSour
 				}
 			}
 		}
-
 	}
 
 	if params.Filter != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "filter", *params.Filter); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -5392,11 +5203,9 @@ func NewListSourceApplicationTypesRequest(server string, id ID, params *ListSour
 				}
 			}
 		}
-
 	}
 
 	if params.SortBy != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "sort_by", *params.SortBy); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -5408,7 +5217,6 @@ func NewListSourceApplicationTypesRequest(server string, id ID, params *ListSour
 				}
 			}
 		}
-
 	}
 
 	queryUrl.RawQuery = queryValues.Encode()
@@ -5450,7 +5258,6 @@ func NewListSourceApplicationsRequest(server string, id ID, params *ListSourceAp
 	queryValues := queryUrl.Query()
 
 	if params.Limit != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "limit", *params.Limit); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -5462,11 +5269,9 @@ func NewListSourceApplicationsRequest(server string, id ID, params *ListSourceAp
 				}
 			}
 		}
-
 	}
 
 	if params.Offset != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "offset", *params.Offset); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -5478,11 +5283,9 @@ func NewListSourceApplicationsRequest(server string, id ID, params *ListSourceAp
 				}
 			}
 		}
-
 	}
 
 	if params.Filter != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "filter", *params.Filter); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -5494,11 +5297,9 @@ func NewListSourceApplicationsRequest(server string, id ID, params *ListSourceAp
 				}
 			}
 		}
-
 	}
 
 	if params.SortBy != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "sort_by", *params.SortBy); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -5510,7 +5311,6 @@ func NewListSourceApplicationsRequest(server string, id ID, params *ListSourceAp
 				}
 			}
 		}
-
 	}
 
 	queryUrl.RawQuery = queryValues.Encode()
@@ -5552,7 +5352,6 @@ func NewListSourceAuthenticationsRequest(server string, id ID, params *ListSourc
 	queryValues := queryUrl.Query()
 
 	if params.Limit != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "limit", *params.Limit); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -5564,11 +5363,9 @@ func NewListSourceAuthenticationsRequest(server string, id ID, params *ListSourc
 				}
 			}
 		}
-
 	}
 
 	if params.Offset != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "offset", *params.Offset); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -5580,11 +5377,9 @@ func NewListSourceAuthenticationsRequest(server string, id ID, params *ListSourc
 				}
 			}
 		}
-
 	}
 
 	if params.Filter != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "filter", *params.Filter); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -5596,11 +5391,9 @@ func NewListSourceAuthenticationsRequest(server string, id ID, params *ListSourc
 				}
 			}
 		}
-
 	}
 
 	if params.SortBy != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "sort_by", *params.SortBy); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -5612,7 +5405,6 @@ func NewListSourceAuthenticationsRequest(server string, id ID, params *ListSourc
 				}
 			}
 		}
-
 	}
 
 	queryUrl.RawQuery = queryValues.Encode()
@@ -5688,7 +5480,6 @@ func NewListSourceEndpointsRequest(server string, id ID, params *ListSourceEndpo
 	queryValues := queryUrl.Query()
 
 	if params.Limit != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "limit", *params.Limit); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -5700,11 +5491,9 @@ func NewListSourceEndpointsRequest(server string, id ID, params *ListSourceEndpo
 				}
 			}
 		}
-
 	}
 
 	if params.Offset != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "offset", *params.Offset); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -5716,11 +5505,9 @@ func NewListSourceEndpointsRequest(server string, id ID, params *ListSourceEndpo
 				}
 			}
 		}
-
 	}
 
 	if params.Filter != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "filter", *params.Filter); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -5732,11 +5519,9 @@ func NewListSourceEndpointsRequest(server string, id ID, params *ListSourceEndpo
 				}
 			}
 		}
-
 	}
 
 	if params.SortBy != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "sort_by", *params.SortBy); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -5748,7 +5533,6 @@ func NewListSourceEndpointsRequest(server string, id ID, params *ListSourceEndpo
 				}
 			}
 		}
-
 	}
 
 	queryUrl.RawQuery = queryValues.Encode()
@@ -5824,7 +5608,6 @@ func NewGetSourcesRhcConnectionRequest(server string, id ID, params *GetSourcesR
 	queryValues := queryUrl.Query()
 
 	if params.Limit != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "limit", *params.Limit); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -5836,11 +5619,9 @@ func NewGetSourcesRhcConnectionRequest(server string, id ID, params *GetSourcesR
 				}
 			}
 		}
-
 	}
 
 	if params.Offset != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "offset", *params.Offset); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -5852,11 +5633,9 @@ func NewGetSourcesRhcConnectionRequest(server string, id ID, params *GetSourcesR
 				}
 			}
 		}
-
 	}
 
 	if params.Filter != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "filter", *params.Filter); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -5868,11 +5647,9 @@ func NewGetSourcesRhcConnectionRequest(server string, id ID, params *GetSourcesR
 				}
 			}
 		}
-
 	}
 
 	if params.SortBy != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "sort_by", *params.SortBy); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -5884,7 +5661,6 @@ func NewGetSourcesRhcConnectionRequest(server string, id ID, params *GetSourcesR
 				}
 			}
 		}
-
 	}
 
 	queryUrl.RawQuery = queryValues.Encode()
@@ -8043,7 +7819,7 @@ func (c *ClientWithResponses) UnpauseSourceWithResponse(ctx context.Context, id 
 
 // ParseListAllAppMetaDataResponse parses an HTTP response from a ListAllAppMetaDataWithResponse call
 func ParseListAllAppMetaDataResponse(rsp *http.Response) (*ListAllAppMetaDataResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -8076,7 +7852,7 @@ func ParseListAllAppMetaDataResponse(rsp *http.Response) (*ListAllAppMetaDataRes
 
 // ParseShowAppMetaDataResponse parses an HTTP response from a ShowAppMetaDataWithResponse call
 func ParseShowAppMetaDataResponse(rsp *http.Response) (*ShowAppMetaDataResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -8116,7 +7892,7 @@ func ParseShowAppMetaDataResponse(rsp *http.Response) (*ShowAppMetaDataResponse,
 
 // ParseListAllApplicationAuthenticationsResponse parses an HTTP response from a ListAllApplicationAuthenticationsWithResponse call
 func ParseListAllApplicationAuthenticationsResponse(rsp *http.Response) (*ListAllApplicationAuthenticationsResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -8149,7 +7925,7 @@ func ParseListAllApplicationAuthenticationsResponse(rsp *http.Response) (*ListAl
 
 // ParseCreateApplicationAuthenticationResponse parses an HTTP response from a CreateApplicationAuthenticationWithResponse call
 func ParseCreateApplicationAuthenticationResponse(rsp *http.Response) (*CreateApplicationAuthenticationResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -8182,7 +7958,7 @@ func ParseCreateApplicationAuthenticationResponse(rsp *http.Response) (*CreateAp
 
 // ParseDeleteApplicationAuthenticationResponse parses an HTTP response from a DeleteApplicationAuthenticationWithResponse call
 func ParseDeleteApplicationAuthenticationResponse(rsp *http.Response) (*DeleteApplicationAuthenticationResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -8215,7 +7991,7 @@ func ParseDeleteApplicationAuthenticationResponse(rsp *http.Response) (*DeleteAp
 
 // ParseShowApplicationAuthenticationResponse parses an HTTP response from a ShowApplicationAuthenticationWithResponse call
 func ParseShowApplicationAuthenticationResponse(rsp *http.Response) (*ShowApplicationAuthenticationResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -8255,7 +8031,7 @@ func ParseShowApplicationAuthenticationResponse(rsp *http.Response) (*ShowApplic
 
 // ParseListApplicationTypesResponse parses an HTTP response from a ListApplicationTypesWithResponse call
 func ParseListApplicationTypesResponse(rsp *http.Response) (*ListApplicationTypesResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -8288,7 +8064,7 @@ func ParseListApplicationTypesResponse(rsp *http.Response) (*ListApplicationType
 
 // ParseShowApplicationTypeResponse parses an HTTP response from a ShowApplicationTypeWithResponse call
 func ParseShowApplicationTypeResponse(rsp *http.Response) (*ShowApplicationTypeResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -8328,7 +8104,7 @@ func ParseShowApplicationTypeResponse(rsp *http.Response) (*ShowApplicationTypeR
 
 // ParseListApplicationTypeAppMetaDataResponse parses an HTTP response from a ListApplicationTypeAppMetaDataWithResponse call
 func ParseListApplicationTypeAppMetaDataResponse(rsp *http.Response) (*ListApplicationTypeAppMetaDataResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -8368,7 +8144,7 @@ func ParseListApplicationTypeAppMetaDataResponse(rsp *http.Response) (*ListAppli
 
 // ParseListApplicationTypeSourcesResponse parses an HTTP response from a ListApplicationTypeSourcesWithResponse call
 func ParseListApplicationTypeSourcesResponse(rsp *http.Response) (*ListApplicationTypeSourcesResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -8408,7 +8184,7 @@ func ParseListApplicationTypeSourcesResponse(rsp *http.Response) (*ListApplicati
 
 // ParseListApplicationsResponse parses an HTTP response from a ListApplicationsWithResponse call
 func ParseListApplicationsResponse(rsp *http.Response) (*ListApplicationsResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -8441,7 +8217,7 @@ func ParseListApplicationsResponse(rsp *http.Response) (*ListApplicationsRespons
 
 // ParseCreateApplicationResponse parses an HTTP response from a CreateApplicationWithResponse call
 func ParseCreateApplicationResponse(rsp *http.Response) (*CreateApplicationResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -8474,7 +8250,7 @@ func ParseCreateApplicationResponse(rsp *http.Response) (*CreateApplicationRespo
 
 // ParseDeleteApplicationResponse parses an HTTP response from a DeleteApplicationWithResponse call
 func ParseDeleteApplicationResponse(rsp *http.Response) (*DeleteApplicationResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -8507,7 +8283,7 @@ func ParseDeleteApplicationResponse(rsp *http.Response) (*DeleteApplicationRespo
 
 // ParseShowApplicationResponse parses an HTTP response from a ShowApplicationWithResponse call
 func ParseShowApplicationResponse(rsp *http.Response) (*ShowApplicationResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -8547,7 +8323,7 @@ func ParseShowApplicationResponse(rsp *http.Response) (*ShowApplicationResponse,
 
 // ParseUpdateApplicationResponse parses an HTTP response from a UpdateApplicationWithResponse call
 func ParseUpdateApplicationResponse(rsp *http.Response) (*UpdateApplicationResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -8587,7 +8363,7 @@ func ParseUpdateApplicationResponse(rsp *http.Response) (*UpdateApplicationRespo
 
 // ParseListApplicationAuthenticationsResponse parses an HTTP response from a ListApplicationAuthenticationsWithResponse call
 func ParseListApplicationAuthenticationsResponse(rsp *http.Response) (*ListApplicationAuthenticationsResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -8627,7 +8403,7 @@ func ParseListApplicationAuthenticationsResponse(rsp *http.Response) (*ListAppli
 
 // ParsePauseApplicationResponse parses an HTTP response from a PauseApplicationWithResponse call
 func ParsePauseApplicationResponse(rsp *http.Response) (*PauseApplicationResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -8660,7 +8436,7 @@ func ParsePauseApplicationResponse(rsp *http.Response) (*PauseApplicationRespons
 
 // ParseUnpauseApplicationResponse parses an HTTP response from a UnpauseApplicationWithResponse call
 func ParseUnpauseApplicationResponse(rsp *http.Response) (*UnpauseApplicationResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -8693,7 +8469,7 @@ func ParseUnpauseApplicationResponse(rsp *http.Response) (*UnpauseApplicationRes
 
 // ParseListApplicationAuthenticationsAuthenticationsResponse parses an HTTP response from a ListApplicationAuthenticationsAuthenticationsWithResponse call
 func ParseListApplicationAuthenticationsAuthenticationsResponse(rsp *http.Response) (*ListApplicationAuthenticationsAuthenticationsResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -8733,7 +8509,7 @@ func ParseListApplicationAuthenticationsAuthenticationsResponse(rsp *http.Respon
 
 // ParseListAuthenticationsResponse parses an HTTP response from a ListAuthenticationsWithResponse call
 func ParseListAuthenticationsResponse(rsp *http.Response) (*ListAuthenticationsResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -8766,7 +8542,7 @@ func ParseListAuthenticationsResponse(rsp *http.Response) (*ListAuthenticationsR
 
 // ParseCreateAuthenticationResponse parses an HTTP response from a CreateAuthenticationWithResponse call
 func ParseCreateAuthenticationResponse(rsp *http.Response) (*CreateAuthenticationResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -8799,7 +8575,7 @@ func ParseCreateAuthenticationResponse(rsp *http.Response) (*CreateAuthenticatio
 
 // ParseDeleteAuthenticationResponse parses an HTTP response from a DeleteAuthenticationWithResponse call
 func ParseDeleteAuthenticationResponse(rsp *http.Response) (*DeleteAuthenticationResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -8832,7 +8608,7 @@ func ParseDeleteAuthenticationResponse(rsp *http.Response) (*DeleteAuthenticatio
 
 // ParseShowAuthenticationResponse parses an HTTP response from a ShowAuthenticationWithResponse call
 func ParseShowAuthenticationResponse(rsp *http.Response) (*ShowAuthenticationResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -8872,7 +8648,7 @@ func ParseShowAuthenticationResponse(rsp *http.Response) (*ShowAuthenticationRes
 
 // ParseUpdateAuthenticationResponse parses an HTTP response from a UpdateAuthenticationWithResponse call
 func ParseUpdateAuthenticationResponse(rsp *http.Response) (*UpdateAuthenticationResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -8912,7 +8688,7 @@ func ParseUpdateAuthenticationResponse(rsp *http.Response) (*UpdateAuthenticatio
 
 // ParseApiBulkCreateResponse parses an HTTP response from a ApiBulkCreateWithResponse call
 func ParseApiBulkCreateResponse(rsp *http.Response) (*ApiBulkCreateResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -8945,7 +8721,7 @@ func ParseApiBulkCreateResponse(rsp *http.Response) (*ApiBulkCreateResponse, err
 
 // ParseListEndpointsResponse parses an HTTP response from a ListEndpointsWithResponse call
 func ParseListEndpointsResponse(rsp *http.Response) (*ListEndpointsResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -8978,7 +8754,7 @@ func ParseListEndpointsResponse(rsp *http.Response) (*ListEndpointsResponse, err
 
 // ParseCreateEndpointResponse parses an HTTP response from a CreateEndpointWithResponse call
 func ParseCreateEndpointResponse(rsp *http.Response) (*CreateEndpointResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -9011,7 +8787,7 @@ func ParseCreateEndpointResponse(rsp *http.Response) (*CreateEndpointResponse, e
 
 // ParseDeleteEndpointResponse parses an HTTP response from a DeleteEndpointWithResponse call
 func ParseDeleteEndpointResponse(rsp *http.Response) (*DeleteEndpointResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -9044,7 +8820,7 @@ func ParseDeleteEndpointResponse(rsp *http.Response) (*DeleteEndpointResponse, e
 
 // ParseShowEndpointResponse parses an HTTP response from a ShowEndpointWithResponse call
 func ParseShowEndpointResponse(rsp *http.Response) (*ShowEndpointResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -9084,7 +8860,7 @@ func ParseShowEndpointResponse(rsp *http.Response) (*ShowEndpointResponse, error
 
 // ParseUpdateEndpointResponse parses an HTTP response from a UpdateEndpointWithResponse call
 func ParseUpdateEndpointResponse(rsp *http.Response) (*UpdateEndpointResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -9124,7 +8900,7 @@ func ParseUpdateEndpointResponse(rsp *http.Response) (*UpdateEndpointResponse, e
 
 // ParseListEndpointAuthenticationsResponse parses an HTTP response from a ListEndpointAuthenticationsWithResponse call
 func ParseListEndpointAuthenticationsResponse(rsp *http.Response) (*ListEndpointAuthenticationsResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -9164,7 +8940,7 @@ func ParseListEndpointAuthenticationsResponse(rsp *http.Response) (*ListEndpoint
 
 // ParsePostGraphQLResponse parses an HTTP response from a PostGraphQLWithResponse call
 func ParsePostGraphQLResponse(rsp *http.Response) (*PostGraphQLResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -9197,7 +8973,7 @@ func ParsePostGraphQLResponse(rsp *http.Response) (*PostGraphQLResponse, error) 
 
 // ParseGetDocumentationResponse parses an HTTP response from a GetDocumentationWithResponse call
 func ParseGetDocumentationResponse(rsp *http.Response) (*GetDocumentationResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -9215,7 +8991,6 @@ func ParseGetDocumentationResponse(rsp *http.Response) (*GetDocumentationRespons
 			return nil, err
 		}
 		response.JSON200 = &dest
-
 	}
 
 	return response, nil
@@ -9223,7 +8998,7 @@ func ParseGetDocumentationResponse(rsp *http.Response) (*GetDocumentationRespons
 
 // ParseGetRhcConnectionsResponse parses an HTTP response from a GetRhcConnectionsWithResponse call
 func ParseGetRhcConnectionsResponse(rsp *http.Response) (*GetRhcConnectionsResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -9256,7 +9031,7 @@ func ParseGetRhcConnectionsResponse(rsp *http.Response) (*GetRhcConnectionsRespo
 
 // ParsePostRhcConnectionResponse parses an HTTP response from a PostRhcConnectionWithResponse call
 func ParsePostRhcConnectionResponse(rsp *http.Response) (*PostRhcConnectionResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -9289,7 +9064,7 @@ func ParsePostRhcConnectionResponse(rsp *http.Response) (*PostRhcConnectionRespo
 
 // ParseDeleteRhcConnectionResponse parses an HTTP response from a DeleteRhcConnectionWithResponse call
 func ParseDeleteRhcConnectionResponse(rsp *http.Response) (*DeleteRhcConnectionResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -9322,7 +9097,7 @@ func ParseDeleteRhcConnectionResponse(rsp *http.Response) (*DeleteRhcConnectionR
 
 // ParseGetRhcConnectionResponse parses an HTTP response from a GetRhcConnectionWithResponse call
 func ParseGetRhcConnectionResponse(rsp *http.Response) (*GetRhcConnectionResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -9362,7 +9137,7 @@ func ParseGetRhcConnectionResponse(rsp *http.Response) (*GetRhcConnectionRespons
 
 // ParseUpdateRhcConnectionResponse parses an HTTP response from a UpdateRhcConnectionWithResponse call
 func ParseUpdateRhcConnectionResponse(rsp *http.Response) (*UpdateRhcConnectionResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -9402,7 +9177,7 @@ func ParseUpdateRhcConnectionResponse(rsp *http.Response) (*UpdateRhcConnectionR
 
 // ParseGetRhcConnectionSourcesResponse parses an HTTP response from a GetRhcConnectionSourcesWithResponse call
 func ParseGetRhcConnectionSourcesResponse(rsp *http.Response) (*GetRhcConnectionSourcesResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -9442,7 +9217,7 @@ func ParseGetRhcConnectionSourcesResponse(rsp *http.Response) (*GetRhcConnection
 
 // ParseListSourceTypesResponse parses an HTTP response from a ListSourceTypesWithResponse call
 func ParseListSourceTypesResponse(rsp *http.Response) (*ListSourceTypesResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -9475,7 +9250,7 @@ func ParseListSourceTypesResponse(rsp *http.Response) (*ListSourceTypesResponse,
 
 // ParseShowSourceTypeResponse parses an HTTP response from a ShowSourceTypeWithResponse call
 func ParseShowSourceTypeResponse(rsp *http.Response) (*ShowSourceTypeResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -9515,7 +9290,7 @@ func ParseShowSourceTypeResponse(rsp *http.Response) (*ShowSourceTypeResponse, e
 
 // ParseListSourceTypeSourcesResponse parses an HTTP response from a ListSourceTypeSourcesWithResponse call
 func ParseListSourceTypeSourcesResponse(rsp *http.Response) (*ListSourceTypeSourcesResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -9555,7 +9330,7 @@ func ParseListSourceTypeSourcesResponse(rsp *http.Response) (*ListSourceTypeSour
 
 // ParseListSourcesResponse parses an HTTP response from a ListSourcesWithResponse call
 func ParseListSourcesResponse(rsp *http.Response) (*ListSourcesResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -9588,7 +9363,7 @@ func ParseListSourcesResponse(rsp *http.Response) (*ListSourcesResponse, error) 
 
 // ParseCreateSourceResponse parses an HTTP response from a CreateSourceWithResponse call
 func ParseCreateSourceResponse(rsp *http.Response) (*CreateSourceResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -9621,7 +9396,7 @@ func ParseCreateSourceResponse(rsp *http.Response) (*CreateSourceResponse, error
 
 // ParseDeleteSourceResponse parses an HTTP response from a DeleteSourceWithResponse call
 func ParseDeleteSourceResponse(rsp *http.Response) (*DeleteSourceResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -9654,7 +9429,7 @@ func ParseDeleteSourceResponse(rsp *http.Response) (*DeleteSourceResponse, error
 
 // ParseShowSourceResponse parses an HTTP response from a ShowSourceWithResponse call
 func ParseShowSourceResponse(rsp *http.Response) (*ShowSourceResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -9694,7 +9469,7 @@ func ParseShowSourceResponse(rsp *http.Response) (*ShowSourceResponse, error) {
 
 // ParseUpdateSourceResponse parses an HTTP response from a UpdateSourceWithResponse call
 func ParseUpdateSourceResponse(rsp *http.Response) (*UpdateSourceResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -9734,7 +9509,7 @@ func ParseUpdateSourceResponse(rsp *http.Response) (*UpdateSourceResponse, error
 
 // ParseListSourceApplicationTypesResponse parses an HTTP response from a ListSourceApplicationTypesWithResponse call
 func ParseListSourceApplicationTypesResponse(rsp *http.Response) (*ListSourceApplicationTypesResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -9774,7 +9549,7 @@ func ParseListSourceApplicationTypesResponse(rsp *http.Response) (*ListSourceApp
 
 // ParseListSourceApplicationsResponse parses an HTTP response from a ListSourceApplicationsWithResponse call
 func ParseListSourceApplicationsResponse(rsp *http.Response) (*ListSourceApplicationsResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -9814,7 +9589,7 @@ func ParseListSourceApplicationsResponse(rsp *http.Response) (*ListSourceApplica
 
 // ParseListSourceAuthenticationsResponse parses an HTTP response from a ListSourceAuthenticationsWithResponse call
 func ParseListSourceAuthenticationsResponse(rsp *http.Response) (*ListSourceAuthenticationsResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -9854,7 +9629,7 @@ func ParseListSourceAuthenticationsResponse(rsp *http.Response) (*ListSourceAuth
 
 // ParseCheckAvailabilitySourceResponse parses an HTTP response from a CheckAvailabilitySourceWithResponse call
 func ParseCheckAvailabilitySourceResponse(rsp *http.Response) (*CheckAvailabilitySourceResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -9887,7 +9662,7 @@ func ParseCheckAvailabilitySourceResponse(rsp *http.Response) (*CheckAvailabilit
 
 // ParseListSourceEndpointsResponse parses an HTTP response from a ListSourceEndpointsWithResponse call
 func ParseListSourceEndpointsResponse(rsp *http.Response) (*ListSourceEndpointsResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -9927,7 +9702,7 @@ func ParseListSourceEndpointsResponse(rsp *http.Response) (*ListSourceEndpointsR
 
 // ParsePauseSourceResponse parses an HTTP response from a PauseSourceWithResponse call
 func ParsePauseSourceResponse(rsp *http.Response) (*PauseSourceResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -9960,7 +9735,7 @@ func ParsePauseSourceResponse(rsp *http.Response) (*PauseSourceResponse, error) 
 
 // ParseGetSourcesRhcConnectionResponse parses an HTTP response from a GetSourcesRhcConnectionWithResponse call
 func ParseGetSourcesRhcConnectionResponse(rsp *http.Response) (*GetSourcesRhcConnectionResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -10000,7 +9775,7 @@ func ParseGetSourcesRhcConnectionResponse(rsp *http.Response) (*GetSourcesRhcCon
 
 // ParseUnpauseSourceResponse parses an HTTP response from a UnpauseSourceWithResponse call
 func ParseUnpauseSourceResponse(rsp *http.Response) (*UnpauseSourceResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err

@@ -9,7 +9,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
@@ -25,7 +24,6 @@ type ActiveTags struct {
 	PaginationOut `yaml:",inline"`
 	// Embedded fields due to inline allOf schema
 	Results []struct {
-
 		// The number of hosts with the given tag. If the value is null this indicates that the count is unknown.
 		Count *int          `json:"count"`
 		Tag   StructuredTag `json:"tag"`
@@ -72,7 +70,6 @@ type CanonicalFactsIn struct {
 
 // CanonicalFactsOut defines model for CanonicalFactsOut.
 type CanonicalFactsOut struct {
-
 	// A UUID of the host machine BIOS.  This field is considered to be a canonical fact.
 	BiosUuid *BiosUuid `json:"bios_uuid"`
 
@@ -167,7 +164,6 @@ type CreateHostOut_PerReporterStaleness struct {
 
 // FactSet defines model for FactSet.
 type FactSet struct {
-
 	// The facts themselves.
 	Facts map[string]interface{} `json:"facts"`
 
@@ -232,7 +228,6 @@ type Page int
 
 // PaginationOut defines model for PaginationOut.
 type PaginationOut struct {
-
 	// The number of items on the current page
 	Count Count `json:"count"`
 
@@ -248,7 +243,6 @@ type PaginationOut struct {
 
 // PatchHostIn defines model for PatchHostIn.
 type PatchHostIn struct {
-
 	// The ansible host name for remediations
 	AnsibleHost *string `json:"ansible_host,omitempty"`
 
@@ -287,10 +281,8 @@ type SubscriptionManagerId string
 
 // SystemProfile defines model for SystemProfile.
 type SystemProfile struct {
-
 	// Object containing data specific to Ansible Automation Platform
 	Ansible *struct {
-
 		// The catalog-worker version on the host
 		CatalogWorkerVersion *string `json:"catalog_worker_version,omitempty"`
 
@@ -346,7 +338,6 @@ type SystemProfile struct {
 
 	// Object containing data specific to the MS SQL workload
 	Mssql *struct {
-
 		// MSSQL version number
 		Version *string `json:"version,omitempty"`
 	} `json:"mssql,omitempty"`
@@ -356,7 +347,6 @@ type SystemProfile struct {
 
 	// Object for OS details. Supports range operations
 	OperatingSystem *struct {
-
 		// Major release of OS (aka the x version)
 		Major int `json:"major"`
 
@@ -382,14 +372,12 @@ type SystemProfile struct {
 
 	// Object for subscription-manager details
 	Rhsm *struct {
-
 		// System release set by subscription-manager
 		Version *string `json:"version,omitempty"`
 	} `json:"rhsm,omitempty"`
 
 	// The list of deployments on the system as reported by rpm-ostree status --json
 	RpmOstreeDeployments *[]struct {
-
 		// Whether the deployment is currently booted
 		Booted bool `json:"booted"`
 
@@ -435,7 +423,6 @@ type SystemProfile struct {
 
 	// Object for system purpose information
 	SystemPurpose *struct {
-
 		// The intended role of the system
 		Role *string `json:"role,omitempty"`
 
@@ -486,7 +473,6 @@ type SystemProfileDnfModule struct {
 
 // SystemProfileInstalledProduct defines model for SystemProfileInstalledProduct.
 type SystemProfileInstalledProduct struct {
-
 	// The product ID
 	Id   *string `json:"id,omitempty"`
 	Name *string `json:"name,omitempty"`
@@ -523,7 +509,6 @@ type SystemProfileNetworkInterface struct {
 
 // SystemProfileOperatingSystemOut defines model for SystemProfileOperatingSystemOut.
 type SystemProfileOperatingSystemOut struct {
-
 	// The number of items on the current page
 	Count *Count `json:"count,omitempty"`
 
@@ -543,7 +528,6 @@ type SystemProfileOperatingSystemOut struct {
 
 // SystemProfileSapSystemOut defines model for SystemProfileSapSystemOut.
 type SystemProfileSapSystemOut struct {
-
 	// The number of items on the current page
 	Count *Count `json:"count,omitempty"`
 
@@ -692,7 +676,6 @@ type TagsParam []string
 
 // ApiHostDeleteHostsByFilterParams defines parameters for ApiHostDeleteHostsByFilter.
 type ApiHostDeleteHostsByFilterParams struct {
-
 	// Filter by display_name (case-insensitive)
 	DisplayName *DisplayName `json:"display_name,omitempty"`
 
@@ -726,7 +709,6 @@ type ApiHostDeleteHostsByFilterParams struct {
 
 // ApiHostGetHostListParams defines parameters for ApiHostGetHostList.
 type ApiHostGetHostListParams struct {
-
 	// Filter by display_name (case-insensitive)
 	DisplayName *DisplayName `json:"display_name,omitempty"`
 
@@ -778,7 +760,6 @@ type ApiHostGetHostListParams struct {
 
 // ApiHostDeleteAllHostsParams defines parameters for ApiHostDeleteAllHosts.
 type ApiHostDeleteAllHostsParams struct {
-
 	// Confirmation to delete all hosts on the account
 	ConfirmDeleteAll *ConfirmDeleteAll `json:"confirm_delete_all,omitempty"`
 }
@@ -788,14 +769,12 @@ type ApiHostHostCheckinJSONBody CreateCheckIn
 
 // ApiHostDeleteByIdParams defines parameters for ApiHostDeleteById.
 type ApiHostDeleteByIdParams struct {
-
 	// Filter by branch_id
 	BranchId *BranchId `json:"branch_id,omitempty"`
 }
 
 // ApiHostGetHostByIdParams defines parameters for ApiHostGetHostById.
 type ApiHostGetHostByIdParams struct {
-
 	// Filter by branch_id
 	BranchId *BranchId `json:"branch_id,omitempty"`
 
@@ -820,7 +799,6 @@ type ApiHostPatchByIdJSONBody PatchHostIn
 
 // ApiHostPatchByIdParams defines parameters for ApiHostPatchById.
 type ApiHostPatchByIdParams struct {
-
 	// Filter by branch_id
 	BranchId *BranchId `json:"branch_id,omitempty"`
 }
@@ -830,7 +808,6 @@ type ApiHostMergeFactsJSONBody Facts
 
 // ApiHostMergeFactsParams defines parameters for ApiHostMergeFacts.
 type ApiHostMergeFactsParams struct {
-
 	// Filter by branch_id
 	BranchId *BranchId `json:"branch_id,omitempty"`
 }
@@ -840,14 +817,12 @@ type ApiHostReplaceFactsJSONBody Facts
 
 // ApiHostReplaceFactsParams defines parameters for ApiHostReplaceFacts.
 type ApiHostReplaceFactsParams struct {
-
 	// Filter by branch_id
 	BranchId *BranchId `json:"branch_id,omitempty"`
 }
 
 // ApiHostGetHostSystemProfileByIdParams defines parameters for ApiHostGetHostSystemProfileById.
 type ApiHostGetHostSystemProfileByIdParams struct {
-
 	// A number of items to return per page.
 	PerPage *PerPageParam `json:"per_page,omitempty"`
 
@@ -869,7 +844,6 @@ type ApiHostGetHostSystemProfileByIdParams struct {
 
 // ApiHostGetHostTagsParams defines parameters for ApiHostGetHostTags.
 type ApiHostGetHostTagsParams struct {
-
 	// A number of items to return per page.
 	PerPage *PerPageParam `json:"per_page,omitempty"`
 
@@ -888,7 +862,6 @@ type ApiHostGetHostTagsParams struct {
 
 // ApiHostGetHostTagCountParams defines parameters for ApiHostGetHostTagCount.
 type ApiHostGetHostTagCountParams struct {
-
 	// A number of items to return per page.
 	PerPage *PerPageParam `json:"per_page,omitempty"`
 
@@ -904,7 +877,6 @@ type ApiHostGetHostTagCountParams struct {
 
 // ApiSystemProfileGetOperatingSystemParams defines parameters for ApiSystemProfileGetOperatingSystem.
 type ApiSystemProfileGetOperatingSystemParams struct {
-
 	// filters out hosts not tagged by the given tags
 	Tags *TagsParam `json:"tags,omitempty"`
 
@@ -926,7 +898,6 @@ type ApiSystemProfileGetOperatingSystemParams struct {
 
 // ApiSystemProfileGetSapSidsParams defines parameters for ApiSystemProfileGetSapSids.
 type ApiSystemProfileGetSapSidsParams struct {
-
 	// Used for searching tags and sap_sids that match the given search string. For searching tags, a tag's namespace, key, and/or value is used for matching.
 	Search *SearchParam `json:"search,omitempty"`
 
@@ -951,7 +922,6 @@ type ApiSystemProfileGetSapSidsParams struct {
 
 // ApiSystemProfileGetSapSystemParams defines parameters for ApiSystemProfileGetSapSystem.
 type ApiSystemProfileGetSapSystemParams struct {
-
 	// filters out hosts not tagged by the given tags
 	Tags *TagsParam `json:"tags,omitempty"`
 
@@ -973,7 +943,6 @@ type ApiSystemProfileGetSapSystemParams struct {
 
 // ApiSystemProfileValidateSchemaParams defines parameters for ApiSystemProfileValidateSchema.
 type ApiSystemProfileValidateSchemaParams struct {
-
 	// The fork of the inventory-schemas repo to use
 	RepoFork *string `json:"repo_fork,omitempty"`
 
@@ -989,7 +958,6 @@ type ApiSystemProfileValidateSchemaParams struct {
 
 // ApiTagGetTagsParams defines parameters for ApiTagGetTags.
 type ApiTagGetTagsParams struct {
-
 	// filters out hosts not tagged by the given tags
 	Tags *TagsParam `json:"tags,omitempty"`
 
@@ -1730,7 +1698,6 @@ func NewApiHostDeleteHostsByFilterRequest(server string, params *ApiHostDeleteHo
 	queryValues := queryUrl.Query()
 
 	if params.DisplayName != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "display_name", *params.DisplayName); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -1742,11 +1709,9 @@ func NewApiHostDeleteHostsByFilterRequest(server string, params *ApiHostDeleteHo
 				}
 			}
 		}
-
 	}
 
 	if params.Fqdn != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "fqdn", *params.Fqdn); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -1758,11 +1723,9 @@ func NewApiHostDeleteHostsByFilterRequest(server string, params *ApiHostDeleteHo
 				}
 			}
 		}
-
 	}
 
 	if params.HostnameOrId != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "hostname_or_id", *params.HostnameOrId); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -1774,11 +1737,9 @@ func NewApiHostDeleteHostsByFilterRequest(server string, params *ApiHostDeleteHo
 				}
 			}
 		}
-
 	}
 
 	if params.InsightsId != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "insights_id", *params.InsightsId); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -1790,11 +1751,9 @@ func NewApiHostDeleteHostsByFilterRequest(server string, params *ApiHostDeleteHo
 				}
 			}
 		}
-
 	}
 
 	if params.ProviderId != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "provider_id", *params.ProviderId); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -1806,11 +1765,9 @@ func NewApiHostDeleteHostsByFilterRequest(server string, params *ApiHostDeleteHo
 				}
 			}
 		}
-
 	}
 
 	if params.ProviderType != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "provider_type", *params.ProviderType); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -1822,11 +1779,9 @@ func NewApiHostDeleteHostsByFilterRequest(server string, params *ApiHostDeleteHo
 				}
 			}
 		}
-
 	}
 
 	if params.RegisteredWith != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "registered_with", *params.RegisteredWith); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -1838,11 +1793,9 @@ func NewApiHostDeleteHostsByFilterRequest(server string, params *ApiHostDeleteHo
 				}
 			}
 		}
-
 	}
 
 	if params.Staleness != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "staleness", *params.Staleness); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -1854,11 +1807,9 @@ func NewApiHostDeleteHostsByFilterRequest(server string, params *ApiHostDeleteHo
 				}
 			}
 		}
-
 	}
 
 	if params.Tags != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "tags", *params.Tags); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -1870,11 +1821,9 @@ func NewApiHostDeleteHostsByFilterRequest(server string, params *ApiHostDeleteHo
 				}
 			}
 		}
-
 	}
 
 	if params.Filter != nil {
-
 		if queryFrag, err := runtime.StyleParam("deepObject", true, "filter", *params.Filter); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -1886,7 +1835,6 @@ func NewApiHostDeleteHostsByFilterRequest(server string, params *ApiHostDeleteHo
 				}
 			}
 		}
-
 	}
 
 	queryUrl.RawQuery = queryValues.Encode()
@@ -1921,7 +1869,6 @@ func NewApiHostGetHostListRequest(server string, params *ApiHostGetHostListParam
 	queryValues := queryUrl.Query()
 
 	if params.DisplayName != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "display_name", *params.DisplayName); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -1933,11 +1880,9 @@ func NewApiHostGetHostListRequest(server string, params *ApiHostGetHostListParam
 				}
 			}
 		}
-
 	}
 
 	if params.Fqdn != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "fqdn", *params.Fqdn); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -1949,11 +1894,9 @@ func NewApiHostGetHostListRequest(server string, params *ApiHostGetHostListParam
 				}
 			}
 		}
-
 	}
 
 	if params.HostnameOrId != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "hostname_or_id", *params.HostnameOrId); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -1965,11 +1908,9 @@ func NewApiHostGetHostListRequest(server string, params *ApiHostGetHostListParam
 				}
 			}
 		}
-
 	}
 
 	if params.InsightsId != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "insights_id", *params.InsightsId); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -1981,11 +1922,9 @@ func NewApiHostGetHostListRequest(server string, params *ApiHostGetHostListParam
 				}
 			}
 		}
-
 	}
 
 	if params.ProviderId != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "provider_id", *params.ProviderId); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -1997,11 +1936,9 @@ func NewApiHostGetHostListRequest(server string, params *ApiHostGetHostListParam
 				}
 			}
 		}
-
 	}
 
 	if params.ProviderType != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "provider_type", *params.ProviderType); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -2013,11 +1950,9 @@ func NewApiHostGetHostListRequest(server string, params *ApiHostGetHostListParam
 				}
 			}
 		}
-
 	}
 
 	if params.BranchId != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "branch_id", *params.BranchId); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -2029,11 +1964,9 @@ func NewApiHostGetHostListRequest(server string, params *ApiHostGetHostListParam
 				}
 			}
 		}
-
 	}
 
 	if params.PerPage != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "per_page", *params.PerPage); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -2045,11 +1978,9 @@ func NewApiHostGetHostListRequest(server string, params *ApiHostGetHostListParam
 				}
 			}
 		}
-
 	}
 
 	if params.Page != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "page", *params.Page); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -2061,11 +1992,9 @@ func NewApiHostGetHostListRequest(server string, params *ApiHostGetHostListParam
 				}
 			}
 		}
-
 	}
 
 	if params.OrderBy != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "order_by", *params.OrderBy); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -2077,11 +2006,9 @@ func NewApiHostGetHostListRequest(server string, params *ApiHostGetHostListParam
 				}
 			}
 		}
-
 	}
 
 	if params.OrderHow != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "order_how", *params.OrderHow); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -2093,11 +2020,9 @@ func NewApiHostGetHostListRequest(server string, params *ApiHostGetHostListParam
 				}
 			}
 		}
-
 	}
 
 	if params.Staleness != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "staleness", *params.Staleness); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -2109,11 +2034,9 @@ func NewApiHostGetHostListRequest(server string, params *ApiHostGetHostListParam
 				}
 			}
 		}
-
 	}
 
 	if params.Tags != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "tags", *params.Tags); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -2125,11 +2048,9 @@ func NewApiHostGetHostListRequest(server string, params *ApiHostGetHostListParam
 				}
 			}
 		}
-
 	}
 
 	if params.RegisteredWith != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "registered_with", *params.RegisteredWith); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -2141,11 +2062,9 @@ func NewApiHostGetHostListRequest(server string, params *ApiHostGetHostListParam
 				}
 			}
 		}
-
 	}
 
 	if params.Filter != nil {
-
 		if queryFrag, err := runtime.StyleParam("deepObject", true, "filter", *params.Filter); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -2157,11 +2076,9 @@ func NewApiHostGetHostListRequest(server string, params *ApiHostGetHostListParam
 				}
 			}
 		}
-
 	}
 
 	if params.Fields != nil {
-
 		if queryFrag, err := runtime.StyleParam("deepObject", true, "fields", *params.Fields); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -2173,7 +2090,6 @@ func NewApiHostGetHostListRequest(server string, params *ApiHostGetHostListParam
 				}
 			}
 		}
-
 	}
 
 	queryUrl.RawQuery = queryValues.Encode()
@@ -2208,7 +2124,6 @@ func NewApiHostDeleteAllHostsRequest(server string, params *ApiHostDeleteAllHost
 	queryValues := queryUrl.Query()
 
 	if params.ConfirmDeleteAll != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "confirm_delete_all", *params.ConfirmDeleteAll); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -2220,7 +2135,6 @@ func NewApiHostDeleteAllHostsRequest(server string, params *ApiHostDeleteAllHost
 				}
 			}
 		}
-
 	}
 
 	queryUrl.RawQuery = queryValues.Encode()
@@ -2301,7 +2215,6 @@ func NewApiHostDeleteByIdRequest(server string, hostIdList HostIdList, params *A
 	queryValues := queryUrl.Query()
 
 	if params.BranchId != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "branch_id", *params.BranchId); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -2313,7 +2226,6 @@ func NewApiHostDeleteByIdRequest(server string, hostIdList HostIdList, params *A
 				}
 			}
 		}
-
 	}
 
 	queryUrl.RawQuery = queryValues.Encode()
@@ -2355,7 +2267,6 @@ func NewApiHostGetHostByIdRequest(server string, hostIdList HostIdList, params *
 	queryValues := queryUrl.Query()
 
 	if params.BranchId != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "branch_id", *params.BranchId); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -2367,11 +2278,9 @@ func NewApiHostGetHostByIdRequest(server string, hostIdList HostIdList, params *
 				}
 			}
 		}
-
 	}
 
 	if params.PerPage != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "per_page", *params.PerPage); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -2383,11 +2292,9 @@ func NewApiHostGetHostByIdRequest(server string, hostIdList HostIdList, params *
 				}
 			}
 		}
-
 	}
 
 	if params.Page != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "page", *params.Page); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -2399,11 +2306,9 @@ func NewApiHostGetHostByIdRequest(server string, hostIdList HostIdList, params *
 				}
 			}
 		}
-
 	}
 
 	if params.OrderBy != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "order_by", *params.OrderBy); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -2415,11 +2320,9 @@ func NewApiHostGetHostByIdRequest(server string, hostIdList HostIdList, params *
 				}
 			}
 		}
-
 	}
 
 	if params.OrderHow != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "order_how", *params.OrderHow); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -2431,11 +2334,9 @@ func NewApiHostGetHostByIdRequest(server string, hostIdList HostIdList, params *
 				}
 			}
 		}
-
 	}
 
 	if params.Fields != nil {
-
 		if queryFrag, err := runtime.StyleParam("deepObject", true, "fields", *params.Fields); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -2447,7 +2348,6 @@ func NewApiHostGetHostByIdRequest(server string, hostIdList HostIdList, params *
 				}
 			}
 		}
-
 	}
 
 	queryUrl.RawQuery = queryValues.Encode()
@@ -2500,7 +2400,6 @@ func NewApiHostPatchByIdRequestWithBody(server string, hostIdList HostIdList, pa
 	queryValues := queryUrl.Query()
 
 	if params.BranchId != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "branch_id", *params.BranchId); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -2512,7 +2411,6 @@ func NewApiHostPatchByIdRequestWithBody(server string, hostIdList HostIdList, pa
 				}
 			}
 		}
-
 	}
 
 	queryUrl.RawQuery = queryValues.Encode()
@@ -2573,7 +2471,6 @@ func NewApiHostMergeFactsRequestWithBody(server string, hostIdList HostIdList, n
 	queryValues := queryUrl.Query()
 
 	if params.BranchId != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "branch_id", *params.BranchId); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -2585,7 +2482,6 @@ func NewApiHostMergeFactsRequestWithBody(server string, hostIdList HostIdList, n
 				}
 			}
 		}
-
 	}
 
 	queryUrl.RawQuery = queryValues.Encode()
@@ -2646,7 +2542,6 @@ func NewApiHostReplaceFactsRequestWithBody(server string, hostIdList HostIdList,
 	queryValues := queryUrl.Query()
 
 	if params.BranchId != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "branch_id", *params.BranchId); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -2658,7 +2553,6 @@ func NewApiHostReplaceFactsRequestWithBody(server string, hostIdList HostIdList,
 				}
 			}
 		}
-
 	}
 
 	queryUrl.RawQuery = queryValues.Encode()
@@ -2701,7 +2595,6 @@ func NewApiHostGetHostSystemProfileByIdRequest(server string, hostIdList HostIdL
 	queryValues := queryUrl.Query()
 
 	if params.PerPage != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "per_page", *params.PerPage); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -2713,11 +2606,9 @@ func NewApiHostGetHostSystemProfileByIdRequest(server string, hostIdList HostIdL
 				}
 			}
 		}
-
 	}
 
 	if params.Page != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "page", *params.Page); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -2729,11 +2620,9 @@ func NewApiHostGetHostSystemProfileByIdRequest(server string, hostIdList HostIdL
 				}
 			}
 		}
-
 	}
 
 	if params.OrderBy != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "order_by", *params.OrderBy); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -2745,11 +2634,9 @@ func NewApiHostGetHostSystemProfileByIdRequest(server string, hostIdList HostIdL
 				}
 			}
 		}
-
 	}
 
 	if params.OrderHow != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "order_how", *params.OrderHow); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -2761,11 +2648,9 @@ func NewApiHostGetHostSystemProfileByIdRequest(server string, hostIdList HostIdL
 				}
 			}
 		}
-
 	}
 
 	if params.BranchId != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "branch_id", *params.BranchId); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -2777,11 +2662,9 @@ func NewApiHostGetHostSystemProfileByIdRequest(server string, hostIdList HostIdL
 				}
 			}
 		}
-
 	}
 
 	if params.Fields != nil {
-
 		if queryFrag, err := runtime.StyleParam("deepObject", true, "fields", *params.Fields); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -2793,7 +2676,6 @@ func NewApiHostGetHostSystemProfileByIdRequest(server string, hostIdList HostIdL
 				}
 			}
 		}
-
 	}
 
 	queryUrl.RawQuery = queryValues.Encode()
@@ -2835,7 +2717,6 @@ func NewApiHostGetHostTagsRequest(server string, hostIdList HostIdList, params *
 	queryValues := queryUrl.Query()
 
 	if params.PerPage != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "per_page", *params.PerPage); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -2847,11 +2728,9 @@ func NewApiHostGetHostTagsRequest(server string, hostIdList HostIdList, params *
 				}
 			}
 		}
-
 	}
 
 	if params.Page != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "page", *params.Page); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -2863,11 +2742,9 @@ func NewApiHostGetHostTagsRequest(server string, hostIdList HostIdList, params *
 				}
 			}
 		}
-
 	}
 
 	if params.OrderBy != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "order_by", *params.OrderBy); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -2879,11 +2756,9 @@ func NewApiHostGetHostTagsRequest(server string, hostIdList HostIdList, params *
 				}
 			}
 		}
-
 	}
 
 	if params.OrderHow != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "order_how", *params.OrderHow); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -2895,11 +2770,9 @@ func NewApiHostGetHostTagsRequest(server string, hostIdList HostIdList, params *
 				}
 			}
 		}
-
 	}
 
 	if params.Search != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "search", *params.Search); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -2911,7 +2784,6 @@ func NewApiHostGetHostTagsRequest(server string, hostIdList HostIdList, params *
 				}
 			}
 		}
-
 	}
 
 	queryUrl.RawQuery = queryValues.Encode()
@@ -2953,7 +2825,6 @@ func NewApiHostGetHostTagCountRequest(server string, hostIdList HostIdList, para
 	queryValues := queryUrl.Query()
 
 	if params.PerPage != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "per_page", *params.PerPage); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -2965,11 +2836,9 @@ func NewApiHostGetHostTagCountRequest(server string, hostIdList HostIdList, para
 				}
 			}
 		}
-
 	}
 
 	if params.Page != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "page", *params.Page); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -2981,11 +2850,9 @@ func NewApiHostGetHostTagCountRequest(server string, hostIdList HostIdList, para
 				}
 			}
 		}
-
 	}
 
 	if params.OrderBy != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "order_by", *params.OrderBy); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -2997,11 +2864,9 @@ func NewApiHostGetHostTagCountRequest(server string, hostIdList HostIdList, para
 				}
 			}
 		}
-
 	}
 
 	if params.OrderHow != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "order_how", *params.OrderHow); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -3013,7 +2878,6 @@ func NewApiHostGetHostTagCountRequest(server string, hostIdList HostIdList, para
 				}
 			}
 		}
-
 	}
 
 	queryUrl.RawQuery = queryValues.Encode()
@@ -3048,7 +2912,6 @@ func NewApiSystemProfileGetOperatingSystemRequest(server string, params *ApiSyst
 	queryValues := queryUrl.Query()
 
 	if params.Tags != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "tags", *params.Tags); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -3060,11 +2923,9 @@ func NewApiSystemProfileGetOperatingSystemRequest(server string, params *ApiSyst
 				}
 			}
 		}
-
 	}
 
 	if params.PerPage != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "per_page", *params.PerPage); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -3076,11 +2937,9 @@ func NewApiSystemProfileGetOperatingSystemRequest(server string, params *ApiSyst
 				}
 			}
 		}
-
 	}
 
 	if params.Page != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "page", *params.Page); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -3092,11 +2951,9 @@ func NewApiSystemProfileGetOperatingSystemRequest(server string, params *ApiSyst
 				}
 			}
 		}
-
 	}
 
 	if params.Staleness != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "staleness", *params.Staleness); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -3108,11 +2965,9 @@ func NewApiSystemProfileGetOperatingSystemRequest(server string, params *ApiSyst
 				}
 			}
 		}
-
 	}
 
 	if params.RegisteredWith != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "registered_with", *params.RegisteredWith); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -3124,11 +2979,9 @@ func NewApiSystemProfileGetOperatingSystemRequest(server string, params *ApiSyst
 				}
 			}
 		}
-
 	}
 
 	if params.Filter != nil {
-
 		if queryFrag, err := runtime.StyleParam("deepObject", true, "filter", *params.Filter); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -3140,7 +2993,6 @@ func NewApiSystemProfileGetOperatingSystemRequest(server string, params *ApiSyst
 				}
 			}
 		}
-
 	}
 
 	queryUrl.RawQuery = queryValues.Encode()
@@ -3175,7 +3027,6 @@ func NewApiSystemProfileGetSapSidsRequest(server string, params *ApiSystemProfil
 	queryValues := queryUrl.Query()
 
 	if params.Search != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "search", *params.Search); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -3187,11 +3038,9 @@ func NewApiSystemProfileGetSapSidsRequest(server string, params *ApiSystemProfil
 				}
 			}
 		}
-
 	}
 
 	if params.Tags != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "tags", *params.Tags); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -3203,11 +3052,9 @@ func NewApiSystemProfileGetSapSidsRequest(server string, params *ApiSystemProfil
 				}
 			}
 		}
-
 	}
 
 	if params.PerPage != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "per_page", *params.PerPage); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -3219,11 +3066,9 @@ func NewApiSystemProfileGetSapSidsRequest(server string, params *ApiSystemProfil
 				}
 			}
 		}
-
 	}
 
 	if params.Page != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "page", *params.Page); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -3235,11 +3080,9 @@ func NewApiSystemProfileGetSapSidsRequest(server string, params *ApiSystemProfil
 				}
 			}
 		}
-
 	}
 
 	if params.Staleness != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "staleness", *params.Staleness); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -3251,11 +3094,9 @@ func NewApiSystemProfileGetSapSidsRequest(server string, params *ApiSystemProfil
 				}
 			}
 		}
-
 	}
 
 	if params.RegisteredWith != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "registered_with", *params.RegisteredWith); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -3267,11 +3108,9 @@ func NewApiSystemProfileGetSapSidsRequest(server string, params *ApiSystemProfil
 				}
 			}
 		}
-
 	}
 
 	if params.Filter != nil {
-
 		if queryFrag, err := runtime.StyleParam("deepObject", true, "filter", *params.Filter); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -3283,7 +3122,6 @@ func NewApiSystemProfileGetSapSidsRequest(server string, params *ApiSystemProfil
 				}
 			}
 		}
-
 	}
 
 	queryUrl.RawQuery = queryValues.Encode()
@@ -3318,7 +3156,6 @@ func NewApiSystemProfileGetSapSystemRequest(server string, params *ApiSystemProf
 	queryValues := queryUrl.Query()
 
 	if params.Tags != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "tags", *params.Tags); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -3330,11 +3167,9 @@ func NewApiSystemProfileGetSapSystemRequest(server string, params *ApiSystemProf
 				}
 			}
 		}
-
 	}
 
 	if params.PerPage != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "per_page", *params.PerPage); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -3346,11 +3181,9 @@ func NewApiSystemProfileGetSapSystemRequest(server string, params *ApiSystemProf
 				}
 			}
 		}
-
 	}
 
 	if params.Page != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "page", *params.Page); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -3362,11 +3195,9 @@ func NewApiSystemProfileGetSapSystemRequest(server string, params *ApiSystemProf
 				}
 			}
 		}
-
 	}
 
 	if params.Staleness != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "staleness", *params.Staleness); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -3378,11 +3209,9 @@ func NewApiSystemProfileGetSapSystemRequest(server string, params *ApiSystemProf
 				}
 			}
 		}
-
 	}
 
 	if params.RegisteredWith != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "registered_with", *params.RegisteredWith); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -3394,11 +3223,9 @@ func NewApiSystemProfileGetSapSystemRequest(server string, params *ApiSystemProf
 				}
 			}
 		}
-
 	}
 
 	if params.Filter != nil {
-
 		if queryFrag, err := runtime.StyleParam("deepObject", true, "filter", *params.Filter); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -3410,7 +3237,6 @@ func NewApiSystemProfileGetSapSystemRequest(server string, params *ApiSystemProf
 				}
 			}
 		}
-
 	}
 
 	queryUrl.RawQuery = queryValues.Encode()
@@ -3445,7 +3271,6 @@ func NewApiSystemProfileValidateSchemaRequest(server string, params *ApiSystemPr
 	queryValues := queryUrl.Query()
 
 	if params.RepoFork != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "repo_fork", *params.RepoFork); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -3457,7 +3282,6 @@ func NewApiSystemProfileValidateSchemaRequest(server string, params *ApiSystemPr
 				}
 			}
 		}
-
 	}
 
 	if queryFrag, err := runtime.StyleParam("form", true, "repo_branch", params.RepoBranch); err != nil {
@@ -3473,7 +3297,6 @@ func NewApiSystemProfileValidateSchemaRequest(server string, params *ApiSystemPr
 	}
 
 	if params.Days != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "days", *params.Days); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -3485,11 +3308,9 @@ func NewApiSystemProfileValidateSchemaRequest(server string, params *ApiSystemPr
 				}
 			}
 		}
-
 	}
 
 	if params.MaxMessages != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "max_messages", *params.MaxMessages); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -3501,7 +3322,6 @@ func NewApiSystemProfileValidateSchemaRequest(server string, params *ApiSystemPr
 				}
 			}
 		}
-
 	}
 
 	queryUrl.RawQuery = queryValues.Encode()
@@ -3536,7 +3356,6 @@ func NewApiTagGetTagsRequest(server string, params *ApiTagGetTagsParams) (*http.
 	queryValues := queryUrl.Query()
 
 	if params.Tags != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "tags", *params.Tags); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -3548,11 +3367,9 @@ func NewApiTagGetTagsRequest(server string, params *ApiTagGetTagsParams) (*http.
 				}
 			}
 		}
-
 	}
 
 	if params.OrderBy != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "order_by", *params.OrderBy); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -3564,11 +3381,9 @@ func NewApiTagGetTagsRequest(server string, params *ApiTagGetTagsParams) (*http.
 				}
 			}
 		}
-
 	}
 
 	if params.OrderHow != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "order_how", *params.OrderHow); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -3580,11 +3395,9 @@ func NewApiTagGetTagsRequest(server string, params *ApiTagGetTagsParams) (*http.
 				}
 			}
 		}
-
 	}
 
 	if params.PerPage != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "per_page", *params.PerPage); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -3596,11 +3409,9 @@ func NewApiTagGetTagsRequest(server string, params *ApiTagGetTagsParams) (*http.
 				}
 			}
 		}
-
 	}
 
 	if params.Page != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "page", *params.Page); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -3612,11 +3423,9 @@ func NewApiTagGetTagsRequest(server string, params *ApiTagGetTagsParams) (*http.
 				}
 			}
 		}
-
 	}
 
 	if params.Staleness != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "staleness", *params.Staleness); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -3628,11 +3437,9 @@ func NewApiTagGetTagsRequest(server string, params *ApiTagGetTagsParams) (*http.
 				}
 			}
 		}
-
 	}
 
 	if params.Search != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "search", *params.Search); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -3644,11 +3451,9 @@ func NewApiTagGetTagsRequest(server string, params *ApiTagGetTagsParams) (*http.
 				}
 			}
 		}
-
 	}
 
 	if params.DisplayName != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "display_name", *params.DisplayName); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -3660,11 +3465,9 @@ func NewApiTagGetTagsRequest(server string, params *ApiTagGetTagsParams) (*http.
 				}
 			}
 		}
-
 	}
 
 	if params.Fqdn != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "fqdn", *params.Fqdn); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -3676,11 +3479,9 @@ func NewApiTagGetTagsRequest(server string, params *ApiTagGetTagsParams) (*http.
 				}
 			}
 		}
-
 	}
 
 	if params.HostnameOrId != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "hostname_or_id", *params.HostnameOrId); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -3692,11 +3493,9 @@ func NewApiTagGetTagsRequest(server string, params *ApiTagGetTagsParams) (*http.
 				}
 			}
 		}
-
 	}
 
 	if params.InsightsId != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "insights_id", *params.InsightsId); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -3708,11 +3507,9 @@ func NewApiTagGetTagsRequest(server string, params *ApiTagGetTagsParams) (*http.
 				}
 			}
 		}
-
 	}
 
 	if params.ProviderId != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "provider_id", *params.ProviderId); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -3724,11 +3521,9 @@ func NewApiTagGetTagsRequest(server string, params *ApiTagGetTagsParams) (*http.
 				}
 			}
 		}
-
 	}
 
 	if params.ProviderType != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "provider_type", *params.ProviderType); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -3740,11 +3535,9 @@ func NewApiTagGetTagsRequest(server string, params *ApiTagGetTagsParams) (*http.
 				}
 			}
 		}
-
 	}
 
 	if params.RegisteredWith != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "registered_with", *params.RegisteredWith); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -3756,11 +3549,9 @@ func NewApiTagGetTagsRequest(server string, params *ApiTagGetTagsParams) (*http.
 				}
 			}
 		}
-
 	}
 
 	if params.Filter != nil {
-
 		if queryFrag, err := runtime.StyleParam("deepObject", true, "filter", *params.Filter); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -3772,7 +3563,6 @@ func NewApiTagGetTagsRequest(server string, params *ApiTagGetTagsParams) (*http.
 				}
 			}
 		}
-
 	}
 
 	queryUrl.RawQuery = queryValues.Encode()
@@ -4428,7 +4218,7 @@ func (c *ClientWithResponses) ApiTagGetTagsWithResponse(ctx context.Context, par
 
 // ParseApiHostDeleteHostsByFilterResponse parses an HTTP response from a ApiHostDeleteHostsByFilterWithResponse call
 func ParseApiHostDeleteHostsByFilterResponse(rsp *http.Response) (*ApiHostDeleteHostsByFilterResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -4447,7 +4237,7 @@ func ParseApiHostDeleteHostsByFilterResponse(rsp *http.Response) (*ApiHostDelete
 
 // ParseApiHostGetHostListResponse parses an HTTP response from a ApiHostGetHostListWithResponse call
 func ParseApiHostGetHostListResponse(rsp *http.Response) (*ApiHostGetHostListResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -4465,7 +4255,6 @@ func ParseApiHostGetHostListResponse(rsp *http.Response) (*ApiHostGetHostListRes
 			return nil, err
 		}
 		response.JSON200 = &dest
-
 	}
 
 	return response, nil
@@ -4473,7 +4262,7 @@ func ParseApiHostGetHostListResponse(rsp *http.Response) (*ApiHostGetHostListRes
 
 // ParseApiHostDeleteAllHostsResponse parses an HTTP response from a ApiHostDeleteAllHostsWithResponse call
 func ParseApiHostDeleteAllHostsResponse(rsp *http.Response) (*ApiHostDeleteAllHostsResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -4492,7 +4281,7 @@ func ParseApiHostDeleteAllHostsResponse(rsp *http.Response) (*ApiHostDeleteAllHo
 
 // ParseApiHostHostCheckinResponse parses an HTTP response from a ApiHostHostCheckinWithResponse call
 func ParseApiHostHostCheckinResponse(rsp *http.Response) (*ApiHostHostCheckinResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -4510,7 +4299,6 @@ func ParseApiHostHostCheckinResponse(rsp *http.Response) (*ApiHostHostCheckinRes
 			return nil, err
 		}
 		response.JSON201 = &dest
-
 	}
 
 	return response, nil
@@ -4518,7 +4306,7 @@ func ParseApiHostHostCheckinResponse(rsp *http.Response) (*ApiHostHostCheckinRes
 
 // ParseApiHostDeleteByIdResponse parses an HTTP response from a ApiHostDeleteByIdWithResponse call
 func ParseApiHostDeleteByIdResponse(rsp *http.Response) (*ApiHostDeleteByIdResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -4537,7 +4325,7 @@ func ParseApiHostDeleteByIdResponse(rsp *http.Response) (*ApiHostDeleteByIdRespo
 
 // ParseApiHostGetHostByIdResponse parses an HTTP response from a ApiHostGetHostByIdWithResponse call
 func ParseApiHostGetHostByIdResponse(rsp *http.Response) (*ApiHostGetHostByIdResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -4555,7 +4343,6 @@ func ParseApiHostGetHostByIdResponse(rsp *http.Response) (*ApiHostGetHostByIdRes
 			return nil, err
 		}
 		response.JSON200 = &dest
-
 	}
 
 	return response, nil
@@ -4563,7 +4350,7 @@ func ParseApiHostGetHostByIdResponse(rsp *http.Response) (*ApiHostGetHostByIdRes
 
 // ParseApiHostPatchByIdResponse parses an HTTP response from a ApiHostPatchByIdWithResponse call
 func ParseApiHostPatchByIdResponse(rsp *http.Response) (*ApiHostPatchByIdResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -4582,7 +4369,7 @@ func ParseApiHostPatchByIdResponse(rsp *http.Response) (*ApiHostPatchByIdRespons
 
 // ParseApiHostMergeFactsResponse parses an HTTP response from a ApiHostMergeFactsWithResponse call
 func ParseApiHostMergeFactsResponse(rsp *http.Response) (*ApiHostMergeFactsResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -4601,7 +4388,7 @@ func ParseApiHostMergeFactsResponse(rsp *http.Response) (*ApiHostMergeFactsRespo
 
 // ParseApiHostReplaceFactsResponse parses an HTTP response from a ApiHostReplaceFactsWithResponse call
 func ParseApiHostReplaceFactsResponse(rsp *http.Response) (*ApiHostReplaceFactsResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -4620,7 +4407,7 @@ func ParseApiHostReplaceFactsResponse(rsp *http.Response) (*ApiHostReplaceFactsR
 
 // ParseApiHostGetHostSystemProfileByIdResponse parses an HTTP response from a ApiHostGetHostSystemProfileByIdWithResponse call
 func ParseApiHostGetHostSystemProfileByIdResponse(rsp *http.Response) (*ApiHostGetHostSystemProfileByIdResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -4638,7 +4425,6 @@ func ParseApiHostGetHostSystemProfileByIdResponse(rsp *http.Response) (*ApiHostG
 			return nil, err
 		}
 		response.JSON200 = &dest
-
 	}
 
 	return response, nil
@@ -4646,7 +4432,7 @@ func ParseApiHostGetHostSystemProfileByIdResponse(rsp *http.Response) (*ApiHostG
 
 // ParseApiHostGetHostTagsResponse parses an HTTP response from a ApiHostGetHostTagsWithResponse call
 func ParseApiHostGetHostTagsResponse(rsp *http.Response) (*ApiHostGetHostTagsResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -4664,7 +4450,6 @@ func ParseApiHostGetHostTagsResponse(rsp *http.Response) (*ApiHostGetHostTagsRes
 			return nil, err
 		}
 		response.JSON200 = &dest
-
 	}
 
 	return response, nil
@@ -4672,7 +4457,7 @@ func ParseApiHostGetHostTagsResponse(rsp *http.Response) (*ApiHostGetHostTagsRes
 
 // ParseApiHostGetHostTagCountResponse parses an HTTP response from a ApiHostGetHostTagCountWithResponse call
 func ParseApiHostGetHostTagCountResponse(rsp *http.Response) (*ApiHostGetHostTagCountResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -4690,7 +4475,6 @@ func ParseApiHostGetHostTagCountResponse(rsp *http.Response) (*ApiHostGetHostTag
 			return nil, err
 		}
 		response.JSON200 = &dest
-
 	}
 
 	return response, nil
@@ -4698,7 +4482,7 @@ func ParseApiHostGetHostTagCountResponse(rsp *http.Response) (*ApiHostGetHostTag
 
 // ParseApiSystemProfileGetOperatingSystemResponse parses an HTTP response from a ApiSystemProfileGetOperatingSystemWithResponse call
 func ParseApiSystemProfileGetOperatingSystemResponse(rsp *http.Response) (*ApiSystemProfileGetOperatingSystemResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -4716,7 +4500,6 @@ func ParseApiSystemProfileGetOperatingSystemResponse(rsp *http.Response) (*ApiSy
 			return nil, err
 		}
 		response.JSON200 = &dest
-
 	}
 
 	return response, nil
@@ -4724,7 +4507,7 @@ func ParseApiSystemProfileGetOperatingSystemResponse(rsp *http.Response) (*ApiSy
 
 // ParseApiSystemProfileGetSapSidsResponse parses an HTTP response from a ApiSystemProfileGetSapSidsWithResponse call
 func ParseApiSystemProfileGetSapSidsResponse(rsp *http.Response) (*ApiSystemProfileGetSapSidsResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -4742,7 +4525,6 @@ func ParseApiSystemProfileGetSapSidsResponse(rsp *http.Response) (*ApiSystemProf
 			return nil, err
 		}
 		response.JSON200 = &dest
-
 	}
 
 	return response, nil
@@ -4750,7 +4532,7 @@ func ParseApiSystemProfileGetSapSidsResponse(rsp *http.Response) (*ApiSystemProf
 
 // ParseApiSystemProfileGetSapSystemResponse parses an HTTP response from a ApiSystemProfileGetSapSystemWithResponse call
 func ParseApiSystemProfileGetSapSystemResponse(rsp *http.Response) (*ApiSystemProfileGetSapSystemResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -4768,7 +4550,6 @@ func ParseApiSystemProfileGetSapSystemResponse(rsp *http.Response) (*ApiSystemPr
 			return nil, err
 		}
 		response.JSON200 = &dest
-
 	}
 
 	return response, nil
@@ -4776,7 +4557,7 @@ func ParseApiSystemProfileGetSapSystemResponse(rsp *http.Response) (*ApiSystemPr
 
 // ParseApiSystemProfileValidateSchemaResponse parses an HTTP response from a ApiSystemProfileValidateSchemaWithResponse call
 func ParseApiSystemProfileValidateSchemaResponse(rsp *http.Response) (*ApiSystemProfileValidateSchemaResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -4795,7 +4576,7 @@ func ParseApiSystemProfileValidateSchemaResponse(rsp *http.Response) (*ApiSystem
 
 // ParseApiTagGetTagsResponse parses an HTTP response from a ApiTagGetTagsWithResponse call
 func ParseApiTagGetTagsResponse(rsp *http.Response) (*ApiTagGetTagsResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -4813,7 +4594,6 @@ func ParseApiTagGetTagsResponse(rsp *http.Response) (*ApiTagGetTagsResponse, err
 			return nil, err
 		}
 		response.JSON200 = &dest
-
 	}
 
 	return response, nil

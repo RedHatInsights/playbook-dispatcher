@@ -7,7 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -38,7 +38,6 @@ type Labels struct {
 
 // Links defines model for Links.
 type Links struct {
-
 	// relative link to the first page of the query results
 	First string `json:"first"`
 
@@ -54,7 +53,6 @@ type Links struct {
 
 // Meta defines model for Meta.
 type Meta struct {
-
 	// number of results returned
 	Count int `json:"count"`
 
@@ -70,7 +68,6 @@ type PlaybookName string
 
 // Run defines model for Run.
 type Run struct {
-
 	// Identifier of the tenant
 	Account *Account `json:"account,omitempty"`
 
@@ -119,7 +116,6 @@ type RunCorrelationId string
 
 // RunHost defines model for RunHost.
 type RunHost struct {
-
 	// Name used to identify a host within Ansible inventory
 	Host        *string       `json:"host,omitempty"`
 	InventoryId *string       `json:"inventory_id,omitempty"`
@@ -262,7 +258,6 @@ type Forbidden Error
 
 // ApiRunHostsListParams defines parameters for ApiRunHostsList.
 type ApiRunHostsListParams struct {
-
 	// Allows for filtering based on various criteria
 	Filter *RunHostFilter `json:"filter,omitempty"`
 
@@ -278,7 +273,6 @@ type ApiRunHostsListParams struct {
 
 // ApiRunsListParams defines parameters for ApiRunsList.
 type ApiRunsListParams struct {
-
 	// Allows for filtering based on various criteria
 	Filter *RunsFilter `json:"filter,omitempty"`
 
@@ -533,7 +527,6 @@ func NewApiRunHostsListRequest(server string, params *ApiRunHostsListParams) (*h
 	queryValues := queryUrl.Query()
 
 	if params.Filter != nil {
-
 		if queryFrag, err := runtime.StyleParam("deepObject", true, "filter", *params.Filter); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -545,11 +538,9 @@ func NewApiRunHostsListRequest(server string, params *ApiRunHostsListParams) (*h
 				}
 			}
 		}
-
 	}
 
 	if params.Fields != nil {
-
 		if queryFrag, err := runtime.StyleParam("deepObject", true, "fields", *params.Fields); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -561,11 +552,9 @@ func NewApiRunHostsListRequest(server string, params *ApiRunHostsListParams) (*h
 				}
 			}
 		}
-
 	}
 
 	if params.Limit != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "limit", *params.Limit); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -577,11 +566,9 @@ func NewApiRunHostsListRequest(server string, params *ApiRunHostsListParams) (*h
 				}
 			}
 		}
-
 	}
 
 	if params.Offset != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "offset", *params.Offset); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -593,7 +580,6 @@ func NewApiRunHostsListRequest(server string, params *ApiRunHostsListParams) (*h
 				}
 			}
 		}
-
 	}
 
 	queryUrl.RawQuery = queryValues.Encode()
@@ -628,7 +614,6 @@ func NewApiRunsListRequest(server string, params *ApiRunsListParams) (*http.Requ
 	queryValues := queryUrl.Query()
 
 	if params.Filter != nil {
-
 		if queryFrag, err := runtime.StyleParam("deepObject", true, "filter", *params.Filter); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -640,11 +625,9 @@ func NewApiRunsListRequest(server string, params *ApiRunsListParams) (*http.Requ
 				}
 			}
 		}
-
 	}
 
 	if params.Fields != nil {
-
 		if queryFrag, err := runtime.StyleParam("deepObject", true, "fields", *params.Fields); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -656,11 +639,9 @@ func NewApiRunsListRequest(server string, params *ApiRunsListParams) (*http.Requ
 				}
 			}
 		}
-
 	}
 
 	if params.SortBy != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "sort_by", *params.SortBy); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -672,11 +653,9 @@ func NewApiRunsListRequest(server string, params *ApiRunsListParams) (*http.Requ
 				}
 			}
 		}
-
 	}
 
 	if params.Limit != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "limit", *params.Limit); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -688,11 +667,9 @@ func NewApiRunsListRequest(server string, params *ApiRunsListParams) (*http.Requ
 				}
 			}
 		}
-
 	}
 
 	if params.Offset != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "offset", *params.Offset); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -704,7 +681,6 @@ func NewApiRunsListRequest(server string, params *ApiRunsListParams) (*http.Requ
 				}
 			}
 		}
-
 	}
 
 	queryUrl.RawQuery = queryValues.Encode()
@@ -821,7 +797,7 @@ func (c *ClientWithResponses) ApiRunsListWithResponse(ctx context.Context, param
 
 // ParseApiRunHostsListResponse parses an HTTP response from a ApiRunHostsListWithResponse call
 func ParseApiRunHostsListResponse(rsp *http.Response) (*ApiRunHostsListResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -861,7 +837,7 @@ func ParseApiRunHostsListResponse(rsp *http.Response) (*ApiRunHostsListResponse,
 
 // ParseApiRunsListResponse parses an HTTP response from a ApiRunsListWithResponse call
 func ParseApiRunsListResponse(rsp *http.Response) (*ApiRunsListResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err

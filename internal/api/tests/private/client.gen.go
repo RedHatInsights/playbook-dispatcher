@@ -9,7 +9,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
@@ -19,7 +18,6 @@ import (
 
 // CancelInputV2 defines model for CancelInputV2.
 type CancelInputV2 struct {
-
 	// Identifies the organization that the given resource belongs to
 	OrgId OrgId `json:"org_id"`
 
@@ -32,7 +30,6 @@ type CancelInputV2 struct {
 
 // Error defines model for Error.
 type Error struct {
-
 	// Human readable error message
 	Message string `json:"message"`
 }
@@ -59,7 +56,6 @@ type Principal string
 
 // RecipientConfig defines model for RecipientConfig.
 type RecipientConfig struct {
-
 	// Identifier of the Satellite instance in the uuid v4/v5 format
 	SatId *string `json:"sat_id,omitempty"`
 
@@ -89,7 +85,6 @@ const (
 
 // RecipientWithConnectionInfo defines model for RecipientWithConnectionInfo.
 type RecipientWithConnectionInfo struct {
-
 	// Identifies the organization that the given resource belongs to
 	OrgId OrgId `json:"org_id"`
 
@@ -112,7 +107,6 @@ type RecipientWithConnectionInfo struct {
 
 // RecipientWithOrg defines model for RecipientWithOrg.
 type RecipientWithOrg struct {
-
 	// Identifies the organization that the given resource belongs to
 	OrgId OrgId `json:"org_id"`
 
@@ -122,7 +116,6 @@ type RecipientWithOrg struct {
 
 // RunCanceled defines model for RunCanceled.
 type RunCanceled struct {
-
 	// status code of the request
 	Code int `json:"code"`
 
@@ -132,7 +125,6 @@ type RunCanceled struct {
 
 // RunCreated defines model for RunCreated.
 type RunCreated struct {
-
 	// status code of the request
 	Code int `json:"code"`
 
@@ -142,7 +134,6 @@ type RunCreated struct {
 
 // RunInput defines model for RunInput.
 type RunInput struct {
-
 	// Identifier of the tenant
 	Account externalRef0.Account `json:"account"`
 
@@ -166,7 +157,6 @@ type RunInput struct {
 
 // RunInputHosts defines model for RunInputHosts.
 type RunInputHosts []struct {
-
 	// Host name as known to Ansible inventory.
 	// Used to identify the host in status reports.
 	AnsibleHost *string `json:"ansible_host,omitempty"`
@@ -177,7 +167,6 @@ type RunInputHosts []struct {
 
 // RunInputV2 defines model for RunInputV2.
 type RunInputV2 struct {
-
 	// Optionally, information about hosts involved in the Playbook run can be provided.
 	// This information is used to pre-allocate run_host resources.
 	// Moreover, it can be used to create a connection between a run_host resource and host inventory.
@@ -1038,7 +1027,7 @@ func (c *ClientWithResponses) ApiInternalVersionWithResponse(ctx context.Context
 
 // ParseApiInternalRunsCreateResponse parses an HTTP response from a ApiInternalRunsCreateWithResponse call
 func ParseApiInternalRunsCreateResponse(rsp *http.Response) (*ApiInternalRunsCreateResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -1071,7 +1060,7 @@ func ParseApiInternalRunsCreateResponse(rsp *http.Response) (*ApiInternalRunsCre
 
 // ParseApiInternalV2RunsCancelResponse parses an HTTP response from a ApiInternalV2RunsCancelWithResponse call
 func ParseApiInternalV2RunsCancelResponse(rsp *http.Response) (*ApiInternalV2RunsCancelResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -1104,7 +1093,7 @@ func ParseApiInternalV2RunsCancelResponse(rsp *http.Response) (*ApiInternalV2Run
 
 // ParseApiInternalHighlevelConnectionStatusResponse parses an HTTP response from a ApiInternalHighlevelConnectionStatusWithResponse call
 func ParseApiInternalHighlevelConnectionStatusResponse(rsp *http.Response) (*ApiInternalHighlevelConnectionStatusResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -1137,7 +1126,7 @@ func ParseApiInternalHighlevelConnectionStatusResponse(rsp *http.Response) (*Api
 
 // ParseApiInternalV2RunsCreateResponse parses an HTTP response from a ApiInternalV2RunsCreateWithResponse call
 func ParseApiInternalV2RunsCreateResponse(rsp *http.Response) (*ApiInternalV2RunsCreateResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -1155,7 +1144,6 @@ func ParseApiInternalV2RunsCreateResponse(rsp *http.Response) (*ApiInternalV2Run
 			return nil, err
 		}
 		response.JSON207 = &dest
-
 	}
 
 	return response, nil
@@ -1163,7 +1151,7 @@ func ParseApiInternalV2RunsCreateResponse(rsp *http.Response) (*ApiInternalV2Run
 
 // ParseApiInternalV2RecipientsStatusResponse parses an HTTP response from a ApiInternalV2RecipientsStatusWithResponse call
 func ParseApiInternalV2RecipientsStatusResponse(rsp *http.Response) (*ApiInternalV2RecipientsStatusResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -1196,7 +1184,7 @@ func ParseApiInternalV2RecipientsStatusResponse(rsp *http.Response) (*ApiInterna
 
 // ParseApiInternalVersionResponse parses an HTTP response from a ApiInternalVersionWithResponse call
 func ParseApiInternalVersionResponse(rsp *http.Response) (*ApiInternalVersionResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -1214,7 +1202,6 @@ func ParseApiInternalVersionResponse(rsp *http.Response) (*ApiInternalVersionRes
 			return nil, err
 		}
 		response.JSON200 = &dest
-
 	}
 
 	return response, nil

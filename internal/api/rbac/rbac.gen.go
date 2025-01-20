@@ -7,7 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -76,7 +76,6 @@ type QueryOffset int
 
 // GetPrincipalAccessParams defines parameters for GetPrincipalAccess.
 type GetPrincipalAccessParams struct {
-
 	// The application name(s) to obtain access for the principal. This is an exact match. When no application is supplied, all permissions for the principal are returned. You may also use a comma-separated list to match on multiple applications.
 	Application string `json:"application"`
 
@@ -216,7 +215,6 @@ func NewGetPrincipalAccessRequest(server string, params *GetPrincipalAccessParam
 	}
 
 	if params.Username != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "username", *params.Username); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -228,11 +226,9 @@ func NewGetPrincipalAccessRequest(server string, params *GetPrincipalAccessParam
 				}
 			}
 		}
-
 	}
 
 	if params.Limit != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "limit", *params.Limit); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -244,11 +240,9 @@ func NewGetPrincipalAccessRequest(server string, params *GetPrincipalAccessParam
 				}
 			}
 		}
-
 	}
 
 	if params.Offset != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "offset", *params.Offset); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -260,7 +254,6 @@ func NewGetPrincipalAccessRequest(server string, params *GetPrincipalAccessParam
 				}
 			}
 		}
-
 	}
 
 	queryUrl.RawQuery = queryValues.Encode()
@@ -341,7 +334,7 @@ func (c *ClientWithResponses) GetPrincipalAccessWithResponse(ctx context.Context
 
 // ParseGetPrincipalAccessResponse parses an HTTP response from a GetPrincipalAccessWithResponse call
 func ParseGetPrincipalAccessResponse(rsp *http.Response) (*GetPrincipalAccessResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err

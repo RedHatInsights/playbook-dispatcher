@@ -9,7 +9,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
@@ -185,7 +184,6 @@ type Offset int
 
 // GetV1ConnectionParams defines parameters for GetV1Connection.
 type GetV1ConnectionParams struct {
-
 	// limit
 	Limit *Limit `json:"limit,omitempty"`
 
@@ -207,7 +205,6 @@ type V1ConnectionStatusJSONBody ConnectionStatusRequest
 
 // GetV1ConnectionAccountParams defines parameters for GetV1ConnectionAccount.
 type GetV1ConnectionAccountParams struct {
-
 	// limit
 	Limit *Limit `json:"limit,omitempty"`
 
@@ -764,7 +761,6 @@ func NewGetV1ConnectionRequest(server string, params *GetV1ConnectionParams) (*h
 	queryValues := queryUrl.Query()
 
 	if params.Limit != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "limit", *params.Limit); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -776,11 +772,9 @@ func NewGetV1ConnectionRequest(server string, params *GetV1ConnectionParams) (*h
 				}
 			}
 		}
-
 	}
 
 	if params.Offset != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "offset", *params.Offset); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -792,7 +786,6 @@ func NewGetV1ConnectionRequest(server string, params *GetV1ConnectionParams) (*h
 				}
 			}
 		}
-
 	}
 
 	queryUrl.RawQuery = queryValues.Encode()
@@ -990,7 +983,6 @@ func NewGetV1ConnectionAccountRequest(server string, account AccountID, params *
 	queryValues := queryUrl.Query()
 
 	if params.Limit != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "limit", *params.Limit); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -1002,11 +994,9 @@ func NewGetV1ConnectionAccountRequest(server string, account AccountID, params *
 				}
 			}
 		}
-
 	}
 
 	if params.Offset != nil {
-
 		if queryFrag, err := runtime.StyleParam("form", true, "offset", *params.Offset); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
@@ -1018,7 +1008,6 @@ func NewGetV1ConnectionAccountRequest(server string, account AccountID, params *
 				}
 			}
 		}
-
 	}
 
 	queryUrl.RawQuery = queryValues.Encode()
@@ -1690,7 +1679,7 @@ func (c *ClientWithResponses) V2ConnectionStatusMultiorgWithResponse(ctx context
 
 // ParseGetV1ConnectionResponse parses an HTTP response from a GetV1ConnectionWithResponse call
 func ParseGetV1ConnectionResponse(rsp *http.Response) (*GetV1ConnectionResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -1708,7 +1697,6 @@ func ParseGetV1ConnectionResponse(rsp *http.Response) (*GetV1ConnectionResponse,
 			return nil, err
 		}
 		response.JSON200 = &dest
-
 	}
 
 	return response, nil
@@ -1716,7 +1704,7 @@ func ParseGetV1ConnectionResponse(rsp *http.Response) (*GetV1ConnectionResponse,
 
 // ParsePostV1ConnectionDisconnectResponse parses an HTTP response from a PostV1ConnectionDisconnectWithResponse call
 func ParsePostV1ConnectionDisconnectResponse(rsp *http.Response) (*PostV1ConnectionDisconnectResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -1735,7 +1723,7 @@ func ParsePostV1ConnectionDisconnectResponse(rsp *http.Response) (*PostV1Connect
 
 // ParsePostV1ConnectionPingResponse parses an HTTP response from a PostV1ConnectionPingWithResponse call
 func ParsePostV1ConnectionPingResponse(rsp *http.Response) (*PostV1ConnectionPingResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -1753,7 +1741,6 @@ func ParsePostV1ConnectionPingResponse(rsp *http.Response) (*PostV1ConnectionPin
 			return nil, err
 		}
 		response.JSON200 = &dest
-
 	}
 
 	return response, nil
@@ -1761,7 +1748,7 @@ func ParsePostV1ConnectionPingResponse(rsp *http.Response) (*PostV1ConnectionPin
 
 // ParsePostV1ConnectionReconnectResponse parses an HTTP response from a PostV1ConnectionReconnectWithResponse call
 func ParsePostV1ConnectionReconnectResponse(rsp *http.Response) (*PostV1ConnectionReconnectResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -1780,7 +1767,7 @@ func ParsePostV1ConnectionReconnectResponse(rsp *http.Response) (*PostV1Connecti
 
 // ParseV1ConnectionStatusResponse parses an HTTP response from a V1ConnectionStatusWithResponse call
 func ParseV1ConnectionStatusResponse(rsp *http.Response) (*V1ConnectionStatusResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -1798,7 +1785,6 @@ func ParseV1ConnectionStatusResponse(rsp *http.Response) (*V1ConnectionStatusRes
 			return nil, err
 		}
 		response.JSON200 = &dest
-
 	}
 
 	return response, nil
@@ -1806,7 +1792,7 @@ func ParseV1ConnectionStatusResponse(rsp *http.Response) (*V1ConnectionStatusRes
 
 // ParseGetV1ConnectionAccountResponse parses an HTTP response from a GetV1ConnectionAccountWithResponse call
 func ParseGetV1ConnectionAccountResponse(rsp *http.Response) (*GetV1ConnectionAccountResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -1824,7 +1810,6 @@ func ParseGetV1ConnectionAccountResponse(rsp *http.Response) (*GetV1ConnectionAc
 			return nil, err
 		}
 		response.JSON200 = &dest
-
 	}
 
 	return response, nil
@@ -1832,7 +1817,7 @@ func ParseGetV1ConnectionAccountResponse(rsp *http.Response) (*GetV1ConnectionAc
 
 // ParseV1ConnectionStatusMultiorgResponse parses an HTTP response from a V1ConnectionStatusMultiorgWithResponse call
 func ParseV1ConnectionStatusMultiorgResponse(rsp *http.Response) (*V1ConnectionStatusMultiorgResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -1850,7 +1835,6 @@ func ParseV1ConnectionStatusMultiorgResponse(rsp *http.Response) (*V1ConnectionS
 			return nil, err
 		}
 		response.JSON200 = &dest
-
 	}
 
 	return response, nil
@@ -1858,7 +1842,7 @@ func ParseV1ConnectionStatusMultiorgResponse(rsp *http.Response) (*V1ConnectionS
 
 // ParsePostV1MessageResponse parses an HTTP response from a PostV1MessageWithResponse call
 func ParsePostV1MessageResponse(rsp *http.Response) (*PostV1MessageResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -1876,7 +1860,6 @@ func ParsePostV1MessageResponse(rsp *http.Response) (*PostV1MessageResponse, err
 			return nil, err
 		}
 		response.JSON201 = &dest
-
 	}
 
 	return response, nil
@@ -1884,7 +1867,7 @@ func ParsePostV1MessageResponse(rsp *http.Response) (*PostV1MessageResponse, err
 
 // ParseGetV2ConnectionsResponse parses an HTTP response from a GetV2ConnectionsWithResponse call
 func ParseGetV2ConnectionsResponse(rsp *http.Response) (*GetV2ConnectionsResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -1902,7 +1885,6 @@ func ParseGetV2ConnectionsResponse(rsp *http.Response) (*GetV2ConnectionsRespons
 			return nil, err
 		}
 		response.JSON200 = &dest
-
 	}
 
 	return response, nil
@@ -1910,7 +1892,7 @@ func ParseGetV2ConnectionsResponse(rsp *http.Response) (*GetV2ConnectionsRespons
 
 // ParsePostV2ConnectionsClientIdMessageResponse parses an HTTP response from a PostV2ConnectionsClientIdMessageWithResponse call
 func ParsePostV2ConnectionsClientIdMessageResponse(rsp *http.Response) (*PostV2ConnectionsClientIdMessageResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -1928,7 +1910,6 @@ func ParsePostV2ConnectionsClientIdMessageResponse(rsp *http.Response) (*PostV2C
 			return nil, err
 		}
 		response.JSON201 = &dest
-
 	}
 
 	return response, nil
@@ -1936,7 +1917,7 @@ func ParsePostV2ConnectionsClientIdMessageResponse(rsp *http.Response) (*PostV2C
 
 // ParseV2ConnectionStatusMultiorgResponse parses an HTTP response from a V2ConnectionStatusMultiorgWithResponse call
 func ParseV2ConnectionStatusMultiorgResponse(rsp *http.Response) (*V2ConnectionStatusMultiorgResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
@@ -1954,7 +1935,6 @@ func ParseV2ConnectionStatusMultiorgResponse(rsp *http.Response) (*V2ConnectionS
 			return nil, err
 		}
 		response.JSON200 = &dest
-
 	}
 
 	return response, nil
