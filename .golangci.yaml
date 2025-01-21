@@ -1,0 +1,5 @@
+issues:
+  exclude-rules:
+    - path: \.gen\.go
+      linters:
+        - '-SA1019' # disable the rule SA1019
