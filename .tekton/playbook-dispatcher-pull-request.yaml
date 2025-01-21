@@ -113,9 +113,6 @@ spec:
     - description: ""
       name: CHAINS-GIT_COMMIT
       value: $(tasks.clone-repository.results.commit)
-    - description: ""
-      name: JAVA_COMMUNITY_DEPENDENCIES
-      value: $(tasks.build-container.results.JAVA_COMMUNITY_DEPENDENCIES)
     tasks:
     - name: init
       params:
@@ -221,7 +218,7 @@ spec:
         - name: name
           value: buildah-oci-ta
         - name: bundle
-          value: quay.io/konflux-ci/tekton-catalog/task-buildah-oci-ta:0.3@sha256:d35ff2504c0f58fd71879c917a1c66d817143cd8586b4bbd6cff0f3f91e5d040
+          value: quay.io/konflux-ci/tekton-catalog/task-buildah-oci-ta:0.3@sha256:b1cdafdac20b33cb6ccbad64fa91abc0aa673f1bdfcf95abd5cf230e0c4ea2b4
         - name: kind
           value: task
         resolver: bundles
