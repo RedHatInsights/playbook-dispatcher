@@ -12,11 +12,12 @@ export PATH := ${LOCAL_BIN_PATH}:${PATH}
 
 PSK ?= secret
 
+all: init generate build test run-lint
+
 init:
-	go install github.com/deepmap/oapi-codegen/cmd/oapi-codegen
+	go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest
 	go get github.com/atombender/go-jsonschema/...@main
 	go install github.com/atombender/go-jsonschema@v0.14.0
-	pip install json2yaml
 	go get github.com/kulshekhar/fungen
 	go install github.com/kulshekhar/fungen
 
@@ -38,27 +39,23 @@ generate-messages:
 
 generate-cloud-connector:
 	curl -s ${CLOUD_CONNECTOR_SCHEMA} -o cloud-connector.json
-	json2yaml cloud-connector.json cloud-connector.yaml
-	${GOPATH}/bin/oapi-codegen -generate client,types -package connectors -o internal/api/connectors/cloudConnector.gen.go cloud-connector.yaml
-	rm cloud-connector.json cloud-connector.yaml
+	${GOPATH}/bin/oapi-codegen -generate client,types -package connectors -o internal/api/connectors/cloudConnector.gen.go cloud-connector.json
+	rm cloud-connector.json
 
 generate-rbac:
 	curl -s ${RBAC_CONNECTOR_SCHEMA} -o rbac.json
-	json2yaml rbac.json rbac.yaml
-	${GOPATH}/bin/oapi-codegen -generate client,types -package rbac -include-tags Access -o internal/api/rbac/rbac.gen.go rbac.yaml
-	rm rbac.json rbac.yaml
+	${GOPATH}/bin/oapi-codegen -generate client,types -package rbac -include-tags Access -o internal/api/rbac/rbac.gen.go rbac.json
+	rm rbac.json
 
 generate-inventory:
 	curl -s ${INVENTORY_CONNECTOR_SCHEMA} -o inventory.json
-	json2yaml inventory.json inventory.yaml
-	${GOPATH}/bin/oapi-codegen -generate client,types -package inventory -o internal/api/connectors/inventory/inventory.gen.go inventory.yaml
-	rm inventory.json inventory.yaml
+	${GOPATH}/bin/oapi-codegen -generate client,types -package inventory -o internal/api/connectors/inventory/inventory.gen.go inventory.json
+	rm inventory.json
 
 generate-sources:
 	curl -s ${SOURCES_CONNECTOR_SCHEMA} -o sources.json
-	json2yaml sources.json sources.yaml
-	${GOPATH}/bin/oapi-codegen -generate client,types -package sources -o internal/api/connectors/sources/sources.gen.go sources.yaml
-	rm sources.yaml sources.json
+	${GOPATH}/bin/oapi-codegen -generate client,types -package sources -o internal/api/connectors/sources/sources.gen.go sources.json
+	rm sources.yaml
 
 generate-utils:
 	go generate ./...
