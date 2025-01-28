@@ -6,7 +6,10 @@ data:
         "list": [
           {
             "builtIn": 1,
-            "datasource": "-- Grafana --",
+            "datasource": {
+              "type": "datasource",
+              "uid": "grafana"
+            },
             "enable": true,
             "hide": true,
             "iconColor": "rgba(0, 211, 255, 1)",
@@ -16,14 +19,16 @@ data:
         ]
       },
       "editable": true,
-      "gnetId": null,
+      "fiscalYearStartMonth": 0,
       "graphTooltip": 0,
-      "iteration": 1629901167114,
       "links": [],
       "panels": [
         {
           "collapsed": false,
-          "datasource": null,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PD776AFABBE26000A"
+          },
           "gridPos": {
             "h": 1,
             "w": 24,
@@ -32,6 +37,15 @@ data:
           },
           "id": 2,
           "panels": [],
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "PD776AFABBE26000A"
+              },
+              "refId": "A"
+            }
+          ],
           "title": "SLO",
           "type": "row"
         },
@@ -40,12 +54,8 @@ data:
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "$datasource",
-          "fieldConfig": {
-            "defaults": {
-              "custom": {}
-            },
-            "overrides": []
+          "datasource": {
+            "uid": "$datasource"
           },
           "fill": 1,
           "fillGradient": 0,
@@ -74,7 +84,7 @@ data:
             "alertThreshold": true
           },
           "percentage": false,
-          "pluginVersion": "7.2.1",
+          "pluginVersion": "10.4.1",
           "pointradius": 2,
           "points": false,
           "renderer": "flot",
@@ -84,6 +94,9 @@ data:
           "steppedLine": false,
           "targets": [
             {
+              "datasource": {
+                "uid": "$datasource"
+              },
               "expr": "1 - (sum(increase(api_3scale_gateway_api_status{status=\"5xx\", exported_service=\"playbook-dispatcher\"}[$__range:1m])) / sum(increase(api_3scale_gateway_api_status{exported_service=\"playbook-dispatcher\"}[$__range:1m])))",
               "interval": "",
               "legendFormat": "Ratio of successful requests",
@@ -101,9 +114,7 @@ data:
               "yaxis": "left"
             }
           ],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "Availability SLO",
           "tooltip": {
             "shared": true,
@@ -112,9 +123,7 @@ data:
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
@@ -123,7 +132,6 @@ data:
               "$$hashKey": "object:338",
               "decimals": 2,
               "format": "percentunit",
-              "label": null,
               "logBase": 1,
               "max": "1",
               "min": "0.9",
@@ -132,16 +140,12 @@ data:
             {
               "$$hashKey": "object:339",
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -149,10 +153,12 @@ data:
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "$datasource",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${aws_resources_exporter}"
+          },
           "fieldConfig": {
             "defaults": {
-              "custom": {},
               "links": []
             },
             "overrides": []
@@ -180,13 +186,12 @@ data:
           },
           "lines": true,
           "linewidth": 1,
-          "links": [],
           "nullPointMode": "null",
           "options": {
             "alertThreshold": true
           },
           "percentage": false,
-          "pluginVersion": "7.2.1",
+          "pluginVersion": "10.4.1",
           "pointradius": 5,
           "points": false,
           "renderer": "flot",
@@ -196,11 +201,17 @@ data:
           "steppedLine": false,
           "targets": [
             {
-              "expr": "sum(kafka_consumergroup_group_lag{group=\"playbook-dispatcher\"}) by (topic)",
+              "datasource": {
+                "type": "prometheus",
+                "uid": "${aws_resources_exporter}"
+              },
+              "editorMode": "code",
+              "expr": "sum(aws_kafka_sum_offset_lag_sum{consumer_group=\"playbook-dispatcher\"}) by (topic)",
               "format": "time_series",
               "interval": "",
               "intervalFactor": 1,
               "legendFormat": "{{topic}}",
+              "range": true,
               "refId": "B"
             }
           ],
@@ -215,9 +226,7 @@ data:
               "yaxis": "left"
             }
           ],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "Consumer lag",
           "tooltip": {
             "shared": true,
@@ -226,9 +235,7 @@ data:
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
@@ -245,23 +252,16 @@ data:
             {
               "$$hashKey": "object:1221",
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
-          "cards": {
-            "cardPadding": null,
-            "cardRound": null
-          },
+          "cards": {},
           "color": {
             "cardColor": "#b4ff00",
             "colorScale": "sqrt",
@@ -271,10 +271,21 @@ data:
             "mode": "spectrum"
           },
           "dataFormat": "tsbuckets",
-          "datasource": "$datasource",
+          "datasource": {
+            "uid": "$datasource"
+          },
           "fieldConfig": {
             "defaults": {
-              "custom": {}
+              "custom": {
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "scaleDistribution": {
+                  "type": "linear"
+                }
+              }
             },
             "overrides": []
           },
@@ -291,10 +302,52 @@ data:
           "legend": {
             "show": true
           },
-          "pluginVersion": "7.2.1",
+          "options": {
+            "calculate": false,
+            "calculation": {},
+            "cellGap": 2,
+            "cellValues": {},
+            "color": {
+              "exponent": 0.5,
+              "fill": "#b4ff00",
+              "min": 0,
+              "mode": "scheme",
+              "reverse": false,
+              "scale": "exponential",
+              "scheme": "Oranges",
+              "steps": 128
+            },
+            "exemplars": {
+              "color": "rgba(255,0,255,0.7)"
+            },
+            "filterValues": {
+              "le": 1e-9
+            },
+            "legend": {
+              "show": true
+            },
+            "rowsFrame": {
+              "layout": "auto"
+            },
+            "showValue": "never",
+            "tooltip": {
+              "mode": "single",
+              "showColorScale": false,
+              "yHistogram": false
+            },
+            "yAxis": {
+              "axisPlacement": "left",
+              "reverse": false,
+              "unit": "none"
+            }
+          },
+          "pluginVersion": "10.4.1",
           "reverseYBuckets": false,
           "targets": [
             {
+              "datasource": {
+                "uid": "$datasource"
+              },
               "expr": "sum(increase(echo_http_request_duration_seconds_bucket{service=\"playbook-dispatcher-api\", method=\"POST\"}[1m])) by (le)",
               "format": "heatmap",
               "interval": "15s",
@@ -302,8 +355,6 @@ data:
               "refId": "A"
             }
           ],
-          "timeFrom": null,
-          "timeShift": null,
           "title": "Latency (POST)",
           "tooltip": {
             "show": true,
@@ -313,24 +364,19 @@ data:
           "xAxis": {
             "show": true
           },
-          "xBucketNumber": null,
-          "xBucketSize": null,
           "yAxis": {
-            "decimals": null,
             "format": "none",
             "logBase": 1,
-            "max": null,
-            "min": null,
-            "show": true,
-            "splitFactor": null
+            "show": true
           },
-          "yBucketBound": "auto",
-          "yBucketNumber": null,
-          "yBucketSize": null
+          "yBucketBound": "auto"
         },
         {
           "collapsed": true,
-          "datasource": null,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PD776AFABBE26000A"
+          },
           "gridPos": {
             "h": 1,
             "w": 24,
@@ -344,7 +390,9 @@ data:
               "bars": false,
               "dashLength": 10,
               "dashes": false,
-              "datasource": "$datasource",
+              "datasource": {
+                "uid": "$datasource"
+              },
               "description": "",
               "fieldConfig": {
                 "defaults": {
@@ -391,6 +439,9 @@ data:
               "steppedLine": false,
               "targets": [
                 {
+                  "datasource": {
+                    "uid": "$datasource"
+                  },
                   "expr": "sum(increase(echo_http_requests_total{service=\"playbook-dispatcher-api\"}[1m])) by (status)",
                   "interval": "1m",
                   "legendFormat": "{{status}}",
@@ -398,9 +449,7 @@ data:
                 }
               ],
               "thresholds": [],
-              "timeFrom": null,
               "timeRegions": [],
-              "timeShift": null,
               "title": "Request rate",
               "tooltip": {
                 "shared": true,
@@ -409,36 +458,27 @@ data:
               },
               "type": "graph",
               "xaxis": {
-                "buckets": null,
                 "mode": "time",
-                "name": null,
                 "show": true,
                 "values": []
               },
               "yaxes": [
                 {
                   "$$hashKey": "object:287",
-                  "decimals": null,
                   "format": "short",
-                  "label": null,
                   "logBase": 1,
-                  "max": null,
                   "min": "0",
                   "show": true
                 },
                 {
                   "$$hashKey": "object:288",
                   "format": "short",
-                  "label": null,
                   "logBase": 1,
-                  "max": null,
-                  "min": null,
                   "show": false
                 }
               ],
               "yaxis": {
-                "align": false,
-                "alignLevel": null
+                "align": false
               }
             },
             {
@@ -446,7 +486,9 @@ data:
               "bars": false,
               "dashLength": 10,
               "dashes": false,
-              "datasource": "$datasource",
+              "datasource": {
+                "uid": "$datasource"
+              },
               "description": "",
               "fieldConfig": {
                 "defaults": {
@@ -493,24 +535,36 @@ data:
               "steppedLine": false,
               "targets": [
                 {
+                  "datasource": {
+                    "uid": "$datasource"
+                  },
                   "expr": "sum(increase(response_consumer_error_total{service=\"playbook-dispatcher-response-consumer\"}[1m])) by (type)",
                   "interval": "",
                   "legendFormat": "consumer error: {{type}}",
                   "refId": "A"
                 },
                 {
+                  "datasource": {
+                    "uid": "$datasource"
+                  },
                   "expr": "sum(increase(response_consumer_validation_failure_total{service=\"playbook-dispatcher-response-consumer\"}[1m])) by (type)",
                   "interval": "",
                   "legendFormat": "consumer failure: {{type}}",
                   "refId": "B"
                 },
                 {
+                  "datasource": {
+                    "uid": "$datasource"
+                  },
                   "expr": "sum(increase(validator_failure_total{service=\"playbook-dispatcher-validator\"}[1m]))",
                   "interval": "",
                   "legendFormat": "validator failure",
                   "refId": "C"
                 },
                 {
+                  "datasource": {
+                    "uid": "$datasource"
+                  },
                   "expr": "sum(increase(validator_error_total{service=\"playbook-dispatcher-validator\"}[1m])) by (phase)",
                   "interval": "",
                   "legendFormat": "validator error: {{phase}}",
@@ -518,9 +572,7 @@ data:
                 }
               ],
               "thresholds": [],
-              "timeFrom": null,
               "timeRegions": [],
-              "timeShift": null,
               "title": "Errors",
               "tooltip": {
                 "shared": true,
@@ -529,43 +581,31 @@ data:
               },
               "type": "graph",
               "xaxis": {
-                "buckets": null,
                 "mode": "time",
-                "name": null,
                 "show": true,
                 "values": []
               },
               "yaxes": [
                 {
                   "$$hashKey": "object:368",
-                  "decimals": null,
                   "format": "short",
-                  "label": null,
                   "logBase": 1,
-                  "max": null,
                   "min": "0",
                   "show": true
                 },
                 {
                   "$$hashKey": "object:369",
                   "format": "short",
-                  "label": null,
                   "logBase": 1,
-                  "max": null,
-                  "min": null,
                   "show": false
                 }
               ],
               "yaxis": {
-                "align": false,
-                "alignLevel": null
+                "align": false
               }
             },
             {
-              "cards": {
-                "cardPadding": null,
-                "cardRound": null
-              },
+              "cards": {},
               "color": {
                 "cardColor": "#b4ff00",
                 "colorScale": "sqrt",
@@ -575,7 +615,9 @@ data:
                 "mode": "spectrum"
               },
               "dataFormat": "tsbuckets",
-              "datasource": "$datasource",
+              "datasource": {
+                "uid": "$datasource"
+              },
               "fieldConfig": {
                 "defaults": {
                   "custom": {}
@@ -599,6 +641,9 @@ data:
               "reverseYBuckets": false,
               "targets": [
                 {
+                  "datasource": {
+                    "uid": "$datasource"
+                  },
                   "expr": "sum(increase(client_request_duration_seconds_bucket{service=\"playbook-dispatcher-api\"}[1m])) by (le)",
                   "format": "heatmap",
                   "interval": "15s",
@@ -606,8 +651,6 @@ data:
                   "refId": "A"
                 }
               ],
-              "timeFrom": null,
-              "timeShift": null,
               "title": "Connector latency",
               "tooltip": {
                 "show": true,
@@ -617,27 +660,21 @@ data:
               "xAxis": {
                 "show": true
               },
-              "xBucketNumber": null,
-              "xBucketSize": null,
               "yAxis": {
-                "decimals": null,
                 "format": "none",
                 "logBase": 1,
-                "max": null,
-                "min": null,
-                "show": true,
-                "splitFactor": null
+                "show": true
               },
-              "yBucketBound": "auto",
-              "yBucketNumber": null,
-              "yBucketSize": null
+              "yBucketBound": "auto"
             },
             {
               "aliasColors": {},
               "bars": false,
               "dashLength": 10,
               "dashes": false,
-              "datasource": "$datasource",
+              "datasource": {
+                "uid": "$datasource"
+              },
               "description": "",
               "fieldConfig": {
                 "defaults": {
@@ -684,6 +721,9 @@ data:
               "steppedLine": false,
               "targets": [
                 {
+                  "datasource": {
+                    "uid": "$datasource"
+                  },
                   "expr": "sum(increase(client_request_duration_seconds_count{service=\"playbook-dispatcher-api\", result!~\"2.*\"}[1m])) by (component)",
                   "interval": "",
                   "legendFormat": "{{component}}",
@@ -691,9 +731,7 @@ data:
                 }
               ],
               "thresholds": [],
-              "timeFrom": null,
               "timeRegions": [],
-              "timeShift": null,
               "title": "Connector errors",
               "tooltip": {
                 "shared": true,
@@ -702,36 +740,27 @@ data:
               },
               "type": "graph",
               "xaxis": {
-                "buckets": null,
                 "mode": "time",
-                "name": null,
                 "show": true,
                 "values": []
               },
               "yaxes": [
                 {
                   "$$hashKey": "object:368",
-                  "decimals": null,
                   "format": "short",
-                  "label": null,
                   "logBase": 1,
-                  "max": null,
                   "min": "0",
                   "show": true
                 },
                 {
                   "$$hashKey": "object:369",
                   "format": "short",
-                  "label": null,
                   "logBase": 1,
-                  "max": null,
-                  "min": null,
                   "show": false
                 }
               ],
               "yaxis": {
-                "align": false,
-                "alignLevel": null
+                "align": false
               }
             },
             {
@@ -739,7 +768,9 @@ data:
               "bars": false,
               "dashLength": 10,
               "dashes": false,
-              "datasource": "app-sre-prod-01-prometheus",
+              "datasource": {
+                "uid": "app-sre-prod-01-prometheus"
+              },
               "fieldConfig": {
                 "defaults": {
                   "custom": {}
@@ -782,6 +813,9 @@ data:
               "steppedLine": false,
               "targets": [
                 {
+                  "datasource": {
+                    "uid": "app-sre-prod-01-prometheus"
+                  },
                   "expr": "rdsosmetrics_fileSys_usedPercent{mount_point=\"/rdsdbdata\", exported_instance=~\"playbook-dispatcher-.*\"}",
                   "interval": "",
                   "legendFormat": "{{exported_instance}}",
@@ -789,9 +823,7 @@ data:
                 }
               ],
               "thresholds": [],
-              "timeFrom": null,
               "timeRegions": [],
-              "timeShift": null,
               "title": "RDS storage usage",
               "tooltip": {
                 "shared": true,
@@ -800,9 +832,7 @@ data:
               },
               "type": "graph",
               "xaxis": {
-                "buckets": null,
                 "mode": "time",
-                "name": null,
                 "show": true,
                 "values": []
               },
@@ -810,34 +840,28 @@ data:
                 {
                   "$$hashKey": "object:98",
                   "format": "percent",
-                  "label": null,
                   "logBase": 1,
-                  "max": null,
-                  "min": null,
                   "show": true
                 },
                 {
                   "$$hashKey": "object:99",
                   "format": "short",
-                  "label": null,
                   "logBase": 1,
-                  "max": null,
-                  "min": null,
                   "show": true
                 }
               ],
               "yaxis": {
-                "align": false,
-                "alignLevel": null
+                "align": false
               }
             },
             {
-              "datasource": "$datasource",
+              "datasource": {
+                "uid": "$datasource"
+              },
               "description": "",
               "fieldConfig": {
                 "defaults": {
                   "custom": {
-                    "align": null,
                     "filterable": false
                   },
                   "mappings": [],
@@ -845,8 +869,7 @@ data:
                     "mode": "absolute",
                     "steps": [
                       {
-                        "color": "green",
-                        "value": null
+                        "color": "green"
                       },
                       {
                         "color": "red",
@@ -883,6 +906,9 @@ data:
               "pluginVersion": "7.2.1",
               "targets": [
                 {
+                  "datasource": {
+                    "uid": "$datasource"
+                  },
                   "expr": "sum(increase(api_run_created_total[$__range])) by (dispatching_service)",
                   "format": "table",
                   "instant": true,
@@ -891,8 +917,6 @@ data:
                   "refId": "A"
                 }
               ],
-              "timeFrom": null,
-              "timeShift": null,
               "title": "New playbook run increment",
               "transformations": [
                 {
@@ -912,12 +936,20 @@ data:
               "type": "table"
             }
           ],
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "PD776AFABBE26000A"
+              },
+              "refId": "A"
+            }
+          ],
           "title": "Details",
           "type": "row"
         }
       ],
-      "schemaVersion": 26,
-      "style": "dark",
+      "schemaVersion": 39,
       "tags": [
         "platform-health",
         "playbook-dispatcher"
@@ -926,9 +958,9 @@ data:
         "list": [
           {
             "current": {
-              "selected": true,
+              "selected": false,
               "text": "crcp01ue1-prometheus",
-              "value": "crcp01ue1-prometheus"
+              "value": "PC1EAC84DCBBF0697"
             },
             "hide": 0,
             "includeAll": false,
@@ -942,6 +974,24 @@ data:
             "regex": "crc[0-9a-z]*-prometheus",
             "skipUrlSync": false,
             "type": "datasource"
+          },
+          {
+            "current": {
+              "selected": false,
+              "text": "aws-resources-exporter-production",
+              "value": "PCEFB875D6FD018FC"
+            },
+            "hide": 0,
+            "includeAll": false,
+            "label": "Resources Exporter",
+            "multi": false,
+            "name": "aws_resources_exporter",
+            "options": [],
+            "query": "prometheus",
+            "refresh": 1,
+            "regex": "/aws-resources-exporter-(production|stage)/",
+            "skipUrlSync": false,
+            "type": "datasource"
           }
         ]
       },
@@ -953,7 +1003,8 @@ data:
       "timezone": "",
       "title": "Playbook Dispatcher",
       "uid": "js1xeMwMz",
-      "version": 1
+      "version": 2,
+      "weekStart": ""
     }
 kind: ConfigMap
 metadata:
