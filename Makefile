@@ -60,7 +60,7 @@ generate-sources:
 generate-utils:
 	go generate ./...
 
-generate: generate-api generate-messages generate-cloud-connector generate-utils generate-clients generate-rbac
+generate: generate-api generate-clients generate-messages generate-cloud-connector generate-rbac generate-inventory generate-sources generate-utils
 
 build:
 	go build -o pd .
