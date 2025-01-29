@@ -68,8 +68,8 @@ func convertInterfaceToString(v interface{}) string {
 }
 
 func createHostGetHostByIdParams(orderBy string, orderHow string) *ApiHostGetHostByIdParams {
-	orderByParam := OrderByParam(orderBy)
-	orderHowParam := OrderHowParam(OrderHowParam_ASC)
+	orderByParam := ApiHostGetHostByIdParamsOrderBy(orderBy)
+	orderHowParam := ApiHostGetHostByIdParamsOrderHowASC
 
 	return &ApiHostGetHostByIdParams{
 		OrderBy:  &orderByParam,
@@ -78,11 +78,12 @@ func createHostGetHostByIdParams(orderBy string, orderHow string) *ApiHostGetHos
 }
 
 func createHostGetHostSystemProfileByIdParams(orderBy string, orderHow string) *ApiHostGetHostSystemProfileByIdParams {
-	orderByParam := OrderByParam(orderBy)
-	orderHowParam := OrderHowParam(orderHow)
+	orderByParam := ApiHostGetHostSystemProfileByIdParamsOrderBy(orderBy)
+	orderHowParam := ApiHostGetHostSystemProfileByIdParamsOrderHow(orderHow)
+
 	fields := FieldsParam(
 		SystemProfileNestedObject{
-			AdditionalProperties: map[string]interface{}{
+			additionalProperties: map[string]interface{}{
 				"fields[system_profile]": []string{"rhc_client_id", "owner_id"},
 			},
 		},
@@ -133,11 +134,9 @@ func (this *inventoryConnectorImpl) getHostDetails(
 	limit int,
 	offset int,
 ) (details []HostOut, err error) {
-
 	params := createHostGetHostByIdParams(orderBy, orderHow)
 
 	response, err := this.client.ApiHostGetHostByIdWithResponse(ctx, IDs, params)
-
 	if err != nil {
 		return nil, err
 	}
@@ -161,11 +160,9 @@ func (this *inventoryConnectorImpl) getSystemProfileDetails(
 	limit int,
 	offset int,
 ) (details map[string]HostSystemProfileOut, err error) {
-
 	params := createHostGetHostSystemProfileByIdParams(orderBy, orderHow)
 
 	response, err := this.client.ApiHostGetHostSystemProfileByIdWithResponse(ctx, IDs, params)
-
 	if err != nil {
 		return nil, err
 	}
@@ -180,9 +177,7 @@ func (this *inventoryConnectorImpl) getSystemProfileDetails(
 }
 
 func (this *inventoryConnectorImpl) GetHostConnectionDetails(ctx context.Context, IDs []string, order_by string, order_how string, limit int, offset int) (details []HostDetails, err error) {
-
 	hostResults, err := this.getHostDetails(ctx, IDs, order_by, order_how, limit, offset)
-
 	if err != nil {
 		return nil, err
 	}
@@ -192,7 +187,6 @@ func (this *inventoryConnectorImpl) GetHostConnectionDetails(ctx context.Context
 	}
 
 	systemProfileResults, err := this.getSystemProfileDetails(ctx, IDs, order_by, order_how, limit, offset)
-
 	if err != nil {
 		return nil, err
 	}
