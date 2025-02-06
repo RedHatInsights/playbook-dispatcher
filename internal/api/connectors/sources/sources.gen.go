@@ -212,8 +212,8 @@ type ApplicationsCollection struct {
 // AuthenticationCreate defines model for AuthenticationCreate.
 type AuthenticationCreate struct {
 
-	// The type of the authentication
-	Authtype *interface{} `json:"authtype,omitempty"`
+	// The type of the authentication. You can find this by listing the source types or the application types
+	Authtype *string `json:"authtype,omitempty"`
 
 	// The received error message when polling for the availability status
 	AvailabilityStatusError *string `json:"availability_status_error,omitempty"`
@@ -240,8 +240,8 @@ type AuthenticationCreate struct {
 // AuthenticationEdit defines model for AuthenticationEdit.
 type AuthenticationEdit struct {
 
-	// The type of the authentication
-	Authtype *interface{} `json:"authtype,omitempty"`
+	// The type of the authentication. You can find this by listing the source types or the application types
+	Authtype *string `json:"authtype,omitempty"`
 
 	// The availability status of the authentication
 	AvailabilityStatus *interface{} `json:"availability_status,omitempty"`
@@ -265,8 +265,8 @@ type AuthenticationEdit struct {
 // AuthenticationRead defines model for AuthenticationRead.
 type AuthenticationRead struct {
 
-	// The type of the authentication
-	Authtype *interface{} `json:"authtype,omitempty"`
+	// The type of the authentication. You can find this by listing the source types or the application types
+	Authtype *string `json:"authtype,omitempty"`
 
 	// The availability status of the authentication
 	AvailabilityStatus *interface{} `json:"availability_status,omitempty"`
@@ -279,6 +279,9 @@ type AuthenticationRead struct {
 		Azure *struct {
 			TenantId *string `json:"tenant_id,omitempty"`
 		} `json:"azure,omitempty"`
+
+		// If the authentication is related to a AWS Source, it may contain an external ID.
+		ExternalId *string `json:"external_id,omitempty"`
 
 		// If the authentication is of the "marketplace-token" type, then this key will contain an unexpired token for the API key that the authentication stores.
 		Marketplace *struct {
@@ -362,6 +365,9 @@ type BulkCreatePayload struct {
 	// Array of endpoint objects to create. The operation looks up the parent source by the `source_name` attribute so the `source_name` must match one of the `source`'s names in the payload.
 	Endpoints *[]struct {
 
+		// Optional X.509 Certificate Authority.
+		CertificateAuthority *string `json:"certificate_authority,omitempty"`
+
 		// URI host component of the endpoint.
 		Host *string `json:"host,omitempty"`
 
@@ -384,8 +390,14 @@ type BulkCreatePayload struct {
 	// Array of source objects to create
 	Sources *[]struct {
 
+		// The way the source is going to be created: manually, or using superkey?
+		AppCreationWorkflow *string `json:"app_creation_workflow,omitempty"`
+
 		// The name of the source
 		Name string `json:"name"`
+
+		// The external referece or ID for the source
+		SourceRef *string `json:"source_ref,omitempty"`
 
 		// The type of the source that will be created
 		SourceTypeName string `json:"source_type_name"`
@@ -399,7 +411,7 @@ type BulkCreateResponse struct {
 	Applications *[]Application `json:"applications,omitempty"`
 
 	// An array containing the created authentications
-	Authentications *[]AuthenticationCreate `json:"authentications,omitempty"`
+	Authentications *[]AuthenticationRead `json:"authentications,omitempty"`
 
 	// An array containing the created endpoints
 	Endpoints *[]Endpoint `json:"endpoints,omitempty"`
@@ -748,6 +760,64 @@ type RhcConnectionUpdate struct {
 	Extra *map[string]interface{} `json:"extra,omitempty"`
 }
 
+// SecretCreate defines model for SecretCreate.
+type SecretCreate struct {
+
+	// Authentication type of the secret
+	Authtype *string `json:"authtype,omitempty"`
+
+	// Any extra information you want stored for the secret, in JSON format
+	Extra *map[string]interface{} `json:"extra,omitempty"`
+
+	// Name of the secret
+	Name *string `json:"name,omitempty"`
+
+	// Password of the secret
+	Password *string `json:"password,omitempty"`
+
+	// Defines whether the secret is created with user ownership. Takes user from header
+	UserScoped *bool `json:"user_scoped,omitempty"`
+
+	// Username of the secret
+	Username *string `json:"username,omitempty"`
+}
+
+// SecretEdit defines model for SecretEdit.
+type SecretEdit struct {
+
+	// Any extra information you want stored for the secret, in JSON format
+	Extra *map[string]interface{} `json:"extra,omitempty"`
+
+	// Password of the secret
+	Password *string `json:"password,omitempty"`
+}
+
+// SecretRead defines model for SecretRead.
+type SecretRead struct {
+
+	// Authentication type of the secret
+	Authtype *string `json:"authtype,omitempty"`
+
+	// Any extra information you want stored for the secret, in JSON format
+	Extra *map[string]interface{} `json:"extra,omitempty"`
+
+	// ID of the resource
+	Id *ID `json:"id,omitempty"`
+
+	// Name of the secret
+	Name *string `json:"name,omitempty"`
+
+	// Username of the secret
+	Username *string `json:"username,omitempty"`
+}
+
+// SecretsCollection defines model for SecretsCollection.
+type SecretsCollection struct {
+	Data  *[]SecretRead       `json:"data,omitempty"`
+	Links *CollectionLinks    `json:"links,omitempty"`
+	Meta  *CollectionMetadata `json:"meta,omitempty"`
+}
+
 // Source defines model for Source.
 type Source struct {
 	AppCreationWorkflow *string `json:"app_creation_workflow,omitempty"`
@@ -885,6 +955,9 @@ type SourcesCollection struct {
 	Links *CollectionLinks    `json:"links,omitempty"`
 	Meta  *CollectionMetadata `json:"meta,omitempty"`
 }
+
+// ID defines model for ID.
+type ID string
 
 // QueryFilter defines model for QueryFilter.
 type QueryFilter string
@@ -1063,8 +1136,8 @@ type CreateAuthenticationJSONBody AuthenticationCreate
 // UpdateAuthenticationJSONBody defines parameters for UpdateAuthentication.
 type UpdateAuthenticationJSONBody AuthenticationEdit
 
-// ApiBulkCreateJSONBody defines parameters for ApiBulkCreate.
-type ApiBulkCreateJSONBody BulkCreatePayload
+// BulkCreateJSONBody defines parameters for BulkCreate.
+type BulkCreateJSONBody BulkCreatePayload
 
 // ListEndpointsParams defines parameters for ListEndpoints.
 type ListEndpointsParams struct {
@@ -1144,6 +1217,28 @@ type GetRhcConnectionSourcesParams struct {
 	// The list of attribute and order to sort the result set by.
 	SortBy *QuerySortBy `json:"sort_by,omitempty"`
 }
+
+// ListSecretsParams defines parameters for ListSecrets.
+type ListSecretsParams struct {
+
+	// The numbers of items to return per page.
+	Limit *QueryLimit `json:"limit,omitempty"`
+
+	// The number of items to skip before starting to collect the result set.
+	Offset *QueryOffset `json:"offset,omitempty"`
+
+	// Filter for querying collections. The format of the filters is as follows: `filter[subresource][field][operation]="value"`.
+	Filter *QueryFilter `json:"filter,omitempty"`
+
+	// The list of attribute and order to sort the result set by.
+	SortBy *QuerySortBy `json:"sort_by,omitempty"`
+}
+
+// CreateSecretJSONBody defines parameters for CreateSecret.
+type CreateSecretJSONBody SecretCreate
+
+// UpdateSecretJSONBody defines parameters for UpdateSecret.
+type UpdateSecretJSONBody SecretEdit
 
 // ListSourceTypesParams defines parameters for ListSourceTypes.
 type ListSourceTypesParams struct {
@@ -1294,8 +1389,8 @@ type CreateAuthenticationJSONRequestBody CreateAuthenticationJSONBody
 // UpdateAuthenticationRequestBody defines body for UpdateAuthentication for application/json ContentType.
 type UpdateAuthenticationJSONRequestBody UpdateAuthenticationJSONBody
 
-// ApiBulkCreateRequestBody defines body for ApiBulkCreate for application/json ContentType.
-type ApiBulkCreateJSONRequestBody ApiBulkCreateJSONBody
+// BulkCreateRequestBody defines body for BulkCreate for application/json ContentType.
+type BulkCreateJSONRequestBody BulkCreateJSONBody
 
 // CreateEndpointRequestBody defines body for CreateEndpoint for application/json ContentType.
 type CreateEndpointJSONRequestBody CreateEndpointJSONBody
@@ -1311,6 +1406,12 @@ type PostRhcConnectionJSONRequestBody PostRhcConnectionJSONBody
 
 // UpdateRhcConnectionRequestBody defines body for UpdateRhcConnection for application/json ContentType.
 type UpdateRhcConnectionJSONRequestBody UpdateRhcConnectionJSONBody
+
+// CreateSecretRequestBody defines body for CreateSecret for application/json ContentType.
+type CreateSecretJSONRequestBody CreateSecretJSONBody
+
+// UpdateSecretRequestBody defines body for UpdateSecret for application/json ContentType.
+type UpdateSecretJSONRequestBody UpdateSecretJSONBody
 
 // CreateSourceRequestBody defines body for CreateSource for application/json ContentType.
 type CreateSourceJSONRequestBody CreateSourceJSONBody
@@ -1473,10 +1574,10 @@ type ClientInterface interface {
 
 	UpdateAuthentication(ctx context.Context, id ID, body UpdateAuthenticationJSONRequestBody) (*http.Response, error)
 
-	// ApiBulkCreate request  with any body
-	ApiBulkCreateWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error)
+	// BulkCreate request  with any body
+	BulkCreateWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error)
 
-	ApiBulkCreate(ctx context.Context, body ApiBulkCreateJSONRequestBody) (*http.Response, error)
+	BulkCreate(ctx context.Context, body BulkCreateJSONRequestBody) (*http.Response, error)
 
 	// ListEndpoints request
 	ListEndpoints(ctx context.Context, params *ListEndpointsParams) (*http.Response, error)
@@ -1529,6 +1630,25 @@ type ClientInterface interface {
 
 	// GetRhcConnectionSources request
 	GetRhcConnectionSources(ctx context.Context, id ID, params *GetRhcConnectionSourcesParams) (*http.Response, error)
+
+	// ListSecrets request
+	ListSecrets(ctx context.Context, params *ListSecretsParams) (*http.Response, error)
+
+	// CreateSecret request  with any body
+	CreateSecretWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error)
+
+	CreateSecret(ctx context.Context, body CreateSecretJSONRequestBody) (*http.Response, error)
+
+	// DeleteSecret request
+	DeleteSecret(ctx context.Context, id ID) (*http.Response, error)
+
+	// ShowSecret request
+	ShowSecret(ctx context.Context, id ID) (*http.Response, error)
+
+	// UpdateSecret request  with any body
+	UpdateSecretWithBody(ctx context.Context, id ID, contentType string, body io.Reader) (*http.Response, error)
+
+	UpdateSecret(ctx context.Context, id ID, body UpdateSecretJSONRequestBody) (*http.Response, error)
 
 	// ListSourceTypes request
 	ListSourceTypes(ctx context.Context, params *ListSourceTypesParams) (*http.Response, error)
@@ -2018,8 +2138,8 @@ func (c *Client) UpdateAuthentication(ctx context.Context, id ID, body UpdateAut
 	return c.Client.Do(req)
 }
 
-func (c *Client) ApiBulkCreateWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error) {
-	req, err := NewApiBulkCreateRequestWithBody(c.Server, contentType, body)
+func (c *Client) BulkCreateWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error) {
+	req, err := NewBulkCreateRequestWithBody(c.Server, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -2033,8 +2153,8 @@ func (c *Client) ApiBulkCreateWithBody(ctx context.Context, contentType string, 
 	return c.Client.Do(req)
 }
 
-func (c *Client) ApiBulkCreate(ctx context.Context, body ApiBulkCreateJSONRequestBody) (*http.Response, error) {
-	req, err := NewApiBulkCreateRequest(c.Server, body)
+func (c *Client) BulkCreate(ctx context.Context, body BulkCreateJSONRequestBody) (*http.Response, error) {
+	req, err := NewBulkCreateRequest(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -2320,6 +2440,111 @@ func (c *Client) UpdateRhcConnection(ctx context.Context, id ID, body UpdateRhcC
 
 func (c *Client) GetRhcConnectionSources(ctx context.Context, id ID, params *GetRhcConnectionSourcesParams) (*http.Response, error) {
 	req, err := NewGetRhcConnectionSourcesRequest(c.Server, id, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if c.RequestEditor != nil {
+		err = c.RequestEditor(ctx, req)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ListSecrets(ctx context.Context, params *ListSecretsParams) (*http.Response, error) {
+	req, err := NewListSecretsRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if c.RequestEditor != nil {
+		err = c.RequestEditor(ctx, req)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreateSecretWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error) {
+	req, err := NewCreateSecretRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if c.RequestEditor != nil {
+		err = c.RequestEditor(ctx, req)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreateSecret(ctx context.Context, body CreateSecretJSONRequestBody) (*http.Response, error) {
+	req, err := NewCreateSecretRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if c.RequestEditor != nil {
+		err = c.RequestEditor(ctx, req)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) DeleteSecret(ctx context.Context, id ID) (*http.Response, error) {
+	req, err := NewDeleteSecretRequest(c.Server, id)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if c.RequestEditor != nil {
+		err = c.RequestEditor(ctx, req)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ShowSecret(ctx context.Context, id ID) (*http.Response, error) {
+	req, err := NewShowSecretRequest(c.Server, id)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if c.RequestEditor != nil {
+		err = c.RequestEditor(ctx, req)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) UpdateSecretWithBody(ctx context.Context, id ID, contentType string, body io.Reader) (*http.Response, error) {
+	req, err := NewUpdateSecretRequestWithBody(c.Server, id, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if c.RequestEditor != nil {
+		err = c.RequestEditor(ctx, req)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) UpdateSecret(ctx context.Context, id ID, body UpdateSecretJSONRequestBody) (*http.Response, error) {
+	req, err := NewUpdateSecretRequest(c.Server, id, body)
 	if err != nil {
 		return nil, err
 	}
@@ -4035,19 +4260,19 @@ func NewUpdateAuthenticationRequestWithBody(server string, id ID, contentType st
 	return req, nil
 }
 
-// NewApiBulkCreateRequest calls the generic ApiBulkCreate builder with application/json body
-func NewApiBulkCreateRequest(server string, body ApiBulkCreateJSONRequestBody) (*http.Request, error) {
+// NewBulkCreateRequest calls the generic BulkCreate builder with application/json body
+func NewBulkCreateRequest(server string, body BulkCreateJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewApiBulkCreateRequestWithBody(server, "application/json", bodyReader)
+	return NewBulkCreateRequestWithBody(server, "application/json", bodyReader)
 }
 
-// NewApiBulkCreateRequestWithBody generates requests for ApiBulkCreate with any type of body
-func NewApiBulkCreateRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+// NewBulkCreateRequestWithBody generates requests for BulkCreate with any type of body
+func NewBulkCreateRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	queryUrl, err := url.Parse(server)
@@ -4837,6 +5062,254 @@ func NewGetRhcConnectionSourcesRequest(server string, id ID, params *GetRhcConne
 		return nil, err
 	}
 
+	return req, nil
+}
+
+// NewListSecretsRequest generates requests for ListSecrets
+func NewListSecretsRequest(server string, params *ListSecretsParams) (*http.Request, error) {
+	var err error
+
+	queryUrl, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	basePath := fmt.Sprintf("/secrets")
+	if basePath[0] == '/' {
+		basePath = basePath[1:]
+	}
+
+	queryUrl, err = queryUrl.Parse(basePath)
+	if err != nil {
+		return nil, err
+	}
+
+	queryValues := queryUrl.Query()
+
+	if params.Limit != nil {
+
+		if queryFrag, err := runtime.StyleParam("form", true, "limit", *params.Limit); err != nil {
+			return nil, err
+		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+			return nil, err
+		} else {
+			for k, v := range parsed {
+				for _, v2 := range v {
+					queryValues.Add(k, v2)
+				}
+			}
+		}
+
+	}
+
+	if params.Offset != nil {
+
+		if queryFrag, err := runtime.StyleParam("form", true, "offset", *params.Offset); err != nil {
+			return nil, err
+		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+			return nil, err
+		} else {
+			for k, v := range parsed {
+				for _, v2 := range v {
+					queryValues.Add(k, v2)
+				}
+			}
+		}
+
+	}
+
+	if params.Filter != nil {
+
+		if queryFrag, err := runtime.StyleParam("form", true, "filter", *params.Filter); err != nil {
+			return nil, err
+		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+			return nil, err
+		} else {
+			for k, v := range parsed {
+				for _, v2 := range v {
+					queryValues.Add(k, v2)
+				}
+			}
+		}
+
+	}
+
+	if params.SortBy != nil {
+
+		if queryFrag, err := runtime.StyleParam("form", true, "sort_by", *params.SortBy); err != nil {
+			return nil, err
+		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+			return nil, err
+		} else {
+			for k, v := range parsed {
+				for _, v2 := range v {
+					queryValues.Add(k, v2)
+				}
+			}
+		}
+
+	}
+
+	queryUrl.RawQuery = queryValues.Encode()
+
+	req, err := http.NewRequest("GET", queryUrl.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewCreateSecretRequest calls the generic CreateSecret builder with application/json body
+func NewCreateSecretRequest(server string, body CreateSecretJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewCreateSecretRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewCreateSecretRequestWithBody generates requests for CreateSecret with any type of body
+func NewCreateSecretRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	queryUrl, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	basePath := fmt.Sprintf("/secrets")
+	if basePath[0] == '/' {
+		basePath = basePath[1:]
+	}
+
+	queryUrl, err = queryUrl.Parse(basePath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryUrl.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+	return req, nil
+}
+
+// NewDeleteSecretRequest generates requests for DeleteSecret
+func NewDeleteSecretRequest(server string, id ID) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParam("simple", false, "id", id)
+	if err != nil {
+		return nil, err
+	}
+
+	queryUrl, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	basePath := fmt.Sprintf("/secrets/%s", pathParam0)
+	if basePath[0] == '/' {
+		basePath = basePath[1:]
+	}
+
+	queryUrl, err = queryUrl.Parse(basePath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("DELETE", queryUrl.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewShowSecretRequest generates requests for ShowSecret
+func NewShowSecretRequest(server string, id ID) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParam("simple", false, "id", id)
+	if err != nil {
+		return nil, err
+	}
+
+	queryUrl, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	basePath := fmt.Sprintf("/secrets/%s", pathParam0)
+	if basePath[0] == '/' {
+		basePath = basePath[1:]
+	}
+
+	queryUrl, err = queryUrl.Parse(basePath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryUrl.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewUpdateSecretRequest calls the generic UpdateSecret builder with application/json body
+func NewUpdateSecretRequest(server string, id ID, body UpdateSecretJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewUpdateSecretRequestWithBody(server, id, "application/json", bodyReader)
+}
+
+// NewUpdateSecretRequestWithBody generates requests for UpdateSecret with any type of body
+func NewUpdateSecretRequestWithBody(server string, id ID, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParam("simple", false, "id", id)
+	if err != nil {
+		return nil, err
+	}
+
+	queryUrl, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	basePath := fmt.Sprintf("/secrets/%s", pathParam0)
+	if basePath[0] == '/' {
+		basePath = basePath[1:]
+	}
+
+	queryUrl, err = queryUrl.Parse(basePath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("PATCH", queryUrl.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
 	return req, nil
 }
 
@@ -6042,10 +6515,10 @@ type ClientWithResponsesInterface interface {
 
 	UpdateAuthenticationWithResponse(ctx context.Context, id ID, body UpdateAuthenticationJSONRequestBody) (*UpdateAuthenticationResponse, error)
 
-	// ApiBulkCreate request  with any body
-	ApiBulkCreateWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*ApiBulkCreateResponse, error)
+	// BulkCreate request  with any body
+	BulkCreateWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*BulkCreateResponse, error)
 
-	ApiBulkCreateWithResponse(ctx context.Context, body ApiBulkCreateJSONRequestBody) (*ApiBulkCreateResponse, error)
+	BulkCreateWithResponse(ctx context.Context, body BulkCreateJSONRequestBody) (*BulkCreateResponse, error)
 
 	// ListEndpoints request
 	ListEndpointsWithResponse(ctx context.Context, params *ListEndpointsParams) (*ListEndpointsResponse, error)
@@ -6098,6 +6571,25 @@ type ClientWithResponsesInterface interface {
 
 	// GetRhcConnectionSources request
 	GetRhcConnectionSourcesWithResponse(ctx context.Context, id ID, params *GetRhcConnectionSourcesParams) (*GetRhcConnectionSourcesResponse, error)
+
+	// ListSecrets request
+	ListSecretsWithResponse(ctx context.Context, params *ListSecretsParams) (*ListSecretsResponse, error)
+
+	// CreateSecret request  with any body
+	CreateSecretWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*CreateSecretResponse, error)
+
+	CreateSecretWithResponse(ctx context.Context, body CreateSecretJSONRequestBody) (*CreateSecretResponse, error)
+
+	// DeleteSecret request
+	DeleteSecretWithResponse(ctx context.Context, id ID) (*DeleteSecretResponse, error)
+
+	// ShowSecret request
+	ShowSecretWithResponse(ctx context.Context, id ID) (*ShowSecretResponse, error)
+
+	// UpdateSecret request  with any body
+	UpdateSecretWithBodyWithResponse(ctx context.Context, id ID, contentType string, body io.Reader) (*UpdateSecretResponse, error)
+
+	UpdateSecretWithResponse(ctx context.Context, id ID, body UpdateSecretJSONRequestBody) (*UpdateSecretResponse, error)
 
 	// ListSourceTypes request
 	ListSourceTypesWithResponse(ctx context.Context, params *ListSourceTypesParams) (*ListSourceTypesResponse, error)
@@ -6715,7 +7207,7 @@ func (r UpdateAuthenticationResponse) StatusCode() int {
 	return 0
 }
 
-type ApiBulkCreateResponse struct {
+type BulkCreateResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON201      *BulkCreateResponse
@@ -6723,7 +7215,7 @@ type ApiBulkCreateResponse struct {
 }
 
 // Status returns HTTPResponse.Status
-func (r ApiBulkCreateResponse) Status() string {
+func (r BulkCreateResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -6731,7 +7223,7 @@ func (r ApiBulkCreateResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r ApiBulkCreateResponse) StatusCode() int {
+func (r BulkCreateResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -6927,7 +7419,7 @@ func (r GetDocumentationResponse) StatusCode() int {
 type GetRhcConnectionsResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *[]RhcConnectionRead
+	JSON200      *RhcConnectionCollection
 	JSON400      *ErrorBadRequest
 }
 
@@ -7044,7 +7536,7 @@ func (r UpdateRhcConnectionResponse) StatusCode() int {
 type GetRhcConnectionSourcesResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *[]SourcesCollection
+	JSON200      *SourcesCollection
 	JSON400      *ErrorBadRequest
 	JSON404      *ErrorNotFound
 }
@@ -7059,6 +7551,123 @@ func (r GetRhcConnectionSourcesResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r GetRhcConnectionSourcesResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type ListSecretsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *SecretsCollection
+	JSON400      *ErrorBadRequest
+}
+
+// Status returns HTTPResponse.Status
+func (r ListSecretsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListSecretsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type CreateSecretResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON201      *SecretRead
+	JSON400      *ErrorBadRequest
+}
+
+// Status returns HTTPResponse.Status
+func (r CreateSecretResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CreateSecretResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type DeleteSecretResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON400      *ErrorBadRequest
+	JSON404      *ErrorNotFound
+}
+
+// Status returns HTTPResponse.Status
+func (r DeleteSecretResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DeleteSecretResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type ShowSecretResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *SecretRead
+	JSON400      *ErrorBadRequest
+	JSON404      *ErrorNotFound
+}
+
+// Status returns HTTPResponse.Status
+func (r ShowSecretResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ShowSecretResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type UpdateSecretResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *SecretRead
+	JSON400      *ErrorBadRequest
+	JSON404      *ErrorNotFound
+}
+
+// Status returns HTTPResponse.Status
+func (r UpdateSecretResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r UpdateSecretResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -7698,21 +8307,21 @@ func (c *ClientWithResponses) UpdateAuthenticationWithResponse(ctx context.Conte
 	return ParseUpdateAuthenticationResponse(rsp)
 }
 
-// ApiBulkCreateWithBodyWithResponse request with arbitrary body returning *ApiBulkCreateResponse
-func (c *ClientWithResponses) ApiBulkCreateWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*ApiBulkCreateResponse, error) {
-	rsp, err := c.ApiBulkCreateWithBody(ctx, contentType, body)
+// BulkCreateWithBodyWithResponse request with arbitrary body returning *BulkCreateResponse
+func (c *ClientWithResponses) BulkCreateWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*BulkCreateResponse, error) {
+	rsp, err := c.BulkCreateWithBody(ctx, contentType, body)
 	if err != nil {
 		return nil, err
 	}
-	return ParseApiBulkCreateResponse(rsp)
+	return ParseBulkCreateResponse(rsp)
 }
 
-func (c *ClientWithResponses) ApiBulkCreateWithResponse(ctx context.Context, body ApiBulkCreateJSONRequestBody) (*ApiBulkCreateResponse, error) {
-	rsp, err := c.ApiBulkCreate(ctx, body)
+func (c *ClientWithResponses) BulkCreateWithResponse(ctx context.Context, body BulkCreateJSONRequestBody) (*BulkCreateResponse, error) {
+	rsp, err := c.BulkCreate(ctx, body)
 	if err != nil {
 		return nil, err
 	}
-	return ParseApiBulkCreateResponse(rsp)
+	return ParseBulkCreateResponse(rsp)
 }
 
 // ListEndpointsWithResponse request returning *ListEndpointsResponse
@@ -7879,6 +8488,67 @@ func (c *ClientWithResponses) GetRhcConnectionSourcesWithResponse(ctx context.Co
 		return nil, err
 	}
 	return ParseGetRhcConnectionSourcesResponse(rsp)
+}
+
+// ListSecretsWithResponse request returning *ListSecretsResponse
+func (c *ClientWithResponses) ListSecretsWithResponse(ctx context.Context, params *ListSecretsParams) (*ListSecretsResponse, error) {
+	rsp, err := c.ListSecrets(ctx, params)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListSecretsResponse(rsp)
+}
+
+// CreateSecretWithBodyWithResponse request with arbitrary body returning *CreateSecretResponse
+func (c *ClientWithResponses) CreateSecretWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*CreateSecretResponse, error) {
+	rsp, err := c.CreateSecretWithBody(ctx, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateSecretResponse(rsp)
+}
+
+func (c *ClientWithResponses) CreateSecretWithResponse(ctx context.Context, body CreateSecretJSONRequestBody) (*CreateSecretResponse, error) {
+	rsp, err := c.CreateSecret(ctx, body)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateSecretResponse(rsp)
+}
+
+// DeleteSecretWithResponse request returning *DeleteSecretResponse
+func (c *ClientWithResponses) DeleteSecretWithResponse(ctx context.Context, id ID) (*DeleteSecretResponse, error) {
+	rsp, err := c.DeleteSecret(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeleteSecretResponse(rsp)
+}
+
+// ShowSecretWithResponse request returning *ShowSecretResponse
+func (c *ClientWithResponses) ShowSecretWithResponse(ctx context.Context, id ID) (*ShowSecretResponse, error) {
+	rsp, err := c.ShowSecret(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	return ParseShowSecretResponse(rsp)
+}
+
+// UpdateSecretWithBodyWithResponse request with arbitrary body returning *UpdateSecretResponse
+func (c *ClientWithResponses) UpdateSecretWithBodyWithResponse(ctx context.Context, id ID, contentType string, body io.Reader) (*UpdateSecretResponse, error) {
+	rsp, err := c.UpdateSecretWithBody(ctx, id, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateSecretResponse(rsp)
+}
+
+func (c *ClientWithResponses) UpdateSecretWithResponse(ctx context.Context, id ID, body UpdateSecretJSONRequestBody) (*UpdateSecretResponse, error) {
+	rsp, err := c.UpdateSecret(ctx, id, body)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateSecretResponse(rsp)
 }
 
 // ListSourceTypesWithResponse request returning *ListSourceTypesResponse
@@ -8910,15 +9580,15 @@ func ParseUpdateAuthenticationResponse(rsp *http.Response) (*UpdateAuthenticatio
 	return response, nil
 }
 
-// ParseApiBulkCreateResponse parses an HTTP response from a ApiBulkCreateWithResponse call
-func ParseApiBulkCreateResponse(rsp *http.Response) (*ApiBulkCreateResponse, error) {
+// ParseBulkCreateResponse parses an HTTP response from a BulkCreateWithResponse call
+func ParseBulkCreateResponse(rsp *http.Response) (*BulkCreateResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &ApiBulkCreateResponse{
+	response := &BulkCreateResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -9236,7 +9906,7 @@ func ParseGetRhcConnectionsResponse(rsp *http.Response) (*GetRhcConnectionsRespo
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest []RhcConnectionRead
+		var dest RhcConnectionCollection
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -9415,7 +10085,186 @@ func ParseGetRhcConnectionSourcesResponse(rsp *http.Response) (*GetRhcConnection
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest []SourcesCollection
+		var dest SourcesCollection
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest ErrorBadRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest ErrorNotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseListSecretsResponse parses an HTTP response from a ListSecretsWithResponse call
+func ParseListSecretsResponse(rsp *http.Response) (*ListSecretsResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListSecretsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest SecretsCollection
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest ErrorBadRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseCreateSecretResponse parses an HTTP response from a CreateSecretWithResponse call
+func ParseCreateSecretResponse(rsp *http.Response) (*CreateSecretResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CreateSecretResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
+		var dest SecretRead
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON201 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest ErrorBadRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseDeleteSecretResponse parses an HTTP response from a DeleteSecretWithResponse call
+func ParseDeleteSecretResponse(rsp *http.Response) (*DeleteSecretResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DeleteSecretResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest ErrorBadRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest ErrorNotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseShowSecretResponse parses an HTTP response from a ShowSecretWithResponse call
+func ParseShowSecretResponse(rsp *http.Response) (*ShowSecretResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ShowSecretResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest SecretRead
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest ErrorBadRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest ErrorNotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseUpdateSecretResponse parses an HTTP response from a UpdateSecretWithResponse call
+func ParseUpdateSecretResponse(rsp *http.Response) (*UpdateSecretResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &UpdateSecretResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest SecretRead
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
