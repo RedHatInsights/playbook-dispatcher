@@ -106,7 +106,7 @@ paths:
           application/json:
             schema:
               type: array
-              items: 
+              items:
                 $ref: '#/components/schemas/CancelInputV2'
               minItems: 1
               maxItems: 50
@@ -205,7 +205,7 @@ components:
       - run_id
       - org_id
       - principal
-    
+
     RunCanceled:
       type: object
       properties:
@@ -248,7 +248,7 @@ components:
           type: integer
           example: 201
           description: status code of the request
-        message: 
+        message:
           type: string
           example: "Unexpected error during processing"
           description: Error Message
@@ -315,6 +315,8 @@ components:
             description: Identifies a record of the Host-Inventory service
             type: string
             minLength: 1
+          minItems: 1
+          maxItems: 50
       required:
       - org_id
       - hosts
@@ -365,7 +367,7 @@ components:
       type: string
       format: sat-id-uuid
       example: aa3b1faa-56f3-4d14-8258-615d11e20060
-    
+
     SatelliteOrgId:
       description: Identifier of the organization within Satellite
       type: string
