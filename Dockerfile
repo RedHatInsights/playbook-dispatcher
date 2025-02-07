@@ -1,4 +1,4 @@
-FROM registry.access.redhat.com/ubi8/go-toolset as builder
+FROM registry.access.redhat.com/ubi9/go-toolset as builder
 USER 0
 
 WORKDIR /go/src/app
@@ -12,7 +12,7 @@ RUN go mod download
 
 RUN go build -v -o app main.go
 
-FROM registry.access.redhat.com/ubi8-minimal
+FROM registry.access.redhat.com/ubi9-minimal
 
 ARG BUILD_COMMIT=unknown
 
