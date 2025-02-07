@@ -49,6 +49,11 @@ func (this *controllers) ApiInternalHighlevelConnectionStatus(ctx echo.Context) 
 		return ctx.NoContent(http.StatusBadRequest)
 	}
 
+	if len(input.Hosts) > 50 {
+		utils.GetLogFromEcho(ctx).Infow("More than 50 hosts requested")
+		return ctx.NoContent(http.StatusBadRequest)
+	}
+
 	if len(hostConnectorDetails) == 0 {
 		utils.GetLogFromEcho(ctx).Infow("host(s) not found in inventory", "data", noRHCResponses)
 		return ctx.JSON(http.StatusOK, noRHCResponses)
