@@ -1,11 +1,12 @@
 module playbook-dispatcher
 
-go 1.22
-toolchain go1.22.5
+go 1.22.0
+
+toolchain go1.22.9
 
 require (
 	github.com/RedHatInsights/tenant-utils v1.0.0
-	github.com/aws/aws-sdk-go v1.38.51
+	github.com/aws/aws-sdk-go v1.44.116
 	github.com/confluentinc/confluent-kafka-go v1.5.2
 	github.com/deepmap/oapi-codegen v1.4.2
 	github.com/getkin/kin-openapi v0.36.0
@@ -14,7 +15,7 @@ require (
 	github.com/golang-migrate/migrate/v4 v4.15.1
 	github.com/google/uuid v1.3.0
 	github.com/labstack/echo/v4 v4.10.2
-	github.com/mec07/cloudwatchwriter v0.2.4
+	github.com/mec07/cloudwatchwriter v0.2.6
 	github.com/onsi/ginkgo v1.16.4
 	github.com/onsi/gomega v1.19.0
 	github.com/pkg/errors v0.9.1
