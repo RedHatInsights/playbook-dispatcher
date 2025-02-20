@@ -3,8 +3,8 @@ USER root
 
 ENV EXTRA_PLUGINS=/deps/plugins \
     EXTRA_LIBS=/deps/libs \
-    DEBEZIUM_VERSION=2.7.2.Final \
-    DEBEZIUM_CHECKSUM=1612a63ca911b17eaec6a52cf3e2c84b \
+    DEBEZIUM_VERSION=3.0.7.Final \
+    DEBEZIUM_CHECKSUM=1a92e55fe78bc44a302e45da2f1233db \
     CONFIG_PROVIDERS_VERSION=0.1.0 \
     CONFIG_PROVIDERS_CHECKSUM=108e0bf4148a37676bed866ff45e1199
 
@@ -26,7 +26,7 @@ RUN ./mvnw -Dschema.event.run=/src/run.event.yaml -Dschema.event.run.host=/src/r
 
 
 # https://access.redhat.com/documentation/en-us/red_hat_amq/2021.q3/html-single/deploying_and_upgrading_amq_streams_on_openshift/index#creating-new-image-from-base-str
-FROM registry.redhat.io/amq-streams/kafka-36-rhel9:2.7.0-17
+FROM registry.redhat.io/amq-streams/kafka-37-rhel9:2.8.0-4
 
 ARG BUILD_COMMIT=unknown
 
