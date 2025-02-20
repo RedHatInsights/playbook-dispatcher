@@ -60,4 +60,22 @@ var _ = Describe("high level connection status", func() {
 		Expect((*result)[1].Status).To(Equal("connected"))
 		Expect((*result)[1].Systems).To(Equal(directConnectHost))
 	})
+	It("disallow more than 50 hosts", func() {
+
+		hosts := make([]string, 51)
+		for i :=0; i < 51; i++ {
+			hosts[i]= "host" + string(rune(i+1))
+		}
+
+		payload := ApiInternalHighlevelConnectionStatusJSONRequestBody{
+			OrgId: "12345",
+			Hosts: hosts,
+		}
+
+		result, response := getConnectionStatus(payload)
+
+		Expect(response.StatusCode()).To(Equal(400))
+		Expect(result).To(HaveKeyWithValue("message","maximum input length exceeded"))
+
+	})
 })
