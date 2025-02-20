@@ -33,6 +33,14 @@ func (this *controllers) ApiInternalHighlevelConnectionStatus(ctx echo.Context) 
 		return ctx.NoContent(http.StatusBadRequest)
 	}
 
+	if len(input.Hosts) > 50 {
+		utils.GetLogFromEcho(ctx).Infow("More than 50 hosts requested")
+
+		return ctx.JSON(http.StatusBadRequest, map[string]string{
+			"message": "maximum input length exceeded",
+		})
+	}
+
 	hostConnectorDetails, err := this.inventoryConnectorClient.GetHostConnectionDetails(
 		ctx.Request().Context(),
 		input.Hosts,
@@ -46,11 +54,6 @@ func (this *controllers) ApiInternalHighlevelConnectionStatus(ctx echo.Context) 
 
 	if err != nil {
 		utils.GetLogFromEcho(ctx).Error(err)
-		return ctx.NoContent(http.StatusBadRequest)
-	}
-
-	if len(input.Hosts) > 50 {
-		utils.GetLogFromEcho(ctx).Infow("More than 50 hosts requested")
 		return ctx.NoContent(http.StatusBadRequest)
 	}
 
