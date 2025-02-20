@@ -37,7 +37,7 @@ func (this *controllers) ApiInternalHighlevelConnectionStatus(ctx echo.Context) 
 		utils.GetLogFromEcho(ctx).Infow("More than 50 hosts requested")
 
 		return ctx.JSON(http.StatusBadRequest, map[string]string{
-			"message": "maximum input length exceeded",
+			"message": "mximum input length exceeded",
 		})
 	}
 
