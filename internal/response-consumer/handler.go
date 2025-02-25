@@ -133,8 +133,7 @@ func (this *handler) onMessage(ctx context.Context, msg *k.Message) {
 			hosts := ansible.GetAnsibleHosts(*value.RunnerEvents)
 
 			if len(hosts) == 0 {
-				utils.GetLogFromContext(ctx).Info("hosts is empty...set hosts to localhost")
-				hosts = []string{"localhost"}
+				return nil
 			}
 
 			toCreate = mapHostsToRunHosts(hosts, func(host string) db.RunHost {
