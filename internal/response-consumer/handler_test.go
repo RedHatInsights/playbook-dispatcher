@@ -210,7 +210,7 @@ var _ = Describe("handler", func() {
 			events := createRunnerEvents(
 				messageModel.EventExecutorOnStart,
 				"verbose",
-				messageModel.EventExecutorOnFailed,
+				EventExecutorOnFailed,
 			)
 
 /*
