@@ -13,7 +13,7 @@ func (*mockImpl) GetPermissions(ctx context.Context) ([]Access, error) {
 					AttributeFilter: ResourceDefinitionFilter{
 						Key:       "service",
 						Operation: "equal",
-						Value:     "remediations",
+						Value:     ResourceDefinitionFilter_Value{[]byte(`{"value": "remediations"}`)},
 					},
 				},
 			},
@@ -25,7 +25,7 @@ func (*mockImpl) GetPermissions(ctx context.Context) ([]Access, error) {
 					AttributeFilter: ResourceDefinitionFilter{
 						Key:       "service",
 						Operation: "equal",
-						Value:     "config_manager",
+						Value:     ResourceDefinitionFilter_Value{[]byte(`{"value": "config_manager"}`)},
 					},
 				},
 			},
@@ -37,7 +37,7 @@ func (*mockImpl) GetPermissions(ctx context.Context) ([]Access, error) {
 					AttributeFilter: ResourceDefinitionFilter{
 						Key:       "service",
 						Operation: "equal",
-						Value:     "test",
+						Value:     ResourceDefinitionFilter_Value{[]byte(`{"value": "test"}`)},
 					},
 				},
 			},

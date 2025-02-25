@@ -103,7 +103,6 @@ func (this *dispatchManager) ProcessRun(ctx context.Context, orgID string, servi
 
 		return nil
 	})
-
 	if err != nil {
 		return entity.ID, correlationID, err
 	}

@@ -8,7 +8,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func NewDispatchManager(config *viper.Viper, cloudConnector connectors.CloudConnectorClient, rateLimiter *rate.Limiter, db *gorm.DB) DispatchManager {
+func NewDispatchManager(config *viper.Viper, cloudConnector connectors.CloudConnectorClient, rateLimiter *rate.Limiter, db *gorm.DB) *dispatchManager {
 	return &dispatchManager{
 		config:         config,
 		cloudConnector: cloudConnector,
