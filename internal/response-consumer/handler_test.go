@@ -223,8 +223,8 @@ var _ = Describe("handler", func() {
 			instance.onMessage(test.TestContext(), newRunnerResponseMessage(events, data.CorrelationID))
 
 			run := fetchRun(data.ID)
-			Expect(run.Status).To(Equal("success"))
-			checkHost(data.ID, "success", nil, "", nil)
+			Expect(run.Status).To(Equal("failure"))
+			checkHost(data.ID, "failure", nil, "ansible-runner not found", nil)
 		})
 
 
