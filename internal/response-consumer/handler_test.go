@@ -213,7 +213,8 @@ var _ = Describe("handler", func() {
 				EventExecutorOnFailed,
 			)
 
-            (*events)[1].EventData.Stdout = "ansible-runner not found"
+            imaString := "ansible-runner not found"
+            (*events)[1].Stdout = &imaString
 /*
 {"event": "executor_on_start", "uuid": "f70ee412-f289-4ab5-b1af-f558c3465c05", "counter": -1, "stdout": null, "start_line": 0, "end_line": 0, "event_data": {"crc_dispatcher_correlation_id": "17a35430-5a73-42a8-a11a-f46d468c7c30"}}
 {"event": "verbose", "uuid": "eadf6063-82d3-4365-a6bd-c2be961e3d94", "counter": 1, "stdout": "The command was not found or was not executable: ansible-playbook", "start_line": 0, "end_line": 1, "runner_ident": "e386133e-bce7-4796-a3fd-dd42239b2a3a", "created": "2025-02-24T15:41:47.904447"}
