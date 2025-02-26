@@ -228,6 +228,51 @@ var _ = Describe("handler", func() {
 			checkHost(data.ID, "failure", nil, "ansible-runner not found", nil)
 		})
 
+		It("updates the run status based on failed runner events and grab crc_dispatcher_error_details", func() {
+			var data = test.NewRun(orgId())
+			Expect(db().Create(&data).Error).ToNot(HaveOccurred())
+
+			events := createRunnerEvents(
+				messageModel.EventExecutorOnStart,
+				"verbose",
+				EventExecutorOnFailed,
+			)
+
+			imaString := "ansible-runner not found"
+			(*events)[1].Stdout = &imaString
+			(*events)[1].EventData.Host = nil
+			(*events)[2].EventData.CrcDispatcherErrorDetails = &imaString
+
+			instance.onMessage(test.TestContext(), newRunnerResponseMessage(events, data.CorrelationID))
+
+			run := fetchRun(data.ID)
+			Expect(run.Status).To(Equal("failure"))
+			checkHost(data.ID, "failure", nil, "ansible-runner not found", nil)
+		})
+
+		It("updates the run status based on failed runner events and grab crc_dispatcher_error_details and stdout", func() {
+			var data = test.NewRun(orgId())
+			Expect(db().Create(&data).Error).ToNot(HaveOccurred())
+
+			events := createRunnerEvents(
+				messageModel.EventExecutorOnStart,
+				//				"verbose",
+				EventExecutorOnFailed,
+			)
+
+			imaString := "ansible-runner not found"
+			//            (*events)[1].Stdout = &imaString
+			//            (*events)[1].EventData.Host = nil
+			(*events)[1].EventData.Stdout = &imaString
+			(*events)[1].EventData.CrcDispatcherErrorDetails = &imaString
+
+			instance.onMessage(test.TestContext(), newRunnerResponseMessage(events, data.CorrelationID))
+
+			run := fetchRun(data.ID)
+			Expect(run.Status).To(Equal("failure"))
+			checkHost(data.ID, "failure", nil, "ansible-runner not found", nil)
+		})
+
 		It("successful runner event - ignore out-of-order updates", func() {
 			var data = test.NewRun(orgId())
 			Expect(db().Create(&data).Error).ToNot(HaveOccurred())
