@@ -213,8 +213,8 @@ var _ = Describe("handler", func() {
 				EventExecutorOnFailed,
 			)
 
-			imaString := "ansible-runner not found"
-			(*events)[1].Stdout = &imaString
+			stdoutMsg := "ansible-runner not found"
+			(*events)[1].Stdout = &stdoutMsg
 			(*events)[1].EventData.Host = nil
 			/*
 			   {"event": "executor_on_start", "uuid": "f70ee412-f289-4ab5-b1af-f558c3465c05", "counter": -1, "stdout": null, "start_line": 0, "end_line": 0, "event_data": {"crc_dispatcher_correlation_id": "17a35430-5a73-42a8-a11a-f46d468c7c30"}}
@@ -225,7 +225,7 @@ var _ = Describe("handler", func() {
 
 			run := fetchRun(data.ID)
 			Expect(run.Status).To(Equal("failure"))
-			checkHost(data.ID, "failure", nil, "ansible-runner not found", nil)
+			checkHost(data.ID, "failure", nil, stdoutMsg, nil)
 		})
 
 		It("updates the run status based on failed runner events and grab crc_dispatcher_error_details", func() {
@@ -238,16 +238,18 @@ var _ = Describe("handler", func() {
 				EventExecutorOnFailed,
 			)
 
-			imaString := "ansible-runner not found"
-			(*events)[1].Stdout = &imaString
+			stdoutMsg := "ansible-runner not found"
+			crcErrorDetails := "ima crc_dispatch_error_details string"
+
+			(*events)[1].Stdout = &stdoutMsg
 			(*events)[1].EventData.Host = nil
-			(*events)[2].EventData.CrcDispatcherErrorDetails = &imaString
+			(*events)[2].EventData.CrcDispatcherErrorDetails = &crcErrorDetails
 
 			instance.onMessage(test.TestContext(), newRunnerResponseMessage(events, data.CorrelationID))
 
 			run := fetchRun(data.ID)
 			Expect(run.Status).To(Equal("failure"))
-			checkHost(data.ID, "failure", nil, "ansible-runner not found", nil)
+			checkHost(data.ID, "failure", nil, stdoutMsg+"\n"+crcErrorDetails, nil)
 		})
 
 		It("updates the run status based on failed runner events and grab crc_dispatcher_error_details and stdout", func() {
@@ -256,21 +258,18 @@ var _ = Describe("handler", func() {
 
 			events := createRunnerEvents(
 				messageModel.EventExecutorOnStart,
-				//				"verbose",
 				EventExecutorOnFailed,
 			)
 
-			imaString := "ansible-runner not found"
-			//            (*events)[1].Stdout = &imaString
-			//            (*events)[1].EventData.Host = nil
-			(*events)[1].EventData.Stdout = &imaString
-			(*events)[1].EventData.CrcDispatcherErrorDetails = &imaString
+			expectedErrorMsg := "ima crc_dispatch_error_details string"
+
+			(*events)[1].EventData.CrcDispatcherErrorDetails = &expectedErrorMsg
 
 			instance.onMessage(test.TestContext(), newRunnerResponseMessage(events, data.CorrelationID))
 
 			run := fetchRun(data.ID)
 			Expect(run.Status).To(Equal("failure"))
-			checkHost(data.ID, "failure", nil, "ansible-runner not found", nil)
+			checkHost(data.ID, "failure", nil, expectedErrorMsg, nil)
 		})
 
 		It("successful runner event - ignore out-of-order updates", func() {
