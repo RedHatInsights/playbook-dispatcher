@@ -7,8 +7,7 @@ import (
 	"github.com/google/uuid"
 )
 
-type cloudConnectorClientMock struct {
-}
+type cloudConnectorClientMock struct{}
 
 func NewConnectorClientMock() CloudConnectorClient {
 	return &cloudConnectorClientMock{}
@@ -21,8 +20,7 @@ func (this *cloudConnectorClientMock) SendCloudConnectorRequest(
 	url *string,
 	directive string,
 	metadata map[string]string,
-
-) (*string, bool, error) {
+) (*uuid.UUID, bool, error) {
 	if recipient.String() == "b5fbb740-5590-45a4-8240-89192dc49199" {
 		return nil, true, nil
 	}
@@ -35,7 +33,7 @@ func (this *cloudConnectorClientMock) SendCloudConnectorRequest(
 		return nil, false, fmt.Errorf("sat_id mismatch")
 	}
 
-	id := uuid.New().String()
+	id := uuid.New()
 
 	return &id, false, nil
 }
@@ -46,8 +44,8 @@ func (this *cloudConnectorClientMock) GetConnectionStatus(
 	recipient string,
 ) (ConnectionStatus, error) {
 	if orgID == "5318290" && recipient == "411cb203-f8c9-480e-ba20-1efbc74e3a33" {
-		return ConnectionStatus_disconnected, nil
+		return Disconnected, nil
 	}
 
-	return ConnectionStatus_connected, nil
+	return Connected, nil
 }

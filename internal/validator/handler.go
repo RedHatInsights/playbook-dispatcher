@@ -12,7 +12,6 @@ import (
 	"playbook-dispatcher/internal/validator/instrumentation"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/google/uuid"
@@ -56,7 +55,6 @@ func (this *handler) onMessage(ctx context.Context, msg *kafka.Message) {
 	ctx = utils.WithRequestType(ctx, requestType)
 
 	err := json.Unmarshal(msg.Value, &request)
-
 	if err != nil {
 		instrumentation.UnmarshallingError(ctx, err, requestType)
 		return
@@ -139,7 +137,7 @@ func (this *handler) validationSteps(
 			OrgId:           request.OrgID,
 			B64Identity:     request.B64Identity,
 			RequestId:       request.RequestID,
-			UploadTimestamp: request.Timestamp.Format(time.RFC3339),
+			UploadTimestamp: request.Timestamp,
 			Events:          events.PlaybookSat,
 		}
 		this.produceMessage(ctx, dispatcherResponseTopic, dispatcherResponse, correlationId.String(), headers...)
@@ -150,7 +148,7 @@ func (this *handler) validationSteps(
 		OrgId:           request.OrgID,
 		B64Identity:     request.B64Identity,
 		RequestId:       request.RequestID,
-		UploadTimestamp: request.Timestamp.Format(time.RFC3339),
+		UploadTimestamp: request.Timestamp,
 		Events:          events.Playbook,
 	}
 
@@ -259,7 +257,6 @@ func validateSatHostUUID(event *messageModel.PlaybookSatRunResponseMessageYamlEv
 }
 
 func validateRunResponseWithSchema(ctx context.Context, schema *jsonschema.Schema, line string) (validatedEvent *messageModel.PlaybookRunResponseMessageYamlEventsElem, err error) {
-
 	errors, parserError := schema.ValidateBytes(ctx, []byte(line))
 	if parserError != nil {
 		return nil, parserError
@@ -277,7 +274,6 @@ func validateRunResponseWithSchema(ctx context.Context, schema *jsonschema.Schem
 }
 
 func validateSatRunResponseWithSchema(ctx context.Context, schema *jsonschema.Schema, line string) (validatedEvent *messageModel.PlaybookSatRunResponseMessageYamlEventsElem, err error) {
-
 	errors, parserError := schema.ValidateBytes(ctx, []byte(line))
 	if parserError != nil {
 		return nil, parserError
@@ -319,7 +315,6 @@ func (this *handler) produceMessage(ctx context.Context, topic string, value int
 }
 
 func ignoreKafkaProduceError(err error) bool {
-
 	kafkaErr := err.(kafka.Error)
 
 	return kafkaErr.Code() == kafka.ErrMsgSizeTooLarge

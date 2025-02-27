@@ -32,7 +32,11 @@ func (this *controllers) ApiRunHostsList(ctx echo.Context, params ApiRunHostsLis
 		Where("runs.org_id = ?", identity.Identity.OrgID)
 
 	permissions := middleware.GetPermissions(ctx)
-	if allowedServices := rbac.GetPredicateValues(permissions, "service"); len(allowedServices) > 0 {
+	if allowedServices, err := rbac.GetPredicateValues(permissions, "service"); len(allowedServices) > 0 {
+		if err != nil {
+			instrumentation.RbacError(ctx, err)
+			return echo.NewHTTPError(http.StatusInternalServerError, "error getting permissions from RBAC")
+		}
 		queryBuilder.Where("runs.service IN ?", allowedServices)
 	}
 
@@ -69,7 +73,7 @@ func (this *controllers) ApiRunHostsList(ctx echo.Context, params ApiRunHostsLis
 		}
 
 		if params.Filter.InventoryId != nil {
-			parsedInventoryID, err := uuid.Parse(string(*params.Filter.InventoryId))
+			parsedInventoryID, err := uuid.Parse(params.Filter.InventoryId.String())
 			if err != nil {
 				return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("invalid inventory_id: %s", *params.Filter.InventoryId))
 			}
@@ -104,7 +108,7 @@ func (this *controllers) ApiRunHostsList(ctx echo.Context, params ApiRunHostsLis
 	for _, host := range dbRunHosts {
 
 		runHost := RunHost{}
-		runId := RunId(host.RunID.String())
+		runId := RunId(host.RunID)
 		runStatus := RunStatus(host.Status)
 
 		for _, field := range fields {
@@ -125,8 +129,8 @@ func (this *controllers) ApiRunHostsList(ctx echo.Context, params ApiRunHostsLis
 				}
 			case fieldInventoryId:
 				if host.InventoryID != nil {
-					inventoryID := host.InventoryID.String()
-					runHost.InventoryId = &inventoryID
+					inventoryID := host.InventoryID
+					runHost.InventoryId = inventoryID
 				}
 			}
 		}

@@ -28,7 +28,7 @@ func NewSourcesClientWithHttpRequestDoer(cfg *viper.Viper, doer HttpRequestDoer)
 		ClientInterface: &Client{
 			Server: fmt.Sprintf("%s://%s:%d%s", cfg.GetString("sources.scheme"), cfg.GetString("sources.host"), cfg.GetInt("sources.port"), basePath),
 			Client: utils.NewMeasuredHttpRequestDoer(doer, "sources", "postMessage"),
-			RequestEditor: func(ctx context.Context, req *http.Request) error {
+			RequestEditors: []RequestEditorFn{func(ctx context.Context, req *http.Request) error {
 				req.Header.Set(constants.HeaderRequestId, request_id.GetReqID(ctx))
 
 				if identity, ok := ctx.Value(constants.HeaderIdentity).(string); ok {
@@ -52,7 +52,7 @@ func NewSourcesClientWithHttpRequestDoer(cfg *viper.Viper, doer HttpRequestDoer)
 				}
 
 				return nil
-			},
+			}},
 		},
 	}
 
@@ -70,7 +70,6 @@ func NewSourcesClient(cfg *viper.Viper) SourcesConnector {
 }
 
 func (this *sourcesClientImpl) getRHCConnectionStatus(ctx context.Context, sourceId string) (*string, *string, error) {
-
 	utils.GetLogFromContext(ctx).Debugw("Sending Sources RHC Connection Request")
 
 	ID := ID(sourceId)
@@ -78,7 +77,6 @@ func (this *sourcesClientImpl) getRHCConnectionStatus(ctx context.Context, sourc
 	params := GetSourcesRhcConnectionParams{}
 
 	res, err := this.client.GetSourcesRhcConnectionWithResponse(ctx, ID, &params)
-
 	if err != nil {
 		return nil, nil, err
 	}
@@ -99,7 +97,14 @@ func (this *sourcesClientImpl) getRHCConnectionStatus(ctx context.Context, sourc
 		return nil, nil, fmt.Errorf("GetRHCConnectionStatus returned an empty response")
 	}
 
-	return (*res.JSON200.Data)[0].RhcId, (*res.JSON200.Data)[0].AvailabilityStatus, err
+	if (*res.JSON200.Data)[0].AvailabilityStatus == nil {
+		return nil, nil, fmt.Errorf("GetRHCConnectionStatus returned an empty AvailabilityStatus")
+	}
+
+	rhcConnectionAvailabilityStatus := (*res.JSON200.Data)[0].AvailabilityStatus
+	rhcConnectionAvailabilityStatusString := string(*rhcConnectionAvailabilityStatus)
+
+	return (*res.JSON200.Data)[0].RhcId, &rhcConnectionAvailabilityStatusString, err
 }
 
 func (this *sourcesClientImpl) getSourceIdBySatelliteId(ctx context.Context, satelliteId string) (sourceId string, sourceName string, err error) {
@@ -113,7 +118,6 @@ func (this *sourcesClientImpl) getSourceIdBySatelliteId(ctx context.Context, sat
 	}
 
 	res, err := this.client.ListSourcesWithResponse(ctx, params)
-
 	if err != nil {
 		return "", "", err
 	}
@@ -143,13 +147,11 @@ func (this *sourcesClientImpl) GetSourceConnectionDetails(ctx context.Context, s
 	utils.GetLogFromContext(ctx).Debugw("Gathering Source Connection Details")
 
 	sourceId, sourceName, err := this.getSourceIdBySatelliteId(ctx, sourceID)
-
 	if err != nil {
 		return SourceConnectionStatus{}, err
 	}
 
 	rhcId, availabilityStatus, err := this.getRHCConnectionStatus(ctx, sourceId)
-
 	if err != nil {
 		return SourceConnectionStatus{}, err
 	}

@@ -94,7 +94,7 @@ func CloudConnectorNoConnection(ctx context.Context, recipient uuid.UUID, reques
 	connectorErrorTotal.WithLabelValues(labelNoConnection, requestType).Inc()
 }
 
-func CloudConnectorOK(ctx context.Context, recipient uuid.UUID, messageId *string) {
+func CloudConnectorOK(ctx context.Context, recipient uuid.UUID, messageId *uuid.UUID) {
 	utils.GetLogFromContext(ctx).Debugw("Received response from cloud connector", "recipient", recipient, "message_id", *messageId)
 	connectorSentTotal.Inc()
 }
