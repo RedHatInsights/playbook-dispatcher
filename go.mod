@@ -1,7 +1,8 @@
 module playbook-dispatcher
 
-go 1.22
-toolchain go1.22.5
+go 1.22.0
+
+toolchain go1.22.9
 
 require (
 	github.com/RedHatInsights/tenant-utils v1.0.0
@@ -12,7 +13,7 @@ require (
 	github.com/ghodss/yaml v1.0.0
 	github.com/globocom/echo-prometheus v0.1.2
 	github.com/golang-migrate/migrate/v4 v4.15.1
-	github.com/google/uuid v1.3.0
+	github.com/google/uuid v1.6.0
 	github.com/labstack/echo/v4 v4.10.2
 	github.com/mec07/cloudwatchwriter v0.2.4
 	github.com/onsi/ginkgo v1.16.4
