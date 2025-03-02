@@ -1,12 +1,13 @@
 module playbook-dispatcher
 
-go 1.22
-toolchain go1.22.5
+go 1.22.0
+
+toolchain go1.22.9
 
 require (
 	github.com/RedHatInsights/tenant-utils v1.0.0
 	github.com/aws/aws-sdk-go v1.38.51
-	github.com/confluentinc/confluent-kafka-go v1.5.2
+	github.com/confluentinc/confluent-kafka-go v1.9.2
 	github.com/deepmap/oapi-codegen v1.4.2
 	github.com/getkin/kin-openapi v0.36.0
 	github.com/ghodss/yaml v1.0.0
