@@ -2,9 +2,10 @@
 
 package message
 
+import "encoding/json"
 import "fmt"
 import "reflect"
-import "encoding/json"
+import "time"
 
 // UnmarshalJSON implements json.Unmarshaler.
 func (j *PlaybookSatRunResponseMessageYamlEventsElemType) UnmarshalJSON(b []byte) error {
@@ -26,22 +27,7 @@ func (j *PlaybookSatRunResponseMessageYamlEventsElemType) UnmarshalJSON(b []byte
 	return nil
 }
 
-type PlaybookSatRunResponseMessageYaml struct {
-	// B64Identity corresponds to the JSON schema field "b64_identity".
-	B64Identity string `json:"b64_identity" yaml:"b64_identity"`
-
-	// Events corresponds to the JSON schema field "events".
-	Events []PlaybookSatRunResponseMessageYamlEventsElem `json:"events" yaml:"events"`
-
-	// OrgId corresponds to the JSON schema field "org_id".
-	OrgId string `json:"org_id" yaml:"org_id"`
-
-	// RequestId corresponds to the JSON schema field "request_id".
-	RequestId string `json:"request_id" yaml:"request_id"`
-
-	// UploadTimestamp corresponds to the JSON schema field "upload_timestamp".
-	UploadTimestamp string `json:"upload_timestamp" yaml:"upload_timestamp"`
-}
+type PlaybookSatRunResponseMessageYamlEventsElemType string
 
 // UnmarshalJSON implements json.Unmarshaler.
 func (j *PlaybookSatRunResponseMessageYamlEventsElemStatus) UnmarshalJSON(b []byte) error {
@@ -63,97 +49,11 @@ func (j *PlaybookSatRunResponseMessageYamlEventsElemStatus) UnmarshalJSON(b []by
 	return nil
 }
 
-// UnmarshalJSON implements json.Unmarshaler.
-func (j *PlaybookSatRunResponseMessageYamlEventsElem) UnmarshalJSON(b []byte) error {
-	var raw map[string]interface{}
-	if err := json.Unmarshal(b, &raw); err != nil {
-		return err
-	}
-	if v, ok := raw["correlation_id"]; !ok || v == nil {
-		return fmt.Errorf("field correlation_id in PlaybookSatRunResponseMessageYamlEventsElem: required")
-	}
-	if v, ok := raw["type"]; !ok || v == nil {
-		return fmt.Errorf("field type in PlaybookSatRunResponseMessageYamlEventsElem: required")
-	}
-	if v, ok := raw["version"]; !ok || v == nil {
-		return fmt.Errorf("field version in PlaybookSatRunResponseMessageYamlEventsElem: required")
-	}
-	type Plain PlaybookSatRunResponseMessageYamlEventsElem
-	var plain Plain
-	if err := json.Unmarshal(b, &plain); err != nil {
-		return err
-	}
-	*j = PlaybookSatRunResponseMessageYamlEventsElem(plain)
-	return nil
-}
-
-type PlaybookSatRunResponseMessageYamlEventsElem struct {
-	// ConnectionCode corresponds to the JSON schema field "connection_code".
-	ConnectionCode *int `json:"connection_code,omitempty" yaml:"connection_code,omitempty"`
-
-	// Console corresponds to the JSON schema field "console".
-	Console *string `json:"console,omitempty" yaml:"console,omitempty"`
-
-	// CorrelationId corresponds to the JSON schema field "correlation_id".
-	CorrelationId string `json:"correlation_id" yaml:"correlation_id"`
-
-	// ExecutionCode corresponds to the JSON schema field "execution_code".
-	ExecutionCode *int `json:"execution_code,omitempty" yaml:"execution_code,omitempty"`
-
-	// Host corresponds to the JSON schema field "host".
-	Host *string `json:"host,omitempty" yaml:"host,omitempty"`
-
-	// SatelliteConnectionCode corresponds to the JSON schema field
-	// "satellite_connection_code".
-	SatelliteConnectionCode *int `json:"satellite_connection_code,omitempty" yaml:"satellite_connection_code,omitempty"`
-
-	// SatelliteConnectionError corresponds to the JSON schema field
-	// "satellite_connection_error".
-	SatelliteConnectionError *string `json:"satellite_connection_error,omitempty" yaml:"satellite_connection_error,omitempty"`
-
-	// SatelliteInfrastructureCode corresponds to the JSON schema field
-	// "satellite_infrastructure_code".
-	SatelliteInfrastructureCode *int `json:"satellite_infrastructure_code,omitempty" yaml:"satellite_infrastructure_code,omitempty"`
-
-	// SatelliteInfrastructureError corresponds to the JSON schema field
-	// "satellite_infrastructure_error".
-	SatelliteInfrastructureError *string `json:"satellite_infrastructure_error,omitempty" yaml:"satellite_infrastructure_error,omitempty"`
-
-	// Sequence corresponds to the JSON schema field "sequence".
-	Sequence *int `json:"sequence,omitempty" yaml:"sequence,omitempty"`
-
-	// Status corresponds to the JSON schema field "status".
-	Status *PlaybookSatRunResponseMessageYamlEventsElemStatus `json:"status,omitempty" yaml:"status,omitempty"`
-
-	// Type corresponds to the JSON schema field "type".
-	Type PlaybookSatRunResponseMessageYamlEventsElemType `json:"type" yaml:"type"`
-
-	// Version corresponds to the JSON schema field "version".
-	Version int `json:"version" yaml:"version"`
-}
+const PlaybookSatRunResponseMessageYamlEventsElemStatusSuccess PlaybookSatRunResponseMessageYamlEventsElemStatus = "success"
 
 type PlaybookSatRunResponseMessageYamlEventsElemStatus string
 
 const PlaybookSatRunResponseMessageYamlEventsElemStatusCanceled PlaybookSatRunResponseMessageYamlEventsElemStatus = "canceled"
-const PlaybookSatRunResponseMessageYamlEventsElemStatusFailure PlaybookSatRunResponseMessageYamlEventsElemStatus = "failure"
-const PlaybookSatRunResponseMessageYamlEventsElemStatusSuccess PlaybookSatRunResponseMessageYamlEventsElemStatus = "success"
-
-type PlaybookSatRunResponseMessageYamlEventsElemType string
-
-const PlaybookSatRunResponseMessageYamlEventsElemTypePlaybookRunCompleted PlaybookSatRunResponseMessageYamlEventsElemType = "playbook_run_completed"
-const PlaybookSatRunResponseMessageYamlEventsElemTypePlaybookRunFinished PlaybookSatRunResponseMessageYamlEventsElemType = "playbook_run_finished"
-const PlaybookSatRunResponseMessageYamlEventsElemTypePlaybookRunUpdate PlaybookSatRunResponseMessageYamlEventsElemType = "playbook_run_update"
-
-var enumValues_PlaybookSatRunResponseMessageYamlEventsElemStatus = []interface{}{
-	"success",
-	"failure",
-	"canceled",
-}
-var enumValues_PlaybookSatRunResponseMessageYamlEventsElemType = []interface{}{
-	"playbook_run_update",
-	"playbook_run_finished",
-	"playbook_run_completed",
-}
 
 // UnmarshalJSON implements json.Unmarshaler.
 func (j *PlaybookSatRunResponseMessageYaml) UnmarshalJSON(b []byte) error {
@@ -183,4 +83,107 @@ func (j *PlaybookSatRunResponseMessageYaml) UnmarshalJSON(b []byte) error {
 	}
 	*j = PlaybookSatRunResponseMessageYaml(plain)
 	return nil
+}
+
+type PlaybookSatRunResponseMessageYaml struct {
+	// B64Identity corresponds to the JSON schema field "b64_identity".
+	B64Identity string `json:"b64_identity" yaml:"b64_identity" mapstructure:"b64_identity"`
+
+	// Events corresponds to the JSON schema field "events".
+	Events []PlaybookSatRunResponseMessageYamlEventsElem `json:"events" yaml:"events" mapstructure:"events"`
+
+	// OrgId corresponds to the JSON schema field "org_id".
+	OrgId string `json:"org_id" yaml:"org_id" mapstructure:"org_id"`
+
+	// RequestId corresponds to the JSON schema field "request_id".
+	RequestId string `json:"request_id" yaml:"request_id" mapstructure:"request_id"`
+
+	// UploadTimestamp corresponds to the JSON schema field "upload_timestamp".
+	UploadTimestamp time.Time `json:"upload_timestamp" yaml:"upload_timestamp" mapstructure:"upload_timestamp"`
+}
+
+const PlaybookSatRunResponseMessageYamlEventsElemStatusFailure PlaybookSatRunResponseMessageYamlEventsElemStatus = "failure"
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *PlaybookSatRunResponseMessageYamlEventsElem) UnmarshalJSON(b []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(b, &raw); err != nil {
+		return err
+	}
+	if v, ok := raw["correlation_id"]; !ok || v == nil {
+		return fmt.Errorf("field correlation_id in PlaybookSatRunResponseMessageYamlEventsElem: required")
+	}
+	if v, ok := raw["type"]; !ok || v == nil {
+		return fmt.Errorf("field type in PlaybookSatRunResponseMessageYamlEventsElem: required")
+	}
+	if v, ok := raw["version"]; !ok || v == nil {
+		return fmt.Errorf("field version in PlaybookSatRunResponseMessageYamlEventsElem: required")
+	}
+	type Plain PlaybookSatRunResponseMessageYamlEventsElem
+	var plain Plain
+	if err := json.Unmarshal(b, &plain); err != nil {
+		return err
+	}
+	*j = PlaybookSatRunResponseMessageYamlEventsElem(plain)
+	return nil
+}
+
+type PlaybookSatRunResponseMessageYamlEventsElem struct {
+	// ConnectionCode corresponds to the JSON schema field "connection_code".
+	ConnectionCode *int `json:"connection_code,omitempty" yaml:"connection_code,omitempty" mapstructure:"connection_code,omitempty"`
+
+	// Console corresponds to the JSON schema field "console".
+	Console *string `json:"console,omitempty" yaml:"console,omitempty" mapstructure:"console,omitempty"`
+
+	// CorrelationId corresponds to the JSON schema field "correlation_id".
+	CorrelationId string `json:"correlation_id" yaml:"correlation_id" mapstructure:"correlation_id"`
+
+	// ExecutionCode corresponds to the JSON schema field "execution_code".
+	ExecutionCode *int `json:"execution_code,omitempty" yaml:"execution_code,omitempty" mapstructure:"execution_code,omitempty"`
+
+	// Host corresponds to the JSON schema field "host".
+	Host *string `json:"host,omitempty" yaml:"host,omitempty" mapstructure:"host,omitempty"`
+
+	// SatelliteConnectionCode corresponds to the JSON schema field
+	// "satellite_connection_code".
+	SatelliteConnectionCode *int `json:"satellite_connection_code,omitempty" yaml:"satellite_connection_code,omitempty" mapstructure:"satellite_connection_code,omitempty"`
+
+	// SatelliteConnectionError corresponds to the JSON schema field
+	// "satellite_connection_error".
+	SatelliteConnectionError *string `json:"satellite_connection_error,omitempty" yaml:"satellite_connection_error,omitempty" mapstructure:"satellite_connection_error,omitempty"`
+
+	// SatelliteInfrastructureCode corresponds to the JSON schema field
+	// "satellite_infrastructure_code".
+	SatelliteInfrastructureCode *int `json:"satellite_infrastructure_code,omitempty" yaml:"satellite_infrastructure_code,omitempty" mapstructure:"satellite_infrastructure_code,omitempty"`
+
+	// SatelliteInfrastructureError corresponds to the JSON schema field
+	// "satellite_infrastructure_error".
+	SatelliteInfrastructureError *string `json:"satellite_infrastructure_error,omitempty" yaml:"satellite_infrastructure_error,omitempty" mapstructure:"satellite_infrastructure_error,omitempty"`
+
+	// Sequence corresponds to the JSON schema field "sequence".
+	Sequence *int `json:"sequence,omitempty" yaml:"sequence,omitempty" mapstructure:"sequence,omitempty"`
+
+	// Status corresponds to the JSON schema field "status".
+	Status *PlaybookSatRunResponseMessageYamlEventsElemStatus `json:"status,omitempty" yaml:"status,omitempty" mapstructure:"status,omitempty"`
+
+	// Type corresponds to the JSON schema field "type".
+	Type PlaybookSatRunResponseMessageYamlEventsElemType `json:"type" yaml:"type" mapstructure:"type"`
+
+	// Version corresponds to the JSON schema field "version".
+	Version int `json:"version" yaml:"version" mapstructure:"version"`
+}
+
+const PlaybookSatRunResponseMessageYamlEventsElemTypePlaybookRunCompleted PlaybookSatRunResponseMessageYamlEventsElemType = "playbook_run_completed"
+const PlaybookSatRunResponseMessageYamlEventsElemTypePlaybookRunFinished PlaybookSatRunResponseMessageYamlEventsElemType = "playbook_run_finished"
+const PlaybookSatRunResponseMessageYamlEventsElemTypePlaybookRunUpdate PlaybookSatRunResponseMessageYamlEventsElemType = "playbook_run_update"
+
+var enumValues_PlaybookSatRunResponseMessageYamlEventsElemStatus = []interface{}{
+	"success",
+	"failure",
+	"canceled",
+}
+var enumValues_PlaybookSatRunResponseMessageYamlEventsElemType = []interface{}{
+	"playbook_run_update",
+	"playbook_run_finished",
+	"playbook_run_completed",
 }

@@ -2,53 +2,72 @@
 
 package message
 
-import "fmt"
 import "encoding/json"
-
-type PlaybookRunResponseMessageYamlEventsElem struct {
-	// Counter corresponds to the JSON schema field "counter".
-	Counter int `json:"counter" yaml:"counter"`
-
-	// EndLine corresponds to the JSON schema field "end_line".
-	EndLine int `json:"end_line" yaml:"end_line"`
-
-	// Event corresponds to the JSON schema field "event".
-	Event string `json:"event" yaml:"event"`
-
-	// EventData corresponds to the JSON schema field "event_data".
-	EventData *PlaybookRunResponseMessageYamlEventsElemEventData `json:"event_data,omitempty" yaml:"event_data,omitempty"`
-
-	// StartLine corresponds to the JSON schema field "start_line".
-	StartLine int `json:"start_line" yaml:"start_line"`
-
-	// Stdout corresponds to the JSON schema field "stdout".
-	Stdout *string `json:"stdout,omitempty" yaml:"stdout,omitempty"`
-
-	// Uuid corresponds to the JSON schema field "uuid".
-	Uuid string `json:"uuid" yaml:"uuid"`
-}
+import "fmt"
+import "time"
 
 type PlaybookRunResponseMessageYamlEventsElemEventData struct {
 	// CrcDispatcherCorrelationId corresponds to the JSON schema field
 	// "crc_dispatcher_correlation_id".
-	CrcDispatcherCorrelationId *string `json:"crc_dispatcher_correlation_id,omitempty" yaml:"crc_dispatcher_correlation_id,omitempty"`
+	CrcDispatcherCorrelationId *string `json:"crc_dispatcher_correlation_id,omitempty" yaml:"crc_dispatcher_correlation_id,omitempty" mapstructure:"crc_dispatcher_correlation_id,omitempty"`
 
 	// CrcDispatcherErrorCode corresponds to the JSON schema field
 	// "crc_dispatcher_error_code".
-	CrcDispatcherErrorCode *string `json:"crc_dispatcher_error_code,omitempty" yaml:"crc_dispatcher_error_code,omitempty"`
+	CrcDispatcherErrorCode *string `json:"crc_dispatcher_error_code,omitempty" yaml:"crc_dispatcher_error_code,omitempty" mapstructure:"crc_dispatcher_error_code,omitempty"`
 
 	// CrcDispatcherErrorDetails corresponds to the JSON schema field
 	// "crc_dispatcher_error_details".
-	CrcDispatcherErrorDetails *string `json:"crc_dispatcher_error_details,omitempty" yaml:"crc_dispatcher_error_details,omitempty"`
+	CrcDispatcherErrorDetails *string `json:"crc_dispatcher_error_details,omitempty" yaml:"crc_dispatcher_error_details,omitempty" mapstructure:"crc_dispatcher_error_details,omitempty"`
 
 	// Host corresponds to the JSON schema field "host".
-	Host *string `json:"host,omitempty" yaml:"host,omitempty"`
+	Host *string `json:"host,omitempty" yaml:"host,omitempty" mapstructure:"host,omitempty"`
 
 	// Playbook corresponds to the JSON schema field "playbook".
-	Playbook *string `json:"playbook,omitempty" yaml:"playbook,omitempty"`
+	Playbook *string `json:"playbook,omitempty" yaml:"playbook,omitempty" mapstructure:"playbook,omitempty"`
 
 	// PlaybookUuid corresponds to the JSON schema field "playbook_uuid".
-	PlaybookUuid *string `json:"playbook_uuid,omitempty" yaml:"playbook_uuid,omitempty"`
+	PlaybookUuid *string `json:"playbook_uuid,omitempty" yaml:"playbook_uuid,omitempty" mapstructure:"playbook_uuid,omitempty"`
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (j *PlaybookRunResponseMessageYamlEventsElemEventData) UnmarshalJSON(b []byte) error {
+	var raw map[string]interface{}
+	if err := json.Unmarshal(b, &raw); err != nil {
+		return err
+	}
+	type Plain PlaybookRunResponseMessageYamlEventsElemEventData
+	var plain Plain
+	if err := json.Unmarshal(b, &plain); err != nil {
+		return err
+	}
+	if plain.Playbook != nil && len(*plain.Playbook) < 1 {
+		return fmt.Errorf("field %s length: must be >= %d", "playbook", 1)
+	}
+	*j = PlaybookRunResponseMessageYamlEventsElemEventData(plain)
+	return nil
+}
+
+type PlaybookRunResponseMessageYamlEventsElem struct {
+	// Counter corresponds to the JSON schema field "counter".
+	Counter int `json:"counter" yaml:"counter" mapstructure:"counter"`
+
+	// EndLine corresponds to the JSON schema field "end_line".
+	EndLine int `json:"end_line" yaml:"end_line" mapstructure:"end_line"`
+
+	// Event corresponds to the JSON schema field "event".
+	Event string `json:"event" yaml:"event" mapstructure:"event"`
+
+	// EventData corresponds to the JSON schema field "event_data".
+	EventData *PlaybookRunResponseMessageYamlEventsElemEventData `json:"event_data,omitempty" yaml:"event_data,omitempty" mapstructure:"event_data,omitempty"`
+
+	// StartLine corresponds to the JSON schema field "start_line".
+	StartLine int `json:"start_line" yaml:"start_line" mapstructure:"start_line"`
+
+	// Stdout corresponds to the JSON schema field "stdout".
+	Stdout *string `json:"stdout,omitempty" yaml:"stdout,omitempty" mapstructure:"stdout,omitempty"`
+
+	// Uuid corresponds to the JSON schema field "uuid".
+	Uuid string `json:"uuid" yaml:"uuid" mapstructure:"uuid"`
 }
 
 // UnmarshalJSON implements json.Unmarshaler.
@@ -77,25 +96,31 @@ func (j *PlaybookRunResponseMessageYamlEventsElem) UnmarshalJSON(b []byte) error
 	if err := json.Unmarshal(b, &plain); err != nil {
 		return err
 	}
+	if len(plain.Event) < 3 {
+		return fmt.Errorf("field %s length: must be >= %d", "event", 3)
+	}
+	if len(plain.Event) >= 50 {
+		return fmt.Errorf("field %s length: must be <= %d", "event", 50)
+	}
 	*j = PlaybookRunResponseMessageYamlEventsElem(plain)
 	return nil
 }
 
 type PlaybookRunResponseMessageYaml struct {
 	// B64Identity corresponds to the JSON schema field "b64_identity".
-	B64Identity string `json:"b64_identity" yaml:"b64_identity"`
+	B64Identity string `json:"b64_identity" yaml:"b64_identity" mapstructure:"b64_identity"`
 
 	// Events corresponds to the JSON schema field "events".
-	Events []PlaybookRunResponseMessageYamlEventsElem `json:"events" yaml:"events"`
+	Events []PlaybookRunResponseMessageYamlEventsElem `json:"events" yaml:"events" mapstructure:"events"`
 
 	// OrgId corresponds to the JSON schema field "org_id".
-	OrgId string `json:"org_id" yaml:"org_id"`
+	OrgId string `json:"org_id" yaml:"org_id" mapstructure:"org_id"`
 
 	// RequestId corresponds to the JSON schema field "request_id".
-	RequestId string `json:"request_id" yaml:"request_id"`
+	RequestId string `json:"request_id" yaml:"request_id" mapstructure:"request_id"`
 
 	// UploadTimestamp corresponds to the JSON schema field "upload_timestamp".
-	UploadTimestamp string `json:"upload_timestamp" yaml:"upload_timestamp"`
+	UploadTimestamp time.Time `json:"upload_timestamp" yaml:"upload_timestamp" mapstructure:"upload_timestamp"`
 }
 
 // UnmarshalJSON implements json.Unmarshaler.

@@ -3,39 +3,6 @@ package private
 
 import "sync"
 
-// RunCreatedList is the type for a list that holds members of type *RunCreated
-type RunCreatedList []*RunCreated
-
-// PMapRunInput is similar to MapRunInput except that it executes the function on each member in parallel.
-func (l RunCreatedList) PMapRunInput(f func(*RunCreated) RunInput) RunInputList {
-	wg := sync.WaitGroup{}
-	l2 := make(RunInputList, len(l))
-	for i, t := range l {
-		wg.Add(1)
-		go func(i int, t *RunCreated) {
-			l2[i] = f(t)
-			wg.Done()
-		}(i, t)
-	}
-	wg.Wait()
-	return l2
-}
-
-// PMap is similar to Map except that it executes the function on each member in parallel.
-func (l RunCreatedList) PMap(f func(*RunCreated) *RunCreated) RunCreatedList {
-	wg := sync.WaitGroup{}
-	l2 := make(RunCreatedList, len(l))
-	for i, t := range l {
-		wg.Add(1)
-		go func(i int, t *RunCreated) {
-			l2[i] = f(t)
-			wg.Done()
-		}(i, t)
-	}
-	wg.Wait()
-	return l2
-}
-
 // RunInputList is the type for a list that holds members of type RunInput
 type RunInputList []RunInput
 
@@ -61,6 +28,39 @@ func (l RunInputList) PMapRunCreated(f func(RunInput) *RunCreated) RunCreatedLis
 	for i, t := range l {
 		wg.Add(1)
 		go func(i int, t RunInput) {
+			l2[i] = f(t)
+			wg.Done()
+		}(i, t)
+	}
+	wg.Wait()
+	return l2
+}
+
+// RunCreatedList is the type for a list that holds members of type *RunCreated
+type RunCreatedList []*RunCreated
+
+// PMap is similar to Map except that it executes the function on each member in parallel.
+func (l RunCreatedList) PMap(f func(*RunCreated) *RunCreated) RunCreatedList {
+	wg := sync.WaitGroup{}
+	l2 := make(RunCreatedList, len(l))
+	for i, t := range l {
+		wg.Add(1)
+		go func(i int, t *RunCreated) {
+			l2[i] = f(t)
+			wg.Done()
+		}(i, t)
+	}
+	wg.Wait()
+	return l2
+}
+
+// PMapRunInput is similar to MapRunInput except that it executes the function on each member in parallel.
+func (l RunCreatedList) PMapRunInput(f func(*RunCreated) RunInput) RunInputList {
+	wg := sync.WaitGroup{}
+	l2 := make(RunInputList, len(l))
+	for i, t := range l {
+		wg.Add(1)
+		go func(i int, t *RunCreated) {
 			l2[i] = f(t)
 			wg.Done()
 		}(i, t)
