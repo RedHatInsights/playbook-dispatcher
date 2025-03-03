@@ -36,10 +36,13 @@ func (l RunInputV2List) PMapRunCreated(f func(RunInputV2) *RunCreated) RunCreate
 	return l2
 }
 
-// PMapRunInputV2 is similar to MapRunInputV2 except that it executes the function on each member in parallel.
-func (l RunCreatedList) PMapRunInputV2(f func(*RunCreated) RunInputV2) RunInputV2List {
+// RunCreatedList is the type for a list that holds members of type *RunCreated
+type RunCreatedList []*RunCreated
+
+// PMap is similar to Map except that it executes the function on each member in parallel.
+func (l RunCreatedList) PMap(f func(*RunCreated) *RunCreated) RunCreatedList {
 	wg := sync.WaitGroup{}
-	l2 := make(RunInputV2List, len(l))
+	l2 := make(RunCreatedList, len(l))
 	for i, t := range l {
 		wg.Add(1)
 		go func(i int, t *RunCreated) {
@@ -51,16 +54,13 @@ func (l RunCreatedList) PMapRunInputV2(f func(*RunCreated) RunInputV2) RunInputV
 	return l2
 }
 
-type CancelationInputV2List []CancelInputV2
-type RunCanceledList [] *RunCanceled
-
-// PMapRunCanceled executes the function on each member in parallel
-func (l CancelationInputV2List) PMapRunCanceled(f func(CancelInputV2) *RunCanceled) RunCanceledList {
+// PMapRunInputV2 is similar to MapRunInputV2 except that it executes the function on each member in parallel.
+func (l RunCreatedList) PMapRunInputV2(f func(*RunCreated) RunInputV2) RunInputV2List {
 	wg := sync.WaitGroup{}
-	l2 := make(RunCanceledList, len(l))
+	l2 := make(RunInputV2List, len(l))
 	for i, t := range l {
 		wg.Add(1)
-		go func(i int, t CancelInputV2) {
+		go func(i int, t *RunCreated) {
 			l2[i] = f(t)
 			wg.Done()
 		}(i, t)
