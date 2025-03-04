@@ -16,7 +16,7 @@ jobs:
     - run: npx @stoplight/spectral@6.0.0 lint schema/private.openapi.yaml
 
   golang:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     services:
       postgres:
         image: postgres
