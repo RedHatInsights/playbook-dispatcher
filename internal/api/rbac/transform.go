@@ -28,15 +28,15 @@ func GetPredicateValues(permissions []Access, key string) (result []string) {
 			}
 
 			if resourceDefinition.AttributeFilter.Operation == operationEqual {
-                valueString, ok := resourceDefinition.AttributeFilter.Value.(string)
-                if ok {
-                    result = append(result, valueString)
-                }
+				valueString, ok := resourceDefinition.AttributeFilter.Value.(string)
+				if ok {
+					result = append(result, valueString)
+				}
 
-                valueStringList, ok := resourceDefinition.AttributeFilter.Value.([]string)
-                if ok {
-                    result = append(result, valueStringList...)
-                }
+				valueStringList, ok := resourceDefinition.AttributeFilter.Value.([]string)
+				if ok {
+					result = append(result, valueStringList...)
+				}
 			}
 		}
 	}

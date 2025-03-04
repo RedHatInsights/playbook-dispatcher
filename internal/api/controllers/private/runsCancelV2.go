@@ -10,7 +10,7 @@ import (
 
 //go:generate fungen -types CancelInputV2,*RunCanceled -methods PMap -package private -filename cancel_utils.v2.gen.go
 func (this *controllers) ApiInternalV2RunsCancel(ctx echo.Context) error {
-    var input CancelInputV2List
+	var input CancelInputV2List
 
 	err := utils.ReadRequestBody(ctx, &input)
 	if err != nil {
