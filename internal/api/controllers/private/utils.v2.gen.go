@@ -6,10 +6,10 @@ import "sync"
 // RunInputV2List is the type for a list that holds members of type RunInputV2
 type RunInputV2List []RunInputV2
 
-// PMapRunCreatedV2 is similar to MapRunCreatedV2 except that it executes the function on each member in parallel.
-func (l RunInputV2List) PMapRunCreatedV2(f func(RunInputV2) *RunCreated) RunCreatedList {
+// PMap is similar to Map except that it executes the function on each member in parallel.
+func (l RunInputV2List) PMap(f func(RunInputV2) RunInputV2) RunInputV2List {
 	wg := sync.WaitGroup{}
-	l2 := make(RunCreatedList, len(l))
+	l2 := make(RunInputV2List, len(l))
 	for i, t := range l {
 		wg.Add(1)
 		go func(i int, t RunInputV2) {
@@ -21,10 +21,10 @@ func (l RunInputV2List) PMapRunCreatedV2(f func(RunInputV2) *RunCreated) RunCrea
 	return l2
 }
 
-// PMap is similar to Map except that it executes the function on each member in parallel.
-func (l RunInputV2List) PMap(f func(RunInputV2) RunInputV2) RunInputV2List {
+// PMapRunCreatedV2 is similar to MapRunCreatedV2 except that it executes the function on each member in parallel.
+func (l RunInputV2List) PMapRunCreatedV2(f func(RunInputV2) *RunCreated) RunCreatedList {
 	wg := sync.WaitGroup{}
-	l2 := make(RunInputV2List, len(l))
+	l2 := make(RunCreatedList, len(l))
 	for i, t := range l {
 		wg.Add(1)
 		go func(i int, t RunInputV2) {
