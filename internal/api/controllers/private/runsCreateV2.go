@@ -10,7 +10,7 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-//go:generate fungen -types RunInputV2,*RunCreated -methods PMap -package private -filename utils.v2.gen.go
+//go:generate fungen -types RunInputV2,*RunCreated:RunCreatedV2  -methods PMap -package private -filename utils.v2.gen.go
 func (this *controllers) ApiInternalV2RunsCreate(ctx echo.Context) error {
 	var input RunInputV2List
 
@@ -29,7 +29,7 @@ func (this *controllers) ApiInternalV2RunsCreate(ctx echo.Context) error {
 	}
 
 	// process individual requests concurrently
-	result := input.PMapRunCreated(func(runInputV2 RunInputV2) *RunCreated {
+	result := input.PMapRunCreatedV2(func(runInputV2 RunInputV2) *RunCreated {
 		context := utils.WithOrgId(ctx.Request().Context(), string(runInputV2.OrgId))
 		context = utils.WithRequestType(context, getRequestTypeLabel(runInputV2))
 
