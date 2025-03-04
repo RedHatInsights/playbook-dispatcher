@@ -89,8 +89,10 @@ type ConnectionStatusRequest struct {
 
 // ConnectionStatusResponse defines model for ConnectionStatusResponse.
 type ConnectionStatusResponse struct {
-	Dispatchers *map[string]interface{} `json:"dispatchers,omitempty"`
-	Status      *ConnectionStatus       `json:"status,omitempty"`
+	CanonicalFacts *map[string]interface{} `json:"canonical_facts,omitempty"`
+	Dispatchers    *map[string]interface{} `json:"dispatchers,omitempty"`
+	Status         *ConnectionStatus       `json:"status,omitempty"`
+	Tags           *map[string]interface{} `json:"tags,omitempty"`
 }
 
 // ConnectionStatusResponseV2 defines model for ConnectionStatusResponseV2.

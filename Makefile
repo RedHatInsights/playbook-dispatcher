@@ -14,8 +14,10 @@ PSK ?= secret
 
 init:
 	go install github.com/deepmap/oapi-codegen/cmd/oapi-codegen
-	go get github.com/atombender/go-jsonschema/...@main
-	go install github.com/atombender/go-jsonschema@v0.14.0
+	#go get github.com/atombender/go-jsonschema/...@main
+	#go install github.com/atombender/go-jsonschema@v0.14.0
+	go get github.com/atombender/go-jsonschema/...
+	go install github.com/atombender/go-jsonschema@latest
 	pip install json2yaml
 	go get github.com/kulshekhar/fungen
 	go install github.com/kulshekhar/fungen
@@ -46,7 +48,7 @@ generate-rbac:
 	curl -s ${RBAC_CONNECTOR_SCHEMA} -o rbac.json
 	json2yaml rbac.json rbac.yaml
 	${GOPATH}/bin/oapi-codegen -generate client,types -package rbac -include-tags Access -o internal/api/rbac/rbac.gen.go rbac.yaml
-	rm rbac.json rbac.yaml
+	#rm rbac.json rbac.yaml
 
 generate-inventory:
 	curl -s ${INVENTORY_CONNECTOR_SCHEMA} -o inventory.json
