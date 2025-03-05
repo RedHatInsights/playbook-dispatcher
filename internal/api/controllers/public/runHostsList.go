@@ -69,12 +69,7 @@ func (this *controllers) ApiRunHostsList(ctx echo.Context, params ApiRunHostsLis
 		}
 
 		if params.Filter.InventoryId != nil {
-			parsedInventoryID, err := uuid.Parse(string(*params.Filter.InventoryId))
-			if err != nil {
-				return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("invalid inventory_id: %s", *params.Filter.InventoryId))
-			}
-
-			queryBuilder.Where("run_hosts.inventory_id = ?", parsedInventoryID)
+			queryBuilder.Where("run_hosts.inventory_id = ?", params.Filter.InventoryId)
 		}
 	}
 
@@ -104,7 +99,6 @@ func (this *controllers) ApiRunHostsList(ctx echo.Context, params ApiRunHostsLis
 	for _, host := range dbRunHosts {
 
 		runHost := RunHost{}
-		runId := RunId(host.RunID.String())
 		runStatus := RunStatus(host.Status)
 
 		for _, field := range fields {
@@ -117,7 +111,7 @@ func (this *controllers) ApiRunHostsList(ctx echo.Context, params ApiRunHostsLis
 				runHost.Status = &runStatus
 			case fieldRun:
 				runHost.Run = &Run{
-					Id: &runId,
+					Id: &host.RunID,
 				}
 			case fieldLinks:
 				runHost.Links = &RunHostLinks{
@@ -125,8 +119,7 @@ func (this *controllers) ApiRunHostsList(ctx echo.Context, params ApiRunHostsLis
 				}
 			case fieldInventoryId:
 				if host.InventoryID != nil {
-					inventoryID := host.InventoryID.String()
-					runHost.InventoryId = &inventoryID
+					runHost.InventoryId = host.InventoryID
 				}
 			}
 		}

@@ -6,6 +6,7 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/google/uuid"
 )
 
 func getStatus(payload ApiInternalV2RecipientsStatusJSONRequestBody) (*[]RecipientStatus, *ApiInternalV2RecipientsStatusResponse) {
@@ -25,7 +26,7 @@ var _ = Describe("recipient status", func() {
 			payload := ApiInternalV2RecipientsStatusJSONRequestBody{
 				RecipientWithOrg{
 					OrgId:     "5318290",
-					Recipient: "214f2dc3-eda5-4230-9800-579b020be25b",
+					Recipient: uuid.MustParse("214f2dc3-eda5-4230-9800-579b020be25b"),
 				},
 			}
 
@@ -42,11 +43,11 @@ var _ = Describe("recipient status", func() {
 			payload := ApiInternalV2RecipientsStatusJSONRequestBody{
 				RecipientWithOrg{
 					OrgId:     "5318290",
-					Recipient: "214f2dc3-eda5-4230-9800-579b020be25b",
+					Recipient: uuid.MustParse("214f2dc3-eda5-4230-9800-579b020be25b"),
 				},
 				RecipientWithOrg{
 					OrgId:     "5318290",
-					Recipient: "411cb203-f8c9-480e-ba20-1efbc74e3a33",
+					Recipient: uuid.MustParse("411cb203-f8c9-480e-ba20-1efbc74e3a33"),
 				},
 			}
 
@@ -66,7 +67,7 @@ var _ = Describe("recipient status", func() {
 		payload := ApiInternalV2RecipientsStatusJSONRequestBody{
 			RecipientWithOrg{
 				OrgId:     "654322",
-				Recipient: "ac2edabb-c489-4d28-8c7b-d60fbd2f99ba",
+				Recipient: uuid.MustParse("ac2edabb-c489-4d28-8c7b-d60fbd2f99ba"),
 			},
 		}
 

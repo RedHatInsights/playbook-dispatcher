@@ -20,7 +20,7 @@ import (
 
 	"github.com/RedHatInsights/tenant-utils/pkg/tenantid"
 
-	oapiMiddleware "github.com/deepmap/oapi-codegen/pkg/middleware"
+    oapiMiddleware "github.com/oapi-codegen/echo-middleware"
 	"github.com/getkin/kin-openapi/openapi3"
 	echoPrometheus "github.com/globocom/echo-prometheus"
 	"github.com/labstack/echo/v4"

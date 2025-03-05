@@ -30,7 +30,7 @@ func (this *controllers) ApiInternalV2RecipientsStatus(ctx echo.Context) error {
 		}
 
 		// TODO: parallelize this
-		status, err := this.cloudConnectorClient.GetConnectionStatus(ctx.Request().Context(), string(recipient.OrgId), string(recipient.Recipient))
+		status, err := this.cloudConnectorClient.GetConnectionStatus(ctx.Request().Context(), string(recipient.OrgId), recipient.Recipient.String())
 		if err != nil {
 			utils.GetLogFromEcho(ctx).Error(err)
 			return ctx.NoContent(http.StatusInternalServerError)
@@ -44,7 +44,8 @@ func (this *controllers) ApiInternalV2RecipientsStatus(ctx echo.Context) error {
 
 func recipientStatusResponse(recipient RecipientWithOrg, connected bool) RecipientStatus {
 	return RecipientStatus{
-		RecipientWithOrg: recipient,
+		Recipient:        recipient.Recipient,
+        OrgId:            recipient.OrgId,
 		Connected:        connected,
 	}
 }

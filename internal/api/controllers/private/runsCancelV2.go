@@ -23,9 +23,7 @@ func (this *controllers) ApiInternalV2RunsCancel(ctx echo.Context) error {
 		context := utils.WithOrgId(ctx.Request().Context(), string(cancelInputV2.OrgId))
 		context = utils.WithRequestType(context, instrumentation.LabelAnsibleRequest)
 
-		parsedRunId := parseValidatedUUID(string(cancelInputV2.RunId))
-
-		cancelInput := CancelInputV2GenericMap(cancelInputV2, parsedRunId)
+		cancelInput := CancelInputV2GenericMap(cancelInputV2, cancelInputV2.RunId)
 
 		runID, _, err := this.dispatchManager.ProcessCancel(context, cancelInput.OrgId, cancelInput)
 		if err != nil {

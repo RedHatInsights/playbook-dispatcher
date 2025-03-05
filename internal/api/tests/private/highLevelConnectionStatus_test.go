@@ -7,6 +7,7 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/google/uuid"
 )
 
 func getConnectionStatus(payload ApiInternalHighlevelConnectionStatusJSONRequestBody) (*HighLevelRecipientStatus, *ApiInternalHighlevelConnectionStatusResponse) {
@@ -44,7 +45,7 @@ var _ = Describe("high level connection status", func() {
 
 		Expect(response.StatusCode()).To(Equal(200))
 		Expect(*result).To(HaveLen(2))
-		Expect((*result)[0].Recipient).To(Equal(public.RunRecipient("d415fc2d-9700-4e30-9621-6a410ccc92d8")))
+		Expect((*result)[0].Recipient).To(Equal(public.RunRecipient(uuid.MustParse("d415fc2d-9700-4e30-9621-6a410ccc92d8"))))
 		Expect((*result)[0].RecipientType).To(Equal(Satellite))
 		Expect((*result)[0].OrgId).To(Equal(payload.OrgId))
 		Expect((*result)[0].SatId).To(Equal(satID))
@@ -52,7 +53,7 @@ var _ = Describe("high level connection status", func() {
 		Expect((*result)[0].Status).To(Equal(Connected))
 		Expect((*result)[0].Systems).To(Equal(satelliteHost))
 
-		Expect((*result)[1].Recipient).To(Equal(public.RunRecipient("32af5948-301f-449a-a25b-ff34c83264a2")))
+		Expect((*result)[1].Recipient).To(Equal(public.RunRecipient(uuid.MustParse("32af5948-301f-449a-a25b-ff34c83264a2"))))
 		Expect((*result)[1].RecipientType).To(Equal(DirectConnect))
 		Expect((*result)[1].OrgId).To(Equal(payload.OrgId))
 		Expect((*result)[1].SatId).To(BeEmpty())
