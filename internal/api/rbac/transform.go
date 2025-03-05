@@ -1,5 +1,7 @@
 package rbac
 
+import "encoding/json"
+
 func FilterPermissions(permissions []Access, requiredPermission RequiredPermission) (result []Access) {
 	result = []Access{}
 
@@ -28,11 +30,19 @@ func GetPredicateValues(permissions []Access, key string) (result []string) {
 			}
 
 			if resourceDefinition.AttributeFilter.Operation == operationEqual {
-				if valueString, ok := resourceDefinition.AttributeFilter.Value.(string); ok {
-					result = append(result, valueString)
-				} else if valueStringList, ok := resourceDefinition.AttributeFilter.Value.([]string); ok {
-					result = append(result, valueStringList...)
+				var resourceDefinitionString string
+				err := json.Unmarshal(resourceDefinition.AttributeFilter.Value.union, &resourceDefinitionString)
+				if err == nil {
+					result = append(result, resourceDefinitionString)
+					continue
 				}
+
+				var resourceDefinitionStringSlice []string
+				err = json.Unmarshal(resourceDefinition.AttributeFilter.Value.union, &resourceDefinitionStringSlice)
+				if err != nil {
+					return
+				}
+				result = append(result, resourceDefinitionStringSlice...)
 			}
 		}
 	}

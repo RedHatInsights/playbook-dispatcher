@@ -27,7 +27,7 @@ func NewRbacClientWithHttpRequestDoer(cfg *viper.Viper, doer HttpRequestDoer) Rb
 		ClientInterface: &Client{
 			Server: fmt.Sprintf("%s://%s:%d%s", cfg.GetString("rbac.scheme"), cfg.GetString("rbac.host"), cfg.GetInt("rbac.port"), basePath),
 			Client: utils.NewMeasuredHttpRequestDoer(doer, "rbac", "getPermissions"),
-			RequestEditor: func(ctx context.Context, req *http.Request) error {
+			RequestEditors: []RequestEditorFn{func(ctx context.Context, req *http.Request) error {
 				req.Header.Set(constants.HeaderRequestId, request_id.GetReqID(ctx))
 
 				if identity, ok := ctx.Value(constants.HeaderIdentity).(string); ok {
@@ -35,7 +35,7 @@ func NewRbacClientWithHttpRequestDoer(cfg *viper.Viper, doer HttpRequestDoer) Rb
 				}
 
 				return nil
-			},
+			}},
 		},
 	}
 

@@ -44,9 +44,8 @@ generate-cloud-connector:
 
 generate-rbac:
 	curl -s ${RBAC_CONNECTOR_SCHEMA} -o rbac.json
-	json2yaml rbac.json rbac.yaml
-	${GOPATH}/bin/oapi-codegen -generate client,types -package rbac -include-tags Access -o internal/api/rbac/rbac.gen.go rbac.yaml
-	rm rbac.json rbac.yaml
+	${GOPATH}/bin/oapi-codegen -generate client,types -package rbac -include-tags Access -o internal/api/rbac/rbac.gen.go rbac.json
+	rm -f rbac.json rbac.yaml
 
 generate-inventory:
 	curl -s ${INVENTORY_CONNECTOR_SCHEMA} -o inventory.json
