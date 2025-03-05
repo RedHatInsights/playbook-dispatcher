@@ -1,6 +1,6 @@
 CLOUD_CONNECTOR_SCHEMA ?= https://raw.githubusercontent.com/RedHatInsights/cloud-connector/master/internal/controller/api/api.spec.json
 RBAC_CONNECTOR_SCHEMA ?= https://cloud.redhat.com/api/rbac/v1/openapi.json
-INVENTORY_CONNECTOR_SCHEMA ?= https://raw.githubusercontent.com/RedHatInsights/insights-host-inventory/master/swagger/openapi.json
+INVENTORY_CONNECTOR_SCHEMA ?= https://raw.githubusercontent.com/RedHatInsights/insights-host-inventory/ffa3cab521f907e006f392d1698bf730346bed94/swagger/openapi.json
 SOURCES_CONNECTOR_SCHEMA ?= https://console.redhat.com/api/sources/v3.1/openapi.json
 
 MKFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
@@ -49,9 +49,9 @@ generate-rbac:
 
 generate-inventory:
 	curl -s ${INVENTORY_CONNECTOR_SCHEMA} -o inventory.json
-	json2yaml inventory.json inventory.yaml
-	${GOPATH}/bin/oapi-codegen -generate client,types -package inventory -o internal/api/connectors/inventory/inventory.gen.go inventory.yaml
-	rm inventory.json inventory.yaml
+	#json2yaml inventory.json inventory.yaml
+	${GOPATH}/bin/oapi-codegen -config oapi-codegen-inventory-cfg.yaml -generate client,types -package inventory -o internal/api/connectors/inventory/inventory.gen.go inventory.json
+	#rm inventory.json inventory.yaml
 
 generate-sources:
 	#curl -s ${SOURCES_CONNECTOR_SCHEMA} -o sources.json
