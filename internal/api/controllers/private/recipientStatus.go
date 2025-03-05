@@ -36,7 +36,7 @@ func (this *controllers) ApiInternalV2RecipientsStatus(ctx echo.Context) error {
 			return ctx.NoContent(http.StatusInternalServerError)
 		}
 
-		results[i] = recipientStatusResponse(recipient, status == connectors.ConnectionStatus_connected)
+		results[i] = recipientStatusResponse(recipient, status == connectors.Connected)
 	}
 
 	return ctx.JSON(http.StatusOK, results)

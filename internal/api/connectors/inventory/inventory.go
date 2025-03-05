@@ -10,6 +10,7 @@ import (
 
 	"github.com/redhatinsights/platform-go-middlewares/request_id"
 	"github.com/spf13/viper"
+    "github.com/google/uuid"
 )
 
 const basePath = "/api/inventory/v1/hosts"
@@ -68,8 +69,8 @@ func convertInterfaceToString(v interface{}) string {
 }
 
 func createHostGetHostByIdParams(orderBy string, orderHow string) *ApiHostGetHostByIdParams {
-	orderByParam := OrderByParam(orderBy)
-	orderHowParam := OrderHowParam(OrderHowParam_ASC)
+	orderByParam := ApiHostGetHostByIdParamsOrderBy(orderBy)
+	orderHowParam := ApiHostGetHostByIdParamsOrderHow(orderHow)
 
 	return &ApiHostGetHostByIdParams{
 		OrderBy:  &orderByParam,
@@ -78,13 +79,12 @@ func createHostGetHostByIdParams(orderBy string, orderHow string) *ApiHostGetHos
 }
 
 func createHostGetHostSystemProfileByIdParams(orderBy string, orderHow string) *ApiHostGetHostSystemProfileByIdParams {
-	orderByParam := OrderByParam(orderBy)
-	orderHowParam := OrderHowParam(orderHow)
+	orderByParam := ApiHostGetHostSystemProfileByIdParamsOrderBy(orderBy)
+	orderHowParam := ApiHostGetHostSystemProfileByIdParamsOrderHow(orderHow)
+
 	fields := FieldsParam(
 		SystemProfileNestedObject{
-			AdditionalProperties: map[string]interface{}{
-				"fields[system_profile]": []string{"rhc_client_id", "owner_id"},
-			},
+                "fields[system_profile]": SystemProfileNestedObject_AdditionalProperties{[]byte(`["rhc_client_id", "owner_id"]`)},
 		},
 	)
 
@@ -100,7 +100,7 @@ func NewInventoryClientWithHttpRequestDoer(cfg *viper.Viper, doer HttpRequestDoe
 		ClientInterface: &Client{
 			Server: fmt.Sprintf("%s://%s:%d%s", cfg.GetString("inventory.connector.scheme"), cfg.GetString("inventory.connector.host"), cfg.GetInt("inventory.connector.port"), basePath),
 			Client: utils.NewMeasuredHttpRequestDoer(doer, "inventory", "GetHostConnectionDetails"),
-			RequestEditor: func(ctx context.Context, req *http.Request) error {
+			RequestEditors: []RequestEditorFn{func(ctx context.Context, req *http.Request) error {
 				req.Header.Set(constants.HeaderRequestId, request_id.GetReqID(ctx))
 
 				if identity, ok := ctx.Value(constants.HeaderIdentity).(string); ok {
@@ -108,7 +108,7 @@ func NewInventoryClientWithHttpRequestDoer(cfg *viper.Viper, doer HttpRequestDoe
 				}
 
 				return nil
-			},
+			}},
 		},
 	}
 
@@ -134,9 +134,14 @@ func (this *inventoryConnectorImpl) getHostDetails(
 	offset int,
 ) (details []HostOut, err error) {
 
+    clientIds, err := strToUUID(IDs)
+    if err != nil {
+		return nil, err
+    }
+
 	params := createHostGetHostByIdParams(orderBy, orderHow)
 
-	response, err := this.client.ApiHostGetHostByIdWithResponse(ctx, IDs, params)
+	response, err := this.client.ApiHostGetHostByIdWithResponse(ctx, clientIds, params)
 
 	if err != nil {
 		return nil, err
@@ -162,9 +167,14 @@ func (this *inventoryConnectorImpl) getSystemProfileDetails(
 	offset int,
 ) (details map[string]HostSystemProfileOut, err error) {
 
+    clientIds, err := strToUUID(IDs)
+    if err != nil {
+		return nil, err
+    }
+
 	params := createHostGetHostSystemProfileByIdParams(orderBy, orderHow)
 
-	response, err := this.client.ApiHostGetHostSystemProfileByIdWithResponse(ctx, IDs, params)
+	response, err := this.client.ApiHostGetHostSystemProfileByIdWithResponse(ctx, clientIds, params)
 
 	if err != nil {
 		return nil, err
@@ -211,4 +221,18 @@ func (this *inventoryConnectorImpl) GetHostConnectionDetails(ctx context.Context
 	}
 
 	return hostConnectionDetails, nil
+}
+
+func strToUUID(strSlice []string) ([]uuid.UUID, error) {
+	var uuidSlice []uuid.UUID
+	for _, str := range strSlice {
+		uuid, err := uuid.Parse(str)
+		if err != nil {
+			return nil, err
+		}
+
+		uuidSlice = append(uuidSlice, uuid)
+	}
+
+	return uuidSlice, nil
 }

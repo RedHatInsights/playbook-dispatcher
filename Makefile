@@ -1,6 +1,6 @@
 CLOUD_CONNECTOR_SCHEMA ?= https://raw.githubusercontent.com/RedHatInsights/cloud-connector/master/internal/controller/api/api.spec.json
 RBAC_CONNECTOR_SCHEMA ?= https://cloud.redhat.com/api/rbac/v1/openapi.json
-INVENTORY_CONNECTOR_SCHEMA ?= https://raw.githubusercontent.com/RedHatInsights/insights-host-inventory/master/swagger/openapi.json
+INVENTORY_CONNECTOR_SCHEMA ?= https://raw.githubusercontent.com/RedHatInsights/insights-host-inventory/ffa3cab521f907e006f392d1698bf730346bed94/swagger/openapi.json
 SOURCES_CONNECTOR_SCHEMA ?= https://console.redhat.com/api/sources/v3.1/openapi.json
 
 MKFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
@@ -13,9 +13,9 @@ export PATH := ${LOCAL_BIN_PATH}:${PATH}
 PSK ?= secret
 
 init:
-	go install github.com/deepmap/oapi-codegen/cmd/oapi-codegen
-	go get github.com/atombender/go-jsonschema/...@main
-	go install github.com/atombender/go-jsonschema@v0.14.0
+	go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest
+	go get github.com/atombender/go-jsonschema/...
+	go install github.com/atombender/go-jsonschema@latest
 	pip install json2yaml
 	go get github.com/kulshekhar/fungen
 	go install github.com/kulshekhar/fungen
@@ -38,27 +38,26 @@ generate-messages:
 
 generate-cloud-connector:
 	curl -s ${CLOUD_CONNECTOR_SCHEMA} -o cloud-connector.json
-	json2yaml cloud-connector.json cloud-connector.yaml
-	${GOPATH}/bin/oapi-codegen -generate client,types -package connectors -o internal/api/connectors/cloudConnector.gen.go cloud-connector.yaml
-	rm cloud-connector.json cloud-connector.yaml
+	#json2yaml cloud-connector.json cloud-connector.yaml
+	${GOPATH}/bin/oapi-codegen -generate client,types -package connectors -o internal/api/connectors/cloudConnector.gen.go cloud-connector.json
+	#rm cloud-connector.json cloud-connector.yaml
 
 generate-rbac:
 	curl -s ${RBAC_CONNECTOR_SCHEMA} -o rbac.json
-	json2yaml rbac.json rbac.yaml
-	${GOPATH}/bin/oapi-codegen -generate client,types -package rbac -include-tags Access -o internal/api/rbac/rbac.gen.go rbac.yaml
-	rm rbac.json rbac.yaml
+	${GOPATH}/bin/oapi-codegen -generate client,types -package rbac -include-tags Access -o internal/api/rbac/rbac.gen.go rbac.json
+	rm -f rbac.json rbac.yaml
 
 generate-inventory:
 	curl -s ${INVENTORY_CONNECTOR_SCHEMA} -o inventory.json
-	json2yaml inventory.json inventory.yaml
-	${GOPATH}/bin/oapi-codegen -generate client,types -package inventory -o internal/api/connectors/inventory/inventory.gen.go inventory.yaml
-	rm inventory.json inventory.yaml
+	#json2yaml inventory.json inventory.yaml
+	${GOPATH}/bin/oapi-codegen -config oapi-codegen-inventory-cfg.yaml -generate client,types -package inventory -o internal/api/connectors/inventory/inventory.gen.go inventory.json
+	#rm inventory.json inventory.yaml
 
 generate-sources:
-	curl -s ${SOURCES_CONNECTOR_SCHEMA} -o sources.json
-	json2yaml sources.json sources.yaml
-	${GOPATH}/bin/oapi-codegen -generate client,types -package sources -o internal/api/connectors/sources/sources.gen.go sources.yaml
-	rm sources.yaml sources.json
+	#curl -s ${SOURCES_CONNECTOR_SCHEMA} -o sources.json
+	#json2yaml sources.json sources.yaml
+	${GOPATH}/bin/oapi-codegen -config oapi-codegen-sources-cfg.yaml -generate client,types -package sources -o internal/api/connectors/sources/sources.gen.go sources.json
+	#rm sources.yaml sources.json
 
 generate-utils:
 	go generate ./...

@@ -156,7 +156,7 @@ func getDirectConnectStatus(ctx echo.Context, client connectors.CloudConnectorCl
 		}
 
 		var connectionStatus string
-		if status == connectors.ConnectionStatus_connected {
+		if status == connectors.Connected {
 			connectionStatus = "connected"
 		} else {
 			connectionStatus = "disconnected"
@@ -232,7 +232,7 @@ func createSatelliteConnectionResponses(ctx echo.Context, hostsGroupedBySatellit
 			}
 
 			var connectionStatus string
-			if status == connectors.ConnectionStatus_connected {
+			if status == connectors.Connected {
 				connectionStatus = "connected"
 			} else {
 				connectionStatus = "disconnected"

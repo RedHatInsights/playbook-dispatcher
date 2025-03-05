@@ -264,8 +264,8 @@ var _ = Describe("Cloud Connector", func() {
 				Expect(result).To(Equal(expectedStatus))
 			},
 
-			Entry("connected", "connected", ConnectionStatus_connected),
-			Entry("disconnected", "disconnected", ConnectionStatus_disconnected),
+			Entry("connected", "connected", Connected),
+			Entry("disconnected", "disconnected", Disconnected),
 		)
 
 		It("constructs a correct request", func() {

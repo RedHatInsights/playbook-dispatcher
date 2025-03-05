@@ -12,7 +12,6 @@ import (
 	"playbook-dispatcher/internal/validator/instrumentation"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/google/uuid"
@@ -139,7 +138,7 @@ func (this *handler) validationSteps(
 			OrgId:           request.OrgID,
 			B64Identity:     request.B64Identity,
 			RequestId:       request.RequestID,
-			UploadTimestamp: request.Timestamp.Format(time.RFC3339),
+			UploadTimestamp: request.Timestamp,
 			Events:          events.PlaybookSat,
 		}
 		this.produceMessage(ctx, dispatcherResponseTopic, dispatcherResponse, correlationId.String(), headers...)
@@ -150,7 +149,7 @@ func (this *handler) validationSteps(
 		OrgId:           request.OrgID,
 		B64Identity:     request.B64Identity,
 		RequestId:       request.RequestID,
-		UploadTimestamp: request.Timestamp.Format(time.RFC3339),
+		UploadTimestamp: request.Timestamp,
 		Events:          events.Playbook,
 	}
 
