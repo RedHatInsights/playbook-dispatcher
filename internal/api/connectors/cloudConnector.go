@@ -8,9 +8,8 @@ import (
 	"io"
 	"net/http"
 	"playbook-dispatcher/internal/common/constants"
-	"time"
-
 	"playbook-dispatcher/internal/common/utils"
+	"time"
 
 	"github.com/redhatinsights/platform-go-middlewares/request_id"
 
@@ -35,7 +34,7 @@ type CloudConnectorClient interface {
 		url *string,
 		directive string,
 		metadata map[string]string,
-	) (*string, bool, error)
+	) (*uuid.UUID, bool, error)
 
 	GetConnectionStatus(
 		ctx context.Context,
@@ -53,7 +52,7 @@ func NewConnectorClientWithHttpRequestDoer(cfg *viper.Viper, doer HttpRequestDoe
 		ClientInterface: &Client{
 			Server: fmt.Sprintf("%s://%s:%d%s", cfg.GetString("cloud.connector.scheme"), cfg.GetString("cloud.connector.host"), cfg.GetInt("cloud.connector.port"), basePath),
 			Client: utils.NewMeasuredHttpRequestDoer(doer, "cloud-connector", "postMessage"),
-			RequestEditor: func(ctx context.Context, req *http.Request) error {
+			RequestEditors: []RequestEditorFn{func(ctx context.Context, req *http.Request) error {
 				req.Header.Set(constants.HeaderRequestId, request_id.GetReqID(ctx))
 
 				req.Header.Set(constants.HeaderCloudConnectorClientID, cfg.GetString("cloud.connector.client.id"))
@@ -61,7 +60,7 @@ func NewConnectorClientWithHttpRequestDoer(cfg *viper.Viper, doer HttpRequestDoe
 				req.Header.Set(constants.HeaderCloudConnectorOrgID, ctx.Value(orgIDKey).(string))
 
 				return nil
-			},
+			}},
 		},
 	}
 
@@ -95,7 +94,7 @@ func (this *cloudConnectorClientImpl) SendCloudConnectorRequest(
 	url *string,
 	directive string,
 	metadata map[string]string,
-) (id *string, notFound bool, err error) {
+) (id *uuid.UUID, notFound bool, err error) {
 	recipientString := recipient.String()
 
 	ctx = context.WithValue(ctx, orgIDKey, orgID)
@@ -109,18 +108,14 @@ func (this *cloudConnectorClientImpl) SendCloudConnectorRequest(
 
 	body, err := encodedBody(PostV2ConnectionsClientIdMessageJSONRequestBody{
 		Directive: &directive,
-		Metadata: &MessageRequestV2_Metadata{
-			AdditionalProperties: metadata,
-		},
-		Payload: url,
+		Metadata:  &metadata,
+		Payload:   url,
 	})
-
 	if err != nil {
 		return nil, false, err
 	}
 
 	res, err := this.client.PostV2ConnectionsClientIdMessageWithBodyWithResponse(ctx, ClientID(recipientString), "application/json", body)
-
 	if err != nil {
 		return nil, false, err
 	}
@@ -149,7 +144,6 @@ func (this *cloudConnectorClientImpl) GetConnectionStatus(
 	)
 
 	res, err := this.client.V2ConnectionStatusMultiorgWithResponse(ctx, ClientID(recipient))
-
 	if err != nil {
 		return "", err
 	}

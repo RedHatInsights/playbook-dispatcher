@@ -29,7 +29,7 @@ var _ = Describe("runsList", func() {
 
 	Describe("list runs", func() {
 		It("by default returns a list of existing runs", func() {
-			var data = test.NewRunWithStatus(orgId(), "success")
+			data := test.NewRunWithStatus(orgId(), "success")
 			data.Labels = dbModel.Labels{"foo": "bar"}
 			data.Timeout = 600
 			Expect(db().Create(&data).Error).ToNot(HaveOccurred())
@@ -39,7 +39,7 @@ var _ = Describe("runsList", func() {
 			Expect(runs.Data).To(HaveLen(1))
 			run := runs.Data[0]
 			Expect(*run.Id).To(BeEquivalentTo(data.ID.String()))
-			Expect(run.Labels.AdditionalProperties["foo"]).To(Equal(data.Labels["foo"]))
+			Expect((*run.Labels)["foo"]).To(Equal(data.Labels["foo"]))
 			Expect(*run.Recipient).To(BeEquivalentTo(data.Recipient.String()))
 			Expect(*run.Status).To(BeEquivalentTo(data.Status))
 			Expect(*run.Timeout).To(BeEquivalentTo(data.Timeout))
@@ -47,7 +47,7 @@ var _ = Describe("runsList", func() {
 		})
 
 		It("properly infers run status", func() {
-			var data = []dbModel.Run{
+			data := []dbModel.Run{
 				test.NewRunWithStatus(orgId(), "running"),
 				test.NewRunWithStatus(orgId(), "success"),
 				test.NewRunWithStatus(orgId(), "failure"),
@@ -71,7 +71,7 @@ var _ = Describe("runsList", func() {
 
 	Describe("sorting", func() {
 		BeforeEach(func() {
-			var runs = []dbModel.Run{
+			runs := []dbModel.Run{
 				test.NewRunWithStatus(orgId(), "success"),
 				test.NewRunWithStatus(orgId(), "failure"),
 			}
@@ -107,7 +107,7 @@ var _ = Describe("runsList", func() {
 
 	Describe("pagination", func() {
 		BeforeEach(func() {
-			var runs = []dbModel.Run{
+			runs := []dbModel.Run{
 				test.NewRun(orgId()),
 				test.NewRun(orgId()),
 				test.NewRun(orgId()),
@@ -371,7 +371,7 @@ var _ = Describe("runsList", func() {
 
 	Describe("links", func() {
 		BeforeEach(func() {
-			var runs = []dbModel.Run{
+			runs := []dbModel.Run{
 				test.NewRun(orgId()),
 				test.NewRun(orgId()),
 				test.NewRun(orgId()),

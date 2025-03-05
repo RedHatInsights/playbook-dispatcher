@@ -3,7 +3,7 @@ package public
 import (
 	"bytes"
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"playbook-dispatcher/internal/common/utils/test"
 
@@ -59,7 +59,7 @@ var _ = Describe("Middleware", func() {
 			Expect(err).ToNot(HaveOccurred())
 
 			Expect(res.StatusCode).To(Equal(http.StatusBadRequest))
-			data, _ := ioutil.ReadAll(res.Body)
+			data, _ := io.ReadAll(res.Body)
 			defer res.Body.Close()
 
 			Expect(data).To(BeEquivalentTo("Bad Request: missing x-rh-identity header\n"))

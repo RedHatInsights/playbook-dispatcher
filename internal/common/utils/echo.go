@@ -2,14 +2,14 @@ package utils
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"io"
 
 	"github.com/labstack/echo/v4"
 )
 
 // workaround for https://github.com/labstack/echo/issues/1356
 func ReadRequestBody(ctx echo.Context, i interface{}) error {
-	body, err := ioutil.ReadAll(ctx.Request().Body)
+	body, err := io.ReadAll(ctx.Request().Body)
 	if err != nil {
 		return err
 	}
