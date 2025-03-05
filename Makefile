@@ -13,7 +13,7 @@ export PATH := ${LOCAL_BIN_PATH}:${PATH}
 PSK ?= secret
 
 init:
-	go install github.com/deepmap/oapi-codegen/cmd/oapi-codegen
+	go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest
 	go get github.com/atombender/go-jsonschema/...
 	go install github.com/atombender/go-jsonschema@latest
 	pip install json2yaml
@@ -55,10 +55,10 @@ generate-inventory:
 	rm inventory.json inventory.yaml
 
 generate-sources:
-	curl -s ${SOURCES_CONNECTOR_SCHEMA} -o sources.json
-	json2yaml sources.json sources.yaml
-	${GOPATH}/bin/oapi-codegen -generate client,types -package sources -o internal/api/connectors/sources/sources.gen.go sources.yaml
-	rm sources.yaml sources.json
+	#curl -s ${SOURCES_CONNECTOR_SCHEMA} -o sources.json
+	#json2yaml sources.json sources.yaml
+	${GOPATH}/bin/oapi-codegen -config oapi-codegen-sources-cfg.yaml -generate client,types -package sources -o internal/api/connectors/sources/sources.gen.go sources.json
+	#rm sources.yaml sources.json
 
 generate-utils:
 	go generate ./...
