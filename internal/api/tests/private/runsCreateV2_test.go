@@ -74,7 +74,7 @@ var _ = Describe("runsCreate V2", func() {
 
 		satId := uuid.New()
 		satOrgId := "123"
-		inventoryId := uuid.New().String()
+		inventoryId := uuid.New()
 		satIdString := satId.String()
 
 		payload := ApiInternalV2RunsCreateJSONRequestBody{
@@ -125,7 +125,7 @@ var _ = Describe("runsCreate V2", func() {
 
 		satId := uuid.New()
 		satOrgId := "123"
-		inventoryId := uuid.New().String()
+		inventoryId := uuid.New()
 		satIdString := satId.String()
 
 		payload := ApiInternalV2RunsCreateJSONRequestBody{
@@ -152,8 +152,8 @@ var _ = Describe("runsCreate V2", func() {
 		result := db().Where("run_id = ?", string(*(*runs)[0].Id)).First(&runHost)
 		Expect(result.Error).ToNot(HaveOccurred())
 
-		Expect(runHost.Host).To(Equal(inventoryId))
-		Expect(runHost.InventoryID.String()).To(Equal(inventoryId))
+		Expect(runHost.Host).To(Equal(inventoryId.String()))
+		Expect(runHost.InventoryID.String()).To(Equal(inventoryId.String()))
 	})
 
 	It("creates a new satellite playbook run with a uuidv5 as the sat_id", func() {
@@ -168,7 +168,7 @@ var _ = Describe("runsCreate V2", func() {
 		satOrgId := "123"
 		satIdStringV5 := "9274c274-a258-5d00-91fe-dbe0f7849cef"
 
-		inventoryId := uuid.New().String()
+		inventoryId := uuid.New()
 
 		payload := ApiInternalV2RunsCreateJSONRequestBody{
 			RunInputV2{
@@ -209,7 +209,7 @@ var _ = Describe("runsCreate V2", func() {
 		satOrgId := "123"
 		satIdStringV5 := "562daa36-b5d8-5511-8bb2-18095e477978" // mismached sat_id recipient combo
 
-		inventoryId := uuid.New().String()
+		inventoryId := uuid.New()
 
 		payload := ApiInternalV2RunsCreateJSONRequestBody{
 			RunInputV2{

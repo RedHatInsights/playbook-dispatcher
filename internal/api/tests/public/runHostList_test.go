@@ -46,10 +46,10 @@ var _ = Describe("runHostList", func() {
 			runs, res := listRunHosts()
 			Expect(res.StatusCode()).To(Equal(http.StatusOK))
 			Expect(runs.Data).To(HaveLen(2))
-			Expect([]RunStatus{*runs.Data[0].Status, *runs.Data[1].Status}).To(ContainElements(RunStatus_failure, RunStatus_running))
+			Expect([]RunStatus{*runs.Data[0].Status, *runs.Data[1].Status}).To(ContainElements(RunStatusFailure, RunStatusRunning))
 			Expect([]string{*runs.Data[0].Host, *runs.Data[1].Host}).To(ContainElements(host1.Host, host2.Host))
-			Expect(*runs.Data[0].Run.Id).To(BeEquivalentTo(run.ID.String()))
-			Expect(*runs.Data[1].Run.Id).To(BeEquivalentTo(run.ID.String()))
+			Expect(*runs.Data[0].Run.Id).To(BeEquivalentTo(run.ID))
+			Expect(*runs.Data[1].Run.Id).To(BeEquivalentTo(run.ID))
 		})
 
 		Describe("filtering", func() {
@@ -65,7 +65,7 @@ var _ = Describe("runHostList", func() {
 				runs, res := listRunHosts("filter[status]", "failure")
 				Expect(res.StatusCode()).To(Equal(http.StatusOK))
 				Expect(runs.Data).To(HaveLen(1))
-				Expect(*runs.Data[0].Run.Id).To(BeEquivalentTo(data[1].ID.String()))
+				Expect(*runs.Data[0].Run.Id).To(BeEquivalentTo(data[1].ID))
 			})
 
 			It("filters by run id", func() {
@@ -83,7 +83,7 @@ var _ = Describe("runHostList", func() {
 				runs, res := listRunHosts("filter[run][id]", data[1].ID.String())
 				Expect(res.StatusCode()).To(Equal(http.StatusOK))
 				Expect(runs.Data).To(HaveLen(1))
-				Expect(*runs.Data[0].Run.Id).To(BeEquivalentTo(data[1].ID.String()))
+				Expect(*runs.Data[0].Run.Id).To(BeEquivalentTo(data[1].ID))
 			})
 
 			It("filters by run labels", func() {
@@ -105,7 +105,7 @@ var _ = Describe("runHostList", func() {
 				runs, res := listRunHosts("filter[run][labels][remediation]", "2")
 				Expect(res.StatusCode()).To(Equal(http.StatusOK))
 				Expect(runs.Data).To(HaveLen(1))
-				Expect(*runs.Data[0].Run.Id).To(BeEquivalentTo(data[2].ID.String()))
+				Expect(*runs.Data[0].Run.Id).To(BeEquivalentTo(data[2].ID))
 			})
 
 			It("filters by service", func() {
@@ -116,7 +116,7 @@ var _ = Describe("runHostList", func() {
 				runs, res := listRunHosts("filter[run][service]", "test")
 				Expect(res.StatusCode()).To(Equal(http.StatusOK))
 				Expect(runs.Data).To(HaveLen(1))
-				Expect(*runs.Data[0].Run.Id).To(BeEquivalentTo(run.ID.String()))
+				Expect(*runs.Data[0].Run.Id).To(BeEquivalentTo(run.ID))
 
 				runs, res = listRunHosts("filter[run][service]", "remediations")
 				Expect(res.StatusCode()).To(Equal(http.StatusOK))
@@ -141,7 +141,7 @@ var _ = Describe("runHostList", func() {
 				runs, res := listRunHosts("filter[inventory_id]", hosts[1].InventoryID.String())
 				Expect(res.StatusCode()).To(Equal(http.StatusOK))
 				Expect(runs.Data).To(HaveLen(1))
-				Expect(*runs.Data[0].Run.Id).To(BeEquivalentTo(data[1].ID.String()))
+				Expect(*runs.Data[0].Run.Id).To(BeEquivalentTo(data[1].ID))
 			})
 		})
 	})
@@ -221,9 +221,9 @@ var _ = Describe("runHostList", func() {
 			Expect(res.StatusCode()).To(Equal(http.StatusOK))
 			Expect(runs.Meta.Count).To(Equal(2))
 
-			expected := []string{data[0].ID.String(), data[1].ID.String()}
-			Expect(string(*runs.Data[0].Run.Id)).To(BeElementOf(expected))
-			Expect(string(*runs.Data[1].Run.Id)).To(BeElementOf(expected))
+			expected := []uuid.UUID{data[0].ID, data[1].ID}
+			Expect(*runs.Data[0].Run.Id).To(BeElementOf(expected))
+			Expect(*runs.Data[1].Run.Id).To(BeElementOf(expected))
 		})
 	})
 

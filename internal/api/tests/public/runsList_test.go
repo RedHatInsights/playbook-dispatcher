@@ -38,9 +38,9 @@ var _ = Describe("runsList", func() {
 			Expect(res.StatusCode()).To(Equal(http.StatusOK))
 			Expect(runs.Data).To(HaveLen(1))
 			run := runs.Data[0]
-			Expect(*run.Id).To(BeEquivalentTo(data.ID.String()))
-			Expect(run.Labels.AdditionalProperties["foo"]).To(Equal(data.Labels["foo"]))
-			Expect(*run.Recipient).To(BeEquivalentTo(data.Recipient.String()))
+			Expect(*run.Id).To(BeEquivalentTo(data.ID))
+			Expect((*run.Labels)["foo"]).To(Equal(data.Labels["foo"]))
+			Expect(*run.Recipient).To(BeEquivalentTo(data.Recipient))
 			Expect(*run.Status).To(BeEquivalentTo(data.Status))
 			Expect(*run.Timeout).To(BeEquivalentTo(data.Timeout))
 			Expect(*run.Url).To(BeEquivalentTo(data.URL))
@@ -93,10 +93,10 @@ var _ = Describe("runsList", func() {
 				}
 			},
 
-			Entry("by default orders by created_at desc", nil, RunStatus_failure, RunStatus_success),
-			Entry("sorts by created_at", RunsSortBy_created_at, RunStatus_failure, RunStatus_success),
-			Entry("sorts by created_at:desc", RunsSortBy_created_at_desc, RunStatus_failure, RunStatus_success),
-			Entry("sorts by created_at:asc", RunsSortBy_created_at_asc, RunStatus_success, RunStatus_failure),
+			Entry("by default orders by created_at desc", nil, RunStatusFailure, RunStatusSuccess),
+			Entry("sorts by created_at", RunsSortByCreatedAt, RunStatusFailure, RunStatusSuccess),
+			Entry("sorts by created_at:desc", RunsSortByCreatedAtDesc, RunStatusFailure, RunStatusSuccess),
+			Entry("sorts by created_at:asc", RunsSortByCreatedAtAsc, RunStatusSuccess, RunStatusFailure),
 		)
 
 		It("400s on invalid value", func() {
@@ -180,7 +180,7 @@ var _ = Describe("runsList", func() {
 					runs, res := listRuns("filter[status]", status)
 					Expect(res.StatusCode()).To(Equal(http.StatusOK))
 					Expect(runs.Meta.Count).To(Equal(1))
-					Expect(*runs.Data[0].Id).To(BeEquivalentTo(data[index].ID.String()))
+					Expect(*runs.Data[0].Id).To(BeEquivalentTo(data[index].ID))
 				},
 
 				Entry("success", "success", 0),
@@ -211,7 +211,7 @@ var _ = Describe("runsList", func() {
 				runs, res := listRuns("filter[recipient]", data[1].Recipient)
 				Expect(res.StatusCode()).To(Equal(http.StatusOK))
 				Expect(runs.Meta.Count).To(Equal(1))
-				Expect(*runs.Data[0].Recipient).To(BeEquivalentTo(data[1].Recipient.String()))
+				Expect(*runs.Data[0].Recipient).To(BeEquivalentTo(data[1].Recipient))
 			})
 
 			It("returns empty result on non-match", func() {
@@ -252,16 +252,16 @@ var _ = Describe("runsList", func() {
 				runs, res := listRuns("filter[labels][service]", "remediations")
 				Expect(res.StatusCode()).To(Equal(http.StatusOK))
 				Expect(runs.Meta.Count).To(Equal(2))
-				expectedIds := []string{data[1].ID.String(), data[2].ID.String()}
-				Expect(expectedIds).To(ContainElement(string(*runs.Data[0].Id)))
-				Expect(expectedIds).To(ContainElement(string(*runs.Data[1].Id)))
+				expectedIds := []uuid.UUID{data[1].ID, data[2].ID}
+				Expect(expectedIds).To(ContainElement(*runs.Data[0].Id))
+				Expect(expectedIds).To(ContainElement(*runs.Data[1].Id))
 			})
 
 			It("finds all runs matching a combination of two labels", func() {
 				runs, res := listRuns("filter[labels][service]", "remediations", "filter[labels][foo]", "bar")
 				Expect(res.StatusCode()).To(Equal(http.StatusOK))
 				Expect(runs.Meta.Count).To(Equal(1))
-				Expect(*runs.Data[0].Id).To(BeEquivalentTo(data[1].ID.String()))
+				Expect(*runs.Data[0].Id).To(BeEquivalentTo(data[1].ID))
 			})
 
 			It("does not find anything if labels do not match", func() {
@@ -283,7 +283,7 @@ var _ = Describe("runsList", func() {
 				runs, res := listRuns("filter[service]", "test")
 				Expect(res.StatusCode()).To(Equal(http.StatusOK))
 				Expect(runs.Meta.Count).To(Equal(1))
-				Expect(*runs.Data[0].Id).To(BeEquivalentTo(data.ID.String()))
+				Expect(*runs.Data[0].Id).To(BeEquivalentTo(data.ID))
 			})
 
 			It("returns nothing if no such service exists", func() {
