@@ -53,7 +53,7 @@ func NewConnectorClientWithHttpRequestDoer(cfg *viper.Viper, doer HttpRequestDoe
 		ClientInterface: &Client{
 			Server: fmt.Sprintf("%s://%s:%d%s", cfg.GetString("cloud.connector.scheme"), cfg.GetString("cloud.connector.host"), cfg.GetInt("cloud.connector.port"), basePath),
 			Client: utils.NewMeasuredHttpRequestDoer(doer, "cloud-connector", "postMessage"),
-			RequestEditor: func(ctx context.Context, req *http.Request) error {
+			RequestEditors: []RequestEditorFn{func(ctx context.Context, req *http.Request) error {
 				req.Header.Set(constants.HeaderRequestId, request_id.GetReqID(ctx))
 
 				req.Header.Set(constants.HeaderCloudConnectorClientID, cfg.GetString("cloud.connector.client.id"))
@@ -61,7 +61,7 @@ func NewConnectorClientWithHttpRequestDoer(cfg *viper.Viper, doer HttpRequestDoe
 				req.Header.Set(constants.HeaderCloudConnectorOrgID, ctx.Value(orgIDKey).(string))
 
 				return nil
-			},
+			}},
 		},
 	}
 
@@ -109,9 +109,7 @@ func (this *cloudConnectorClientImpl) SendCloudConnectorRequest(
 
 	body, err := encodedBody(PostV2ConnectionsClientIdMessageJSONRequestBody{
 		Directive: &directive,
-		Metadata: &MessageRequestV2_Metadata{
-			AdditionalProperties: metadata,
-		},
+		Metadata: &metadata,
 		Payload: url,
 	})
 
@@ -133,7 +131,13 @@ func (this *cloudConnectorClientImpl) SendCloudConnectorRequest(
 		return nil, false, utils.UnexpectedResponse(res.HTTPResponse)
 	}
 
-	return res.JSON201.Id, false, nil
+	if res.JSON201.Id == nil {
+		return nil, false, utils.UnexpectedResponse(res.HTTPResponse)
+	}
+
+    idString := res.JSON201.Id.String()
+
+	return &idString, false, nil
 }
 
 func (this *cloudConnectorClientImpl) GetConnectionStatus(
