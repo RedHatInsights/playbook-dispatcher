@@ -591,13 +591,13 @@ func WithBaseURL(baseURL string) ClientOption {
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
 	// ListSourcesWithResponse request
-	ListSourcesWithResponse(ctx context.Context, params *ListSourcesParams, reqEditors ...RequestEditorFn) (*ListSources_Fred, error)
+	ListSourcesWithResponse(ctx context.Context, params *ListSourcesParams, reqEditors ...RequestEditorFn) (*ListSourcesResponse, error)
 
 	// GetSourcesRhcConnectionWithResponse request
-	GetSourcesRhcConnectionWithResponse(ctx context.Context, idParam IDParam, params *GetSourcesRhcConnectionParams, reqEditors ...RequestEditorFn) (*GetSourcesRhcConnection_Fred, error)
+	GetSourcesRhcConnectionWithResponse(ctx context.Context, idParam IDParam, params *GetSourcesRhcConnectionParams, reqEditors ...RequestEditorFn) (*GetSourcesRhcConnectionResponse, error)
 }
 
-type ListSources_Fred struct {
+type ListSourcesResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *SourcesCollection
@@ -605,7 +605,7 @@ type ListSources_Fred struct {
 }
 
 // Status returns HTTPResponse.Status
-func (r ListSources_Fred) Status() string {
+func (r ListSourcesResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -613,14 +613,14 @@ func (r ListSources_Fred) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r ListSources_Fred) StatusCode() int {
+func (r ListSourcesResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type GetSourcesRhcConnection_Fred struct {
+type GetSourcesRhcConnectionResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *RhcConnectionCollection
@@ -629,7 +629,7 @@ type GetSourcesRhcConnection_Fred struct {
 }
 
 // Status returns HTTPResponse.Status
-func (r GetSourcesRhcConnection_Fred) Status() string {
+func (r GetSourcesRhcConnectionResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -637,40 +637,40 @@ func (r GetSourcesRhcConnection_Fred) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r GetSourcesRhcConnection_Fred) StatusCode() int {
+func (r GetSourcesRhcConnectionResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-// ListSourcesWithResponse request returning *ListSources_Fred
-func (c *ClientWithResponses) ListSourcesWithResponse(ctx context.Context, params *ListSourcesParams, reqEditors ...RequestEditorFn) (*ListSources_Fred, error) {
+// ListSourcesWithResponse request returning *ListSourcesResponse
+func (c *ClientWithResponses) ListSourcesWithResponse(ctx context.Context, params *ListSourcesParams, reqEditors ...RequestEditorFn) (*ListSourcesResponse, error) {
 	rsp, err := c.ListSources(ctx, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseListSources_Fred(rsp)
+	return ParseListSourcesResponse(rsp)
 }
 
-// GetSourcesRhcConnectionWithResponse request returning *GetSourcesRhcConnection_Fred
-func (c *ClientWithResponses) GetSourcesRhcConnectionWithResponse(ctx context.Context, idParam IDParam, params *GetSourcesRhcConnectionParams, reqEditors ...RequestEditorFn) (*GetSourcesRhcConnection_Fred, error) {
+// GetSourcesRhcConnectionWithResponse request returning *GetSourcesRhcConnectionResponse
+func (c *ClientWithResponses) GetSourcesRhcConnectionWithResponse(ctx context.Context, idParam IDParam, params *GetSourcesRhcConnectionParams, reqEditors ...RequestEditorFn) (*GetSourcesRhcConnectionResponse, error) {
 	rsp, err := c.GetSourcesRhcConnection(ctx, idParam, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetSourcesRhcConnection_Fred(rsp)
+	return ParseGetSourcesRhcConnectionResponse(rsp)
 }
 
-// ParseListSources_Fred parses an HTTP response from a ListSourcesWithResponse call
-func ParseListSources_Fred(rsp *http.Response) (*ListSources_Fred, error) {
+// ParseListSourcesResponse parses an HTTP response from a ListSourcesWithResponse call
+func ParseListSourcesResponse(rsp *http.Response) (*ListSourcesResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &ListSources_Fred{
+	response := &ListSourcesResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -695,15 +695,15 @@ func ParseListSources_Fred(rsp *http.Response) (*ListSources_Fred, error) {
 	return response, nil
 }
 
-// ParseGetSourcesRhcConnection_Fred parses an HTTP response from a GetSourcesRhcConnectionWithResponse call
-func ParseGetSourcesRhcConnection_Fred(rsp *http.Response) (*GetSourcesRhcConnection_Fred, error) {
+// ParseGetSourcesRhcConnectionResponse parses an HTTP response from a GetSourcesRhcConnectionWithResponse call
+func ParseGetSourcesRhcConnectionResponse(rsp *http.Response) (*GetSourcesRhcConnectionResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetSourcesRhcConnection_Fred{
+	response := &GetSourcesRhcConnectionResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
