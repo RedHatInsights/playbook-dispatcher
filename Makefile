@@ -1,6 +1,5 @@
 CLOUD_CONNECTOR_SCHEMA ?= https://raw.githubusercontent.com/RedHatInsights/cloud-connector/master/internal/controller/api/api.spec.json
 RBAC_CONNECTOR_SCHEMA ?= https://cloud.redhat.com/api/rbac/v1/openapi.json
-INVENTORY_CONNECTOR_SCHEMA ?= https://raw.githubusercontent.com/RedHatInsights/insights-host-inventory/ffa3cab521f907e006f392d1698bf730346bed94/swagger/openapi.json
 SOURCES_CONNECTOR_SCHEMA ?= https://console.redhat.com/api/sources/v3.1/openapi.json
 
 MKFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
@@ -12,13 +11,12 @@ export PATH := ${LOCAL_BIN_PATH}:${PATH}
 
 PSK ?= secret
 
+all: init generate build test run-lint
+
 init:
 	go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest
-	go get github.com/atombender/go-jsonschema/...
-	go install github.com/atombender/go-jsonschema@latest
-	pip install json2yaml
+	go get github.com/atombender/go-jsonschema
 	go get github.com/kulshekhar/fungen
-	go install github.com/kulshekhar/fungen
 
 generate-api:
 	# public API
@@ -38,31 +36,27 @@ generate-messages:
 
 generate-cloud-connector:
 	curl -s ${CLOUD_CONNECTOR_SCHEMA} -o cloud-connector.json
-	#json2yaml cloud-connector.json cloud-connector.yaml
 	${GOPATH}/bin/oapi-codegen -generate client,types -package connectors -o internal/api/connectors/cloudConnector.gen.go cloud-connector.json
-	#rm cloud-connector.json cloud-connector.yaml
+	rm cloud-connector.json
 
 generate-rbac:
 	curl -s ${RBAC_CONNECTOR_SCHEMA} -o rbac.json
 	${GOPATH}/bin/oapi-codegen -generate client,types -package rbac -include-tags Access -o internal/api/rbac/rbac.gen.go rbac.json
-	rm -f rbac.json rbac.yaml
+	rm rbac.json
 
 generate-inventory:
-	curl -s ${INVENTORY_CONNECTOR_SCHEMA} -o inventory.json
-	#json2yaml inventory.json inventory.yaml
-	${GOPATH}/bin/oapi-codegen -config oapi-codegen-inventory-cfg.yaml -generate client,types -package inventory -o internal/api/connectors/inventory/inventory.gen.go inventory.json
-	#rm inventory.json inventory.yaml
+	${GOPATH}/bin/oapi-codegen -config oapi-codegen-inventory-cfg.yaml -generate client,types -package inventory -o internal/api/connectors/inventory/inventory.gen.go insights-host-inventory/swagger/openapi.json
+	cd insights-host-inventory && git reset --hard
 
 generate-sources:
-	#curl -s ${SOURCES_CONNECTOR_SCHEMA} -o sources.json
-	#json2yaml sources.json sources.yaml
+	curl -s ${SOURCES_CONNECTOR_SCHEMA} -o sources.json
 	${GOPATH}/bin/oapi-codegen -config oapi-codegen-sources-cfg.yaml -generate client,types -package sources -o internal/api/connectors/sources/sources.gen.go sources.json
-	#rm sources.yaml sources.json
+	rm sources.json
 
 generate-utils:
 	go generate ./...
 
-generate: generate-api generate-messages generate-cloud-connector generate-utils generate-clients generate-rbac generate-sources generate-inventory
+generate: generate-api generate-clients generate-messages generate-cloud-connector generate-rbac generate-inventory generate-sources generate-utils
 
 build:
 	go build -o pd .
