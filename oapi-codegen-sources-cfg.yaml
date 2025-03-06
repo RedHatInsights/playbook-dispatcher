@@ -1,4 +1,3 @@
 output-options:
   include-operation-ids: [getSourcesRhcConnection, listSources]
   exclude-schemas: []
-  response-type-suffix: "_Fred"
