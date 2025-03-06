@@ -80,7 +80,7 @@ var _ = Describe("Middleware", func() {
 			var parsed map[string]string
 			Expect(json.NewDecoder(res.Body).Decode(&parsed)).ToNot(HaveOccurred())
 
-			Expect(parsed["message"]).To(Equal("Request body has an error: doesn't match the schema: Minimum number of items is 1"))
+			Expect(parsed["message"]).To(Equal("request body has an error: doesn't match schema: minimum number of items is 1"))
 		})
 	})
 })

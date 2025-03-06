@@ -80,7 +80,7 @@ type Error struct {
 }
 
 // InventoryIdNullable defines model for InventoryIdNullable.
-type InventoryIdNullable = openapi_types.UUID
+type InventoryIdNullable = string
 
 // Labels Additional metadata about the Playbook run. Can be used for filtering purposes.
 type Labels map[string]string
@@ -250,9 +250,9 @@ type RunHostFields struct {
 type RunHostFilter struct {
 	InventoryId *InventoryIdNullable `json:"inventory_id"`
 	Run         *struct {
-		Id      *openapi_types.UUID `json:"id"`
-		Labels  *RunLabelsNullable  `json:"labels"`
-		Service *ServiceNullable    `json:"service"`
+		Id      *string            `json:"id,omitempty"`
+		Labels  *RunLabelsNullable `json:"labels"`
+		Service *ServiceNullable   `json:"service"`
 	} `json:"run"`
 	Status *StatusNullable `json:"status"`
 }
@@ -264,10 +264,10 @@ type RunsFields struct {
 
 // RunsFilter defines model for RunsFilter.
 type RunsFilter struct {
-	Labels    *RunLabelsNullable  `json:"labels"`
-	Recipient *openapi_types.UUID `json:"recipient"`
-	Service   *ServiceNullable    `json:"service"`
-	Status    *StatusNullable     `json:"status"`
+	Labels    *RunLabelsNullable `json:"labels"`
+	Recipient *string            `json:"recipient,omitempty"`
+	Service   *ServiceNullable   `json:"service"`
+	Status    *StatusNullable    `json:"status"`
 }
 
 // RunsSortBy defines model for RunsSortBy.

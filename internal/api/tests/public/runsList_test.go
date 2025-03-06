@@ -1,8 +1,10 @@
 package public
 
 import (
+    "fmt"
 	"net/http"
 	dbModel "playbook-dispatcher/internal/common/model/db"
+//"playbook-dispatcher/internal/common/utils"
 	"playbook-dispatcher/internal/common/utils/test"
 	"time"
 
@@ -18,7 +20,16 @@ func listRunsRaw(keysAndValues ...interface{}) *http.Response {
 
 func listRuns(keysAndValues ...interface{}) (*Runs, *ApiRunsListResponse) {
 	raw := listRunsRaw(keysAndValues...)
+    fmt.Println("RAW:", raw)
+/*
+    body, err := io.ReadAll(raw.Body)
+    bodyString := string(body)
+    fmt.Println("Body:", bodyString)
+*/
+
 	res, err := ParseApiRunsListResponse(raw)
+    fmt.Println("res.JSON400:", res.JSON400)
+ 
 	Expect(err).ToNot(HaveOccurred())
 
 	return res.JSON200, res
@@ -202,12 +213,15 @@ var _ = Describe("runsList", func() {
 				}
 
 				data[3].Recipient = uuid.MustParse("64aeb237-d46d-494e-98e3-b48fc5c78bf1")
-				data[3].OrgID = "9999999999-test"
+				data[3].OrgID = "99999-test"
 
 				Expect(db().Create(&data).Error).ToNot(HaveOccurred())
 			})
 
 			It("finds a run based on recipient id", func() {
+                fmt.Println("RECIPIENT:", data[1].Recipient)
+                fmt.Println("data[1].ORG:", data[1].OrgID)
+                fmt.Println("ORG:", orgId())
 				runs, res := listRuns("filter[recipient]", data[1].Recipient)
 				Expect(res.StatusCode()).To(Equal(http.StatusOK))
 				Expect(runs.Meta.Count).To(Equal(1))
@@ -215,6 +229,9 @@ var _ = Describe("runsList", func() {
 			})
 
 			It("returns empty result on non-match", func() {
+                fmt.Println("data[1].ORG:", data[1].OrgID)
+                fmt.Println("ORG:", orgId())
+
 				runs, res := listRuns("filter[recipient]", "b76ceabc-d404-4a43-a09c-7650e661e807")
 				Expect(res.StatusCode()).To(Equal(http.StatusOK))
 				Expect(runs.Meta.Count).To(Equal(0))
