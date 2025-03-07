@@ -45,11 +45,13 @@ generate-rbac:
 	rm rbac.json
 
 generate-inventory:
+	patch -p1 insights-host-inventory/swagger/openapi.json inventory_xgo_name.patch
 	${GOPATH}/bin/oapi-codegen -config oapi-codegen-inventory-cfg.yaml -generate client,types -package inventory -o internal/api/connectors/inventory/inventory.gen.go insights-host-inventory/swagger/openapi.json
 	cd insights-host-inventory && git reset --hard
 
 generate-sources:
 	curl -s ${SOURCES_CONNECTOR_SCHEMA} -o sources.json
+	patch -p1 sources.json sources_xgo_name.patch
 	${GOPATH}/bin/oapi-codegen -config oapi-codegen-sources-cfg.yaml -generate client,types -package sources -o internal/api/connectors/sources/sources.gen.go sources.json
 	rm sources.json
 
