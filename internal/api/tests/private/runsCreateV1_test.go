@@ -40,7 +40,7 @@ var _ = Describe("runsCreate V1", func() {
 
 			payload := ApiInternalRunsCreateJSONRequestBody{
 				RunInput{
-					Recipient: public.RunRecipient(recipient.String()),
+					Recipient: public.RunRecipient(recipient),
 					Account:   public.Account(accountNumber()),
 					Url:       public.Url(url),
 					Hosts:     &RunInputHosts{{AnsibleHost: &ansibleHost}},
@@ -51,11 +51,13 @@ var _ = Describe("runsCreate V1", func() {
 
 			Expect(*runs).To(HaveLen(1))
 			Expect((*runs)[0].Code).To(Equal(201))
+            /*
 			_, err := uuid.Parse(string(*(*runs)[0].Id))
 			Expect(err).ToNot(HaveOccurred())
+            */
 
 			var run dbModel.Run
-			result := db().Where("id = ?", string(*(*runs)[0].Id)).First(&run)
+			result := db().Where("id = ?", (*runs)[0].Id).First(&run)
 			Expect(result.Error).ToNot(HaveOccurred())
 			Expect(run.OrgID).To(Equal(accountNumber() + "-test"))
 			Expect(run.Recipient).To(Equal(recipient))
@@ -71,7 +73,7 @@ var _ = Describe("runsCreate V1", func() {
 
 			payload := ApiInternalRunsCreateJSONRequestBody{
 				RunInput{
-					Recipient: public.RunRecipient(recipient.String()),
+					Recipient: public.RunRecipient(recipient),
 					Account:   public.Account(accountNumber()),
 					Url:       public.Url(url),
 					Hosts:     &RunInputHosts{{AnsibleHost: &ansibleHost}},
@@ -90,7 +92,7 @@ var _ = Describe("runsCreate V1", func() {
 
 			payload := ApiInternalRunsCreateJSONRequestBody{
 				RunInput{
-					Recipient: public.RunRecipient(recipient.String()),
+					Recipient: public.RunRecipient(recipient),
 					Account:   public.Account("10000"),
 					Url:       public.Url(url),
 					Hosts:     &RunInputHosts{{AnsibleHost: &ansibleHost}},
@@ -103,7 +105,7 @@ var _ = Describe("runsCreate V1", func() {
 			Expect((*runs)[0].Code).To(Equal(201))
 
 			var run dbModel.Run
-			result := db().Where("id = ?", string(*(*runs)[0].Id)).First(&run)
+			result := db().Where("id = ?", (*runs)[0].Id).First(&run)
 			Expect(result.Error).ToNot(HaveOccurred())
 			Expect(run.OrgID).To(Equal("10000-test"))
 			Expect(run.Recipient).To(Equal(recipient))
@@ -120,7 +122,7 @@ var _ = Describe("runsCreate V1", func() {
 
 			payload := ApiInternalRunsCreateJSONRequestBody{
 				RunInput{
-					Recipient: public.RunRecipient(recipient.String()),
+					Recipient: public.RunRecipient(recipient),
 					Account:   public.Account("1234"),
 					Url:       public.Url(url),
 					Hosts:     &RunInputHosts{{AnsibleHost: &ansibleHost}},
@@ -139,7 +141,7 @@ var _ = Describe("runsCreate V1", func() {
 
 			payload := ApiInternalRunsCreateJSONRequestBody{
 				RunInput{
-					Recipient: public.RunRecipient(recipient.String()),
+					Recipient: public.RunRecipient(recipient),
 					Account:   public.Account(accountNumber()),
 					Url:       public.Url(url),
 					Hosts:     &RunInputHosts{{AnsibleHost: &ansibleHost}},
@@ -157,7 +159,7 @@ var _ = Describe("runsCreate V1", func() {
 			url := "http://example.com"
 			payload := ApiInternalRunsCreateJSONRequestBody{
 				RunInput{
-					Recipient: public.RunRecipient(recipient.String()),
+					Recipient: public.RunRecipient(recipient),
 					Account:   public.Account(accountNumber()),
 					Url:       public.Url(url),
 					Hosts:     &RunInputHosts{{AnsibleHost: &ansibleHost}},
@@ -176,7 +178,7 @@ var _ = Describe("runsCreate V1", func() {
 			Expect(runs[0].Code).To(Equal(201))
 
 			var run dbModel.Run
-			result := db().Where("id = ?", string(*runs[0].Id)).First(&run)
+			result := db().Where("id = ?", *runs[0].Id).First(&run)
 			Expect(result.Error).ToNot(HaveOccurred())
 			Expect(run.Service).To(Equal("test02"))
 		})
@@ -187,7 +189,7 @@ var _ = Describe("runsCreate V1", func() {
 
 			payload := ApiInternalRunsCreateJSONRequestBody{
 				RunInput{
-					Recipient: public.RunRecipient(recipient.String()),
+					Recipient: public.RunRecipient(recipient),
 					Account:   public.Account(accountNumber()),
 					Url:       public.Url(url),
 					Hosts:     &RunInputHosts{{AnsibleHost: &ansibleHost}},
@@ -217,26 +219,26 @@ var _ = Describe("runsCreate V1", func() {
 			Expect(string(body)).To(ContainSubstring(expected))
 		},
 
-		Entry("empty list", `[]`, "Minimum number of items is 1"),
+		Entry("empty list", `[]`, "minimum number of items is 1"),
 		Entry(
 			"missing required property (account)",
 			`[{"recipient": "3831fec2-1875-432a-bb58-08e71908f0e6", "url": "http://example.com"}]`,
-			"Property 'account' is missing",
+			`property \"account\" is missing`,
 		),
 		Entry(
 			"invalid property (account)",
 			`[{"recipient": "3831fec2-1875-432a-bb58-08e71908f0e6", "url": "http://example.com", "account": "2718281828459045235360287471352"}]`,
-			"Maximum string length is 10",
+			"maximum string length is 10",
 		),
 		Entry(
 			"timeout minimum",
 			`[{"recipient": "3831fec2-1875-432a-bb58-08e71908f0e6", "url": "http://example.com", "account": "540155", "timeout": -1}]`,
-			"Number must be at least 0",
+			"number must be at least 0",
 		),
 		Entry(
 			"timeout maximum",
 			`[{"recipient": "3831fec2-1875-432a-bb58-08e71908f0e6", "url": "http://example.com", "account": "540155", "timeout": 1000000}]`,
-			"Number must be most 604800",
+			"number must be at most 604800",
 		),
 	)
 })

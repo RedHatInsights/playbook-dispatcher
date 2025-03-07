@@ -25,7 +25,7 @@ func minimalV2Cancel() CancelInputV2 {
 	return CancelInputV2{
 		OrgId:     OrgId("5318290"),
 		Principal: Principal("test_user"),
-		RunId:     public.RunId("eb05b1a7-6613-442f-9ca6-1d7f83188915"),
+		RunId:     public.RunId(uuid.MustParse("eb05b1a7-6613-442f-9ca6-1d7f83188915")),
 	}
 }
 
@@ -44,7 +44,7 @@ var _ = Describe("runsCancel V2", func() {
 		Expect(db().Create(&data).Error).ToNot(HaveOccurred())
 
 		payload := minimalV2Cancel()
-		payload.RunId = public.RunId(data.ID.String())
+		payload.RunId = public.RunId(data.ID)
 		payload.OrgId = OrgId("1234")
 
 		runs, _ := cancelV2(&ApiInternalV2RunsCancelJSONRequestBody{payload})
@@ -63,16 +63,14 @@ var _ = Describe("runsCancel V2", func() {
 		Expect(db().Create(&data).Error).ToNot(HaveOccurred())
 
 		payload := minimalV2Cancel()
-		payload.RunId = public.RunId(data.ID.String())
+		payload.RunId = public.RunId(data.ID)
 		payload.OrgId = OrgId(data.OrgID)
 
 		runs, _ := cancelV2(&ApiInternalV2RunsCancelJSONRequestBody{payload})
 
 		Expect(*runs).To(HaveLen(1))
 		Expect((*runs)[0].Code).To(Equal(202))
-		parsedRunID, err := uuid.Parse(string((*runs)[0].RunId))
-		Expect(parsedRunID).To(BeEquivalentTo(data.ID))
-		Expect(err).ToNot(HaveOccurred())
+		Expect((*runs)[0].RunId).To(BeEquivalentTo(data.ID))
 	})
 
 	It("404s if playbook run is not known", func() {
@@ -97,16 +95,14 @@ var _ = Describe("runsCancel V2", func() {
 		Expect(db().Create(&data).Error).ToNot(HaveOccurred())
 
 		payload := minimalV2Cancel()
-		payload.RunId = public.RunId(data.ID.String())
+		payload.RunId = public.RunId(data.ID)
 		payload.OrgId = OrgId(data.OrgID)
 
 		runs, _ := cancelV2(&ApiInternalV2RunsCancelJSONRequestBody{payload})
 
 		Expect(*runs).To(HaveLen(1))
 		Expect((*runs)[0].Code).To(Equal(202))
-		parsedRunID, err := uuid.Parse(string((*runs)[0].RunId))
-		Expect(parsedRunID).To(BeEquivalentTo(data.ID))
-		Expect(err).ToNot(HaveOccurred())
+		Expect((*runs)[0].RunId).To(BeEquivalentTo(data.ID))
 	})
 
 	It("400s if run is not of type satellite RHC", func() {
@@ -116,7 +112,7 @@ var _ = Describe("runsCancel V2", func() {
 		Expect(db().Create(&data).Error).ToNot(HaveOccurred())
 
 		payload := minimalV2Cancel()
-		payload.RunId = public.RunId(data.ID.String())
+		payload.RunId = public.RunId(data.ID)
 		payload.OrgId = OrgId(data.OrgID)
 
 		runs, _ := cancelV2(&ApiInternalV2RunsCancelJSONRequestBody{payload})
@@ -138,7 +134,7 @@ var _ = Describe("runsCancel V2", func() {
 		Expect(db().Create(&data).Error).ToNot(HaveOccurred())
 
 		payload := minimalV2Cancel()
-		payload.RunId = public.RunId(data.ID.String())
+		payload.RunId = public.RunId(data.ID)
 		payload.OrgId = OrgId(data.OrgID)
 
 		runs, _ := cancelV2(&ApiInternalV2RunsCancelJSONRequestBody{payload})
@@ -161,7 +157,7 @@ var _ = Describe("runsCancel V2", func() {
 		Expect(db().Create(&data).Error).ToNot(HaveOccurred())
 
 		payload := minimalV2Cancel()
-		payload.RunId = public.RunId(data.ID.String())
+		payload.RunId = public.RunId(data.ID)
 		payload.OrgId = OrgId(data.OrgID)
 
 		runs, _ := cancelV2(&ApiInternalV2RunsCancelJSONRequestBody{payload})

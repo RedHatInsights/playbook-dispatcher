@@ -20,7 +20,7 @@ func getLabels(input *public.Labels) map[string]string {
 		return map[string]string{}
 	}
 
-	return input.AdditionalProperties
+	return *input
 }
 
 // this will panic if the given value is not a valid UUID
@@ -42,7 +42,7 @@ func parseRunHosts(input *RunInputHosts) []generic.RunHostsInput {
 		}
 
 		if host.InventoryId != nil {
-			result[i].InventoryId = utils.UUIDRef(parseValidatedUUID(*host.InventoryId))
+			result[i].InventoryId = host.InventoryId
 		}
 
 	}
@@ -148,7 +148,7 @@ func handleRunCreateError(err error) *RunCreated {
 func runCreated(runID uuid.UUID) *RunCreated {
 	return &RunCreated{
 		Code: http.StatusCreated,
-		Id:   (*public.RunId)(utils.StringRef(runID.String())),
+		Id:   &runID,
 	}
 }
 
