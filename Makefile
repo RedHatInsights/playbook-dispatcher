@@ -15,8 +15,8 @@ all: init generate build test run-lint
 
 init:
 	go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest
-	go get github.com/atombender/go-jsonschema
-	go get github.com/kulshekhar/fungen
+	go install github.com/atombender/go-jsonschema@latest
+	go install github.com/kulshekhar/fungen@latest
 
 generate-api:
 	# public API
@@ -37,23 +37,19 @@ generate-messages:
 generate-cloud-connector:
 	curl -s ${CLOUD_CONNECTOR_SCHEMA} -o cloud-connector.json
 	${GOPATH}/bin/oapi-codegen -generate client,types -package connectors -o internal/api/connectors/cloudConnector.gen.go cloud-connector.json
-	rm cloud-connector.json
 
 generate-rbac:
 	curl -s ${RBAC_CONNECTOR_SCHEMA} -o rbac.json
 	${GOPATH}/bin/oapi-codegen -generate client,types -package rbac -include-tags Access -o internal/api/rbac/rbac.gen.go rbac.json
-	rm rbac.json
 
 generate-inventory:
 	patch -p1 insights-host-inventory/swagger/openapi.json inventory_xgo_name.patch
 	${GOPATH}/bin/oapi-codegen -config oapi-codegen-inventory-cfg.yaml -generate client,types -package inventory -o internal/api/connectors/inventory/inventory.gen.go insights-host-inventory/swagger/openapi.json
-	cd insights-host-inventory && git reset --hard
 
 generate-sources:
 	curl -s ${SOURCES_CONNECTOR_SCHEMA} -o sources.json
 	patch -p1 sources.json sources_xgo_name.patch
 	${GOPATH}/bin/oapi-codegen -config oapi-codegen-sources-cfg.yaml -generate client,types -package sources -o internal/api/connectors/sources/sources.gen.go sources.json
-	rm sources.json
 
 generate-utils:
 	go generate ./...
@@ -61,7 +57,7 @@ generate-utils:
 generate: generate-api generate-clients generate-messages generate-cloud-connector generate-rbac generate-inventory generate-sources generate-utils
 
 build:
-	go build -o pd .
+	go build -v -o app .
 
 migrate-db:
 	ACG_CONFIG=$(shell pwd)/cdappconfig.json go run . migrate up
