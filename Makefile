@@ -1,5 +1,7 @@
 CLOUD_CONNECTOR_SCHEMA ?= https://raw.githubusercontent.com/RedHatInsights/cloud-connector/master/internal/controller/api/api.spec.json
 RBAC_CONNECTOR_SCHEMA ?= https://cloud.redhat.com/api/rbac/v1/openapi.json
+# Newer commits do not generate 3/11/25
+INVENTORY_CONNECTOR_SCHEMA ?= https://raw.githubusercontent.com/RedHatInsights/insights-host-inventory/ffa3cab521f907e006f392d1698bf730346bed94/swagger/openapi.json
 SOURCES_CONNECTOR_SCHEMA ?= https://console.redhat.com/api/sources/v3.1/openapi.json
 
 MKFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
@@ -37,19 +39,24 @@ generate-messages:
 generate-cloud-connector:
 	curl -s ${CLOUD_CONNECTOR_SCHEMA} -o cloud-connector.json
 	${GOPATH}/bin/oapi-codegen -generate client,types -package connectors -o internal/api/connectors/cloudConnector.gen.go cloud-connector.json
+	rm cloud-connector.json
 
 generate-rbac:
 	curl -s ${RBAC_CONNECTOR_SCHEMA} -o rbac.json
 	${GOPATH}/bin/oapi-codegen -generate client,types -package rbac -include-tags Access -o internal/api/rbac/rbac.gen.go rbac.json
+	rm rbac.json
 
 generate-inventory:
-	patch -p1 insights-host-inventory/swagger/openapi.json inventory_xgo_name.patch
-	${GOPATH}/bin/oapi-codegen -config oapi-codegen-inventory-cfg.yaml -generate client,types -package inventory -o internal/api/connectors/inventory/inventory.gen.go insights-host-inventory/swagger/openapi.json
+	curl -s ${INVENTORY_CONNECTOR_SCHEMA} -o inventory.json
+	patch -p1 inventory.json inventory_xgo_name.patch
+	${GOPATH}/bin/oapi-codegen -config oapi-codegen-inventory-cfg.yaml -generate client,types -package inventory -o internal/api/connectors/inventory/inventory.gen.go inventory.json
+	rm inventory.json
 
 generate-sources:
 	curl -s ${SOURCES_CONNECTOR_SCHEMA} -o sources.json
 	patch -p1 sources.json sources_xgo_name.patch
 	${GOPATH}/bin/oapi-codegen -config oapi-codegen-sources-cfg.yaml -generate client,types -package sources -o internal/api/connectors/sources/sources.gen.go sources.json
+	rm sources.json
 
 generate-utils:
 	go generate ./...

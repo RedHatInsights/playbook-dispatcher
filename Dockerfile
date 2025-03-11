@@ -8,7 +8,6 @@ COPY inventory_xgo_name.patch sources_xgo_name.patch oapi-codegen-sources-cfg.ya
 COPY internal/ internal/
 COPY cmd/ cmd/
 COPY schema schema/
-COPY insights-host-inventory/ insights-host-inventory
 COPY main.go main.go
 COPY Makefile ./
 
