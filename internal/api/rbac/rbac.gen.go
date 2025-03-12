@@ -21,7 +21,7 @@ const (
 
 // Defines values for ResourceDefinitionFilterOperation.
 const (
-	EEqual ResourceDefinitionFilterOperation = "equal"
+	Equal ResourceDefinitionFilterOperation = "equal"
 	In    ResourceDefinitionFilterOperation = "in"
 )
 
