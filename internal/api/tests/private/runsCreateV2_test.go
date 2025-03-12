@@ -2,7 +2,7 @@ package private
 
 import (
 	"context"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"playbook-dispatcher/internal/api/controllers/public"
 	dbModel "playbook-dispatcher/internal/common/model/db"
@@ -328,7 +328,7 @@ var _ = Describe("runsCreate V2", func() {
 			resp, err := client.ApiInternalV2RunsCreateWithBody(test.TestContext(), "application/json", strings.NewReader(payload))
 			Expect(err).ToNot(HaveOccurred())
 			Expect(resp.StatusCode).To(Equal(http.StatusBadRequest))
-			body, err := ioutil.ReadAll(resp.Body)
+			body, err := io.ReadAll(resp.Body)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(string(body)).To(ContainSubstring(expected))
 		},

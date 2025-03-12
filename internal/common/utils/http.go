@@ -2,7 +2,7 @@ package utils
 
 import (
 	"bytes"
-	"io/ioutil"
+	"io"
 	"net/http"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -48,7 +48,7 @@ func (this *mockHttpRequestDoer) Do(req *http.Request) (*http.Response, error) {
 	status, body, error := this.callback(req)
 	return &http.Response{
 		StatusCode: status,
-		Body:       ioutil.NopCloser(bytes.NewBufferString(body)),
+		Body:       io.NopCloser(bytes.NewBufferString(body)),
 		Header:     make(http.Header),
 	}, error
 }

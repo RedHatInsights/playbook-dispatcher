@@ -2,7 +2,7 @@ package public
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"playbook-dispatcher/internal/common/utils"
 	"playbook-dispatcher/internal/common/utils/test"
@@ -16,7 +16,7 @@ func fieldTester(fn func(params ...interface{}) *http.Response) func(...string) 
 		res := fn(params...)
 		Expect(res.StatusCode).To(Equal(http.StatusOK))
 
-		bodyBytes, err := ioutil.ReadAll(res.Body)
+		bodyBytes, err := io.ReadAll(res.Body)
 		Expect(err).ToNot(HaveOccurred())
 		defer res.Body.Close()
 
