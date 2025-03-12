@@ -16,7 +16,7 @@ ENV PATH="/opt/app-root/src/.go/bin:/opt/app-root/src/bin:/opt/app-root/bin:/usr
 
 RUN make init generate build
 
-FROM registry.access.redhat.com/ubi9-minimal
+FROM registry.access.redhat.com/ubi9/ubi-minimal
 
 ARG BUILD_COMMIT=unknown
 
