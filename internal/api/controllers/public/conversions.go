@@ -99,8 +99,3 @@ func dbRuntoApiRun(r *dbModel.Run, fields []string) *Run {
 
 	return &run
 }
-
-func convertUuid(value uuid.UUID) *string {
-	result := value.String()
-	return &result
-}
