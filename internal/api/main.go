@@ -34,9 +34,9 @@ const specFile = "/api/playbook-dispatcher/v1/openapi.json"
 const apiShutdownTimeout = 10 * time.Second
 
 func init() {
-	openapi3.DefineStringFormat("uuid", `^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89aAbB][a-f0-9]{3}-[a-f0-9]{12}$`)
-	openapi3.DefineStringFormat("sat-id-uuid", `^[a-f0-9]{8}-[a-f0-9]{4}-[45][a-f0-9]{3}-[89aAbB][a-f0-9]{3}-[a-f0-9]{12}$`)
-	openapi3.DefineStringFormat("url", `^https?:\/\/.*$`)
+	openapi3.DefineStringFormatValidator("uuid", openapi3.NewRegexpFormatValidator(`^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89aAbB][a-f0-9]{3}-[a-f0-9]{12}$`))
+	openapi3.DefineStringFormatValidator("sat-id-uuid", openapi3.NewRegexpFormatValidator(`^[a-f0-9]{8}-[a-f0-9]{4}-[45][a-f0-9]{3}-[89aAbB][a-f0-9]{3}-[a-f0-9]{12}$`))
+	openapi3.DefineStringFormatValidator("url", openapi3.NewRegexpFormatValidator(`^https?:\/\/.*$`))
 }
 
 func Start(
