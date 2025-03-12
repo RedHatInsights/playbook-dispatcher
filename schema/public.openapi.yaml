@@ -460,6 +460,7 @@ components:
           - created_at
           - created_at:asc
           - created_at:desc
+        default: created_at:desc
 
     Limit:
       description: Maximum number of results to return
