@@ -3,8 +3,6 @@ package public
 import (
 	dbModel "playbook-dispatcher/internal/common/model/db"
 	"playbook-dispatcher/internal/common/utils"
-
-	"github.com/google/uuid"
 )
 
 const (
