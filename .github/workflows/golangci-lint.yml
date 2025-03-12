@@ -20,8 +20,6 @@ jobs:
         with:
           go-version: 1.22
       - uses: actions/checkout@v3
-      - name: Run build and generation for our API components
-        run: make init generate build
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v3
         with:
