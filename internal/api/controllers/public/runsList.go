@@ -11,6 +11,7 @@ import (
 	"playbook-dispatcher/internal/common/utils"
 	"strings"
 
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	identityMiddleware "github.com/redhatinsights/platform-go-middlewares/identity"
 	"gorm.io/gorm"
@@ -81,7 +82,14 @@ func (this *controllers) ApiRunsList(ctx echo.Context, params ApiRunsListParams)
 		}
 
 		if params.Filter.Recipient != nil {
-			queryBuilder.Where("runs.recipient = ?", *params.Filter.Recipient)
+
+			recipient, err := uuid.Parse(*params.Filter.Recipient)
+			if err != nil {
+				instrumentation.PlaybookApiRequestError(ctx, err)
+				return echo.NewHTTPError(http.StatusBadRequest, "Unable to parse recipient!")
+			}
+
+			queryBuilder.Where("runs.recipient = ?", recipient)
 		}
 
 		if params.Filter.Service != nil {

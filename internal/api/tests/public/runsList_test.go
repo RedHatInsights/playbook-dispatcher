@@ -224,6 +224,12 @@ var _ = Describe("runsList", func() {
 				Expect(res.StatusCode()).To(Equal(http.StatusOK))
 				Expect(runs.Meta.Count).To(Equal(0))
 			})
+
+			It("handle invalid recipient", func() {
+				_, res := listRuns("filter[recipient]", "fred-flintston-barney-rubble")
+				Expect(res.StatusCode()).To(Equal(http.StatusBadRequest))
+				Expect(res.JSON400.Message).To(Equal("Unable to parse recipient!"))
+			})
 		})
 
 		Describe("labels", func() {
