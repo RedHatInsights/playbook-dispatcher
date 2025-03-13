@@ -143,6 +143,12 @@ var _ = Describe("runHostList", func() {
 				Expect(runs.Data).To(HaveLen(1))
 				Expect(*runs.Data[0].Run.Id).To(BeEquivalentTo(data[1].ID))
 			})
+
+			It("handle invalid inventory id filter", func() {
+				_, res := listRunHosts("filter[inventory_id]", "fred-flintstone-barney-rubble-not-uuid")
+				Expect(res.StatusCode()).To(Equal(http.StatusBadRequest))
+				Expect(res.JSON400.Message).To(Equal("Unable to parse inventory id!"))
+			})
 		})
 	})
 
