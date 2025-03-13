@@ -8,9 +8,9 @@ import (
 	"playbook-dispatcher/internal/common/utils"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/redhatinsights/platform-go-middlewares/request_id"
 	"github.com/spf13/viper"
-    "github.com/google/uuid"
 )
 
 const basePath = "/api/inventory/v1/hosts"
@@ -84,7 +84,7 @@ func createHostGetHostSystemProfileByIdParams(orderBy string, orderHow string) *
 
 	fields := FieldsParam(
 		SystemProfileNestedObject{
-                "fields[system_profile]": SystemProfileNestedObject_AdditionalProperties{[]byte(`["rhc_client_id", "owner_id"]`)},
+			"fields[system_profile]": SystemProfileNestedObject_AdditionalProperties{[]byte(`["rhc_client_id", "owner_id"]`)},
 		},
 	)
 
@@ -134,10 +134,10 @@ func (this *inventoryConnectorImpl) getHostDetails(
 	offset int,
 ) (details []HostOut, err error) {
 
-    clientIds, err := strToUUID(IDs)
-    if err != nil {
+	clientIds, err := strToUUID(IDs)
+	if err != nil {
 		return nil, err
-    }
+	}
 
 	params := createHostGetHostByIdParams(orderBy, orderHow)
 
@@ -167,10 +167,10 @@ func (this *inventoryConnectorImpl) getSystemProfileDetails(
 	offset int,
 ) (details map[string]HostSystemProfileOut, err error) {
 
-    clientIds, err := strToUUID(IDs)
-    if err != nil {
+	clientIds, err := strToUUID(IDs)
+	if err != nil {
 		return nil, err
-    }
+	}
 
 	params := createHostGetHostSystemProfileByIdParams(orderBy, orderHow)
 

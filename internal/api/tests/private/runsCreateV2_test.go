@@ -47,10 +47,6 @@ var _ = Describe("runsCreate V2", func() {
 
 		Expect(*runs).To(HaveLen(1))
 		Expect((*runs)[0].Code).To(Equal(201))
-        /*
-		_, err := uuid.Parse(string(*(*runs)[0].Id))
-		Expect(err).ToNot(HaveOccurred())
-        */
 
 		var run dbModel.Run
 		result := db().Where("id = ?", (*runs)[0].Id).First(&run)
@@ -96,10 +92,6 @@ var _ = Describe("runsCreate V2", func() {
 
 		Expect(*runs).To(HaveLen(1))
 		Expect((*runs)[0].Code).To(Equal(201))
-        /*
-		_, err := uuid.Parse(string(*(*runs)[0].Id))
-		Expect(err).ToNot(HaveOccurred())
-        */
 
 		var run dbModel.Run
 		result := db().Where("id = ?", (*runs)[0].Id).First(&run)
@@ -149,10 +141,6 @@ var _ = Describe("runsCreate V2", func() {
 
 		Expect(*runs).To(HaveLen(1))
 		Expect((*runs)[0].Code).To(Equal(201))
-        /*
-		_, err := uuid.Parse(string(*(*runs)[0].Id))
-		Expect(err).ToNot(HaveOccurred())
-        */
 
 		var runHost dbModel.RunHost
 		result := db().Where("run_id = ?", (*runs)[0].Id).First(&runHost)
@@ -193,10 +181,6 @@ var _ = Describe("runsCreate V2", func() {
 
 		Expect(*runs).To(HaveLen(1))
 		Expect((*runs)[0].Code).To(Equal(201))
-        /*
-		_, err := uuid.Parse(string(*(*runs)[0].Id))
-		Expect(err).ToNot(HaveOccurred())
-        */
 
 		var run dbModel.Run
 		result := db().Where("id = ?", (*runs)[0].Id).First(&run)
@@ -245,10 +229,6 @@ var _ = Describe("runsCreate V2", func() {
 
 		Expect(*runs).To(HaveLen(1))
 		Expect((*runs)[0].Code).To(Equal(201))
-        /*
-		_, err := uuid.Parse(string(*(*runs)[0].Id))
-		Expect(err).ToNot(HaveOccurred())
-        */
 
 		var run dbModel.Run
 		result := db().Where("id = ?", (*runs)[0].Id).First(&run)

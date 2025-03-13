@@ -3,7 +3,7 @@ package responseConsumer
 import (
 	"context"
 	"errors"
-    "time"
+	"time"
 
 	"playbook-dispatcher/internal/common/ansible"
 	"playbook-dispatcher/internal/common/constants"

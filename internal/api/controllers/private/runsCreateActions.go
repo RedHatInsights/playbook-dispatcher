@@ -124,25 +124,25 @@ func validateSatelliteFields(runInput RunInputV2) error {
 
 func runCreateError(code int, message string) *RunCreated {
 	return &RunCreated{
-		Code: 	code,
+		Code:    code,
 		Message: &message,
 	}
 }
 
 func handleRunCreateError(err error) *RunCreated {
 	if _, ok := err.(*dispatch.RecipientNotFoundError); ok {
-		return runCreateError(http.StatusNotFound,"Receipient not found")
+		return runCreateError(http.StatusNotFound, "Receipient not found")
 	}
 
 	if _, ok := err.(*tenantid.TenantNotFoundError); ok {
-		return runCreateError(http.StatusNotFound,"Tenant not found")
+		return runCreateError(http.StatusNotFound, "Tenant not found")
 	}
 
 	if _, ok := err.(*utils.BlocklistedOrgIdError); ok {
-		return runCreateError(http.StatusBadRequest,"Block listed org")
+		return runCreateError(http.StatusBadRequest, "Block listed org")
 	}
 
-	return runCreateError(http.StatusInternalServerError,"Unexpected error during processing")
+	return runCreateError(http.StatusInternalServerError, "Unexpected error during processing")
 }
 
 func runCreated(runID uuid.UUID) *RunCreated {

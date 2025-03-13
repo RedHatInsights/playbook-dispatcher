@@ -5,9 +5,9 @@ import (
 	"playbook-dispatcher/internal/api/controllers/public"
 	"playbook-dispatcher/internal/api/tests/common"
 
+	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/google/uuid"
 )
 
 func getConnectionStatus(payload ApiInternalHighlevelConnectionStatusJSONRequestBody) (*HighLevelRecipientStatus, *ApiInternalHighlevelConnectionStatusResponse) {
@@ -15,8 +15,8 @@ func getConnectionStatus(payload ApiInternalHighlevelConnectionStatusJSONRequest
 	// Build a test client that passes an identity header because the high
 	// level interface requires the identity header
 	identityPassingClient := &Client{
-		Server:        common.TestServer,
-		Client:        common.TestClient,
+		Server:         common.TestServer,
+		Client:         common.TestClient,
 		RequestEditors: []RequestEditorFn{common.TestRequestEditor},
 	}
 	ctx := common.ContextWithIdentity(orgId)
