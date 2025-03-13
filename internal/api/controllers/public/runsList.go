@@ -82,7 +82,6 @@ func (this *controllers) ApiRunsList(ctx echo.Context, params ApiRunsListParams)
 		}
 
 		if params.Filter.Recipient != nil {
-
 			recipient, err := uuid.Parse(*params.Filter.Recipient)
 			if err != nil {
 				instrumentation.PlaybookApiRequestError(ctx, err)

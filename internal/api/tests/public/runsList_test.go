@@ -226,7 +226,7 @@ var _ = Describe("runsList", func() {
 			})
 
 			It("handle invalid recipient", func() {
-				_, res := listRuns("filter[recipient]", "fred-flintston-barney-rubble")
+				_, res := listRuns("filter[recipient]", "fred-flintstone-barney-rubble-not-uuid")
 				Expect(res.StatusCode()).To(Equal(http.StatusBadRequest))
 				Expect(res.JSON400.Message).To(Equal("Unable to parse recipient!"))
 			})
