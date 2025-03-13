@@ -134,7 +134,7 @@ func (this *inventoryConnectorImpl) getHostDetails(
 	offset int,
 ) (details []HostOut, err error) {
 
-	clientIds, err := strToUUID(IDs)
+	clientIds, err := strSliceToUUIDSlice(IDs)
 	if err != nil {
 		return nil, err
 	}
@@ -167,7 +167,7 @@ func (this *inventoryConnectorImpl) getSystemProfileDetails(
 	offset int,
 ) (details map[string]HostSystemProfileOut, err error) {
 
-	clientIds, err := strToUUID(IDs)
+	clientIds, err := strSliceToUUIDSlice(IDs)
 	if err != nil {
 		return nil, err
 	}
@@ -223,8 +223,9 @@ func (this *inventoryConnectorImpl) GetHostConnectionDetails(ctx context.Context
 	return hostConnectionDetails, nil
 }
 
-func strToUUID(strSlice []string) ([]uuid.UUID, error) {
-	var uuidSlice []uuid.UUID
+func strSliceToUUIDSlice(strSlice []string) ([]uuid.UUID, error) {
+	uuidSlice := make([]uuid.UUID, 0, len(strSlice))
+
 	for _, str := range strSlice {
 		uuid, err := uuid.Parse(str)
 		if err != nil {
