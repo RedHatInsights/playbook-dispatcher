@@ -4,9 +4,9 @@ import (
 	"net/http"
 	"playbook-dispatcher/internal/common/utils/test"
 
+	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/google/uuid"
 )
 
 func getStatus(payload ApiInternalV2RecipientsStatusJSONRequestBody) (*[]RecipientStatus, *ApiInternalV2RecipientsStatusResponse) {

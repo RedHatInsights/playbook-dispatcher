@@ -44,8 +44,8 @@ func (this *controllers) ApiInternalV2RecipientsStatus(ctx echo.Context) error {
 
 func recipientStatusResponse(recipient RecipientWithOrg, connected bool) RecipientStatus {
 	return RecipientStatus{
-		Recipient:        recipient.Recipient,
-        OrgId:            recipient.OrgId,
-		Connected:        connected,
+		Recipient: recipient.Recipient,
+		OrgId:     recipient.OrgId,
+		Connected: connected,
 	}
 }

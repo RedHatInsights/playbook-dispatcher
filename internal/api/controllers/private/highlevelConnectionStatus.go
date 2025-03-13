@@ -8,8 +8,8 @@ import (
 	"playbook-dispatcher/internal/api/controllers/public"
 	"playbook-dispatcher/internal/common/utils"
 
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
-    "github.com/google/uuid"
 )
 
 type rhcSatellite struct {
@@ -126,7 +126,7 @@ func formatConnectionResponse(satID *string, satOrgID *string, rhcClientID *stri
 	}
 
 	if rhcClientID != nil {
-        rhcClientUUID, _ := uuid.Parse(*rhcClientID)
+		rhcClientUUID, _ := uuid.Parse(*rhcClientID)
 		formatedRHCClientID = public.RunRecipient(rhcClientUUID)
 	}
 

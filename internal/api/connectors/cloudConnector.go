@@ -109,8 +109,8 @@ func (this *cloudConnectorClientImpl) SendCloudConnectorRequest(
 
 	body, err := encodedBody(PostV2ConnectionsClientIdMessageJSONRequestBody{
 		Directive: &directive,
-		Metadata: &metadata,
-		Payload: url,
+		Metadata:  &metadata,
+		Payload:   url,
 	})
 
 	if err != nil {
@@ -135,7 +135,7 @@ func (this *cloudConnectorClientImpl) SendCloudConnectorRequest(
 		return nil, false, utils.UnexpectedResponse(res.HTTPResponse)
 	}
 
-    idString := res.JSON201.Id.String()
+	idString := res.JSON201.Id.String()
 
 	return &idString, false, nil
 }
