@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/json"
-	"io/ioutil"
+	"os"
 	"playbook-dispatcher/internal/common/constants"
 	kafkaUtils "playbook-dispatcher/internal/common/kafka"
 	messageModel "playbook-dispatcher/internal/common/model/message"
@@ -27,7 +27,7 @@ var _ = Describe("Handler", func() {
 
 		for _, filePath := range []string{"../../schema/ansibleRunnerJobEvent.yaml", "../../schema/rhcsatJobEvent.yaml"} {
 			var schema jsonschema.Schema
-			file, err := ioutil.ReadFile(filePath)
+			file, err := os.ReadFile(filePath)
 			Expect(err).ToNot(HaveOccurred())
 			err = yaml.Unmarshal(file, &schema)
 			Expect(err).ToNot(HaveOccurred())

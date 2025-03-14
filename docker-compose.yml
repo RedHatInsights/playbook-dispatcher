@@ -89,7 +89,7 @@ services:
       - kafka
 
   db:
-    image: quay.io/debezium/postgres:12
+    image: quay.io/debezium/postgres:16
     restart: always
     environment:
       POSTGRES_PASSWORD: insights

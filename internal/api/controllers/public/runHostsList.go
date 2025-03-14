@@ -69,12 +69,13 @@ func (this *controllers) ApiRunHostsList(ctx echo.Context, params ApiRunHostsLis
 		}
 
 		if params.Filter.InventoryId != nil {
-			parsedInventoryID, err := uuid.Parse(string(*params.Filter.InventoryId))
+			inventoryId, err := uuid.Parse(*params.Filter.InventoryId)
 			if err != nil {
-				return echo.NewHTTPError(http.StatusBadRequest, fmt.Errorf("invalid inventory_id: %s", *params.Filter.InventoryId))
+				instrumentation.PlaybookApiRequestError(ctx, err)
+				return echo.NewHTTPError(http.StatusBadRequest, "Unable to parse inventory id!")
 			}
 
-			queryBuilder.Where("run_hosts.inventory_id = ?", parsedInventoryID)
+			queryBuilder.Where("run_hosts.inventory_id = ?", inventoryId)
 		}
 	}
 
@@ -104,7 +105,6 @@ func (this *controllers) ApiRunHostsList(ctx echo.Context, params ApiRunHostsLis
 	for _, host := range dbRunHosts {
 
 		runHost := RunHost{}
-		runId := RunId(host.RunID.String())
 		runStatus := RunStatus(host.Status)
 
 		for _, field := range fields {
@@ -117,7 +117,7 @@ func (this *controllers) ApiRunHostsList(ctx echo.Context, params ApiRunHostsLis
 				runHost.Status = &runStatus
 			case fieldRun:
 				runHost.Run = &Run{
-					Id: &runId,
+					Id: &host.RunID,
 				}
 			case fieldLinks:
 				runHost.Links = &RunHostLinks{
@@ -125,8 +125,7 @@ func (this *controllers) ApiRunHostsList(ctx echo.Context, params ApiRunHostsLis
 				}
 			case fieldInventoryId:
 				if host.InventoryID != nil {
-					inventoryID := host.InventoryID.String()
-					runHost.InventoryId = &inventoryID
+					runHost.InventoryId = host.InventoryID
 				}
 			}
 		}

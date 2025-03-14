@@ -1,0 +1,7 @@
+output-options:
+  include-operation-ids: [api.host.get_host_by_id,api.host.get_host_system_profile_by_id]
+  exclude-schemas: []
+
+
+
+
