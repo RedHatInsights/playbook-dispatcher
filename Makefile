@@ -65,13 +65,13 @@ generate-rbac:
 
 generate-inventory:
 	curl -s ${INVENTORY_CONNECTOR_SCHEMA} -o inventory.json
-	patch -p1 inventory.json inventory_xgo_name.patch
+	patch -p1 inventory.json openapi_patches/inventory_xgo_name.patch
 	${GOPATH}/bin/oapi-codegen -config oapi-codegen-inventory-cfg.yaml -generate client,types -package inventory -o internal/api/connectors/inventory/inventory.gen.go inventory.json
 	rm inventory.json
 
 generate-sources:
 	curl -s ${SOURCES_CONNECTOR_SCHEMA} -o sources.json
-	patch -p1 sources.json sources_xgo_name.patch
+	patch -p1 sources.json openapi_patches/sources_xgo_name.patch
 	${GOPATH}/bin/oapi-codegen -config oapi-codegen-sources-cfg.yaml -generate client,types -package sources -o internal/api/connectors/sources/sources.gen.go sources.json
 	rm sources.json
 
