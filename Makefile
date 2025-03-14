@@ -20,20 +20,37 @@ init:
 	go install github.com/atombender/go-jsonschema@latest
 	go install github.com/kulshekhar/fungen@latest
 
-generate-api:
+generate-api: internal/api/controllers/public/spec.gen.go \
+	          internal/api/controllers/public/types.gen.go \
+	          internal/api/controllers/private/spec.gen.go \
+	          internal/api/controllers/private/types.gen.go
+
+internal/api/controllers/public/spec.gen.go internal/api/controllers/public/types.gen.go: schema/public.openapi.yaml
 	# public API
 	${GOPATH}/bin/oapi-codegen -generate server,spec -package public -o internal/api/controllers/public/spec.gen.go schema/public.openapi.yaml
 	${GOPATH}/bin/oapi-codegen -generate types -package public -o internal/api/controllers/public/types.gen.go schema/public.openapi.yaml
-	# internal API
+
+internal/api/controllers/private/spec.gen.go internal/api/controllers/private/types.gen.go: schema/public.openapi.yaml schema/private.openapi.yaml
+	# private API
 	${GOPATH}/bin/oapi-codegen -generate server,spec -package private -o internal/api/controllers/private/spec.gen.go -import-mapping=./public.openapi.yaml:playbook-dispatcher/internal/api/controllers/public schema/private.openapi.yaml
 	${GOPATH}/bin/oapi-codegen -generate types -package private -o internal/api/controllers/private/types.gen.go -import-mapping=./public.openapi.yaml:playbook-dispatcher/internal/api/controllers/public schema/private.openapi.yaml
 
-generate-clients:
+generate-clients: internal/api/tests/public/client.gen.go \
+	              internal/api/tests/private/client.gen.go
+
+internal/api/tests/public/client.gen.go: schema/public.openapi.yaml schema/private.openapi.yaml
 	${GOPATH}/bin/oapi-codegen -generate client,types -package public -o internal/api/tests/public/client.gen.go schema/public.openapi.yaml
+
+internal/api/tests/private/client.gen.go: schema/public.openapi.yaml schema/private.openapi.yaml
 	${GOPATH}/bin/oapi-codegen -generate client,types -package private -o internal/api/tests/private/client.gen.go -import-mapping=./public.openapi.yaml:playbook-dispatcher/internal/api/controllers/public schema/private.openapi.yaml
 
-generate-messages:
+generate-messages: internal/common/model/message/runner.types.gen.go \
+	               internal/common/model/message/rhcsat.types.gen.go
+
+internal/common/model/message/runner.types.gen.go: schema/playbookRunResponse.message.yaml
 	${GOPATH}/bin/go-jsonschema --yaml-extension yaml -p message schema/playbookRunResponse.message.yaml > ./internal/common/model/message/runner.types.gen.go
+
+internal/common/model/message/rhcsat.types.gen.go: schema/playbookSatRunResponse.message.yaml
 	${GOPATH}/bin/go-jsonschema --yaml-extension yaml -p message schema/playbookSatRunResponse.message.yaml > ./internal/common/model/message/rhcsat.types.gen.go
 
 generate-cloud-connector:
@@ -48,17 +65,27 @@ generate-rbac:
 
 generate-inventory:
 	curl -s ${INVENTORY_CONNECTOR_SCHEMA} -o inventory.json
-	patch -p1 inventory.json inventory_xgo_name.patch
+	patch -p1 inventory.json openapi_patches/inventory_xgo_name.patch
 	${GOPATH}/bin/oapi-codegen -config oapi-codegen-inventory-cfg.yaml -generate client,types -package inventory -o internal/api/connectors/inventory/inventory.gen.go inventory.json
 	rm inventory.json
 
 generate-sources:
 	curl -s ${SOURCES_CONNECTOR_SCHEMA} -o sources.json
-	patch -p1 sources.json sources_xgo_name.patch
+	patch -p1 sources.json openapi_patches/sources_xgo_name.patch
 	${GOPATH}/bin/oapi-codegen -config oapi-codegen-sources-cfg.yaml -generate client,types -package sources -o internal/api/connectors/sources/sources.gen.go sources.json
 	rm sources.json
 
-generate-utils:
+generate-utils: internal/api/controllers/private/utils.gen.go \
+	            internal/api/controllers/private/utils.v2.gen.go \
+	            internal/api/controllers/private/cancel_utils.v2.gen.go
+
+internal/api/controllers/private/utils.gen.go: internal/api/controllers/private/runsCreate.go
+	go generate ./...
+
+internal/api/controllers/private/utils.v2.gen.go: internal/api/controllers/private/runsCreateV2.go
+	go generate ./...
+
+internal/api/controllers/private/cancel_utils.v2.gen.go: internal/api/controllers/private/runsCancelV2.go
 	go generate ./...
 
 generate: generate-api generate-clients generate-messages generate-cloud-connector generate-rbac generate-inventory generate-sources generate-utils
@@ -146,3 +173,4 @@ endif
 
 run-lint: golangci-lint
 	$(LOCAL_BIN_PATH)/golangci-lint run
+
