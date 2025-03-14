@@ -4,7 +4,7 @@ USER 0
 WORKDIR /go/src/app
 
 COPY go.mod go.sum ./
-COPY inventory_xgo_name.patch sources_xgo_name.patch oapi-codegen-sources-cfg.yaml oapi-codegen-inventory-cfg.yaml ./
+COPY oapi_codegen oapi_codegen/
 COPY internal/ internal/
 COPY cmd/ cmd/
 COPY schema schema/
