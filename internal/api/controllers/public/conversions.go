@@ -3,8 +3,6 @@ package public
 import (
 	dbModel "playbook-dispatcher/internal/common/model/db"
 	"playbook-dispatcher/internal/common/utils"
-
-	"github.com/google/uuid"
 )
 
 const (
@@ -55,19 +53,17 @@ func dbRuntoApiRun(r *dbModel.Run, fields []string) *Run {
 	for _, field := range fields {
 		switch field {
 		case fieldId:
-			run.Id = (*RunId)(convertUuid(r.ID))
+			run.Id = &r.ID
 		case fieldOrgId:
 			value := OrgId(r.OrgID)
 			run.OrgId = &value
 		case fieldRecipient:
-			run.Recipient = (*RunRecipient)(convertUuid(r.Recipient))
+			run.Recipient = &r.Recipient
 		case fieldUrl:
 			value := Url(r.URL)
 			run.Url = &value
 		case fieldLabels:
-			run.Labels = (&Labels{
-				AdditionalProperties: r.Labels,
-			})
+			run.Labels = (*Labels)(&r.Labels)
 		case fieldTimeout:
 			value := RunTimeout(r.Timeout)
 			run.Timeout = &value
@@ -100,9 +96,4 @@ func dbRuntoApiRun(r *dbModel.Run, fields []string) *Run {
 	}
 
 	return &run
-}
-
-func convertUuid(value uuid.UUID) *string {
-	result := value.String()
-	return &result
 }
