@@ -17,7 +17,7 @@ all: init generate build test run-lint
 
 init:
 	go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest
-	go install github.com/atombender/go-jsonschema@latest
+	go install github.com/atombender/go-jsonschema@v0.17.0
 	go install github.com/kulshekhar/fungen@latest
 
 generate-api: internal/api/controllers/public/spec.gen.go \
