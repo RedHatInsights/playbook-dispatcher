@@ -8,6 +8,7 @@ import (
 	"playbook-dispatcher/internal/api/controllers/public"
 	"playbook-dispatcher/internal/common/utils"
 
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 )
 
@@ -125,7 +126,8 @@ func formatConnectionResponse(satID *string, satOrgID *string, rhcClientID *stri
 	}
 
 	if rhcClientID != nil {
-		formatedRHCClientID = public.RunRecipient(*rhcClientID)
+		rhcClientUUID, _ := uuid.Parse(*rhcClientID)
+		formatedRHCClientID = public.RunRecipient(rhcClientUUID)
 	}
 
 	for i, host := range hosts {
@@ -138,7 +140,7 @@ func formatConnectionResponse(satID *string, satOrgID *string, rhcClientID *stri
 		RecipientType: RecipientType(recipientType),
 		SatId:         formatedSatID,
 		SatOrgId:      formatedSatOrgID,
-		Status:        status,
+		Status:        RecipientWithConnectionInfoStatus(status),
 		Systems:       formatedHosts,
 	}
 
@@ -156,13 +158,13 @@ func getDirectConnectStatus(ctx echo.Context, client connectors.CloudConnectorCl
 		}
 
 		var connectionStatus string
-		if status == connectors.ConnectionStatus_connected {
+		if status == connectors.Connected {
 			connectionStatus = "connected"
 		} else {
 			connectionStatus = "disconnected"
 		}
 
-		responses = append(responses, formatConnectionResponse(nil, nil, host.RHCClientID, orgId, []string{host.ID}, string(RecipientType_directConnect), connectionStatus))
+		responses = append(responses, formatConnectionResponse(nil, nil, host.RHCClientID, orgId, []string{host.ID}, string(DirectConnect), connectionStatus))
 	}
 
 	return responses, nil
@@ -232,13 +234,13 @@ func createSatelliteConnectionResponses(ctx echo.Context, hostsGroupedBySatellit
 			}
 
 			var connectionStatus string
-			if status == connectors.ConnectionStatus_connected {
+			if status == connectors.Connected {
 				connectionStatus = "connected"
 			} else {
 				connectionStatus = "disconnected"
 			}
 
-			responses = append(responses, formatConnectionResponse(&satellite.SatelliteInstanceID, &satellite.SatelliteOrgID, satellite.RhcClientID, orgId, satellite.Hosts, string(RecipientType_satellite), connectionStatus))
+			responses = append(responses, formatConnectionResponse(&satellite.SatelliteInstanceID, &satellite.SatelliteOrgID, satellite.RhcClientID, orgId, satellite.Hosts, string(Satellite), connectionStatus))
 		}
 	}
 
