@@ -13,7 +13,7 @@ ADD event-streams /src
 ADD schema/run.event.yaml /src
 ADD schema/run.host.event.yaml /src
 
-RUN microdnf update -y && microdnf install jq && microdnf install gzip
+RUN microdnf update -y && microdnf install -y jq && microdnf install -y gzip
 
 # Taken from https://github.com/debezium/docker-images/blob/master/connect-base/1.9/docker-maven-download.sh
 # Debezium PostgreSQL checksum from https://github.com/debezium/container-images/blob/main/connect/2.7/Dockerfile
