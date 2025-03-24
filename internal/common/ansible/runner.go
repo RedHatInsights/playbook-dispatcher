@@ -46,11 +46,10 @@ func GetStdout(events []messageModel.PlaybookRunResponseMessageYamlEventsElem, h
 	}
 
 	if executorFailedEvent != nil {
-		if executorFailedEvent.Stdout != nil {
-			result += *executorFailedEvent.Stdout
-		}
-
 		if executorFailedEvent.EventData != nil && executorFailedEvent.EventData.CrcDispatcherErrorDetails != nil {
+			if len(result) > 0 {
+				result += "\n"
+			}
 			result += *executorFailedEvent.EventData.CrcDispatcherErrorDetails
 		}
 	}
