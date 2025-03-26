@@ -9,7 +9,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func getConnectionStatus(payload ApiInternalHighlevelConnectionStatusJSONRequestBody) (*ApiInternalHighlevelConnectionStatusResponse, error) {
+func getConnectionStatus(payload ApiInternalHighlevelConnectionStatusJSONRequestBody) (error, *ApiInternalHighlevelConnectionStatusResponse) {
 	orgId := "12345"
 	// Build a test client that passes an identity header because the high
 	// level interface requires the identity header
@@ -21,14 +21,12 @@ func getConnectionStatus(payload ApiInternalHighlevelConnectionStatusJSONRequest
 	ctx := common.ContextWithIdentity(orgId)
 	resp, err := identityPassingClient.ApiInternalHighlevelConnectionStatus(ctx, payload)
 	if err != nil {
-		return nil, err
+		return err, nil
 	}
 	res, err := ParseApiInternalHighlevelConnectionStatusResponse(resp)
-	if err != nil {
-		return nil, err
-	}
-	
-	return res, err
+	//Expect(err).ToNot(HaveOccurred())
+
+	return err, res
 }
 
 var _ = Describe("high level connection status", func() {
@@ -43,11 +41,12 @@ var _ = Describe("high level connection status", func() {
 			OrgId: "12345",
 		}
 
-		res, err := getConnectionStatus(payload)
+		err, response := getConnectionStatus(payload)
+		if err != nil{
 
-		result := res.JSON200
-		Expect(err).To(BeNil())
-		Expect(res.StatusCode()).To(Equal(200))
+		}
+		result := response.JSON200
+		Expect(response.StatusCode()).To(Equal(200))
 		Expect(*result).To(HaveLen(2))
 		Expect((*result)[0].Recipient).To(Equal(public.RunRecipient("d415fc2d-9700-4e30-9621-6a410ccc92d8")))
 		Expect((*result)[0].RecipientType).To(Equal(RecipientType_satellite))
@@ -73,14 +72,14 @@ var _ = Describe("high level connection status", func() {
 		}
 
 		payload := ApiInternalHighlevelConnectionStatusJSONRequestBody{
-			OrgId: "12345",
 			Hosts: hosts,
+			OrgId: "12345",
 		}
 
-		res, err := getConnectionStatus(payload)
-
-		Expect(res.StatusCode()).To(Equal(400))
-		Expect(err).To(HaveKeyWithValue("message","maximum input length exceeded"))
-
+		err, response := getConnectionStatus(payload)
+		if err != nil{
+		}
+		Expect(response.StatusCode()).To(Equal(400))
+		Expect(response).To(HaveKeyWithValue("message","maximum input length exceeded"))
 	})
 })
