@@ -74,6 +74,7 @@ var _ = Describe("high level connection status", func() {
 
 		res, err := getConnectionStatus(payload)
 
+		print(err)
 		Expect(err).To(HaveOccurred())
 		Expect(res.StatusCode()).To(Equal(400))
 		Expect(res).To(HaveKeyWithValue("message","maximum input length exceeded"))
