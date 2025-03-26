@@ -24,7 +24,6 @@ func getConnectionStatus(payload ApiInternalHighlevelConnectionStatusJSONRequest
 		return err, nil
 	}
 	res, err := ParseApiInternalHighlevelConnectionStatusResponse(resp)
-	//Expect(err).ToNot(HaveOccurred())
 
 	return err, res
 }
@@ -80,6 +79,5 @@ var _ = Describe("high level connection status", func() {
 		if err != nil{
 		}
 		Expect(response.StatusCode()).To(Equal(400))
-		//Expect(response).To(HaveKeyWithValue("message","maximum input length exceeded"))
 	})
 })
