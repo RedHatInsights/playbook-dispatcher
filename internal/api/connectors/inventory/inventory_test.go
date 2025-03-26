@@ -21,7 +21,7 @@ var _ = Describe("Inventory", func() {
 			doer := test.MockMultiResponseHttpClient(responses...)
 			client := NewInventoryClientWithHttpRequestDoer(config.Get(), doer)
 			ctx := utils.SetLog(test.TestContext(), zap.NewNop().Sugar())
-			IDs := []string{"1234"}
+			IDs := []string{"db0b6f08-e0ba-4248-8e0e-2de2fb843dcf"}
 			result, err := client.GetHostConnectionDetails(ctx, IDs, "DisplayName", "ASC", 10, 0)
 			resultData := result[0]
 			Expect(err).ToNot(HaveOccurred())
@@ -42,7 +42,7 @@ var _ = Describe("Inventory", func() {
 			doer := test.MockMultiResponseHttpClient(responses...)
 			client := NewInventoryClientWithHttpRequestDoer(config.Get(), doer)
 			ctx := utils.SetLog(test.TestContext(), zap.NewNop().Sugar())
-			IDs := []string{"1234"}
+			IDs := []string{"db0b6f08-e0ba-4248-8e0e-2de2fb843dcf"}
 			_, err := client.GetHostConnectionDetails(ctx, IDs, "DisplayName", "ASC", 10, 0)
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(ContainSubstring(`unexpected status code "400"`))
@@ -57,7 +57,7 @@ var _ = Describe("Inventory", func() {
 			doer := test.MockMultiResponseHttpClient(responses...)
 			client := NewInventoryClientWithHttpRequestDoer(config.Get(), doer)
 			ctx := utils.SetLog(test.TestContext(), zap.NewNop().Sugar())
-			IDs := []string{"1234"}
+			IDs := []string{"db0b6f08-e0ba-4248-8e0e-2de2fb843dcf"}
 			_, err := client.GetHostConnectionDetails(ctx, IDs, "DisplayName", "ASC", 10, 0)
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(ContainSubstring(`unexpected status code "400"`))
@@ -72,7 +72,7 @@ var _ = Describe("Inventory", func() {
 			doer := test.MockMultiResponseHttpClient(responses...)
 			client := NewInventoryClientWithHttpRequestDoer(config.Get(), doer)
 			ctx := test.TestContext()
-			IDs := []string{"1234"}
+			IDs := []string{"db0b6f08-e0ba-4248-8e0e-2de2fb843dcf"}
 			result, err := client.GetHostConnectionDetails(ctx, IDs, "DisplayName", "ASC", 10, 0)
 			resultData := result[0]
 			Expect(err).ToNot(HaveOccurred())
@@ -93,7 +93,7 @@ var _ = Describe("Inventory", func() {
 			doer := test.MockMultiResponseHttpClient(responses...)
 			client := NewInventoryClientWithHttpRequestDoer(config.Get(), doer)
 			ctx := test.TestContext()
-			IDs := []string{"1234"}
+			IDs := []string{"db0b6f08-e0ba-4248-8e0e-2de2fb843dcf"}
 			result, err := client.GetHostConnectionDetails(ctx, IDs, "DisplayName", "ASC", 10, 0)
 			resultData := result[0]
 			Expect(err).ToNot(HaveOccurred())

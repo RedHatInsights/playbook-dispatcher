@@ -2,7 +2,7 @@ package test
 
 import (
 	"bytes"
-	"io/ioutil"
+	"io"
 	"net/http"
 )
 
@@ -19,7 +19,7 @@ func (this *mockHttpRequestDoer) Do(req *http.Request) (*http.Response, error) {
 func MockHttpClient(statusCode int, body string) mockHttpRequestDoer {
 	response := http.Response{
 		StatusCode: statusCode,
-		Body:       ioutil.NopCloser(bytes.NewReader([]byte(body))),
+		Body:       io.NopCloser(bytes.NewReader([]byte(body))),
 		Header: http.Header{
 			"Content-Type": []string{"application/json"},
 		},

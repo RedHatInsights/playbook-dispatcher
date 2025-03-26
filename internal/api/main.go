@@ -20,11 +20,11 @@ import (
 
 	"github.com/RedHatInsights/tenant-utils/pkg/tenantid"
 
-	oapiMiddleware "github.com/deepmap/oapi-codegen/pkg/middleware"
 	"github.com/getkin/kin-openapi/openapi3"
 	echoPrometheus "github.com/globocom/echo-prometheus"
 	"github.com/labstack/echo/v4"
 	echoMiddleware "github.com/labstack/echo/v4/middleware"
+	oapiMiddleware "github.com/oapi-codegen/echo-middleware"
 	"github.com/redhatinsights/platform-go-middlewares/identity"
 	"github.com/redhatinsights/platform-go-middlewares/request_id"
 	"github.com/spf13/viper"
@@ -34,9 +34,9 @@ const specFile = "/api/playbook-dispatcher/v1/openapi.json"
 const apiShutdownTimeout = 10 * time.Second
 
 func init() {
-	openapi3.DefineStringFormat("uuid", `^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89aAbB][a-f0-9]{3}-[a-f0-9]{12}$`)
-	openapi3.DefineStringFormat("sat-id-uuid", `^[a-f0-9]{8}-[a-f0-9]{4}-[45][a-f0-9]{3}-[89aAbB][a-f0-9]{3}-[a-f0-9]{12}$`)
-	openapi3.DefineStringFormat("url", `^https?:\/\/.*$`)
+	openapi3.DefineStringFormatValidator("uuid", openapi3.NewRegexpFormatValidator(`^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89aAbB][a-f0-9]{3}-[a-f0-9]{12}$`))
+	openapi3.DefineStringFormatValidator("sat-id-uuid", openapi3.NewRegexpFormatValidator(`^[a-f0-9]{8}-[a-f0-9]{4}-[45][a-f0-9]{3}-[89aAbB][a-f0-9]{3}-[a-f0-9]{12}$`))
+	openapi3.DefineStringFormatValidator("url", openapi3.NewRegexpFormatValidator(`^https?:\/\/.*$`))
 }
 
 func Start(

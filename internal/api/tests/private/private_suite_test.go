@@ -27,7 +27,7 @@ var (
 	client        = &Client{
 		Server: common.TestServer,
 		Client: common.TestClient,
-		RequestEditor: func(ctx context.Context, req *http.Request) error {
+		RequestEditors: []RequestEditorFn{func(ctx context.Context, req *http.Request) error {
 			if psk, ok := ctx.Value(pskKey).(string); ok {
 				req.Header.Set("authorization", fmt.Sprintf("PSK %s", psk))
 			} else {
@@ -35,7 +35,7 @@ var (
 			}
 
 			return nil
-		},
+		}},
 	}
 )
 

@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"compress/gzip"
 	"io"
-	"io/ioutil"
 	"net/http"
 	commonInstrumentation "playbook-dispatcher/internal/common/instrumentation"
 	"playbook-dispatcher/internal/common/utils"
@@ -98,5 +97,5 @@ func readFile(reader io.Reader) (result []byte, err error) {
 		}
 	}
 
-	return ioutil.ReadAll(reader)
+	return io.ReadAll(reader)
 }

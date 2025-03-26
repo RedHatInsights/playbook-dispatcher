@@ -59,6 +59,6 @@ func handleRunCancelError(err error) *RunCanceled {
 func runCanceled(runID uuid.UUID) *RunCanceled {
 	return &RunCanceled{
 		Code:  http.StatusAccepted,
-		RunId: public.RunId(runID.String()),
+		RunId: public.RunId(runID),
 	}
 }

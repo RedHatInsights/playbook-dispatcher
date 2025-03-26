@@ -4,24 +4,24 @@ import (
 	"playbook-dispatcher/internal/common/config"
 	"playbook-dispatcher/internal/common/utils/test"
 
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/ginkgo/extensions/table"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo/extensions/table"
+	"github.com/onsi/gomega"
 )
 
-var _ = Describe("RBAC", func() {
-	DescribeTable("filter permissions",
+var _ = ginkgo.Describe("RBAC", func() {
+	table.DescribeTable("filter permissions",
 		func(expected bool, body string) {
 			doer := test.MockHttpClient(200, body)
 
 			client := NewRbacClientWithHttpRequestDoer(config.Get(), &doer)
 			permissions, err := client.GetPermissions(test.TestContext())
-			Expect(err).ToNot(HaveOccurred())
+			gomega.Expect(err).ToNot(gomega.HaveOccurred())
 			matchingPermissions := FilterPermissions(permissions, DispatcherPermission("run", "read"))
-			Expect(len(matchingPermissions) > 0).To(Equal(expected))
+			gomega.Expect(len(matchingPermissions) > 0).To(gomega.Equal(expected))
 		},
 
-		Entry("no permissions", false, `{
+		table.Entry("no permissions", false, `{
 			"meta": {
 				"count": 0,
 				"limit": 1000,
@@ -36,7 +36,7 @@ var _ = Describe("RBAC", func() {
 			"data": []
 		}`),
 
-		Entry("single permission positive", true, `{
+		table.Entry("single permission positive", true, `{
 			"meta": {
 				"count": 1,
 				"limit": 1000,
@@ -56,7 +56,7 @@ var _ = Describe("RBAC", func() {
 			]
 		}`),
 
-		Entry("single permission negative", true, `{
+		table.Entry("single permission negative", true, `{
 			"meta": {
 				"count": 1,
 				"limit": 1000,
@@ -76,7 +76,7 @@ var _ = Describe("RBAC", func() {
 			]
 		}`),
 
-		Entry("single permission wildcard verb", true, `{
+		table.Entry("single permission wildcard verb", true, `{
 			"meta": {
 				"count": 1,
 				"limit": 1000,
@@ -96,7 +96,7 @@ var _ = Describe("RBAC", func() {
 			]
 		}`),
 
-		Entry("single permission wildcard resource type", true, `{
+		table.Entry("single permission wildcard resource type", true, `{
 			"meta": {
 				"count": 1,
 				"limit": 1000,
@@ -116,7 +116,7 @@ var _ = Describe("RBAC", func() {
 			]
 		}`),
 
-		Entry("single permission wildcards", true, `{
+		table.Entry("single permission wildcards", true, `{
 			"meta": {
 				"count": 1,
 				"limit": 1000,
@@ -136,7 +136,7 @@ var _ = Describe("RBAC", func() {
 			]
 		}`),
 
-		Entry("single permission wildcard verb negative", false, `{
+		table.Entry("single permission wildcard verb negative", false, `{
 			"meta": {
 				"count": 1,
 				"limit": 1000,
@@ -156,7 +156,7 @@ var _ = Describe("RBAC", func() {
 			]
 		}`),
 
-		Entry("single permission wildcard resource type", false, `{
+		table.Entry("single permission wildcard resource type", false, `{
 			"meta": {
 				"count": 1,
 				"limit": 1000,
@@ -176,7 +176,7 @@ var _ = Describe("RBAC", func() {
 			]
 		}`),
 
-		Entry("multiple permissions", true, `{
+		table.Entry("multiple permissions", true, `{
 			"meta": {
 				"count": 2,
 				"limit": 1000,
@@ -200,7 +200,7 @@ var _ = Describe("RBAC", func() {
 			]
 		}`),
 
-		Entry("permissions for different application", false, `{
+		table.Entry("permissions for different application", false, `{
 			"meta": {
 				"count": 1,
 				"limit": 1000,
@@ -221,8 +221,8 @@ var _ = Describe("RBAC", func() {
 		}`),
 	)
 
-	Describe("errors", func() {
-		It("detects page overflow", func() {
+	ginkgo.Describe("errors", func() {
+		ginkgo.It("detects page overflow", func() {
 			doer := test.MockHttpClient(200, `{
 				"meta": {
 					"count": 1002,
@@ -240,33 +240,33 @@ var _ = Describe("RBAC", func() {
 
 			client := NewRbacClientWithHttpRequestDoer(config.Get(), &doer)
 			_, err := client.GetPermissions(test.TestContext())
-			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(ContainSubstring(`RBAC page overflow`))
+			gomega.Expect(err).To(gomega.HaveOccurred())
+			gomega.Expect(err.Error()).To(gomega.ContainSubstring(`RBAC page overflow`))
 		})
 
-		It("detects unexpected status code", func() {
+		ginkgo.It("detects unexpected status code", func() {
 			doer := test.MockHttpClient(500, `{}`)
 
 			client := NewRbacClientWithHttpRequestDoer(config.Get(), &doer)
 			_, err := client.GetPermissions(test.TestContext())
-			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(ContainSubstring(`unexpected status code "500"`))
+			gomega.Expect(err).To(gomega.HaveOccurred())
+			gomega.Expect(err.Error()).To(gomega.ContainSubstring(`unexpected status code "500"`))
 		})
 	})
 
-	DescribeTable("predicate values",
+	table.DescribeTable("predicate values",
 		func(body string, values ...interface{}) {
 			doer := test.MockHttpClient(200, body)
 
 			client := NewRbacClientWithHttpRequestDoer(config.Get(), &doer)
 			permissions, err := client.GetPermissions(test.TestContext())
-			Expect(err).ToNot(HaveOccurred())
+			gomega.Expect(err).ToNot(gomega.HaveOccurred())
 			matchingPermissions := FilterPermissions(permissions, DispatcherPermission("run", "read"))
 			services := GetPredicateValues(matchingPermissions, "service")
-			Expect(services).To(ConsistOf(values...))
+			gomega.Expect(services).To(gomega.ConsistOf(values...))
 		},
 
-		Entry("empty", `{
+		table.Entry("empty", `{
 			"meta": {
 				"count": 0,
 				"limit": 1000,
@@ -281,7 +281,7 @@ var _ = Describe("RBAC", func() {
 			"data": []
 		}`),
 
-		Entry("no predicates", `{
+		table.Entry("no predicates", `{
 			"meta": {
 				"count": 1,
 				"limit": 1000,
@@ -301,7 +301,7 @@ var _ = Describe("RBAC", func() {
 			]
 		}`),
 
-		Entry("no matching permission", `{
+		table.Entry("no matching permission", `{
 			"meta": {
 				"count": 1,
 				"limit": 1000,
@@ -329,7 +329,7 @@ var _ = Describe("RBAC", func() {
 			]
 		}`),
 
-		Entry("service predicates", `{
+		table.Entry("service predicates", `{
 			"meta": {
 				"count": 3,
 				"limit": 1000,
