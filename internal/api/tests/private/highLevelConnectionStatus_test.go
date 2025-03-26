@@ -19,9 +19,13 @@ func getConnectionStatus(payload ApiInternalHighlevelConnectionStatusJSONRequest
 	}
 	ctx := common.ContextWithIdentity(orgId)
 	resp, err := identityPassingClient.ApiInternalHighlevelConnectionStatus(ctx, payload)
-	Expect(err).ToNot(HaveOccurred())
+	if err != nil {
+		return nil, err
+	}
 	res, err := ParseApiInternalHighlevelConnectionStatusResponse(resp)
-	Expect(err).ToNot(HaveOccurred())
+	if err != nil {
+		return nil, err
+	}
 	
 	return res, err
 }
@@ -74,7 +78,7 @@ var _ = Describe("high level connection status", func() {
 
 		res, err := getConnectionStatus(payload)
 
-		print(err)
+
 		Expect(err).To(HaveOccurred())
 		Expect(res.StatusCode()).To(Equal(400))
 		Expect(res).To(HaveKeyWithValue("message","maximum input length exceeded"))
