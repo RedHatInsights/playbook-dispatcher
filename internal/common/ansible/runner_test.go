@@ -67,6 +67,12 @@ var _ = Describe("Ansible", func() {
 			Expect(hosts[0]).To(Equal("jharting1"))
 			Expect(hosts[1]).To(Equal("jharting2"))
 		})
+
+		It("determines ansible hosts from a missing host key", func() {
+			events := loadFile("./test-events7.jsonl")
+			hosts := GetAnsibleHosts(events)
+			Expect(hosts).To(HaveLen(0))
+		})
 	})
 
 	Describe("stdout", func() {
@@ -92,6 +98,12 @@ var _ = Describe("Ansible", func() {
 			events := loadFile("./test-events4.jsonl")
 			stdout := GetStdout(events, nil)
 			Expect(stdout).To(Equal(""))
+		})
+
+		It("determines stdout from a successful run with a missing host key", func() {
+			events := loadFile("./test-events7.jsonl")
+			stdout := GetStdout(events, nil)
+			Expect(stdout).To(Equal("\r\nPLAY [ping] ********************************************************************\n\r\nTASK [ping] ********************************************************************\n\x1b[0;32mok: [localhost]\x1b[0m\n\r\nPLAY RECAP *********************************************************************\r\n\x1b[0;32mlocalhost\x1b[0m                  : \x1b[0;32mok=1   \x1b[0m changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   \r\n\n"))
 		})
 	})
 })
