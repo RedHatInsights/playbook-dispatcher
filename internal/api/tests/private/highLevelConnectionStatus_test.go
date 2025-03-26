@@ -43,7 +43,8 @@ var _ = Describe("high level connection status", func() {
 		resp, res:= getConnectionStatus(payload)
 
 		result := res.JSON200
-		Expect(resp).To(Equal(200))
+		Expect(res.StatusCode()).To(Equal(200))
+		Expect(resp)
 		Expect(*result).To(HaveLen(2))
 		Expect((*result)[0].Recipient).To(Equal(public.RunRecipient("d415fc2d-9700-4e30-9621-6a410ccc92d8")))
 		Expect((*result)[0].RecipientType).To(Equal(RecipientType_satellite))
