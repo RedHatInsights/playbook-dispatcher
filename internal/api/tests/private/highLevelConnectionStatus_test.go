@@ -3,6 +3,7 @@ package private
 import (
 	"playbook-dispatcher/internal/api/controllers/public"
 	"playbook-dispatcher/internal/api/tests/common"
+	"strconv"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -68,7 +69,7 @@ var _ = Describe("high level connection status", func() {
 
 		hosts := make([]string, 51)
 		for i :=0; i < 51; i++ {
-			hosts[i]= "host" + string(rune(i+1))
+			hosts[i]= "host" + strconv.Itoa(i+1)
 		}
 
 		payload := ApiInternalHighlevelConnectionStatusJSONRequestBody{
@@ -78,10 +79,8 @@ var _ = Describe("high level connection status", func() {
 
 		res, err := getConnectionStatus(payload)
 
-
-		Expect(err).To(HaveOccurred())
 		Expect(res.StatusCode()).To(Equal(400))
-		Expect(res).To(HaveKeyWithValue("message","maximum input length exceeded"))
+		Expect(err).To(HaveKeyWithValue("message","maximum input length exceeded"))
 
 	})
 })
