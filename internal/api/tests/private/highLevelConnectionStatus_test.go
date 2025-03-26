@@ -9,7 +9,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func getConnectionStatus(payload ApiInternalHighlevelConnectionStatusJSONRequestBody) (*HighLevelRecipientStatus, *ApiInternalHighlevelConnectionStatusResponse) {
+func getConnectionStatus(payload ApiInternalHighlevelConnectionStatusJSONRequestBody) (*http.Response, *ApiInternalHighlevelConnectionStatusResponse) {
 	orgId := "12345"
 	// Build a test client that passes an identity header because the high
 	// level interface requires the identity header
@@ -25,7 +25,7 @@ func getConnectionStatus(payload ApiInternalHighlevelConnectionStatusJSONRequest
 	Expect(err).ToNot(HaveOccurred())
 	Expect(res.StatusCode()).To(Equal(http.StatusOK))
 
-	return res.JSON200, res
+	return resp, res
 }
 
 var _ = Describe("high level connection status", func() {
@@ -40,9 +40,10 @@ var _ = Describe("high level connection status", func() {
 			OrgId: "12345",
 		}
 
-		result, response := getConnectionStatus(payload)
+		resp, res:= getConnectionStatus(payload)
 
-		Expect(response.StatusCode()).To(Equal(200))
+		result := res.JSON200
+		Expect(resp).To(Equal(200))
 		Expect(*result).To(HaveLen(2))
 		Expect((*result)[0].Recipient).To(Equal(public.RunRecipient("d415fc2d-9700-4e30-9621-6a410ccc92d8")))
 		Expect((*result)[0].RecipientType).To(Equal(RecipientType_satellite))
@@ -72,10 +73,10 @@ var _ = Describe("high level connection status", func() {
 			Hosts: hosts,
 		}
 
-		result, response := getConnectionStatus(payload)
+		resp, res := getConnectionStatus(payload)
 
-		Expect(response.StatusCode()).To(Equal(400))
-		Expect(result).To(HaveKeyWithValue("message","maximum input length exceeded"))
+		Expect(res.StatusCode()).To(Equal(400))
+		Expect(resp).To(HaveKeyWithValue("message","maximum input length exceeded"))
 
 	})
 })
