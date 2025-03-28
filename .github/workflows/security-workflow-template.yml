@@ -13,7 +13,7 @@
 # For more information about the Anchore SBOM tool, Syft, see
 # https://github.com/anchore/syft
 
-name: ConsoleDot Platform Security Scan
+name: HCM Security Security Scan
 
 on:
   push:
@@ -23,5 +23,21 @@ on:
     branches: [ "main", "master", "security-compliance" ]
 
 jobs:
-  PlatSec-Security-Workflow:
+  HCM-Security-Scan-Playbook-Dispatcher:
     uses: RedHatInsights/platform-security-gh-workflow/.github/workflows/platsec-security-scan-reusable-workflow.yml@master
+    with:
+      dockerfile_path: '.'
+      dockerfile_name: 'Dockerfile'
+      dockerbuild_path: '.'
+      app_name: 'playbook-dispatcher'
+
+  HCM-Security-Scan-Playbook-Dispatcher-Connect:
+    uses: RedHatInsights/platform-security-gh-workflow/.github/workflows/platsec-security-scan-reusable-workflow.yml@master
+    secrets:
+      RH_CATALOG_USERNAME: ${{ secrets.RH_CATALOG_USERNAME }}
+      RH_CATALOG_PASSWORD: ${{ secrets.RH_CATALOG_PASSWORD }}
+    with:
+      dockerfile_path: './event-streams'
+      dockerfile_name: 'Dockerfile'
+      dockerbuild_path: './event-streams'
+      app_name: 'playbook-dispatcher-connect'
