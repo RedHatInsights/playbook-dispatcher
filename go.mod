@@ -6,7 +6,7 @@ toolchain go1.22.9
 
 require (
 	github.com/RedHatInsights/tenant-utils v1.0.0
-	github.com/aws/aws-sdk-go v1.38.51
+	github.com/aws/aws-sdk-go v1.44.116
 	github.com/confluentinc/confluent-kafka-go v1.5.2
 	github.com/getkin/kin-openapi v0.129.0
 	github.com/ghodss/yaml v1.0.0
@@ -14,7 +14,7 @@ require (
 	github.com/golang-migrate/migrate/v4 v4.15.1
 	github.com/google/uuid v1.5.0
 	github.com/labstack/echo/v4 v4.12.0
-	github.com/mec07/cloudwatchwriter v0.2.4
+	github.com/mec07/cloudwatchwriter v0.2.6
 	github.com/oapi-codegen/echo-middleware v1.0.2
 	github.com/oapi-codegen/runtime v1.1.1
 	github.com/onsi/ginkgo v1.16.4
