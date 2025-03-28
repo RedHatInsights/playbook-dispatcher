@@ -33,6 +33,9 @@ jobs:
 
   HCM-Security-Scan-Playbook-Dispatcher-Connect:
     uses: RedHatInsights/platform-security-gh-workflow/.github/workflows/platsec-security-scan-reusable-workflow.yml@master
+    secrets:
+      RH_CATALOG_USERNAME: ${{ secrets.RH_CATALOG_USERNAME }}
+      RH_CATALOG_PASSWORD: ${{ secrets.RH_CATALOG_PASSWORD }}
     with:
       dockerfile_path: './event-streams'
       dockerfile_name: 'Dockerfile'
