@@ -955,8 +955,8 @@ github.com/qri-io/jsonpointer v0.1.1 h1:prVZBZLL6TW5vsSB9fFHFAMBLI4b0ri5vribQlTJ
 github.com/qri-io/jsonpointer v0.1.1/go.mod h1:DnJPaYgiKu56EuDp8TU5wFLdZIcAnb/uH9v37ZaMV64=
 github.com/qri-io/jsonschema v0.2.0 h1:is8lirh3HYwTkC0e+4jL/vWEHwzPLojnl4FWkUoeEPU=
 github.com/qri-io/jsonschema v0.2.0/go.mod h1:g7DPkiOsK1xv6T/Ao5scXRkd+yTFygcANPBaaqW+VrI=
-github.com/redhatinsights/app-common-go v1.6.2 h1:SYOYC7eelAAMiOK8hp4GxmQLAJ4HtuJ50kNzEZa7S/4=
-github.com/redhatinsights/app-common-go v1.6.2/go.mod h1:SqgG5JkX/RNlk2d+sXamIFxhOIvWLgCBr8uK6q70ESk=
+github.com/redhatinsights/app-common-go v1.6.8 h1:hyExMp6WHprlGkHKElQvSFF2ZPX8XTW6X+54PLLyUv0=
+github.com/redhatinsights/app-common-go v1.6.8/go.mod h1:KW0BK+bnhp3kXU8BFwebQXqCqjdkcRewZsDlXCSNMyo=
 github.com/redhatinsights/platform-go-middlewares v0.17.0 h1:upjyS2Fq+yGio0N8TrZWha6ZzhidIkRROM0QnDqpiMk=
 github.com/redhatinsights/platform-go-middlewares v0.17.0/go.mod h1:i5gVDZJ/quCQhs5AW5CwkRPXlz1HfDBvyNtXHnlXZfM=
 github.com/remyoudompheng/bigfft v0.0.0-20190728182440-6a916e37a237/go.mod h1:qqbHyh8v60DhA7CoWK5oRCqLrMHRGoxYCSS9EjAz6Eo=
