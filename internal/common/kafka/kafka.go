@@ -7,7 +7,7 @@ import (
 	"playbook-dispatcher/internal/common/utils"
 	"time"
 
-	"github.com/confluentinc/confluent-kafka-go/kafka"
+	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	"github.com/qri-io/jsonschema"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
