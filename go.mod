@@ -12,7 +12,7 @@ require (
 	github.com/ghodss/yaml v1.0.0
 	github.com/globocom/echo-prometheus v0.1.2
 	github.com/golang-migrate/migrate/v4 v4.15.1
-	github.com/google/uuid v1.5.0
+	github.com/google/uuid v1.6.0
 	github.com/labstack/echo/v4 v4.12.0
 	github.com/mec07/cloudwatchwriter v0.2.4
 	github.com/oapi-codegen/echo-middleware v1.0.2
