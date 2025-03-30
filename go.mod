@@ -6,7 +6,7 @@ toolchain go1.22.9
 
 require (
 	github.com/RedHatInsights/tenant-utils v1.0.0
-	github.com/aws/aws-sdk-go v1.38.51
+	github.com/aws/aws-sdk-go v1.49.13
 	github.com/confluentinc/confluent-kafka-go v1.5.2
 	github.com/getkin/kin-openapi v0.129.0
 	github.com/ghodss/yaml v1.0.0
@@ -17,12 +17,12 @@ require (
 	github.com/mec07/cloudwatchwriter v0.2.4
 	github.com/oapi-codegen/echo-middleware v1.0.2
 	github.com/oapi-codegen/runtime v1.1.1
-	github.com/onsi/ginkgo v1.16.4
+	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.19.0
 	github.com/prometheus/client_golang v1.12.1
 	github.com/qri-io/jsonschema v0.2.0
 	github.com/redhatinsights/app-common-go v1.6.2
-	github.com/redhatinsights/platform-go-middlewares v0.17.0
+	github.com/redhatinsights/platform-go-middlewares v1.0.0
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/viper v1.7.1
 	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8
