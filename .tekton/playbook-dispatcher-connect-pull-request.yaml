@@ -12,9 +12,9 @@ metadata:
   creationTimestamp: null
   labels:
     appstudio.openshift.io/application: playbook-dispatcher
-    appstudio.openshift.io/component: playbook-dispatcher
+    appstudio.openshift.io/component: playbook-dispatcher-connect
     pipelines.appstudio.openshift.io/type: build
-  name: playbook-dispatcher-on-pull-request
+  name: playbook-dispatcher-connect-on-pull-request
   namespace: hcc-integrations-tenant
 spec:
   params:
@@ -23,11 +23,11 @@ spec:
   - name: revision
     value: '{{revision}}'
   - name: output-image
-    value: quay.io/redhat-user-workloads/hcc-integrations-tenant/playbook-dispatcher/playbook-dispatcher:on-pr-{{revision}}
+    value: quay.io/redhat-user-workloads/hcc-integrations-tenant/playbook-dispatcher-connect:on-pr-{{revision}}
   - name: image-expires-after
     value: 5d
   - name: dockerfile
-    value: Dockerfile
+    value: /event-streams/Dockerfile
   pipelineRef:
     params:
     - name: url
