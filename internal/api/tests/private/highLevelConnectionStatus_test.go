@@ -9,7 +9,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func getConnectionStatus(payload ApiInternalHighlevelConnectionStatusJSONRequestBody) (error, *ApiInternalHighlevelConnectionStatusResponse) {
+func getConnectionStatus(payload ApiInternalHighlevelConnectionStatusJSONRequestBody) (*ApiInternalHighlevelConnectionStatusResponse, error) {
 	orgId := "12345"
 	// Build a test client that passes an identity header because the high
 	// level interface requires the identity header
@@ -21,11 +21,11 @@ func getConnectionStatus(payload ApiInternalHighlevelConnectionStatusJSONRequest
 	ctx := common.ContextWithIdentity(orgId)
 	resp, err := identityPassingClient.ApiInternalHighlevelConnectionStatus(ctx, payload)
 	if err != nil {
-		return err, nil
+		return nil, err
 	}
 	res, err := ParseApiInternalHighlevelConnectionStatusResponse(resp)
 
-	return err, res
+	return res, err
 }
 
 var _ = Describe("high level connection status", func() {
@@ -40,10 +40,10 @@ var _ = Describe("high level connection status", func() {
 			OrgId: "12345",
 		}
 
-		err, response := getConnectionStatus(payload)
-		if err != nil{
+		response, err := getConnectionStatus(payload)
 
-		}
+		Expect(err).ToNot(HaveOccurred())
+	
 		result := response.JSON200
 		Expect(response.StatusCode()).To(Equal(200))
 		Expect(*result).To(HaveLen(2))
@@ -75,9 +75,8 @@ var _ = Describe("high level connection status", func() {
 			OrgId: "12345",
 		}
 
-		err, response := getConnectionStatus(payload)
-		if err != nil{
-		}
+		response, err := getConnectionStatus(payload)
+		Expect(err).ToNot(HaveOccurred())
 		Expect(response.StatusCode()).To(Equal(400))
 	})
 })
