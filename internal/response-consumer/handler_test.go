@@ -203,6 +203,76 @@ var _ = Describe("handler", func() {
 			checkHost(data.ID, "success", nil, "", nil)
 		})
 
+		It("updates the run status based on executor_on_failed events", func() {
+			var data = test.NewRun(orgId())
+			Expect(db().Create(&data).Error).ToNot(HaveOccurred())
+
+			events := createRunnerEvents(
+				messageModel.EventExecutorOnStart,
+				"verbose",
+				EventExecutorOnFailed,
+			)
+
+			expectedError := "ansible-runner not found"
+			expectedCrcError := "crc dispatcher error detail"
+
+			(*events)[1].Stdout = &expectedError
+			// Explicitly setting the host to nil as this triggered the issue
+			(*events)[1].EventData.Host = nil
+
+			// Explicitly setting the host to nil as this triggered the issue
+			(*events)[2].EventData.Host = nil
+			(*events)[2].EventData.CrcDispatcherErrorDetails = &expectedCrcError
+
+			instance.onMessage(test.TestContext(), newRunnerResponseMessage(events, data.CorrelationID))
+
+			run := fetchRun(data.ID)
+			Expect(run.Status).To(Equal("failure"))
+			checkHost(data.ID, "failure", nil, expectedError+"\n"+expectedCrcError, nil)
+		})
+
+		It("updates the run status based on executor_on_failed events (no verbose event line)", func() {
+			var data = test.NewRun(orgId())
+			Expect(db().Create(&data).Error).ToNot(HaveOccurred())
+
+			events := createRunnerEvents(
+				messageModel.EventExecutorOnStart,
+				EventExecutorOnFailed,
+			)
+
+			expectedError := "crc dispatcher error details!!"
+
+			// Explicitly setting the host to nil as this triggered the issue
+			(*events)[1].EventData.Host = nil
+			(*events)[1].EventData.CrcDispatcherErrorDetails = &expectedError
+
+			instance.onMessage(test.TestContext(), newRunnerResponseMessage(events, data.CorrelationID))
+
+			run := fetchRun(data.ID)
+			Expect(run.Status).To(Equal("failure"))
+			checkHost(data.ID, "failure", nil, expectedError, nil)
+		})
+
+		It("updates the run status based on executor_on_failed events (no verbose event line, no crc_dispatcher_error_details)", func() {
+			var data = test.NewRun(orgId())
+			Expect(db().Create(&data).Error).ToNot(HaveOccurred())
+
+			events := createRunnerEvents(
+				messageModel.EventExecutorOnStart,
+				EventExecutorOnFailed,
+			)
+
+			expectedErrorMsg := "stdout details - error message here"
+
+			(*events)[1].Stdout = &expectedErrorMsg
+
+			instance.onMessage(test.TestContext(), newRunnerResponseMessage(events, data.CorrelationID))
+
+			run := fetchRun(data.ID)
+			Expect(run.Status).To(Equal("failure"))
+			checkHost(data.ID, "failure", nil, expectedErrorMsg, nil)
+		})
+
 		It("successful runner event - ignore out-of-order updates", func() {
 			var data = test.NewRun(orgId())
 			Expect(db().Create(&data).Error).ToNot(HaveOccurred())

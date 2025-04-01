@@ -4,17 +4,16 @@ metadata:
   annotations:
     build.appstudio.openshift.io/repo: https://github.com/RedHatInsights/playbook-dispatcher?rev={{revision}}
     build.appstudio.redhat.com/commit_sha: '{{revision}}'
-    build.appstudio.redhat.com/pull_request_number: '{{pull_request_number}}'
     build.appstudio.redhat.com/target_branch: '{{target_branch}}'
     pipelinesascode.tekton.dev/max-keep-runs: "3"
-    pipelinesascode.tekton.dev/on-cel-expression: event == "pull_request" && target_branch
+    pipelinesascode.tekton.dev/on-cel-expression: event == "push" && target_branch
       == "master"
   creationTimestamp: null
   labels:
     appstudio.openshift.io/application: playbook-dispatcher
-    appstudio.openshift.io/component: playbook-dispatcher
+    appstudio.openshift.io/component: playbook-dispatcher-connect
     pipelines.appstudio.openshift.io/type: build
-  name: playbook-dispatcher-on-pull-request
+  name: playbook-dispatcher-connect-on-push
   namespace: hcc-integrations-tenant
 spec:
   params:
@@ -23,11 +22,9 @@ spec:
   - name: revision
     value: '{{revision}}'
   - name: output-image
-    value: quay.io/redhat-user-workloads/hcc-integrations-tenant/playbook-dispatcher/playbook-dispatcher:on-pr-{{revision}}
-  - name: image-expires-after
-    value: 5d
+    value: quay.io/redhat-user-workloads/hcc-integrations-tenant/playbook-dispatcher-connect:{{revision}}
   - name: dockerfile
-    value: Dockerfile
+    value: /event-streams/Dockerfile
   pipelineRef:
     params:
     - name: url

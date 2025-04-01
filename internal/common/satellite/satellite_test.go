@@ -2,7 +2,7 @@ package satellite
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"os"
 	messageModel "playbook-dispatcher/internal/common/model/message"
 	"strings"
 
@@ -11,7 +11,7 @@ import (
 )
 
 func loadFile(path string) (events []messageModel.PlaybookSatRunResponseMessageYamlEventsElem) {
-	file, err := ioutil.ReadFile(path)
+	file, err := os.ReadFile(path)
 	Expect(err).ToNot(HaveOccurred())
 
 	lines := strings.Split(string(file), "\n")

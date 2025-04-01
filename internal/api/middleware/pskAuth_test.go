@@ -3,7 +3,7 @@ package middleware
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"playbook-dispatcher/internal/common/utils"
@@ -76,7 +76,7 @@ var _ = Describe("PSK auth middleware", func() {
 		res, err := testPskAuth(req)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(res.Result().StatusCode).To(Equal(200))
-		body, err := ioutil.ReadAll(res.Result().Body)
+		body, err := io.ReadAll(res.Result().Body)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(body).To(BeEquivalentTo("principal1"))
 	})
