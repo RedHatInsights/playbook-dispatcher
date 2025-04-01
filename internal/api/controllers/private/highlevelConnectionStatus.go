@@ -33,8 +33,6 @@ func (this *controllers) ApiInternalHighlevelConnectionStatus(ctx echo.Context) 
 		return ctx.NoContent(http.StatusBadRequest)
 	}
 
-	utils.GetLogFromEcho(ctx).Infow("TEST", "data", input, "error", err)
-
 	if len(input.Hosts) > 50 {
 		utils.GetLogFromEcho(ctx).Infow("More than 50 hosts requested")
 
