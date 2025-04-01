@@ -20,7 +20,7 @@ require (
 	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.19.0
 	github.com/prometheus/client_golang v1.12.1
-	github.com/qri-io/jsonschema v0.2.0
+	github.com/qri-io/jsonschema v0.2.1
 	github.com/redhatinsights/app-common-go v1.6.2
 	github.com/redhatinsights/platform-go-middlewares v0.17.0
 	github.com/spf13/cobra v1.8.1
