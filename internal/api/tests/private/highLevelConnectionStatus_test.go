@@ -1,16 +1,16 @@
 package private
 
 import (
-	"net/http"
 	"playbook-dispatcher/internal/api/controllers/public"
 	"playbook-dispatcher/internal/api/tests/common"
+	"strconv"
 
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
 
-func getConnectionStatus(payload ApiInternalHighlevelConnectionStatusJSONRequestBody) (*HighLevelRecipientStatus, *ApiInternalHighlevelConnectionStatusResponse) {
+func getConnectionStatus(payload ApiInternalHighlevelConnectionStatusJSONRequestBody) (*ApiInternalHighlevelConnectionStatusResponse, error) {
 	orgId := "12345"
 	// Build a test client that passes an identity header because the high
 	// level interface requires the identity header
@@ -21,12 +21,12 @@ func getConnectionStatus(payload ApiInternalHighlevelConnectionStatusJSONRequest
 	}
 	ctx := common.ContextWithIdentity(orgId)
 	resp, err := identityPassingClient.ApiInternalHighlevelConnectionStatus(ctx, payload)
-	Expect(err).ToNot(HaveOccurred())
+	if err != nil {
+		return nil, err
+	}
 	res, err := ParseApiInternalHighlevelConnectionStatusResponse(resp)
-	Expect(err).ToNot(HaveOccurred())
-	Expect(res.StatusCode()).To(Equal(http.StatusOK))
 
-	return res.JSON200, res
+	return res, err
 }
 
 var _ = Describe("high level connection status", func() {
@@ -41,8 +41,11 @@ var _ = Describe("high level connection status", func() {
 			OrgId: "12345",
 		}
 
-		result, response := getConnectionStatus(payload)
+		response, err := getConnectionStatus(payload)
 
+		Expect(err).ToNot(HaveOccurred())
+	
+		result := response.JSON200
 		Expect(response.StatusCode()).To(Equal(200))
 		Expect(*result).To(HaveLen(2))
 		Expect((*result)[0].Recipient).To(Equal(public.RunRecipient(uuid.MustParse("d415fc2d-9700-4e30-9621-6a410ccc92d8"))))
@@ -60,5 +63,21 @@ var _ = Describe("high level connection status", func() {
 		Expect((*result)[1].SatOrgId).To(BeEmpty())
 		Expect((*result)[1].Status).To(Equal(Connected))
 		Expect((*result)[1].Systems).To(Equal(directConnectHost))
+	})
+	It("disallow more than 50 hosts", func() {
+
+		hosts := make([]string, 51)
+		for i :=0; i < 51; i++ {
+			hosts[i]= "host" + strconv.Itoa(i+1)
+		}
+
+		payload := ApiInternalHighlevelConnectionStatusJSONRequestBody{
+			Hosts: hosts,
+			OrgId: "12345",
+		}
+
+		response, err := getConnectionStatus(payload)
+		Expect(err).ToNot(HaveOccurred())
+		Expect(response.StatusCode()).To(Equal(400))
 	})
 })
