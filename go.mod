@@ -1,6 +1,6 @@
 module playbook-dispatcher
 
-go 1.22.5
+go 1.23.0
 
 toolchain go1.24.1
 
@@ -27,7 +27,7 @@ require (
 	github.com/spf13/viper v1.7.1
 	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8
 	go.uber.org/zap v1.13.0
-	golang.org/x/time v0.5.0
+	golang.org/x/time v0.11.0
 	gorm.io/driver/postgres v1.0.8
 	gorm.io/gorm v1.21.4
 )
