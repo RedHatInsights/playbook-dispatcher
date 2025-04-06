@@ -6,7 +6,7 @@ toolchain go1.24.1
 
 require (
 	github.com/RedHatInsights/tenant-utils v1.0.0
-	github.com/aws/aws-sdk-go v1.44.116
+	github.com/aws/aws-sdk-go v1.49.13
 	github.com/confluentinc/confluent-kafka-go v1.5.2
 	github.com/getkin/kin-openapi v0.129.0
 	github.com/ghodss/yaml v1.0.0
@@ -22,7 +22,7 @@ require (
 	github.com/prometheus/client_golang v1.12.1
 	github.com/qri-io/jsonschema v0.2.0
 	github.com/redhatinsights/app-common-go v1.6.2
-	github.com/redhatinsights/platform-go-middlewares v0.17.0
+	github.com/redhatinsights/platform-go-middlewares v1.0.0
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/viper v1.7.1
 	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8
