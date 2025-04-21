@@ -1,31 +1,32 @@
 package private
 
 import (
-	"net/http"
 	"playbook-dispatcher/internal/api/controllers/public"
 	"playbook-dispatcher/internal/api/tests/common"
+	"strconv"
 
+	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
 
-func getConnectionStatus(payload ApiInternalHighlevelConnectionStatusJSONRequestBody) (*HighLevelRecipientStatus, *ApiInternalHighlevelConnectionStatusResponse) {
+func getConnectionStatus(payload ApiInternalHighlevelConnectionStatusJSONRequestBody) (*ApiInternalHighlevelConnectionStatusResponse, error) {
 	orgId := "12345"
 	// Build a test client that passes an identity header because the high
 	// level interface requires the identity header
 	identityPassingClient := &Client{
-		Server:        common.TestServer,
-		Client:        common.TestClient,
-		RequestEditor: common.TestRequestEditor,
+		Server:         common.TestServer,
+		Client:         common.TestClient,
+		RequestEditors: []RequestEditorFn{common.TestRequestEditor},
 	}
 	ctx := common.ContextWithIdentity(orgId)
 	resp, err := identityPassingClient.ApiInternalHighlevelConnectionStatus(ctx, payload)
-	Expect(err).ToNot(HaveOccurred())
+	if err != nil {
+		return nil, err
+	}
 	res, err := ParseApiInternalHighlevelConnectionStatusResponse(resp)
-	Expect(err).ToNot(HaveOccurred())
-	Expect(res.StatusCode()).To(Equal(http.StatusOK))
 
-	return res.JSON200, res
+	return res, err
 }
 
 var _ = Describe("high level connection status", func() {
@@ -40,24 +41,43 @@ var _ = Describe("high level connection status", func() {
 			OrgId: "12345",
 		}
 
-		result, response := getConnectionStatus(payload)
+		response, err := getConnectionStatus(payload)
 
+		Expect(err).ToNot(HaveOccurred())
+	
+		result := response.JSON200
 		Expect(response.StatusCode()).To(Equal(200))
 		Expect(*result).To(HaveLen(2))
-		Expect((*result)[0].Recipient).To(Equal(public.RunRecipient("d415fc2d-9700-4e30-9621-6a410ccc92d8")))
-		Expect((*result)[0].RecipientType).To(Equal(RecipientType_satellite))
+		Expect((*result)[0].Recipient).To(Equal(public.RunRecipient(uuid.MustParse("d415fc2d-9700-4e30-9621-6a410ccc92d8"))))
+		Expect((*result)[0].RecipientType).To(Equal(Satellite))
 		Expect((*result)[0].OrgId).To(Equal(payload.OrgId))
 		Expect((*result)[0].SatId).To(Equal(satID))
 		Expect((*result)[0].SatOrgId).To(Equal(satOrgID))
-		Expect((*result)[0].Status).To(Equal("connected"))
+		Expect((*result)[0].Status).To(Equal(Connected))
 		Expect((*result)[0].Systems).To(Equal(satelliteHost))
 
-		Expect((*result)[1].Recipient).To(Equal(public.RunRecipient("32af5948-301f-449a-a25b-ff34c83264a2")))
-		Expect((*result)[1].RecipientType).To(Equal(RecipientType_directConnect))
+		Expect((*result)[1].Recipient).To(Equal(public.RunRecipient(uuid.MustParse("32af5948-301f-449a-a25b-ff34c83264a2"))))
+		Expect((*result)[1].RecipientType).To(Equal(DirectConnect))
 		Expect((*result)[1].OrgId).To(Equal(payload.OrgId))
 		Expect((*result)[1].SatId).To(BeEmpty())
 		Expect((*result)[1].SatOrgId).To(BeEmpty())
-		Expect((*result)[1].Status).To(Equal("connected"))
+		Expect((*result)[1].Status).To(Equal(Connected))
 		Expect((*result)[1].Systems).To(Equal(directConnectHost))
+	})
+	It("disallow more than 50 hosts", func() {
+
+		hosts := make([]string, 51)
+		for i :=0; i < 51; i++ {
+			hosts[i]= "host" + strconv.Itoa(i+1)
+		}
+
+		payload := ApiInternalHighlevelConnectionStatusJSONRequestBody{
+			Hosts: hosts,
+			OrgId: "12345",
+		}
+
+		response, err := getConnectionStatus(payload)
+		Expect(err).ToNot(HaveOccurred())
+		Expect(response.StatusCode()).To(Equal(400))
 	})
 })

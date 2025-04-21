@@ -1,6 +1,7 @@
 CLOUD_CONNECTOR_SCHEMA ?= https://raw.githubusercontent.com/RedHatInsights/cloud-connector/master/internal/controller/api/api.spec.json
 RBAC_CONNECTOR_SCHEMA ?= https://cloud.redhat.com/api/rbac/v1/openapi.json
-INVENTORY_CONNECTOR_SCHEMA ?= https://raw.githubusercontent.com/RedHatInsights/insights-host-inventory/master/swagger/openapi.json
+# Newer commits do not generate 3/11/25
+INVENTORY_CONNECTOR_SCHEMA ?= https://raw.githubusercontent.com/RedHatInsights/insights-host-inventory/ffa3cab521f907e006f392d1698bf730346bed94/swagger/openapi.json
 SOURCES_CONNECTOR_SCHEMA ?= https://console.redhat.com/api/sources/v3.1/openapi.json
 
 MKFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
@@ -12,61 +13,85 @@ export PATH := ${LOCAL_BIN_PATH}:${PATH}
 
 PSK ?= secret
 
-init:
-	go install github.com/deepmap/oapi-codegen/cmd/oapi-codegen
-	go get github.com/atombender/go-jsonschema/...@main
-	go install github.com/atombender/go-jsonschema@v0.14.0
-	pip install json2yaml
-	go get github.com/kulshekhar/fungen
-	go install github.com/kulshekhar/fungen
+all: init generate build test run-lint
 
-generate-api:
+init:
+	go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest
+	go install github.com/atombender/go-jsonschema@v0.17.0
+	go install github.com/kulshekhar/fungen@latest
+
+generate-api: internal/api/controllers/public/spec.gen.go \
+	          internal/api/controllers/public/types.gen.go \
+	          internal/api/controllers/private/spec.gen.go \
+	          internal/api/controllers/private/types.gen.go
+
+internal/api/controllers/public/spec.gen.go internal/api/controllers/public/types.gen.go: schema/public.openapi.yaml
 	# public API
 	${GOPATH}/bin/oapi-codegen -generate server,spec -package public -o internal/api/controllers/public/spec.gen.go schema/public.openapi.yaml
 	${GOPATH}/bin/oapi-codegen -generate types -package public -o internal/api/controllers/public/types.gen.go schema/public.openapi.yaml
-	# internal API
+
+internal/api/controllers/private/spec.gen.go internal/api/controllers/private/types.gen.go: schema/public.openapi.yaml schema/private.openapi.yaml
+	# private API
 	${GOPATH}/bin/oapi-codegen -generate server,spec -package private -o internal/api/controllers/private/spec.gen.go -import-mapping=./public.openapi.yaml:playbook-dispatcher/internal/api/controllers/public schema/private.openapi.yaml
 	${GOPATH}/bin/oapi-codegen -generate types -package private -o internal/api/controllers/private/types.gen.go -import-mapping=./public.openapi.yaml:playbook-dispatcher/internal/api/controllers/public schema/private.openapi.yaml
 
-generate-clients:
+generate-clients: internal/api/tests/public/client.gen.go \
+	              internal/api/tests/private/client.gen.go
+
+internal/api/tests/public/client.gen.go: schema/public.openapi.yaml schema/private.openapi.yaml
 	${GOPATH}/bin/oapi-codegen -generate client,types -package public -o internal/api/tests/public/client.gen.go schema/public.openapi.yaml
+
+internal/api/tests/private/client.gen.go: schema/public.openapi.yaml schema/private.openapi.yaml
 	${GOPATH}/bin/oapi-codegen -generate client,types -package private -o internal/api/tests/private/client.gen.go -import-mapping=./public.openapi.yaml:playbook-dispatcher/internal/api/controllers/public schema/private.openapi.yaml
 
-generate-messages:
+generate-messages: internal/common/model/message/runner.types.gen.go \
+	               internal/common/model/message/rhcsat.types.gen.go
+
+internal/common/model/message/runner.types.gen.go: schema/playbookRunResponse.message.yaml
 	${GOPATH}/bin/go-jsonschema --yaml-extension yaml -p message schema/playbookRunResponse.message.yaml > ./internal/common/model/message/runner.types.gen.go
+
+internal/common/model/message/rhcsat.types.gen.go: schema/playbookSatRunResponse.message.yaml
 	${GOPATH}/bin/go-jsonschema --yaml-extension yaml -p message schema/playbookSatRunResponse.message.yaml > ./internal/common/model/message/rhcsat.types.gen.go
 
 generate-cloud-connector:
 	curl -s ${CLOUD_CONNECTOR_SCHEMA} -o cloud-connector.json
-	json2yaml cloud-connector.json cloud-connector.yaml
-	${GOPATH}/bin/oapi-codegen -generate client,types -package connectors -o internal/api/connectors/cloudConnector.gen.go cloud-connector.yaml
-	rm cloud-connector.json cloud-connector.yaml
+	${GOPATH}/bin/oapi-codegen -generate client,types -package connectors -o internal/api/connectors/cloudConnector.gen.go cloud-connector.json
+	rm cloud-connector.json
 
 generate-rbac:
 	curl -s ${RBAC_CONNECTOR_SCHEMA} -o rbac.json
-	json2yaml rbac.json rbac.yaml
-	${GOPATH}/bin/oapi-codegen -generate client,types -package rbac -include-tags Access -o internal/api/rbac/rbac.gen.go rbac.yaml
-	rm rbac.json rbac.yaml
+	${GOPATH}/bin/oapi-codegen -generate client,types -package rbac -include-tags Access -o internal/api/rbac/rbac.gen.go rbac.json
+	rm rbac.json
 
 generate-inventory:
 	curl -s ${INVENTORY_CONNECTOR_SCHEMA} -o inventory.json
-	json2yaml inventory.json inventory.yaml
-	${GOPATH}/bin/oapi-codegen -generate client,types -package inventory -o internal/api/connectors/inventory/inventory.gen.go inventory.yaml
-	rm inventory.json inventory.yaml
+	patch -p1 inventory.json oapi_codegen/inventory_xgo_name.patch
+	${GOPATH}/bin/oapi-codegen -config oapi_codegen/oapi-codegen-inventory-cfg.yaml -generate client,types -package inventory -o internal/api/connectors/inventory/inventory.gen.go inventory.json
+	rm inventory.json
 
 generate-sources:
 	curl -s ${SOURCES_CONNECTOR_SCHEMA} -o sources.json
-	json2yaml sources.json sources.yaml
-	${GOPATH}/bin/oapi-codegen -generate client,types -package sources -o internal/api/connectors/sources/sources.gen.go sources.yaml
-	rm sources.yaml sources.json
+	patch -p1 sources.json oapi_codegen/sources_xgo_name.patch
+	${GOPATH}/bin/oapi-codegen -config oapi_codegen/oapi-codegen-sources-cfg.yaml -generate client,types -package sources -o internal/api/connectors/sources/sources.gen.go sources.json
+	rm sources.json
 
-generate-utils:
+generate-utils: internal/api/controllers/private/utils.gen.go \
+	            internal/api/controllers/private/utils.v2.gen.go \
+	            internal/api/controllers/private/cancel_utils.v2.gen.go
+
+internal/api/controllers/private/utils.gen.go: internal/api/controllers/private/runsCreate.go
 	go generate ./...
 
-generate: generate-api generate-messages generate-cloud-connector generate-utils generate-clients generate-rbac
+internal/api/controllers/private/utils.v2.gen.go: internal/api/controllers/private/runsCreateV2.go
+	go generate ./...
+
+internal/api/controllers/private/cancel_utils.v2.gen.go: internal/api/controllers/private/runsCancelV2.go
+	go generate ./...
+
+generate: generate-api generate-clients generate-messages generate-cloud-connector generate-rbac generate-inventory generate-sources generate-utils
 
 build:
-	go build -o pd .
+	go build -v -o app .
 
 migrate-db:
 	ACG_CONFIG=$(shell pwd)/cdappconfig.json go run . migrate up
@@ -148,3 +173,4 @@ endif
 
 run-lint: golangci-lint
 	$(LOCAL_BIN_PATH)/golangci-lint run
+

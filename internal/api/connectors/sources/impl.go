@@ -28,7 +28,7 @@ func NewSourcesClientWithHttpRequestDoer(cfg *viper.Viper, doer HttpRequestDoer)
 		ClientInterface: &Client{
 			Server: fmt.Sprintf("%s://%s:%d%s", cfg.GetString("sources.scheme"), cfg.GetString("sources.host"), cfg.GetInt("sources.port"), basePath),
 			Client: utils.NewMeasuredHttpRequestDoer(doer, "sources", "postMessage"),
-			RequestEditor: func(ctx context.Context, req *http.Request) error {
+			RequestEditors: []RequestEditorFn{func(ctx context.Context, req *http.Request) error {
 				req.Header.Set(constants.HeaderRequestId, request_id.GetReqID(ctx))
 
 				if identity, ok := ctx.Value(constants.HeaderIdentity).(string); ok {
@@ -52,7 +52,7 @@ func NewSourcesClientWithHttpRequestDoer(cfg *viper.Viper, doer HttpRequestDoer)
 				}
 
 				return nil
-			},
+			}},
 		},
 	}
 
@@ -99,7 +99,7 @@ func (this *sourcesClientImpl) getRHCConnectionStatus(ctx context.Context, sourc
 		return nil, nil, fmt.Errorf("GetRHCConnectionStatus returned an empty response")
 	}
 
-	return (*res.JSON200.Data)[0].RhcId, (*res.JSON200.Data)[0].AvailabilityStatus, err
+	return (*res.JSON200.Data)[0].RhcId, (*string)((*res.JSON200.Data)[0].AvailabilityStatus), err
 }
 
 func (this *sourcesClientImpl) getSourceIdBySatelliteId(ctx context.Context, satelliteId string) (sourceId string, sourceName string, err error) {

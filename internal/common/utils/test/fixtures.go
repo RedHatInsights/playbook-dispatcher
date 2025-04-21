@@ -26,7 +26,7 @@ func WithAccountNumber() func() string {
 }
 
 func WithOrgId() func() string {
-	var base = uuid.New().String()[29:]
+	var base = uuid.New().String()[:5]
 	var test int
 
 	BeforeEach(func() {

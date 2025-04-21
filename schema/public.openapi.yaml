@@ -322,7 +322,9 @@ components:
     InventoryIdNullable:
       nullable: true
       type: string
-      format: uuid
+      # this property should not be nullable however it is set so as a workaround for
+      # ideally we set the format to uuid
+      #format: uuid
 
   parameters:
     RunsFilter:
@@ -344,8 +346,8 @@ components:
             # this property should not be nullable however it is set so as a workaround for
             # https://github.com/getkin/kin-openapi/issues/293
             # ideally we would reuse '#/components/schemas/RunRecipient' here
-            nullable: true
-            format: uuid
+            #nullable: true
+            #format: uuid
           # See ./internal/api/middleware/labelFilters.go
           labels:
             $ref: '#/components/schemas/RunLabelsNullable'
@@ -371,8 +373,8 @@ components:
                 # this property should not be nullable however it is set so as a workaround for
                 # https://github.com/getkin/kin-openapi/issues/293
                 # ideally we would reuse '#/components/schemas/RunRecipient' here
-                nullable: true
-                format: uuid
+                #nullable: true
+                #format: uuid
               # See ./internal/api/middleware/labelFilters.go
               service:
                 $ref: '#/components/schemas/ServiceNullable'
@@ -458,6 +460,7 @@ components:
           - created_at
           - created_at:asc
           - created_at:desc
+        default: created_at:desc
 
     Limit:
       description: Maximum number of results to return
