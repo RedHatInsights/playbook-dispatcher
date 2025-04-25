@@ -26,6 +26,8 @@ func GetLoggerOrDie() *zap.SugaredLogger {
 		cfg := config.Get()
 
 		logCfg := zap.NewProductionConfig()
+		logCfg.EncoderConfig.MessageKey = "message"
+
 		err := logCfg.Level.UnmarshalText([]byte(cfg.GetString("log.level")))
 		if err != nil {
 			DieOnError(err)
