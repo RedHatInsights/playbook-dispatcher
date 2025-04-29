@@ -6,7 +6,6 @@ import (
 	"io"
 	"net/http"
 	"playbook-dispatcher/internal/common/utils/test"
-	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -18,7 +17,6 @@ var _ = Describe("Middleware", func() {
 
 		It("attaches request id to the response", func() {
 			const requestId = "33ee136c-da81-4a68-953c-c22bdd096d30"
-			time.Sleep(30 * time.Second)
 
 			req, err := http.NewRequest(http.MethodGet, "http://localhost:9002/api/playbook-dispatcher/v1/runs", nil)
 			Expect(err).ToNot(HaveOccurred())
