@@ -26,8 +26,9 @@ func GetLoggerOrDie() *zap.SugaredLogger {
 		cfg := config.Get()
 
 		logCfg := zap.NewProductionConfig()
-		err := logCfg.Level.UnmarshalText([]byte(cfg.GetString("log.level")))
+		logCfg.EncoderConfig.MessageKey = "message"
 
+		err := logCfg.Level.UnmarshalText([]byte(cfg.GetString("log.level")))
 		if err != nil {
 			DieOnError(err)
 		}
@@ -78,8 +79,11 @@ func createCloudwatch(cfg *viper.Viper, level zap.AtomicLevel) (zap.Option, erro
 		return nil, err
 	}
 
+	encoderConfig := zap.NewProductionEncoderConfig()
+	encoderConfig.MessageKey = "message"
+
 	cwc := zapcore.NewCore(
-		zapcore.NewJSONEncoder(zap.NewProductionEncoderConfig()),
+		zapcore.NewJSONEncoder(encoderConfig),
 		zapcore.AddSync(writer),
 		zap.NewAtomicLevelAt(level.Level()),
 	)
