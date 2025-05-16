@@ -6,7 +6,7 @@ toolchain go1.24.1
 
 require (
 	github.com/RedHatInsights/tenant-utils v1.0.0
-	github.com/aws/aws-sdk-go v1.44.116
+	github.com/aws/aws-sdk-go v1.55.6
 	github.com/confluentinc/confluent-kafka-go v1.5.2
 	github.com/getkin/kin-openapi v0.129.0
 	github.com/ghodss/yaml v1.0.0
