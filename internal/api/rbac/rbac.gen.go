@@ -98,15 +98,7 @@ type ResourceDefinitionFilterOperation string
 type ResourceDefinitionFilterValue0 = string
 
 // ResourceDefinitionFilterValue1 defines model for .
-type ResourceDefinitionFilterValue1 = []ResourceDefinitionFilter_Value_1_Item
-
-// ResourceDefinitionFilterValue10 defines model for .
-type ResourceDefinitionFilterValue10 = string
-
-// ResourceDefinitionFilter_Value_1_Item defines model for ResourceDefinitionFilter.Value.1.Item.
-type ResourceDefinitionFilter_Value_1_Item struct {
-	union json.RawMessage
-}
+type ResourceDefinitionFilterValue1 = []string
 
 // ResourceDefinitionFilter_Value defines model for ResourceDefinitionFilter.Value.
 type ResourceDefinitionFilter_Value struct {
@@ -145,42 +137,6 @@ type GetPrincipalAccessParamsOrderBy string
 
 // GetPrincipalAccessParamsStatus defines parameters for GetPrincipalAccess.
 type GetPrincipalAccessParamsStatus string
-
-// AsResourceDefinitionFilterValue10 returns the union data inside the ResourceDefinitionFilter_Value_1_Item as a ResourceDefinitionFilterValue10
-func (t ResourceDefinitionFilter_Value_1_Item) AsResourceDefinitionFilterValue10() (ResourceDefinitionFilterValue10, error) {
-	var body ResourceDefinitionFilterValue10
-	err := json.Unmarshal(t.union, &body)
-	return body, err
-}
-
-// FromResourceDefinitionFilterValue10 overwrites any union data inside the ResourceDefinitionFilter_Value_1_Item as the provided ResourceDefinitionFilterValue10
-func (t *ResourceDefinitionFilter_Value_1_Item) FromResourceDefinitionFilterValue10(v ResourceDefinitionFilterValue10) error {
-	b, err := json.Marshal(v)
-	t.union = b
-	return err
-}
-
-// MergeResourceDefinitionFilterValue10 performs a merge with any union data inside the ResourceDefinitionFilter_Value_1_Item, using the provided ResourceDefinitionFilterValue10
-func (t *ResourceDefinitionFilter_Value_1_Item) MergeResourceDefinitionFilterValue10(v ResourceDefinitionFilterValue10) error {
-	b, err := json.Marshal(v)
-	if err != nil {
-		return err
-	}
-
-	merged, err := runtime.JSONMerge(t.union, b)
-	t.union = merged
-	return err
-}
-
-func (t ResourceDefinitionFilter_Value_1_Item) MarshalJSON() ([]byte, error) {
-	b, err := t.union.MarshalJSON()
-	return b, err
-}
-
-func (t *ResourceDefinitionFilter_Value_1_Item) UnmarshalJSON(b []byte) error {
-	err := t.union.UnmarshalJSON(b)
-	return err
-}
 
 // AsResourceDefinitionFilterValue0 returns the union data inside the ResourceDefinitionFilter_Value as a ResourceDefinitionFilterValue0
 func (t ResourceDefinitionFilter_Value) AsResourceDefinitionFilterValue0() (ResourceDefinitionFilterValue0, error) {
