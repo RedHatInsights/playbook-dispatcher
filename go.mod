@@ -89,7 +89,7 @@ require (
 	go.uber.org/multierr v1.5.0 // indirect
 	golang.org/x/crypto v0.38.0 // indirect
 	golang.org/x/lint v0.0.0-20241112194109-818c5a804067 // indirect
-	golang.org/x/net v0.33.0 // indirect
+	golang.org/x/net v0.40.0 // indirect
 	golang.org/x/sys v0.33.0 // indirect
 	golang.org/x/text v0.25.0 // indirect
 	golang.org/x/tools v0.27.0 // indirect
