@@ -8,8 +8,9 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+//go:generate fungen -types CancelInputV2,*RunCanceled -methods PMap -package private -filename cancel_utils.v2.gen.go
 func (this *controllers) ApiInternalV2RunsCancel(ctx echo.Context) error {
-	var input CancelationInputV2List
+	var input CancelInputV2List
 
 	err := utils.ReadRequestBody(ctx, &input)
 	if err != nil {
@@ -22,9 +23,7 @@ func (this *controllers) ApiInternalV2RunsCancel(ctx echo.Context) error {
 		context := utils.WithOrgId(ctx.Request().Context(), string(cancelInputV2.OrgId))
 		context = utils.WithRequestType(context, instrumentation.LabelAnsibleRequest)
 
-		parsedRunId := parseValidatedUUID(string(cancelInputV2.RunId))
-
-		cancelInput := CancelInputV2GenericMap(cancelInputV2, parsedRunId)
+		cancelInput := CancelInputV2GenericMap(cancelInputV2, cancelInputV2.RunId)
 
 		runID, _, err := this.dispatchManager.ProcessCancel(context, cancelInput.OrgId, cancelInput)
 		if err != nil {

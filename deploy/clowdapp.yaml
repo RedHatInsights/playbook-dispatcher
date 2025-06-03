@@ -282,6 +282,7 @@ objects:
     jobs:
     - name: cleaner
       schedule: ${CLEANER_SCHEDULE}
+      suspend: ${{SUSPEND_CLEANER}}
       restartPolicy: OnFailure
       concurrencyPolicy: Replace
       podSpec:
@@ -377,6 +378,9 @@ parameters:
 
 - name: CLEANER_SCHEDULE
   value: "*/10 * * * *"
+- name: SUSPEND_CLEANER
+  description: Should the cleaner job be suspended?
+  value: "false"
 
 - name: TENANT_TRANSLATOR_HOST
   required: true

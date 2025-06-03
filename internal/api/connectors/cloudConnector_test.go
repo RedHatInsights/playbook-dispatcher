@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"playbook-dispatcher/internal/common/config"
 	"playbook-dispatcher/internal/common/constants"
 	"playbook-dispatcher/internal/common/utils"
@@ -91,7 +91,7 @@ var _ = Describe("Cloud Connector", func() {
 		Expect(err).ToNot(HaveOccurred())
 		Expect(*result).To(Equal("871e31aa-7d41-43e3-8ef7-05706a0ee34a"))
 
-		bytes, err := ioutil.ReadAll(doer.Request.Body)
+		bytes, err := io.ReadAll(doer.Request.Body)
 		Expect(err).ToNot(HaveOccurred())
 		parsedRequest := make(map[string]interface{})
 		err = json.Unmarshal(bytes, &parsedRequest)
@@ -137,7 +137,7 @@ var _ = Describe("Cloud Connector", func() {
 		Expect(err).ToNot(HaveOccurred())
 		Expect(*result).To(Equal("871e31aa-7d41-43e3-8ef7-05706a0ee34a"))
 
-		bytes, err := ioutil.ReadAll(doer.Request.Body)
+		bytes, err := io.ReadAll(doer.Request.Body)
 		Expect(err).ToNot(HaveOccurred())
 		parsedRequest := make(map[string]interface{})
 		err = json.Unmarshal(bytes, &parsedRequest)
@@ -183,7 +183,7 @@ var _ = Describe("Cloud Connector", func() {
 		Expect(err).ToNot(HaveOccurred())
 		Expect(*result).To(Equal("871e31aa-7d41-43e3-8ef7-05706a0ee34a"))
 
-		bytes, err := ioutil.ReadAll(doer.Request.Body)
+		bytes, err := io.ReadAll(doer.Request.Body)
 		Expect(err).ToNot(HaveOccurred())
 		parsedRequest := make(map[string]interface{})
 		err = json.Unmarshal(bytes, &parsedRequest)
@@ -235,7 +235,7 @@ var _ = Describe("Cloud Connector", func() {
 		Expect(err).ToNot(HaveOccurred())
 		Expect(*result).To(Equal("871e31aa-7d41-43e3-8ef7-05706a0ee34a"))
 
-		bytes, err := ioutil.ReadAll(doer.Request.Body)
+		bytes, err := io.ReadAll(doer.Request.Body)
 		Expect(err).ToNot(HaveOccurred())
 		parsedRequest := &CustomUrlType{}
 		err = json.Unmarshal(bytes, parsedRequest)
@@ -264,8 +264,8 @@ var _ = Describe("Cloud Connector", func() {
 				Expect(result).To(Equal(expectedStatus))
 			},
 
-			Entry("connected", "connected", ConnectionStatus_connected),
-			Entry("disconnected", "disconnected", ConnectionStatus_disconnected),
+			Entry("connected", "connected", Connected),
+			Entry("disconnected", "disconnected", Disconnected),
 		)
 
 		It("constructs a correct request", func() {

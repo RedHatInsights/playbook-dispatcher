@@ -3,6 +3,8 @@ package responseConsumer
 import (
 	"context"
 	"errors"
+	"time"
+
 	"playbook-dispatcher/internal/common/ansible"
 	"playbook-dispatcher/internal/common/constants"
 	kafkaUtils "playbook-dispatcher/internal/common/kafka"
@@ -133,7 +135,13 @@ func (this *handler) onMessage(ctx context.Context, msg *k.Message) {
 			hosts := ansible.GetAnsibleHosts(*value.RunnerEvents)
 
 			if len(hosts) == 0 {
-				return nil
+				// If the the playbook fials the signature validation step or if ansible is not
+				// installed, then the generated output will not have any events with a "host" field.
+				// When this happens (the hosts list is empty), then we need to add a "localhost"
+				// entry to the hosts list so that output from the run will get inserted into the
+				// host table otherwise the output gets thrown away.
+				utils.GetLogFromContext(ctx).Debug("Unable to locate any hosts in the ansible output...setting hosts to [localhost]")
+				hosts = []string{"localhost"}
 			}
 
 			toCreate = mapHostsToRunHosts(hosts, func(host string) db.RunHost {
@@ -379,7 +387,7 @@ func parseMessage(ctx context.Context, requestType string, msg *k.Message) *pars
 		return &parsedMessageInfo{
 			OrgId:           value.OrgId,
 			B64Identity:     value.B64Identity,
-			UploadTimestamp: value.UploadTimestamp,
+			UploadTimestamp: value.UploadTimestamp.Format(time.RFC3339),
 			RunnerEvents:    &value.Events,
 		}
 	} else {
@@ -393,7 +401,7 @@ func parseMessage(ctx context.Context, requestType string, msg *k.Message) *pars
 		return &parsedMessageInfo{
 			OrgId:           value.OrgId,
 			B64Identity:     value.B64Identity,
-			UploadTimestamp: value.UploadTimestamp,
+			UploadTimestamp: value.UploadTimestamp.Format(time.RFC3339),
 			SatEvents:       &value.Events,
 		}
 	}
