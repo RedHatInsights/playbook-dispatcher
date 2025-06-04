@@ -1,5 +1,6 @@
 CLOUD_CONNECTOR_SCHEMA ?= https://raw.githubusercontent.com/RedHatInsights/cloud-connector/master/internal/controller/api/api.spec.json
-RBAC_CONNECTOR_SCHEMA ?= https://cloud.redhat.com/api/rbac/v1/openapi.json
+# FIXME: replace this url with one that points at the latest version of the rbac openapi spec
+RBAC_CONNECTOR_SCHEMA ?= https://raw.githubusercontent.com/RedHatInsights/insights-rbac/dfc91ab58888a00b38c136e7b7de7ecaab8d4426/docs/source/specs/openapi.json
 # Newer commits do not generate 3/11/25
 INVENTORY_CONNECTOR_SCHEMA ?= https://raw.githubusercontent.com/RedHatInsights/insights-host-inventory/ffa3cab521f907e006f392d1698bf730346bed94/swagger/openapi.json
 SOURCES_CONNECTOR_SCHEMA ?= https://console.redhat.com/api/sources/v3.1/openapi.json
