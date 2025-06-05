@@ -48,5 +48,7 @@ COPY --from=builder /deps/libs $CONNECT_LIB_PATH
 
 COPY event-streams/log4j.properties /opt/kafka/custom-config
 
+COPY licenses/LICENSE /licenses/LICENSE
+
 USER 1001
 
