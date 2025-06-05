@@ -380,5 +380,45 @@ var _ = ginkgo.Describe("RBAC", func() {
 				}
 			]
 		}`, "remediations", "config-manager"),
+
+		table.Entry("service predicates - in operation", `{
+			"meta": {
+				"count": 3,
+				"limit": 1000,
+				"offset": 0
+			},
+			"links": {
+				"first": "/api/rbac/v1/access/?application=playbook-dispatcher&limit=1000&offset=0",
+				"next": null,
+				"previous": null,
+				"last": "/api/rbac/v1/access/?application=playbook-dispatcher&limit=1000&offset=0"
+			},
+			"data": [
+				{
+					"resourceDefinitions": [
+						{
+							"attributeFilter": {
+								"key": "service",
+								"value": ["remediations", "config-manager"],
+								"operation": "in"
+							}
+						}
+					],
+					"permission": "playbook-dispatcher:run:read"
+				},
+				{
+					"resourceDefinitions": [
+						{
+							"attributeFilter": {
+								"key": "service",
+								"value": "test",
+								"operation": "equal"
+							}
+						}
+					],
+					"permission": "playbook-dispatcher:run:destroy"
+				}
+			]
+		}`, "remediations", "config-manager"),
 	)
 })
