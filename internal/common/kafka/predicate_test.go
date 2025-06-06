@@ -1,7 +1,7 @@
 package kafka
 
 import (
-	k "github.com/confluentinc/confluent-kafka-go/kafka"
+	k "github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"go.uber.org/zap"

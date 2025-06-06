@@ -10,7 +10,7 @@ import (
 	messageModel "playbook-dispatcher/internal/common/model/message"
 	"playbook-dispatcher/internal/common/utils/test"
 
-	k "github.com/confluentinc/confluent-kafka-go/kafka"
+	k "github.com/confluentinc/confluent-kafka-go/v2/kafka"
 
 	"github.com/ghodss/yaml"
 	. "github.com/onsi/ginkgo"
