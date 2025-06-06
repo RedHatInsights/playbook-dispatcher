@@ -3,6 +3,10 @@ USER 0
 
 WORKDIR /go/src/app
 
+# The current ubi9 image does not include Go 1.24, so we specify it.
+# Adding "auto" will allow a newer version to be downloaded if specified in go.mod
+ARG GOTOOLCHAIN=go1.24.2+auto
+
 COPY go.mod go.sum ./
 COPY oapi_codegen oapi_codegen/
 COPY internal/ internal/
