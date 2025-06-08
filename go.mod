@@ -2,7 +2,7 @@ module playbook-dispatcher
 
 go 1.23.8
 
-toolchain go1.24.2
+toolchain go1.24.4
 
 require (
 	github.com/RedHatInsights/tenant-utils v1.0.0
