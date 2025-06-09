@@ -14,7 +14,7 @@ import (
 	"playbook-dispatcher/internal/common/utils"
 	"playbook-dispatcher/internal/response-consumer/instrumentation"
 
-	k "github.com/confluentinc/confluent-kafka-go/kafka"
+	k "github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	"github.com/google/uuid"
 
 	"gorm.io/gorm"

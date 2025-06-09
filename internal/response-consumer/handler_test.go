@@ -10,7 +10,7 @@ import (
 	"playbook-dispatcher/internal/common/utils/test"
 	"sort"
 
-	k "github.com/confluentinc/confluent-kafka-go/kafka"
+	k "github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	"github.com/google/uuid"
 
 	. "github.com/onsi/ginkgo"

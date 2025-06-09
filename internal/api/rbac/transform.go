@@ -25,24 +25,28 @@ func FilterPermissions(permissions []Access, requiredPermission RequiredPermissi
 func GetPredicateValues(permissions []Access, key string) (result []string) {
 	for _, permission := range permissions {
 		for _, resourceDefinition := range permission.ResourceDefinitions {
-			if resourceDefinition.AttributeFilter.Key != key {
-				continue
-			}
 
-			if resourceDefinition.AttributeFilter.Operation == operationEqual {
-				var resourceDefinitionString string
-				err := json.Unmarshal(resourceDefinition.AttributeFilter.Value.union, &resourceDefinitionString)
-				if err == nil {
-					result = append(result, resourceDefinitionString)
+			var operationEqual ResourceDefinitionFilterOperationEqual
+			err := json.Unmarshal(resourceDefinition.AttributeFilter.union, &operationEqual)
+			if err == nil {
+				if operationEqual.Key != key {
 					continue
 				}
 
-				var resourceDefinitionStringSlice []string
-				err = json.Unmarshal(resourceDefinition.AttributeFilter.Value.union, &resourceDefinitionStringSlice)
-				if err != nil {
-					return
+				if operationEqual.Value != nil {
+					result = append(result, *operationEqual.Value)
+					continue
 				}
-				result = append(result, resourceDefinitionStringSlice...)
+			}
+
+			var operationIn ResourceDefinitionFilterOperationIn
+			err = json.Unmarshal(resourceDefinition.AttributeFilter.union, &operationIn)
+			if err == nil {
+				if operationIn.Key != key {
+					continue
+				}
+
+				result = append(result, operationIn.Value...)
 			}
 		}
 	}

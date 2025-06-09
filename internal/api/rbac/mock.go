@@ -12,11 +12,7 @@ func (*mockImpl) GetPermissions(ctx context.Context) ([]Access, error) {
 			Permission: "playbook-dispatcher:run:read",
 			ResourceDefinitions: []ResourceDefinition{
 				{
-					AttributeFilter: ResourceDefinitionFilter{
-						Key:       "service",
-						Operation: "equal",
-						Value:     ResourceDefinitionFilter_Value{[]byte(`["remediations"]`)},
-					},
+					AttributeFilter: ResourceDefinitionFilter{[]byte(`{"key": "service", "operation": "equal", "value": ["remediations"]}`)},
 				},
 			},
 		},
@@ -24,11 +20,7 @@ func (*mockImpl) GetPermissions(ctx context.Context) ([]Access, error) {
 			Permission: "playbook-dispatcher:run:read",
 			ResourceDefinitions: []ResourceDefinition{
 				{
-					AttributeFilter: ResourceDefinitionFilter{
-						Key:       "service",
-						Operation: "equal",
-						Value:     ResourceDefinitionFilter_Value{[]byte(`["config_manager"]`)},
-					},
+					AttributeFilter: ResourceDefinitionFilter{[]byte(`{"key": "service", "operation": "equal", "value": ["config_manager"]}`)},
 				},
 			},
 		},
@@ -36,11 +28,7 @@ func (*mockImpl) GetPermissions(ctx context.Context) ([]Access, error) {
 			Permission: "playbook-dispatcher:run:read",
 			ResourceDefinitions: []ResourceDefinition{
 				{
-					AttributeFilter: ResourceDefinitionFilter{
-						Key:       "service",
-						Operation: "equal",
-						Value:     ResourceDefinitionFilter_Value{[]byte(`"test"`)},
-					},
+					AttributeFilter: ResourceDefinitionFilter{[]byte(`{"key": "service", "operation": "equal", "value": "test"}`)},
 				},
 			},
 		},
