@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/redhatinsights/platform-go-middlewares/request_id"
+	"github.com/redhatinsights/platform-go-middlewares/v2/request_id"
 	"github.com/spf13/viper"
 )
 
