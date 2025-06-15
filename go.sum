@@ -659,8 +659,8 @@ github.com/r3labs/sse v0.0.0-20210224172625-26fe804710bc h1:zAsgcP8MhzAbhMnB1QQ2
 github.com/r3labs/sse v0.0.0-20210224172625-26fe804710bc/go.mod h1:S8xSOnV3CgpNrWd0GQ/OoQfMtlg2uPRSuTzcSGrzwK8=
 github.com/redhatinsights/app-common-go v1.6.2 h1:SYOYC7eelAAMiOK8hp4GxmQLAJ4HtuJ50kNzEZa7S/4=
 github.com/redhatinsights/app-common-go v1.6.2/go.mod h1:SqgG5JkX/RNlk2d+sXamIFxhOIvWLgCBr8uK6q70ESk=
-github.com/redhatinsights/platform-go-middlewares v0.17.0 h1:upjyS2Fq+yGio0N8TrZWha6ZzhidIkRROM0QnDqpiMk=
-github.com/redhatinsights/platform-go-middlewares v0.17.0/go.mod h1:i5gVDZJ/quCQhs5AW5CwkRPXlz1HfDBvyNtXHnlXZfM=
+github.com/redhatinsights/platform-go-middlewares v0.20.0 h1:qwK9ArGYRlORsZ56PXXLJrGvzTsMe3bk2lR+WN5aIjM=
+github.com/redhatinsights/platform-go-middlewares v0.20.0/go.mod h1:i5gVDZJ/quCQhs5AW5CwkRPXlz1HfDBvyNtXHnlXZfM=
 github.com/rivo/uniseg v0.2.0 h1:S1pD9weZBuJdFmowNwbpi7BJ8TNftyUImj/0WQi72jY=
 github.com/rivo/uniseg v0.2.0/go.mod h1:J6wj4VEh+S6ZtnVlnTBMWIodfgj8LQOQFoIToxlJtxc=
 github.com/rogpeppe/fastuuid v0.0.0-20150106093220-6724a57986af/go.mod h1:XWv6SoW27p1b0cqNHllgS5HIMJraePCO15w5zCzIWYg=
