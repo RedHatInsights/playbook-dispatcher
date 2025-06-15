@@ -7,7 +7,7 @@ toolchain go1.24.2
 require (
 	github.com/RedHatInsights/tenant-utils v1.0.0
 	github.com/aws/aws-sdk-go v1.49.6
-	github.com/confluentinc/confluent-kafka-go/v2 v2.10.0
+	github.com/confluentinc/confluent-kafka-go/v2 v2.10.1
 	github.com/getkin/kin-openapi v0.129.0
 	github.com/ghodss/yaml v1.0.0
 	github.com/globocom/echo-prometheus v0.1.2
