@@ -57,8 +57,8 @@ services:
       - '9000:9000'
       - '10000:10000'
     environment:
-      - MINIO_ACCESS_KEY=$MINIO_ACCESS_KEY
-      - MINIO_SECRET_KEY=$MINIO_SECRET_KEY
+      - MINIO_ROOT_USER=$MINIO_ROOT_USER
+      - MINIO_ROOT_PASSWORD=$MINIO_ROOT_PASSWORD
 
   minio-createbuckets:
     image: minio/mc
@@ -67,9 +67,9 @@ services:
     restart: on-failure
     entrypoint: >
       /bin/sh -c "
-      /usr/bin/mc config host add myminio http://minio:9000 "$MINIO_ACCESS_KEY" "$MINIO_SECRET_KEY" || exit 1;
+      /usr/bin/mc alias set myminio http://minio:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD" || exit 1;
       /usr/bin/mc mb --ignore-existing myminio/insights-upload-perma;
-      /usr/bin/mc policy set upload myminio/insights-upload-perma;
+      /usr/bin/mc anonymous set upload myminio/insights-upload-perma;
       "
 
   ingress:
@@ -82,8 +82,8 @@ services:
       - OPENSHIFT_BUILD_COMMIT=somestring
       - INGRESS_MAXSIZE=104857600
       - INGRESS_MINIODEV=true
-      - INGRESS_MINIOACCESSKEY=$MINIO_ACCESS_KEY
-      - INGRESS_MINIOSECRETKEY=$MINIO_SECRET_KEY
+      - INGRESS_MINIOACCESSKEY=$MINIO_ROOT_USER
+      - INGRESS_MINIOSECRETKEY=$MINIO_ROOT_PASSWORD
       - INGRESS_MINIOENDPOINT=minio:9000
     depends_on:
       - kafka
