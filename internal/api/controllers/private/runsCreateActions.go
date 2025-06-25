@@ -45,6 +45,9 @@ func parseRunHosts(input *RunInputHosts) []generic.RunHostsInput {
 			result[i].InventoryId = host.InventoryId
 		}
 
+		if host.SubscriptionManagerId != nil {
+			result[i].SubscriptionManagerId = host.SubscriptionManagerId
+		}
 	}
 
 	return result

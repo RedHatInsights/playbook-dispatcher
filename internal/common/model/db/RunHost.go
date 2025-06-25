@@ -10,8 +10,9 @@ type RunHost struct {
 	ID    uuid.UUID `gorm:"type:uuid"`
 	RunID uuid.UUID `gorm:"type:uuid"`
 
-	InventoryID *uuid.UUID `gorm:"type:uuid"`
-	Host        string
+	InventoryID           *uuid.UUID `gorm:"type:uuid"`
+	SubscriptionManagerID *uuid.UUID `gorm:"type:uuid"`
+	Host                  string
 
 	SatSequence *int
 
