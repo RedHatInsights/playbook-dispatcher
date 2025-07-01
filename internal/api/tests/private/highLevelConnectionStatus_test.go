@@ -44,7 +44,7 @@ var _ = Describe("high level connection status", func() {
 		response, err := getConnectionStatus(payload)
 
 		Expect(err).ToNot(HaveOccurred())
-	
+
 		result := response.JSON200
 		Expect(response.StatusCode()).To(Equal(200))
 		Expect(*result).To(HaveLen(2))
@@ -67,8 +67,8 @@ var _ = Describe("high level connection status", func() {
 	It("disallow more than 50 hosts", func() {
 
 		hosts := make([]string, 51)
-		for i :=0; i < 51; i++ {
-			hosts[i]= "host" + strconv.Itoa(i+1)
+		for i := 0; i < 51; i++ {
+			hosts[i] = "host" + strconv.Itoa(i+1)
 		}
 
 		payload := ApiInternalHighlevelConnectionStatusJSONRequestBody{

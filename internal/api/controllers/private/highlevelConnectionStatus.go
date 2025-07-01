@@ -202,12 +202,18 @@ func groupHostsBySatellite(hostDetails []inventory.HostDetails) map[string]*rhcS
 		if exists {
 			hostsGroupedBySatellite[satInstanceAndOrg].Hosts = append(hostsGroupedBySatellite[satInstanceAndOrg].Hosts, host.ID)
 		} else {
-			hostsGroupedBySatellite[satInstanceAndOrg] = &rhcSatellite{
-				SatelliteInstanceID: *host.SatelliteInstanceID,
-				SatelliteOrgID:      *host.SatelliteOrgID,
-				SatelliteVersion:    *host.SatelliteVersion,
-				Hosts:               []string{host.ID},
+			satellite := &rhcSatellite{Hosts: []string{host.ID}}
+			if host.SatelliteInstanceID != nil {
+				satellite.SatelliteInstanceID = *host.SatelliteInstanceID
 			}
+			if host.SatelliteOrgID != nil {
+				satellite.SatelliteOrgID = *host.SatelliteOrgID
+			}
+			if host.SatelliteVersion != nil {
+				satellite.SatelliteVersion = *host.SatelliteVersion
+			}
+
+			hostsGroupedBySatellite[satInstanceAndOrg] = satellite
 		}
 	}
 
