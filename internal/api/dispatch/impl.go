@@ -22,21 +22,21 @@ type dispatchManager struct {
 	rateLimiter    *rate.Limiter
 }
 
-func (this *dispatchManager) newCorrelationId() uuid.UUID {
-	if this.config.GetBool("demo.mode") {
+func (dm *dispatchManager) newCorrelationId() uuid.UUID {
+	if dm.config.GetBool("demo.mode") {
 		return uuid.UUID{}
 	}
 
 	return uuid.New()
 }
 
-func (this *dispatchManager) applyDefaults(run *generic.RunInput) {
+func (dm *dispatchManager) applyDefaults(run *generic.RunInput) {
 	if run.WebConsoleUrl == nil {
-		run.WebConsoleUrl = utils.StringRef(this.config.GetString("web.console.url.default"))
+		run.WebConsoleUrl = utils.StringRef(dm.config.GetString("web.console.url.default"))
 	}
 
 	if run.Timeout == nil {
-		run.Timeout = utils.IntRef(this.config.GetInt("default.run.timeout"))
+		run.Timeout = utils.IntRef(dm.config.GetInt("default.run.timeout"))
 	}
 }
 
@@ -48,24 +48,24 @@ func getProtocol(runInput generic.RunInput) protocols.Protocol {
 	}
 }
 
-func (this *dispatchManager) ProcessRun(ctx context.Context, orgID string, service string, run generic.RunInput) (runID, correlationID uuid.UUID, err error) {
-	correlationID = this.newCorrelationId()
+func (dm *dispatchManager) ProcessRun(ctx context.Context, orgID string, service string, run generic.RunInput) (runID, correlationID uuid.UUID, err error) {
+	correlationID = dm.newCorrelationId()
 	ctx = utils.WithCorrelationId(ctx, correlationID.String())
 
-	this.applyDefaults(&run)
+	dm.applyDefaults(&run)
 
 	protocol := getProtocol(run)
 
-	signalMetadata := protocol.BuildMedatada(run, correlationID, this.config)
+	signalMetadata := protocol.BuildMetaData(run, correlationID, dm.config)
 
 	// take from the rate limit bucket
-	rateErr := this.rateLimiter.Wait(ctx)
+	rateErr := dm.rateLimiter.Wait(ctx)
 
 	if rateErr != nil {
 		return uuid.UUID{}, correlationID, rateErr
 	}
 
-	messageId, notFound, err := this.cloudConnector.SendCloudConnectorRequest(
+	messageId, notFound, err := dm.cloudConnector.SendCloudConnectorRequest(
 		ctx,
 		orgID,
 		run.Recipient,
@@ -84,9 +84,9 @@ func (this *dispatchManager) ProcessRun(ctx context.Context, orgID string, servi
 
 	instrumentation.CloudConnectorOK(ctx, run.Recipient, messageId)
 
-	entity := newRun(&run, correlationID, protocol.GetResponseFull(this.config), service, this.config)
+	entity := newRun(&run, correlationID, protocol.GetResponseFull(dm.config), service, dm.config)
 
-	err = this.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+	err = dm.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if dbResult := tx.Create(&entity); dbResult.Error != nil {
 			instrumentation.PlaybookRunCreateError(ctx, dbResult.Error, &entity, protocol.GetLabel())
 			return dbResult.Error
@@ -112,11 +112,11 @@ func (this *dispatchManager) ProcessRun(ctx context.Context, orgID string, servi
 	return entity.ID, correlationID, nil
 }
 
-func (this *dispatchManager) ProcessCancel(ctx context.Context, orgID string, cancel generic.CancelInput) (runID, correlationID uuid.UUID, err error) {
+func (dm *dispatchManager) ProcessCancel(ctx context.Context, orgID string, cancel generic.CancelInput) (runID, correlationID uuid.UUID, err error) {
 	var run db.Run
 	payload := ""
 
-	if err := this.db.First(&run, cancel.RunId).Error; err != nil {
+	if err := dm.db.First(&run, cancel.RunId).Error; err != nil {
 		instrumentation.PlaybookRunCancelError(ctx, err)
 		return uuid.UUID{}, run.CorrelationID, &RunNotFoundError{err: err, runID: cancel.RunId}
 	}
@@ -136,16 +136,16 @@ func (this *dispatchManager) ProcessCancel(ctx context.Context, orgID string, ca
 	}
 
 	protocol := *protocols.SatelliteProtocol
-	signalMetadata := protocol.BuildCancelMetadata(cancel, run.CorrelationID, this.config)
+	signalMetadata := protocol.BuildCancelMetaData(cancel, run.CorrelationID, dm.config)
 
 	// take from the rate limit bucket
-	rateErr := this.rateLimiter.Wait(ctx)
+	rateErr := dm.rateLimiter.Wait(ctx)
 
 	if rateErr != nil {
 		return uuid.UUID{}, correlationID, rateErr
 	}
 
-	messageId, notFound, err := this.cloudConnector.SendCloudConnectorRequest(
+	messageId, notFound, err := dm.cloudConnector.SendCloudConnectorRequest(
 		ctx,
 		orgID,
 		run.Recipient,

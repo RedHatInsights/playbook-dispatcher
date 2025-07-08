@@ -21,5 +21,5 @@ type Protocol interface {
 	GetResponseFull(cfg *viper.Viper) bool
 
 	// build the metadata dictionary in a format that the given rhc worker understands
-	BuildMedatada(runInput generic.RunInput, correlationID uuid.UUID, cfg *viper.Viper) map[string]string
+	BuildMetaData(runInput generic.RunInput, correlationID uuid.UUID, cfg *viper.Viper) map[string]string
 }

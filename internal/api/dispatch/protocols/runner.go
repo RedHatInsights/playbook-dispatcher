@@ -9,19 +9,19 @@ import (
 
 type runnerProtocol struct{}
 
-func (this *runnerProtocol) GetDirective() Directive {
+func (rp *runnerProtocol) GetDirective() Directive {
 	return RunnerDirective
 }
 
-func (this *runnerProtocol) GetLabel() string {
+func (rp *runnerProtocol) GetLabel() string {
 	return LabelRunnerRequest
 }
 
-func (this *runnerProtocol) GetResponseFull(cfg *viper.Viper) bool {
+func (rp *runnerProtocol) GetResponseFull(cfg *viper.Viper) bool {
 	return true
 }
 
-func (this *runnerProtocol) BuildMedatada(runInput generic.RunInput, correlationID uuid.UUID, cfg *viper.Viper) map[string]string {
+func (rp *runnerProtocol) BuildMetaData(runInput generic.RunInput, correlationID uuid.UUID, cfg *viper.Viper) map[string]string {
 	metadata := buildCommonSignal(cfg)
 	metadata["crc_dispatcher_correlation_id"] = correlationID.String()
 
