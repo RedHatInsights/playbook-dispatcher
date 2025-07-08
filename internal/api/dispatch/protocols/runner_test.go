@@ -23,7 +23,7 @@ var _ = Describe("Runner Protocol", func() {
 			cfg.Set("response.interval", "3")
 			cfg.Set("return.url", "https://example.com")
 
-			metadata := RunnerProtocol.BuildMedatada(run, correlationID, cfg)
+			metadata := RunnerProtocol.BuildMetaData(run, correlationID, cfg)
 			Expect(metadata).To(HaveLen(3))
 			Expect(metadata["crc_dispatcher_correlation_id"]).To(Equal(correlationID.String()))
 			Expect(metadata["response_interval"]).To(Equal("3"))
