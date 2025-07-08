@@ -45,6 +45,18 @@ func (this *inventoryConnectorMock) GetHostConnectionDetails(
 		RHCClientID: &rhcClientID,
 	}
 
+	// Special case for testing nil SatelliteVersion
+	if IDs[0] == "nil-satellite-version-host" {
+		nilSatelliteVersionHost := HostDetails{
+			ID:                  "nil-satellite-version-host",
+			OwnerID:             &ownerID,
+			SatelliteInstanceID: &satelliteInstanceID,
+			SatelliteVersion:    nil,
+			SatelliteOrgID:      &satelliteOrgID,
+		}
+		return []HostDetails{nilSatelliteVersionHost}, nil
+	}
+
 	hostDetailsList := []HostDetails{hostDetails, directConnectDetails}
 
 	return hostDetailsList, nil
