@@ -25,6 +25,7 @@ type CancelInput struct {
 }
 
 type RunHostsInput struct {
-	AnsibleHost *string
-	InventoryId *uuid.UUID
+	AnsibleHost           *string
+	InventoryId           *uuid.UUID
+	SubscriptionManagerId *uuid.UUID
 }

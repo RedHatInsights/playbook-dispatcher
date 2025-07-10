@@ -174,6 +174,9 @@ type RunInputHosts = []struct {
 
 	// InventoryId Inventory id of the given host
 	InventoryId *openapi_types.UUID `json:"inventory_id,omitempty"`
+
+	// SubscriptionManagerId Subscription Manager id of the given host
+	SubscriptionManagerId *openapi_types.UUID `json:"subscription_manager_id,omitempty"`
 }
 
 // RunInputV2 defines model for RunInputV2.
