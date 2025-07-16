@@ -44,7 +44,7 @@ var _ = Describe("high level connection status", func() {
 		response, err := getConnectionStatus(payload)
 
 		Expect(err).ToNot(HaveOccurred())
-	
+
 		result := response.JSON200
 		Expect(response.StatusCode()).To(Equal(200))
 		Expect(*result).To(HaveLen(2))
@@ -67,8 +67,8 @@ var _ = Describe("high level connection status", func() {
 	It("disallow more than 50 hosts", func() {
 
 		hosts := make([]string, 51)
-		for i :=0; i < 51; i++ {
-			hosts[i]= "host" + strconv.Itoa(i+1)
+		for i := 0; i < 51; i++ {
+			hosts[i] = "host" + strconv.Itoa(i+1)
 		}
 
 		payload := ApiInternalHighlevelConnectionStatusJSONRequestBody{
@@ -79,5 +79,25 @@ var _ = Describe("high level connection status", func() {
 		response, err := getConnectionStatus(payload)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(response.StatusCode()).To(Equal(400))
+	})
+
+	It("handles satellite hosts with nil SatelliteVersion", func() {
+		// Test with a host that has nil SatelliteVersion
+		payload := ApiInternalHighlevelConnectionStatusJSONRequestBody{
+			Hosts: []string{"nil-satellite-version-host"},
+			OrgId: "12345",
+		}
+
+		response, err := getConnectionStatus(payload)
+
+		Expect(err).ToNot(HaveOccurred())
+		Expect(response.StatusCode()).To(Equal(200))
+
+		result := response.JSON200
+		Expect(*result).To(HaveLen(1))
+		Expect((*result)[0].RecipientType).To(Equal(Satellite))
+		Expect((*result)[0].OrgId).To(Equal(payload.OrgId))
+		Expect((*result)[0].Status).To(Equal(Connected))
+		Expect((*result)[0].Systems).To(Equal([]HostId{"nil-satellite-version-host"}))
 	})
 })
