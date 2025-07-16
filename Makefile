@@ -35,6 +35,16 @@ internal/api/controllers/private/spec.gen.go internal/api/controllers/private/ty
 	${GOPATH}/bin/oapi-codegen -generate server,spec -package private -o internal/api/controllers/private/spec.gen.go -import-mapping=./public.openapi.yaml:playbook-dispatcher/internal/api/controllers/public schema/private.openapi.yaml
 	${GOPATH}/bin/oapi-codegen -generate types -package private -o internal/api/controllers/private/types.gen.go -import-mapping=./public.openapi.yaml:playbook-dispatcher/internal/api/controllers/public schema/private.openapi.yaml
 
+# use this when the oapi-codegen module version is updated and the golang validator fails
+.PHONY: update-local-api
+update-local-api: touch-openapi-files generate-api
+
+.PHONY: touch-openapi-files
+touch-openapi-files:
+	# touch the openapi source config files
+	touch schema/private.openapi.yaml
+	touch schema/public.openapi.yaml
+
 generate-clients: internal/api/tests/public/client.gen.go \
 	              internal/api/tests/private/client.gen.go
 

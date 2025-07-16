@@ -8,8 +8,8 @@ services:
     image: quay.io/cloudservices/playbook-dispatcher
     build:
       context: .
-    links:
-    - kafka
+    depends_on:
+    - kafka-init
     - db
     ports:
       - '8000:8000'
@@ -43,7 +43,32 @@ services:
       - KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1
       - KAFKA_ZOOKEEPER_CONNECT=zookeeper:32181
       - KAFKA_AUTO_CREATE_TOPICS_ENABLE=true
+    healthcheck:
+      test: ["CMD", "kafka-topics", "--bootstrap-server", "localhost:29092", "--list"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
+  kafka-init:
+    image: confluentinc/cp-kafka
+    depends_on:
+      kafka:
+        condition: service_healthy
+    entrypoint: ['/bin/sh', '-c']
+    command: |
+      "
+      echo 'Existing Kafka topics...'
+      kafka-topics --bootstrap-server kafka:29092 --list
+      
+      echo 'Creating Kafka topics if they do not exist...'
+      
+      # Add Playbook Dispatcher topics here
+      kafka-topics --bootstrap-server kafka:29092 --create --if-not-exists --topic platform.playbook-dispatcher.runner-updates 
+      kafka-topics --bootstrap-server kafka:29092 --create --if-not-exists --topic platform.upload.announce
+      
+      echo 'Kafka topics have been created.'
+      kafka-topics --bootstrap-server kafka:29092 --list
+      "
   minio:
     image: minio/minio
     command: server /data --console-address ":10000"
@@ -86,7 +111,7 @@ services:
       - INGRESS_MINIOSECRETKEY=$MINIO_ROOT_PASSWORD
       - INGRESS_MINIOENDPOINT=minio:9000
     depends_on:
-      - kafka
+      - kafka-init
 
   db:
     image: quay.io/debezium/postgres:16
@@ -103,8 +128,8 @@ services:
       context: .
       dockerfile: event-streams/Dockerfile
     image: quay.io/cloudservices/playbook-dispatcher-connect
-    links:
-      - kafka
+    depends_on:
+      - kafka-init
       - db
     ports:
       - 8083:8083
