@@ -16,7 +16,7 @@ require (
 	github.com/labstack/echo/v4 v4.12.0
 	github.com/mec07/cloudwatchwriter v0.2.6
 	github.com/oapi-codegen/echo-middleware v1.0.2
-	github.com/oapi-codegen/runtime v1.1.1
+	github.com/oapi-codegen/runtime v1.1.2
 	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.19.0
 	github.com/prometheus/client_golang v1.17.0
