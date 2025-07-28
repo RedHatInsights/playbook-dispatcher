@@ -13,19 +13,19 @@ import (
 
 type satelliteProtocol struct{}
 
-func (this *satelliteProtocol) GetDirective() Directive {
+func (sp *satelliteProtocol) GetDirective() Directive {
 	return SatelliteDirective
 }
 
-func (this *satelliteProtocol) GetLabel() string {
+func (sp *satelliteProtocol) GetLabel() string {
 	return LabelSatRequest
 }
 
-func (this *satelliteProtocol) GetResponseFull(cfg *viper.Viper) bool {
+func (sp *satelliteProtocol) GetResponseFull(cfg *viper.Viper) bool {
 	return cfg.GetBool("satellite.response.full")
 }
 
-func (this *satelliteProtocol) GetPrincipalHash(principal string) string {
+func (sp *satelliteProtocol) GetPrincipalHash(principal string) string {
 	return fmt.Sprintf("%x", sha256.Sum256([]byte(principal)))
 }
 
@@ -38,10 +38,27 @@ func getHostsLine(runInput generic.RunInput) string {
 	return strings.Join(hosts, ",")
 }
 
-func (this *satelliteProtocol) BuildMedatada(runInput generic.RunInput, correlationID uuid.UUID, cfg *viper.Viper) map[string]string {
-	hosts := getHostsLine(runInput)
+// collates existing Subscription Manager IDs into a comma-delimited string
+func submanIdsAsString(runInput generic.RunInput) string {
+	submanIDs := make([]string, 0)
+	for _, host := range runInput.Hosts {
+		if host.SubscriptionManagerId != nil && host.SubscriptionManagerId.String() != "" {
+			submanIDs = append(submanIDs, (*host.SubscriptionManagerId).String())
+		}
+	}
 
-	principalHash := this.GetPrincipalHash(*runInput.Principal)
+	if len(submanIDs) > 0 {
+		return strings.Join(submanIDs, ",")
+	}
+
+	return ""
+}
+
+func (sp *satelliteProtocol) BuildMetaData(runInput generic.RunInput, correlationID uuid.UUID, cfg *viper.Viper) map[string]string {
+	hosts := getHostsLine(runInput)
+	submanIDs := submanIdsAsString(runInput)
+
+	principalHash := sp.GetPrincipalHash(*runInput.Principal)
 
 	metadata := buildCommonSignal(cfg)
 
@@ -53,13 +70,17 @@ func (this *satelliteProtocol) BuildMedatada(runInput generic.RunInput, correlat
 	metadata["sat_org_id"] = *runInput.SatOrgId
 	metadata["initiator_user_id"] = principalHash
 	metadata["hosts"] = hosts
-	metadata["response_full"] = strconv.FormatBool(this.GetResponseFull(cfg))
+	// maintain compatibility if no subscription manager ids are provided
+	if submanIDs != "" {
+		metadata["subscription_manager_ids"] = submanIDs
+	}
+	metadata["response_full"] = strconv.FormatBool(sp.GetResponseFull(cfg))
 
 	return metadata
 }
 
-func (this *satelliteProtocol) BuildCancelMetadata(cancelInput generic.CancelInput, correlationID uuid.UUID, cfg *viper.Viper) map[string]string {
-	principalHash := this.GetPrincipalHash(cancelInput.Principal)
+func (sp *satelliteProtocol) BuildCancelMetaData(cancelInput generic.CancelInput, correlationID uuid.UUID, cfg *viper.Viper) map[string]string {
+	principalHash := sp.GetPrincipalHash(cancelInput.Principal)
 
 	metadata := map[string]string{
 		"operation":         "cancel",
