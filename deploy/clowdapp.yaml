@@ -309,6 +309,48 @@ objects:
             cpu: 100m
             memory: 64Mi
 
+- apiVersion: metrics.console.redhat.com/v1alpha1
+  kind: FloorPlan
+  metadata:
+    name: playbook-dispatcher
+  spec:
+    database:
+      secretName: ${FLOORIST_DB_SECRET_NAME}
+    objectStore:
+      secretName: ${FLOORIST_BUCKET_SECRET_NAME}
+    logLevel: ${FLOORIST_LOGLEVEL}
+    suspend: ${{FLOORIST_SUSPEND}}
+    disabled: ${{FLOORIST_DISABLED}}
+    queries:
+      - prefix: insights/playbook-dispatcher/run_hosts
+        query: >-
+          SELECT id,
+                  run_id,
+                  inventory_id,
+                  status,
+                  created_at,
+                  updated_at,
+                  sat_sequence
+          FROM run_hosts;
+      - prefix: insights/playbook-dispatcher/runs
+        query: >-
+          SELECT id, 
+                  recipient, 
+                  correlation_id, 
+                  url, 
+                  status, 
+                  created_at, 
+                  updated_at, 
+                  timeout, 
+                  service, 
+                  org_id, 
+                  playbook_name, 
+                  playbook_run_url, 
+                  principal, 
+                  sat_id, 
+                  sat_org_id 
+          FROM runs;
+
 parameters:
 - name: IMAGE_TAG
   required: true
@@ -428,3 +470,25 @@ parameters:
   value: playbook-dispatcher
 - name: KEY_CLOUD_CONNECTOR
   value: cloud_connector
+
+# Used for floorist
+- name: FLOORIST_SUSPEND
+  description: Disable Floorist cronjob execution
+  required: true
+  value: 'true'
+- name: FLOORIST_DISABLED
+  description: Determines whether to build the Floorist Job.
+  value: 'false'
+- name: FLOORIST_DB_SECRET_NAME
+  description: database secret name
+  value: playbook-dispatcher-db
+- name: FLOORIST_BUCKET_SECRET_NAME
+  description: bucket secret name
+  required: true
+  value: dummy-secret
+- name: FLOORIST_HMS_BUCKET_SECRET_NAME
+  description: HMS bucket secret name
+  value: hms-floorist-bucket
+- name: FLOORIST_LOGLEVEL
+  description: Floorist loglevel config
+  value: 'INFO'
