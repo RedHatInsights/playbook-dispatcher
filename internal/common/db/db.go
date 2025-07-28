@@ -26,7 +26,11 @@ func Connect(ctx context.Context, cfg *viper.Viper) (*gorm.DB, *sql.DB) {
 		cfg.GetString("db.sslmode"),
 	)
 
-	if cfg.IsSet("db.ca") {
+	// with go 1.24.4 update, there is an upstream change related to gorm and github.com/jackc/pgx/v5
+	// the workaround/fix is to set the cert to empty string when the sslmode is disable
+	if cfg.GetString("db.sslmode") == "disable" {
+		dsn += fmt.Sprintf(" sslrootcert=%s", "")
+	} else if cfg.IsSet("db.ca") {
 		dsn += fmt.Sprintf(" sslrootcert=%s", cfg.GetString("db.ca"))
 	}
 

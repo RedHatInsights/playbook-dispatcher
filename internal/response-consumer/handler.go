@@ -117,11 +117,15 @@ func (this *handler) onMessage(ctx context.Context, msg *k.Message) {
 			Events: eventsSerialized,
 		}
 
-		// We retrieved the run id (primary key) above...lets use it here during the update to speed up the query
-		baseQuery = baseQuery.Where("id = ?", run.ID)
-
 		// Only update if the run is not marked as complete
-		updateResult := baseQuery.Where("status not in ?", []string{db.RunStatusSuccess, db.RunStatusFailure}).Select("status", "events").Updates(toUpdate)
+		// Gorm v1.30.0 is more strict on reuse of table names in a query without joins, so not reusing baseQuery here.
+		updateResult := tx.Model(&db.Run{}).
+			Where("org_id = ?", value.OrgId).
+			Where("correlation_id = ?", correlationId).
+			Where("id = ?", run.ID).
+			Where("status not in ?", []string{db.RunStatusSuccess, db.RunStatusFailure}).
+			Select("status", "events").
+			Updates(toUpdate)
 		if updateResult.Error != nil {
 			utils.GetLogFromContext(ctx).Errorw("Error updating run in db", "error", updateResult.Error)
 			return updateResult.Error
