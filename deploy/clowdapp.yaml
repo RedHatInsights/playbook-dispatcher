@@ -488,7 +488,7 @@ parameters:
   value: dummy-secret
 - name: FLOORIST_HMS_BUCKET_SECRET_NAME
   description: HMS bucket secret name
-  value: floorist-bucket
+  value: hms-floorist-bucket
 - name: FLOORIST_LOGLEVEL
   description: Floorist loglevel config
   value: 'INFO'
