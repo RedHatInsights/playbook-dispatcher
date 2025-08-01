@@ -355,7 +355,7 @@ parameters:
 - name: IMAGE_TAG
   required: true
 - name: IMAGE
-  value: quay.io/redhat-services-prod/hcc-integrations-tenant/playbook-dispatcher
+  value: quay.io/cloudservices/playbook-dispatcher
 - description : ClowdEnvironment name
   name: ENV_NAME
   required: true
