@@ -5,9 +5,11 @@ metadata:
     build.appstudio.openshift.io/repo: https://github.com/RedHatInsights/playbook-dispatcher?rev={{revision}}
     build.appstudio.redhat.com/commit_sha: '{{revision}}'
     build.appstudio.redhat.com/target_branch: '{{target_branch}}'
+    pipelinesascode.tekton.dev/cancel-in-progress: "false"
     pipelinesascode.tekton.dev/max-keep-runs: "3"
     pipelinesascode.tekton.dev/on-cel-expression: event == "push" && target_branch
       == "master"
+    pipelinesascode.tekton.dev/pipeline: https://github.com/RedHatInsights/konflux-pipelines/raw/main/pipelines/docker-build-oci-ta.yaml
   creationTimestamp: null
   labels:
     appstudio.openshift.io/application: playbook-dispatcher
@@ -25,15 +27,10 @@ spec:
     value: quay.io/redhat-user-workloads/hcc-integrations-tenant/playbook-dispatcher/playbook-dispatcher:{{revision}}
   - name: dockerfile
     value: Dockerfile
+  - name: path-context
+    value: .
   pipelineRef:
-    params:
-    - name: url
-      value: https://github.com/RedHatInsights/konflux-pipelines
-    - name: revision
-      value: main
-    - name: pathInRepo
-      value: pipelines/docker-build-oci-ta.yaml
-    resolver: git
+    name: docker-build-oci-ta
   taskRunTemplate:
     serviceAccountName: build-pipeline-playbook-dispatcher
   workspaces:
