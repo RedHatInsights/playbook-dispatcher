@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/redhatinsights/platform-go-middlewares/identity"
+	"github.com/redhatinsights/platform-go-middlewares/v2/identity"
 )
 
 const userType = "user"

@@ -11,7 +11,7 @@ import (
 	"playbook-dispatcher/internal/common/utils/test"
 	"strconv"
 
-	"github.com/redhatinsights/platform-go-middlewares/request_id"
+	"github.com/redhatinsights/platform-go-middlewares/v2/request_id"
 
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo"
