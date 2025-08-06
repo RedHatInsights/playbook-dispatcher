@@ -318,7 +318,7 @@ objects:
     database:
       secretName: ${FLOORIST_DB_SECRET_NAME}
     objectStore:
-      secretName: ${FLOORIST_BUCKET_SECRET_NAME}
+      secretName: ${FLOORIST_HMS_BUCKET_SECRET_NAME}
     logLevel: ${FLOORIST_LOGLEVEL}
     suspend: ${{FLOORIST_SUSPEND}}
     disabled: ${{FLOORIST_DISABLED}}
@@ -483,10 +483,6 @@ parameters:
 - name: FLOORIST_DB_SECRET_NAME
   description: database secret name
   value: playbook-dispatcher-db
-- name: FLOORIST_BUCKET_SECRET_NAME
-  description: bucket secret name
-  required: true
-  value: dummy-secret
 - name: FLOORIST_HMS_BUCKET_SECRET_NAME
   description: HMS bucket secret name
   value: hms-floorist-bucket
