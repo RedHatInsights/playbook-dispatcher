@@ -3,7 +3,7 @@ kind: Template
 metadata:
   name: playbook-dispatcher-connect
 parameters:
-- name: KAFKA_CONNECT_IMAGE
+- name: IMAGE
   value: quay.io/cloudservices/playbook-dispatcher-connect
 - name: IMAGE_TAG
   value: latest
@@ -76,7 +76,7 @@ objects:
             value: "false"
           - name: KAFKA_HEAP_OPTS
             value: "-Xms${XMS} -Xmx${XMS}"
-          image: ${KAFKA_CONNECT_IMAGE}:${IMAGE_TAG}
+          image: ${IMAGE}:${IMAGE_TAG}
           livenessProbe:
             exec:
               command:
@@ -168,7 +168,7 @@ objects:
           - ${EVENT_CONSUMER_GROUP}
           - --topic
           - ${EVENT_CONSUMER_TOPIC}
-          image: ${KAFKA_CONNECT_IMAGE}:${IMAGE_TAG}
+          image: ${IMAGE}:${IMAGE_TAG}
           name: playbook-dispatcher-event-consumer
           resources:
             requests:
