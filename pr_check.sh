@@ -53,6 +53,10 @@ bonfire deploy playbook-dispatcher cloud-connector host-inventory \
     --set-template-ref ${CONNECT_COMPONENT_NAME}=${GIT_COMMIT} \
     --namespace ${NAMESPACE} \
     --timeout ${DEPLOY_TIMEOUT} \
+    --set-parameter playbook-dispatcher/IMAGE=${IMAGE_DISPATCHER} \
+    --set-parameter playbook-dispatcher/IMAGE_TAG=${IMAGE_TAG} \
+    --set-parameter playbook-dispatcher-connect/KAFKA_CONNECT_IMAGE=${IMAGE_CONNECT} \
+    --set-parameter playbook-dispatcher-connect/IMAGE_TAG=${IMAGE_TAG} \
     --set-parameter playbook-dispatcher/CLOUD_CONNECTOR_IMPL=impl
 
 # Run Playbook Dispatcher isolated tests
