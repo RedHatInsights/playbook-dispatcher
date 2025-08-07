@@ -31,7 +31,13 @@ source $CICD_ROOT/build.sh
 
 # IMAGE is set to the Connect image, setting dispatcher image as an extra arg
 # hardcode connect to use a ref that works in ephemeral
-EXTRA_DEPLOY_ARGS="--set-image-tag ${IMAGE_DISPATCHER}=${IMAGE_TAG} --set-template-ref ${CONNECT_COMPONENT_NAME}=${GIT_COMMIT}"
+EXTRA_DEPLOY_ARGS="
+  --set-image-tag ${IMAGE_DISPATCHER}=${IMAGE_TAG}
+  --set-template-ref ${CONNECT_COMPONENT_NAME}=${GIT_COMMIT} \
+  --set-parameter playbook-dispatcher/IMAGE=${IMAGE_DISPATCHER} \
+  --set-parameter playbook-dispatcher/IMAGE_TAG=${IMAGE_TAG} \
+  --set-parameter playbook-dispatcher-connect/KAFKA_CONNECT_IMAGE=${IMAGE_CONNECT} \
+  --set-parameter playbook-dispatcher-connect/IMAGE_TAG=${IMAGE_TAG}"
 
 # Deploy to an ephemeral environment
 source $CICD_ROOT/deploy_ephemeral_env.sh
@@ -47,6 +53,10 @@ bonfire deploy playbook-dispatcher cloud-connector host-inventory \
     --set-template-ref ${CONNECT_COMPONENT_NAME}=${GIT_COMMIT} \
     --namespace ${NAMESPACE} \
     --timeout ${DEPLOY_TIMEOUT} \
+    --set-parameter playbook-dispatcher/IMAGE=${IMAGE_DISPATCHER} \
+    --set-parameter playbook-dispatcher/IMAGE_TAG=${IMAGE_TAG} \
+    --set-parameter playbook-dispatcher-connect/KAFKA_CONNECT_IMAGE=${IMAGE_CONNECT} \
+    --set-parameter playbook-dispatcher-connect/IMAGE_TAG=${IMAGE_TAG} \
     --set-parameter playbook-dispatcher/CLOUD_CONNECTOR_IMPL=impl
 
 # Run Playbook Dispatcher isolated tests
