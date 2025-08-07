@@ -3,7 +3,7 @@ kind: Template
 metadata:
   name: playbook-dispatcher-connect
 parameters:
-- name: KAFKA_CONNECT_IMAGE
+- name: IMAGE
   value: quay.io/redhat-services-prod/hcc-integrations-tenant/playbook-dispatcher-connect
 - name: IMAGE_TAG
   value: latest
@@ -182,7 +182,7 @@ objects:
     annotations:
       strimzi.io/use-connector-resources: "true"
   spec:
-    image: ${KAFKA_CONNECT_IMAGE}:${IMAGE_TAG}
+    image: ${IMAGE}:${IMAGE_TAG}
     version: ${VERSION}
     replicas: ${{NUM_REPLICAS}}
     resources:
@@ -345,7 +345,7 @@ objects:
           - ${EVENT_CONSUMER_TOPIC}
           - --consumer.config
           - /tmp/temp-files/kafka-jaas.conf
-          image: ${KAFKA_CONNECT_IMAGE}:${IMAGE_TAG}
+          image: ${IMAGE}:${IMAGE_TAG}
           name: playbook-dispatcher-event-consumer
           resources:
             requests:
@@ -422,7 +422,7 @@ objects:
                 value: playbook-dispatcher-connect-connect-api
               - name: CONNECT_PORT
                 value: "8083"
-              image: ${KAFKA_CONNECT_IMAGE}:${IMAGE_TAG}
+              image: ${IMAGE}:${IMAGE_TAG}
               name: playbook-dispatcher-connector-check
               resources:
                 limits:
