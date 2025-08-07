@@ -32,7 +32,6 @@ objects:
     dependencies:
       - rbac
       - host-inventory
-      - cloud-connector
     optionalDependencies:
       - ingress
 
