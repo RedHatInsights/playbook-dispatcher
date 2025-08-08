@@ -16,8 +16,8 @@ require (
 	github.com/oapi-codegen/echo-middleware v1.0.2
 	github.com/oapi-codegen/runtime v1.1.2
 	github.com/onsi/ginkgo v1.16.5
-	github.com/onsi/gomega v1.37.0
-	github.com/prometheus/client_golang v1.22.0
+	github.com/onsi/gomega v1.38.0
+	github.com/prometheus/client_golang v1.23.0
 	github.com/qri-io/jsonschema v0.2.1
 	github.com/redhatinsights/app-common-go v1.6.8
 	github.com/redhatinsights/platform-go-middlewares v1.0.0
@@ -27,7 +27,7 @@ require (
 	go.uber.org/zap v1.27.0
 	golang.org/x/time v0.12.0
 	gorm.io/driver/postgres v1.6.0
-	gorm.io/gorm v1.30.0
+	gorm.io/gorm v1.30.1
 )
 
 require (
@@ -70,13 +70,13 @@ require (
 	github.com/prometheus/common v0.65.0 // indirect
 	github.com/prometheus/procfs v0.17.0 // indirect
 	github.com/qri-io/jsonpointer v0.1.1 // indirect
-	github.com/sagikazarmark/locafero v0.9.0 // indirect
-	github.com/sourcegraph/conc v0.3.0 // indirect
+	github.com/sagikazarmark/locafero v0.10.0 // indirect
+	github.com/sourcegraph/conc v0.3.1-0.20240121214520-5f936abd7ae8 // indirect
 	github.com/spf13/afero v1.14.0 // indirect
 	github.com/spf13/cast v1.9.2 // indirect
-	github.com/spf13/pflag v1.0.6 // indirect
+	github.com/spf13/pflag v1.0.7 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
-	github.com/ugorji/go/codec v1.2.12 // indirect
+	github.com/ugorji/go/codec v1.3.0 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.2 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
