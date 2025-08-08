@@ -13,7 +13,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
-	identityMiddleware "github.com/redhatinsights/platform-go-middlewares/identity"
+	identityMiddleware "github.com/redhatinsights/platform-go-middlewares/v2/identity"
 	"gorm.io/gorm"
 )
 
