@@ -240,6 +240,11 @@ components:
             format: uuid
             description: Inventory id of the given host
             example: ffb47020-a6fd-484d-80b5-da00a4a30bf2
+          subscription_manager_id:
+            description: Subscription Manager id of the given host
+            type: string
+            format: uuid
+            example: 39b3a029-5329-40c7-ad22-1542b5fbf345
 
     RunCreated:
       type: object

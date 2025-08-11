@@ -35,10 +35,11 @@ func newHostRun(runHosts []generic.RunHostsInput, entityId uuid.UUID) []dbModel.
 
 	for i, inputHost := range runHosts {
 		newHosts[i] = dbModel.RunHost{
-			ID:          uuid.New(),
-			RunID:       entityId,
-			InventoryID: inputHost.InventoryId,
-			Status:      dbModel.RunStatusRunning,
+			ID:                    uuid.New(),
+			RunID:                 entityId,
+			InventoryID:           inputHost.InventoryId,
+			SubscriptionManagerID: inputHost.SubscriptionManagerId,
+			Status:                dbModel.RunStatusRunning,
 		}
 
 		if inputHost.AnsibleHost != nil {
