@@ -323,7 +323,7 @@ objects:
     suspend: ${{FLOORIST_SUSPEND}}
     disabled: ${{FLOORIST_DISABLED}}
     queries:
-      - prefix: insights/playbook-dispatcher/run_hosts
+      - prefix: hms_analytics/playbook-dispatcher/run_hosts
         query: >-
           SELECT id,
                   run_id,
@@ -333,7 +333,7 @@ objects:
                   updated_at,
                   sat_sequence
           FROM run_hosts;
-      - prefix: insights/playbook-dispatcher/runs
+      - prefix: hms_analytics/playbook-dispatcher/runs
         query: >-
           SELECT id, 
                   recipient, 
