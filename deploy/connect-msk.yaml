@@ -4,7 +4,7 @@ metadata:
   name: playbook-dispatcher-connect
 parameters:
 - name: IMAGE
-  value: quay.io/redhat-services-prod/hcc-integrations-tenant/playbook-dispatcher-connect
+  value: quay.io/redhat-services-prod/insights-management-tenant/playbook-dispatcher-connect
 - name: IMAGE_TAG
   value: latest
 - name: KAFKA_BOOTSTRAP_HOST

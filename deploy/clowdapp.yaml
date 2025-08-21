@@ -335,28 +335,28 @@ objects:
           FROM run_hosts;
       - prefix: hms_analytics/playbook-dispatcher/runs
         query: >-
-          SELECT id, 
-                  recipient, 
-                  correlation_id, 
-                  url, 
-                  status, 
-                  created_at, 
-                  updated_at, 
-                  timeout, 
-                  service, 
-                  org_id, 
-                  playbook_name, 
-                  playbook_run_url, 
-                  principal, 
-                  sat_id, 
-                  sat_org_id 
+          SELECT id,
+                  recipient,
+                  correlation_id,
+                  url,
+                  status,
+                  created_at,
+                  updated_at,
+                  timeout,
+                  service,
+                  org_id,
+                  playbook_name,
+                  playbook_run_url,
+                  principal,
+                  sat_id,
+                  sat_org_id
           FROM runs;
 
 parameters:
 - name: IMAGE_TAG
   required: true
 - name: IMAGE
-  value: quay.io/redhat-services-prod/hcc-integrations-tenant/playbook-dispatcher
+  value: quay.io/redhat-services-prod/insights-management-tenant/playbook-dispatcher
 - description : ClowdEnvironment name
   name: ENV_NAME
   required: true
