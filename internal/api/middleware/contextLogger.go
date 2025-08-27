@@ -4,7 +4,7 @@ import (
 	"playbook-dispatcher/internal/common/utils"
 
 	"github.com/labstack/echo/v4"
-	"github.com/redhatinsights/platform-go-middlewares/request_id"
+	"github.com/redhatinsights/platform-go-middlewares/v2/request_id"
 )
 
 func ContextLogger(next echo.HandlerFunc) echo.HandlerFunc {
