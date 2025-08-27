@@ -325,21 +325,22 @@ objects:
     queries:
       - prefix: hms_analytics/playbook-dispatcher/run_hosts
         query: >-
-          SELECT id,
-                  run_id,
-                  inventory_id,
-                  status,
+          SELECT id::TEXT,
+                  run_id::TEXT,
+                  inventory_id::TEXT,
+                  status::TEXT,
                   created_at,
                   updated_at,
-                  sat_sequence
+                  sat_sequence,
+                  subscription_manager_id::TEXT
           FROM run_hosts;
       - prefix: hms_analytics/playbook-dispatcher/runs
         query: >-
-          SELECT id, 
-                  recipient, 
-                  correlation_id, 
+          SELECT id::TEXT, 
+                  recipient::TEXT, 
+                  correlation_id::TEXT, 
                   url, 
-                  status, 
+                  status::TEXT, 
                   created_at, 
                   updated_at, 
                   timeout, 
@@ -348,7 +349,7 @@ objects:
                   playbook_name, 
                   playbook_run_url, 
                   principal, 
-                  sat_id, 
+                  sat_id::TEXT, 
                   sat_org_id 
           FROM runs;
 
