@@ -8,7 +8,7 @@ import (
 	"playbook-dispatcher/internal/common/utils"
 	"time"
 
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"go.uber.org/zap"
 )
