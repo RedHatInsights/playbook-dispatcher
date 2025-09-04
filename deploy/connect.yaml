@@ -3,7 +3,7 @@ kind: Template
 metadata:
   name: playbook-dispatcher-connect
 parameters:
-- name: KAFKA_CONNECT_IMAGE
+- name: IMAGE
   value: quay.io/redhat-services-prod/insights-management-tenant/playbook-dispatcher-connect
 - name: IMAGE_TAG
   value: latest
@@ -191,7 +191,7 @@ objects:
       strimzi.io/use-connector-resources: "true"
       igore-check.kube-linter.io/minimum-three-replicas: "This deployment uses 1 pod, using more than 1 pod will produce more than 1 kafka messages for every db update"
   spec:
-    image: ${KAFKA_CONNECT_IMAGE}:${IMAGE_TAG}
+    image: ${IMAGE}:${IMAGE_TAG}
     version: ${VERSION}
     replicas: ${{NUM_REPLICAS}}
     resources:
@@ -341,7 +341,7 @@ objects:
           - ${EVENT_CONSUMER_GROUP}
           - --topic
           - ${EVENT_CONSUMER_TOPIC}
-          image: ${KAFKA_CONNECT_IMAGE}:${IMAGE_TAG}
+          image: ${IMAGE}:${IMAGE_TAG}
           name: playbook-dispatcher-event-consumer
           resources:
             requests:
@@ -400,7 +400,7 @@ objects:
                 value: playbook-dispatcher-connect-connect-api
               - name: CONNECT_PORT
                 value: "8083"
-              image: ${KAFKA_CONNECT_IMAGE}:${IMAGE_TAG}
+              image: ${IMAGE}:${IMAGE_TAG}
               name: playbook-dispatcher-connector-check
               resources:
                 limits:
