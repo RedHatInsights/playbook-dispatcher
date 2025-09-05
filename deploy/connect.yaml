@@ -35,13 +35,13 @@ parameters:
   value: '1'
 - name: VERSION
   value: '2.7.1'
-- name: CPU_REQUEST
+- name: CPU_REQUESTS
   value: 500m
-- name: CPU_LIMIT
+- name: CPU_LIMITS
   value: '1'
-- name: MEMORY_REQUEST
+- name: MEMORY_REQUESTS
   value: 2Gi
-- name: MEMORY_LIMIT
+- name: MEMORY_LIMITS
   value: 4Gi
 - name: EVENT_CONSUMER_CPU_REQUEST
   value: 100m
@@ -189,17 +189,18 @@ objects:
       app: playbook-dispatcher
     annotations:
       strimzi.io/use-connector-resources: "true"
+      igore-check.kube-linter.io/minimum-three-replicas: "This deployment uses 1 pod, using more than 1 pod will produce more than 1 kafka messages for every db update"
   spec:
     image: ${IMAGE}:${IMAGE_TAG}
     version: ${VERSION}
     replicas: ${{NUM_REPLICAS}}
     resources:
       limits:
-        cpu: ${CPU_LIMIT}
-        memory: ${MEMORY_LIMIT}
+        cpu: ${CPU_LIMITS}
+        memory: ${MEMORY_LIMITS}
       requests:
-        cpu: ${CPU_REQUEST}
-        memory: ${MEMORY_REQUEST}
+        cpu: ${CPU_REQUESTS}
+        memory: ${MEMORY_REQUESTS}
     jvmOptions:
       "-Xmx": ${XMX}
       "-Xms": ${XMS}
