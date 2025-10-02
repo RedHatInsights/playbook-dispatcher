@@ -323,7 +323,7 @@ objects:
     suspend: ${{FLOORIST_SUSPEND}}
     disabled: ${{FLOORIST_DISABLED}}
     queries:
-      - prefix: hms_analytics/playbook-dispatcher/run_hosts
+      - prefix: ${FLOORIST_QUERY_PREFIX}/run_hosts
         query: >-
           SELECT id::TEXT,
                   run_id::TEXT,
@@ -333,8 +333,10 @@ objects:
                   updated_at,
                   sat_sequence,
                   subscription_manager_id::TEXT
-          FROM run_hosts;
-      - prefix: hms_analytics/playbook-dispatcher/runs
+          FROM run_hosts 
+          WHERE created_at >= DATE_TRUNC('month', NOW() - INTERVAL '1 month');
+
+      - prefix: ${FLOORIST_QUERY_PREFIX}/runs
         query: >-
           SELECT id::TEXT, 
                   recipient::TEXT, 
@@ -351,7 +353,8 @@ objects:
                   principal, 
                   sat_id::TEXT, 
                   sat_org_id 
-          FROM runs;
+          FROM runs
+          WHERE created_at >= DATE_TRUNC('month', NOW() - INTERVAL '1 month');
 
 parameters:
 - name: IMAGE_TAG
@@ -473,20 +476,35 @@ parameters:
 - name: KEY_CLOUD_CONNECTOR
   value: cloud_connector
 
-# Used for floorist
+# Global Floorist Values
+
+- name: FLOORIST_DB_SECRET_NAME
+  description: database secret name
+  value: playbook-dispatcher-db
+
+- name: FLOORIST_HMS_BUCKET_SECRET_NAME
+  description: HMS bucket secret name
+  value: hms-floorist-bucket
+
 - name: FLOORIST_SUSPEND
   description: Disable Floorist cronjob execution
   required: true
   value: 'true'
+
 - name: FLOORIST_DISABLED
   description: Determines whether to build the Floorist Job.
   value: 'false'
-- name: FLOORIST_DB_SECRET_NAME
-  description: database secret name
-  value: playbook-dispatcher-db
-- name: FLOORIST_HMS_BUCKET_SECRET_NAME
-  description: HMS bucket secret name
-  value: hms-floorist-bucket
+
 - name: FLOORIST_LOGLEVEL
   description: Floorist loglevel config
   value: 'INFO'
+
+- name: FLOORIST_QUERY_PREFIX
+  description: Prefix for separating query data between prod and stage in the bucket
+  value: "hms_analytics/playbook-dispatcher/unknown"
+
+#- name: FLOORIST_SCHEDULE
+#  description: Cronjob schedule definition
+#  required: true
+# Run at 00:00 on first day of month
+#  value: "0 0 1 * *"
