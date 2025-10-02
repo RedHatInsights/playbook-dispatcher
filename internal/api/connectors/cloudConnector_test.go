@@ -14,8 +14,8 @@ import (
 	"github.com/redhatinsights/platform-go-middlewares/request_id"
 
 	"github.com/google/uuid"
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/ginkgo/extensions/table"
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/ginkgo/v2/extensions/table"
 	. "github.com/onsi/gomega"
 	"go.uber.org/zap"
 )
