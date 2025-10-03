@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/labstack/echo/v4"
-	identityMiddleware "github.com/redhatinsights/platform-go-middlewares/identity"
+	identityMiddleware "github.com/redhatinsights/platform-go-middlewares/v2/identity"
 )
 
 func RequestLogger(next echo.HandlerFunc) echo.HandlerFunc {
