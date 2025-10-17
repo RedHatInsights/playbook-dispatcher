@@ -22,7 +22,7 @@ require (
 	github.com/redhatinsights/app-common-go v1.6.8
 	github.com/redhatinsights/platform-go-middlewares v1.0.0
 	github.com/spf13/cobra v1.10.1
-	github.com/spf13/viper v1.20.1
+	github.com/spf13/viper v1.21.0
 	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8
 	go.uber.org/zap v1.27.0
 	golang.org/x/time v0.14.0
@@ -93,7 +93,6 @@ require (
 	gopkg.in/oleiade/lane.v1 v1.0.0 // indirect
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
 replace gopkg.in/oleiade/lane.v1 v1.0.0 => github.com/oleiade/lane v1.0.1
