@@ -25,7 +25,7 @@ require (
 	github.com/spf13/viper v1.20.1
 	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8
 	go.uber.org/zap v1.27.0
-	golang.org/x/time v0.12.0
+	golang.org/x/time v0.14.0
 	gorm.io/driver/postgres v1.6.0
 	gorm.io/gorm v1.30.1
 )
