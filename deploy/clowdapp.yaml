@@ -355,6 +355,13 @@ objects:
                   sat_org_id 
           FROM runs
           WHERE created_at >= DATE_TRUNC('month', NOW() - INTERVAL '1 month');
+    resources:
+      limits:
+        cpu: 300m
+        memory: 500Mi
+      requests:
+        cpu: 150m
+        memory: 250Mi
 
 parameters:
 - name: IMAGE_TAG
