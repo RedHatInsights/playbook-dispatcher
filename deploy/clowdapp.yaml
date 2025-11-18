@@ -186,6 +186,31 @@ objects:
           - name: BLOCKLIST_ORG_IDS
             value: ${BLOCKLIST_ORG_IDS}
 
+          - name: KESSEL_ENABLED
+            value: ${KESSEL_ENABLED}
+          - name: KESSEL_URL
+            value: ${KESSEL_URL}
+          - name: KESSEL_AUTH_ENABLED
+            value: ${KESSEL_AUTH_ENABLED}
+          - name: KESSEL_AUTH_CLIENT_ID
+            valueFrom:
+              secretKeyRef:
+                key: client-id
+                name: kessel-auth-secret
+                optional: true
+          - name: KESSEL_AUTH_CLIENT_SECRET
+            valueFrom:
+              secretKeyRef:
+                key: client-secret
+                name: kessel-auth-secret
+                optional: true
+          - name: KESSEL_AUTH_OIDC_ISSUER
+            value: ${KESSEL_AUTH_OIDC_ISSUER}
+          - name: KESSEL_INSECURE
+            value: ${KESSEL_INSECURE}
+          - name: KESSEL_PRINCIPAL_DOMAIN
+            value: ${KESSEL_PRINCIPAL_DOMAIN}
+
         resources:
           limits:
             cpu: ${API_CPU_LIMIT}
@@ -510,8 +535,14 @@ parameters:
   description: Prefix for separating query data between prod and stage in the bucket
   value: "hms_analytics/playbook-dispatcher/unknown"
 
-#- name: FLOORIST_SCHEDULE
-#  description: Cronjob schedule definition
-#  required: true
-# Run at 00:00 on first day of month
-#  value: "0 0 1 * *"
+- name: KESSEL_ENABLED
+  value: 'false'
+- name: KESSEL_URL
+  value: 'kessel-inventory-api:9000'
+- name: KESSEL_AUTH_ENABLED
+  value: 'false'
+- name: KESSEL_AUTH_OIDC_ISSUER
+- name: KESSEL_INSECURE
+  value: 'false'
+- name: KESSEL_PRINCIPAL_DOMAIN
+  value: 'redhat'
