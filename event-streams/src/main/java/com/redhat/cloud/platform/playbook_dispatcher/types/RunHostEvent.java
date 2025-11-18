@@ -113,9 +113,9 @@ public class RunHostEvent {
     @Override
     public int hashCode() {
         int result = 1;
+        result = ((result* 31)+((this.payload == null)? 0 :this.payload.hashCode()));
         result = ((result* 31)+((this.eventType == null)? 0 :this.eventType.hashCode()));
         result = ((result* 31)+((this.additionalProperties == null)? 0 :this.additionalProperties.hashCode()));
-        result = ((result* 31)+((this.payload == null)? 0 :this.payload.hashCode()));
         return result;
     }
 
@@ -128,7 +128,7 @@ public class RunHostEvent {
             return false;
         }
         RunHostEvent rhs = ((RunHostEvent) other);
-        return ((((this.eventType == rhs.eventType)||((this.eventType!= null)&&this.eventType.equals(rhs.eventType)))&&((this.additionalProperties == rhs.additionalProperties)||((this.additionalProperties!= null)&&this.additionalProperties.equals(rhs.additionalProperties))))&&((this.payload == rhs.payload)||((this.payload!= null)&&this.payload.equals(rhs.payload))));
+        return ((((this.payload == rhs.payload)||((this.payload!= null)&&this.payload.equals(rhs.payload)))&&((this.eventType == rhs.eventType)||((this.eventType!= null)&&this.eventType.equals(rhs.eventType))))&&((this.additionalProperties == rhs.additionalProperties)||((this.additionalProperties!= null)&&this.additionalProperties.equals(rhs.additionalProperties))));
     }
 
     public enum EventType {
