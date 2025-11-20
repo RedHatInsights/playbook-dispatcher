@@ -44,6 +44,17 @@ func run(cmd *cobra.Command, args []string) error {
 	defer utils.CloseLogger()
 	cfg := config.Get()
 
+	// Log Kessel configuration at startup
+	if cfg.GetBool("kessel.enabled") {
+		log.Infow("Kessel authorization enabled",
+			"mode", cfg.GetString("kessel.auth.mode"),
+			"url", cfg.GetString("kessel.url"),
+			"auth_enabled", cfg.GetBool("kessel.auth.enabled"),
+			"insecure", cfg.GetBool("kessel.insecure"))
+	} else {
+		log.Info("Kessel authorization disabled, using RBAC only")
+	}
+
 	metricsServer := echo.New()
 	metricsServer.HideBanner = true
 	metricsServer.Debug = false

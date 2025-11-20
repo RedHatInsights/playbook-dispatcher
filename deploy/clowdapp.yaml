@@ -210,6 +210,8 @@ objects:
             value: ${KESSEL_INSECURE}
           - name: KESSEL_PRINCIPAL_DOMAIN
             value: ${KESSEL_PRINCIPAL_DOMAIN}
+          - name: KESSEL_AUTH_MODE
+            value: ${KESSEL_AUTH_MODE}
 
         resources:
           limits:
@@ -546,3 +548,7 @@ parameters:
   value: 'false'
 - name: KESSEL_PRINCIPAL_DOMAIN
   value: 'redhat'
+
+- name: KESSEL_AUTH_MODE
+  description: Mode for feature flag testing (rbac-only, both-rbac-enforces, both-kessel-enforces, kessel-only)
+  value: 'rbac-only'
