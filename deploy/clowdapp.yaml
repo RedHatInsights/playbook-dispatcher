@@ -37,6 +37,8 @@ objects:
 
     envName: ${ENV_NAME}
 
+    featureFlags: true
+
     testing:
       iqePlugin: playbook-dispatcher
 
