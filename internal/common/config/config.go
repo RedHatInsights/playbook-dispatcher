@@ -8,6 +8,14 @@ import (
 	clowder "github.com/redhatinsights/app-common-go/pkg/api/v1"
 )
 
+const (
+	// Kessel authorization modes (matching Unleash feature flag variants)
+	KesselModeRBACOnly           = "rbac-only"
+	KesselModeBothRBACEnforces   = "both-rbac-enforces"
+	KesselModeBothKesselEnforces = "both-kessel-enforces"
+	KesselModeKesselOnly         = "kessel-only"
+)
+
 var rdsCaPath *string
 
 func init() {
@@ -108,6 +116,21 @@ func Get() *viper.Viper {
 
 	options.SetDefault("blocklist.org.ids", "")
 
+	// Kessel authorization configuration
+	// Feature flag: master switch for Kessel authorization
+	options.SetDefault("kessel.enabled", false)
+	// Feature flag: authorization mode matching Unleash variants
+	// Valid values: rbac-only, both-rbac-enforces, both-kessel-enforces, kessel-only
+	options.SetDefault("kessel.auth.mode", "rbac-only")
+
+	// Kessel client configuration
+	options.SetDefault("kessel.url", "localhost:9091")
+	options.SetDefault("kessel.auth.enabled", false)
+	options.SetDefault("kessel.auth.client.id", "")
+	options.SetDefault("kessel.auth.client.secret", "")
+	options.SetDefault("kessel.auth.oidc.issuer", "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token")
+	options.SetDefault("kessel.insecure", true)
+
 	if clowder.IsClowderEnabled() {
 
 		cfg := clowder.LoadedConfig
@@ -150,6 +173,17 @@ func Get() *viper.Viper {
 		if rdsCaPath != nil {
 			options.SetDefault("db.ca", *rdsCaPath)
 		}
+
+		// Kessel endpoint discovery from Clowder
+		// Currently commented out due to RHCLOUD-40314
+		// Uncomment when Kessel inventory is properly registered in Clowder
+		/*
+			for _, e := range cfg.Endpoints {
+				if e.App == "kessel-inventory-api" {
+					options.SetDefault("kessel.url", fmt.Sprintf("%s:%d", e.Hostname, e.Port))
+				}
+			}
+		*/
 	} else {
 		options.SetDefault("web.port", 8000)
 		options.SetDefault("metrics.port", 9001)
