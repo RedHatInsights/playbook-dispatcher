@@ -7,6 +7,7 @@ import (
 	"os/signal"
 	"playbook-dispatcher/internal/api"
 	"playbook-dispatcher/internal/common/config"
+	"playbook-dispatcher/internal/common/unleash"
 	"playbook-dispatcher/internal/common/utils"
 	responseConsumer "playbook-dispatcher/internal/response-consumer"
 	"playbook-dispatcher/internal/validator"
@@ -54,6 +55,26 @@ func run(cmd *cobra.Command, args []string) error {
 	} else {
 		log.Info("Kessel authorization disabled, using RBAC only")
 	}
+
+	// Log Unleash configuration at startup
+	if cfg.GetBool("unleash.enabled") {
+		log.Infow("Unleash feature flags enabled",
+			"url", cfg.GetString("unleash.url"),
+			"app_name", cfg.GetString("unleash.app.name"),
+			"environment", cfg.GetString("unleash.environment"))
+		// Note: Do NOT log unleash.api.token (sensitive)
+	} else {
+		log.Info("Unleash feature flags disabled")
+	}
+
+	// Initialize Unleash client (non-fatal if it fails)
+	if err := unleash.Initialize(cfg, log); err != nil {
+		// Log warning but continue - application will fall back to environment variables
+		log.Warnw("Failed to initialize Unleash client, will use environment variables for feature flags",
+			"error", err)
+	}
+	// Ensure Unleash client is closed on shutdown
+	defer unleash.Close()
 
 	metricsServer := echo.New()
 	metricsServer.HideBanner = true

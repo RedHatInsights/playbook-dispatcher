@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/spf13/viper"
@@ -131,6 +132,13 @@ func Get() *viper.Viper {
 	options.SetDefault("kessel.auth.oidc.issuer", "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token")
 	options.SetDefault("kessel.insecure", true)
 
+	// Unleash feature flag configuration (defaults for non-Clowder environments)
+	options.SetDefault("unleash.enabled", false)
+	options.SetDefault("unleash.url", "")
+	options.SetDefault("unleash.api.token", "")
+	options.SetDefault("unleash.app.name", "playbook-dispatcher")
+	options.SetDefault("unleash.environment", "development")
+
 	if clowder.IsClowderEnabled() {
 
 		cfg := clowder.LoadedConfig
@@ -172,6 +180,27 @@ func Get() *viper.Viper {
 
 		if rdsCaPath != nil {
 			options.SetDefault("db.ca", *rdsCaPath)
+		}
+
+		// Unleash (Feature Flags) configuration from Clowder
+		// Clowder provides this in stage/production environments
+		if cfg.FeatureFlags != nil {
+			unleashURL := ""
+			if cfg.FeatureFlags.Hostname != "" && cfg.FeatureFlags.Port != 0 && cfg.FeatureFlags.Scheme != "" {
+				unleashURL = fmt.Sprintf("%s://%s:%d/api",
+					cfg.FeatureFlags.Scheme,
+					cfg.FeatureFlags.Hostname,
+					cfg.FeatureFlags.Port)
+			}
+
+			if unleashURL != "" {
+				options.SetDefault("unleash.url", unleashURL)
+				options.SetDefault("unleash.enabled", true)
+			}
+
+			if cfg.FeatureFlags.ClientAccessToken != nil {
+				options.SetDefault("unleash.api.token", *cfg.FeatureFlags.ClientAccessToken)
+			}
 		}
 
 		// Kessel endpoint discovery from Clowder
