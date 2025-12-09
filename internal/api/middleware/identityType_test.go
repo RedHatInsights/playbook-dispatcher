@@ -10,7 +10,7 @@ import (
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
 
-	identityMw "github.com/redhatinsights/platform-go-middlewares/identity"
+	identityMw "github.com/redhatinsights/platform-go-middlewares/v2/identity"
 )
 
 var _ = Describe("Identity type middleware", func() {

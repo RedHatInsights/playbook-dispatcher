@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/labstack/echo/v4"
-	identityMiddleware "github.com/redhatinsights/platform-go-middlewares/identity"
+	identityMiddleware "github.com/redhatinsights/platform-go-middlewares/v2/identity"
 )
 
 func RequestLogger(next echo.HandlerFunc) echo.HandlerFunc {
@@ -25,7 +25,8 @@ func RequestLogger(next echo.HandlerFunc) echo.HandlerFunc {
 			statusCode = httpError.Code
 		}
 
-		if identity, ok := c.Request().Context().Value(identityMiddleware.Key).(identityMiddleware.XRHID); ok {
+		identity := identityMiddleware.GetIdentity(c.Request().Context())
+		if identity.Identity.OrgID != "" {
 			log = log.With(
 				"account", identity.Identity.AccountNumber,
 				"org_id", identity.Identity.OrgID,
