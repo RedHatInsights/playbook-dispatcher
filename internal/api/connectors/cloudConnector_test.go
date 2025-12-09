@@ -5,13 +5,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/http"
+	"net/http/httptest"
 	"playbook-dispatcher/internal/common/config"
 	"playbook-dispatcher/internal/common/constants"
 	"playbook-dispatcher/internal/common/utils"
 	"playbook-dispatcher/internal/common/utils/test"
 	"strconv"
 
-	"github.com/redhatinsights/platform-go-middlewares/request_id"
+	"github.com/redhatinsights/platform-go-middlewares/v2/request_id"
 
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo"
@@ -203,10 +205,19 @@ var _ = Describe("Cloud Connector", func() {
 		Expect(metadata["initiator_user_id"]).To(Equal(satCancelMetadata["initiator_user_id"]))
 	})
 
-	It("forwards identity header", func() {
-		requestId := "e6b06142-9589-4213-9a5e-1e2f513c448b"
+	It("forwards request id header", func() {
+		// Note: In v2, request_id is extracted via GetReqID(ctx). Since there's no public API
+		// to set it directly in tests, we use the middleware to create a properly configured context.
+		requestIdValue := "e6b06142-9589-4213-9a5e-1e2f513c448b"
 		doer := test.MockHttpClient(201, `{"id": "871e31aa-7d41-43e3-8ef7-05706a0ee34a"}`)
-		ctx := context.WithValue(test.TestContext(), request_id.RequestIDKey, requestId)
+
+		// Use middleware to create context with request ID
+		req, _ := http.NewRequestWithContext(test.TestContext(), "GET", "/", nil)
+		req.Header.Set(constants.HeaderRequestId, requestIdValue)
+		var ctx context.Context
+		request_id.ConfiguredRequestID(constants.HeaderRequestId)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			ctx = r.Context()
+		})).ServeHTTP(httptest.NewRecorder(), req)
 
 		client := NewConnectorClientWithHttpRequestDoer(config.Get(), &doer)
 		recipient := uuid.New()
@@ -218,7 +229,7 @@ var _ = Describe("Cloud Connector", func() {
 		Expect(*result).To(Equal("871e31aa-7d41-43e3-8ef7-05706a0ee34a"))
 
 		idHeader := doer.Request.Header.Get(constants.HeaderRequestId)
-		Expect(idHeader).To(Equal(requestId))
+		Expect(idHeader).To(Equal(requestIdValue))
 	})
 
 	It("does not escape ampersands with unicode", func() {

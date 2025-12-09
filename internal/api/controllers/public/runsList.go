@@ -13,7 +13,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
-	identityMiddleware "github.com/redhatinsights/platform-go-middlewares/identity"
+	identityMiddleware "github.com/redhatinsights/platform-go-middlewares/v2/identity"
 	"gorm.io/gorm"
 )
 
@@ -50,7 +50,7 @@ func mapFieldsToSql(field string) string {
 func (this *controllers) ApiRunsList(ctx echo.Context, params ApiRunsListParams) error {
 	var dbRuns []dbModel.Run
 
-	identity := identityMiddleware.Get(ctx.Request().Context())
+	identity := identityMiddleware.GetIdentity(ctx.Request().Context())
 	db := this.database.WithContext(ctx.Request().Context())
 
 	// tenant isolation

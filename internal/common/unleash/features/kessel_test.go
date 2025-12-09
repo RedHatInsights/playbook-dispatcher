@@ -5,7 +5,7 @@ import (
 	"playbook-dispatcher/internal/common/config"
 	"testing"
 
-	"github.com/redhatinsights/platform-go-middlewares/identity"
+	"github.com/redhatinsights/platform-go-middlewares/v2/identity"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
@@ -132,7 +132,7 @@ func TestBuildUnleashContext_WithIdentity(t *testing.T) {
 			Type:  "User",
 		},
 	}
-	ctx := context.WithValue(context.Background(), identity.Key, xrhid)
+	ctx := identity.WithIdentity(context.Background(), xrhid)
 	log := zap.NewNop().Sugar()
 
 	unleashCtx := buildUnleashContext(ctx, log)
@@ -142,7 +142,8 @@ func TestBuildUnleashContext_WithIdentity(t *testing.T) {
 }
 
 func TestBuildUnleashContext_WrongType(t *testing.T) {
-	ctx := context.WithValue(context.Background(), identity.Key, "not-an-xrhid")
+	// In v2, GetIdentity returns empty XRHID for invalid context, so test with empty OrgID instead
+	ctx := context.Background()
 	log := zap.NewNop().Sugar()
 
 	unleashCtx := buildUnleashContext(ctx, log)
@@ -158,7 +159,7 @@ func TestBuildUnleashContext_EmptyOrgID(t *testing.T) {
 			Type:  "User",
 		},
 	}
-	ctx := context.WithValue(context.Background(), identity.Key, xrhid)
+	ctx := identity.WithIdentity(context.Background(), xrhid)
 	log := zap.NewNop().Sugar()
 
 	unleashCtx := buildUnleashContext(ctx, log)

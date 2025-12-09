@@ -7,7 +7,7 @@ import (
 
 	"github.com/Unleash/unleash-go-sdk/v5/api"
 	ucontext "github.com/Unleash/unleash-go-sdk/v5/context"
-	"github.com/redhatinsights/platform-go-middlewares/identity"
+	"github.com/redhatinsights/platform-go-middlewares/v2/identity"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
 )
@@ -142,21 +142,18 @@ func GetKesselAuthModeWithContext(ctx context.Context, cfg *viper.Viper, log *za
 // This is used for per-org targeting and gradual rollout
 func buildUnleashContext(ctx context.Context, log *zap.SugaredLogger) ucontext.Context {
 	// Extract identity from context
-	value := ctx.Value(identity.Key)
-	if value == nil {
-		log.Debug("No identity found in context, using empty Unleash context")
-		return ucontext.Context{}
-	}
+	// Note: In v2, GetIdentity returns an empty XRHID if identity is not in context
+	xrhid := identity.GetIdentity(ctx)
 
-	xrhid, ok := value.(identity.XRHID)
-	if !ok {
-		log.Warn("Identity in context is not of type XRHID, using empty Unleash context")
+	// Check if we got a valid identity (non-empty Type indicates presence)
+	if xrhid.Identity.Type == "" {
+		log.Debug("No identity found in context, using empty Unleash context")
 		return ucontext.Context{}
 	}
 
 	orgID := xrhid.Identity.OrgID
 	if orgID == "" {
-		log.Debug("No org ID found in identity, using empty Unleash context")
+		log.Warn("Identity present but OrgID is empty, using empty Unleash context")
 		return ucontext.Context{}
 	}
 

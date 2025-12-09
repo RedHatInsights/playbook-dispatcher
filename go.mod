@@ -21,9 +21,10 @@ require (
 	github.com/prometheus/client_golang v1.23.2
 	github.com/qri-io/jsonschema v0.2.1
 	github.com/redhatinsights/app-common-go v1.6.9
-	github.com/redhatinsights/platform-go-middlewares v1.0.0
+	github.com/redhatinsights/platform-go-middlewares/v2 v2.0.0
 	github.com/spf13/cobra v1.10.1
 	github.com/spf13/viper v1.21.0
+	github.com/stretchr/testify v1.11.1
 	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8
 	go.uber.org/zap v1.27.0
 	golang.org/x/time v0.14.0
@@ -82,7 +83,6 @@ require (
 	github.com/spf13/cast v1.10.0 // indirect
 	github.com/spf13/pflag v1.0.10 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
-	github.com/stretchr/testify v1.11.1 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/twmb/murmur3 v1.1.8 // indirect
 	github.com/ugorji/go/codec v1.3.1 // indirect
