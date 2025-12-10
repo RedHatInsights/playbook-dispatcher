@@ -7,6 +7,7 @@ import (
 	"os/signal"
 	"playbook-dispatcher/internal/api"
 	"playbook-dispatcher/internal/common/config"
+	"playbook-dispatcher/internal/common/kessel"
 	"playbook-dispatcher/internal/common/unleash"
 	"playbook-dispatcher/internal/common/utils"
 	responseConsumer "playbook-dispatcher/internal/response-consumer"
@@ -75,6 +76,15 @@ func run(cmd *cobra.Command, args []string) error {
 	}
 	// Ensure Unleash client is closed on shutdown
 	defer unleash.Close()
+
+	// Initialize Kessel client (non-fatal if it fails)
+	// only two endpoints rely on kessel, so not implementing a panic here
+	if err := kessel.Initialize(cfg, log); err != nil {
+		// Log warning but continue - application will use RBAC-only mode
+		log.Warnw("Failed to initialize Kessel client, will use RBAC-only authorization mode",
+			"error", err)
+	}
+	defer kessel.Close()
 
 	metricsServer := echo.New()
 	metricsServer.HideBanner = true
