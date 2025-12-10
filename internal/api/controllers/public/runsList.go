@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"playbook-dispatcher/internal/api/instrumentation"
 	"playbook-dispatcher/internal/api/middleware"
-	"playbook-dispatcher/internal/api/rbac"
 	dbModel "playbook-dispatcher/internal/common/model/db"
 	"playbook-dispatcher/internal/common/utils"
 	"strings"
@@ -56,9 +55,8 @@ func (this *controllers) ApiRunsList(ctx echo.Context, params ApiRunsListParams)
 	// tenant isolation
 	queryBuilder := db.Table("runs").Where("org_id = ?", identity.Identity.OrgID)
 
-	// rbac
-	permissions := middleware.GetPermissions(ctx)
-	if allowedServices := rbac.GetPredicateValues(permissions, "service"); len(allowedServices) > 0 {
+	// rbac + kessel
+	if allowedServices := getAllowedServices(ctx); len(allowedServices) > 0 {
 		queryBuilder.Where("service IN ?", allowedServices)
 	}
 
