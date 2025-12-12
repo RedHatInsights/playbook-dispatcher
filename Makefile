@@ -183,11 +183,10 @@ golangci-lint:
 ifeq (, $(shell which $(LOCAL_BIN_PATH)/golangci-lint 2> /dev/null))
 	@{ \
 	set -e ;\
-	VERSION="v1.43.0" ;\
+	VERSION="v1.64.2" ;\
 	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/$${VERSION}/install.sh | sh -s -- -b ${LOCAL_BIN_PATH} $${VERSION} ;\
 	}
 endif
 
-run-lint: golangci-lint
+run-lint lint: golangci-lint
 	$(LOCAL_BIN_PATH)/golangci-lint run
-
