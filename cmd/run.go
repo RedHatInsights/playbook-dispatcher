@@ -46,6 +46,14 @@ func run(cmd *cobra.Command, args []string) error {
 	defer utils.CloseLogger()
 	cfg := config.Get()
 
+	// Log RBAC configuration at startup
+	log.Infow("RBAC configuration",
+		"impl", cfg.GetString("rbac.impl"),
+		"host", cfg.GetString("rbac.host"),
+		"port", cfg.GetInt("rbac.port"),
+		"scheme", cfg.GetString("rbac.scheme"),
+		"timeout", cfg.GetInt("rbac.timeout"))
+
 	// Log Kessel configuration at startup
 	if cfg.GetBool("kessel.enabled") {
 		log.Infow("Kessel authorization enabled",

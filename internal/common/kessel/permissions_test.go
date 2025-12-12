@@ -32,36 +32,8 @@ func TestPermissionConstants_V1(t *testing.T) {
 	}
 }
 
-func TestPermissionConstants_V2(t *testing.T) {
-	// Test that V2 permission constants have expected values
-	tests := []struct {
-		name     string
-		constant string
-		expected string
-	}{
-		{
-			name:     "PermissionRemediationsRunView",
-			constant: PermissionRemediationsRunView,
-			expected: "playbook_dispatcher_remediations_run_view",
-		},
-		{
-			name:     "PermissionTasksRunView",
-			constant: PermissionTasksRunView,
-			expected: "playbook_dispatcher_tasks_run_view",
-		},
-		{
-			name:     "PermissionConfigManagerRunView",
-			constant: PermissionConfigManagerRunView,
-			expected: "playbook_dispatcher_config_manager_run_view",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.expected, tt.constant)
-		})
-	}
-}
+// V2 permission constants have been removed - permissions are now defined
+// in the ServicePermissions struct by the caller
 
 func TestResourceTypeConstants(t *testing.T) {
 	tests := []struct {
@@ -118,48 +90,8 @@ func TestPlaybookPermissions_Structure(t *testing.T) {
 	assert.NotEmpty(t, writePerm.Description)
 }
 
-func TestV2ApplicationPermissions_Structure(t *testing.T) {
-	// Verify V2ApplicationPermissions map structure
-	assert.NotNil(t, V2ApplicationPermissions)
-	assert.Len(t, V2ApplicationPermissions, 3)
-
-	tests := []struct {
-		appName    string
-		permission string
-	}{
-		{
-			appName:    "config_manager",
-			permission: PermissionConfigManagerRunView,
-		},
-		{
-			appName:    "remediations",
-			permission: PermissionRemediationsRunView,
-		},
-		{
-			appName:    "tasks",
-			permission: PermissionTasksRunView,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.appName, func(t *testing.T) {
-			perm, exists := V2ApplicationPermissions[tt.appName]
-			assert.True(t, exists, "application %s should exist in map", tt.appName)
-			assert.Equal(t, tt.permission, perm)
-		})
-	}
-}
-
-func TestV2ApplicationPermissions_UniquenessCheck(t *testing.T) {
-	// Verify that all V2 permissions are unique
-	seen := make(map[string]string)
-	for app, perm := range V2ApplicationPermissions {
-		if existingApp, exists := seen[perm]; exists {
-			t.Errorf("Permission %s is duplicated between apps %s and %s", perm, app, existingApp)
-		}
-		seen[perm] = app
-	}
-}
+// V2ApplicationPermissions map has been removed - permissions are now passed
+// via ServicePermissions struct by the caller
 
 func TestPermissionType_FieldsPresent(t *testing.T) {
 	// Test that the Permission type has all expected fields
@@ -194,19 +126,8 @@ func TestPlaybookPermissions_Immutability(t *testing.T) {
 	assert.NotContains(t, PlaybookPermissions, "test_permission")
 }
 
-func TestV2Permissions_NamingConvention(t *testing.T) {
-	// Verify V2 permissions follow naming convention: playbook_dispatcher_{service}_run_view
-	expectedPrefix := "playbook_dispatcher_"
-	expectedSuffix := "_run_view"
-
-	for app, perm := range V2ApplicationPermissions {
-		t.Run(app, func(t *testing.T) {
-			assert.Contains(t, perm, expectedPrefix, "permission should start with playbook_dispatcher_")
-			assert.Contains(t, perm, expectedSuffix, "permission should end with _run_view")
-			assert.Contains(t, perm, app, "permission should contain application name")
-		})
-	}
-}
+// V2 permissions naming convention tests removed - permissions are now
+// defined by callers in ServicePermissions struct
 
 func TestV1Permissions_NamingConvention(t *testing.T) {
 	// Verify V1 permissions follow naming convention: playbook_dispatcher_run_{action}
@@ -220,7 +141,7 @@ func TestV1Permissions_NamingConvention(t *testing.T) {
 }
 
 func TestPermissionConstants_NoCollisions(t *testing.T) {
-	// Verify that V1 and V2 permission constants don't collide
+	// Verify that V1 permission constants are unique
 	allPermissions := make(map[string]bool)
 
 	// Add V1 permissions
@@ -232,19 +153,8 @@ func TestPermissionConstants_NoCollisions(t *testing.T) {
 		allPermissions[perm] = true
 	}
 
-	// Add V2 permissions
-	v2Permissions := []string{
-		PermissionRemediationsRunView,
-		PermissionTasksRunView,
-		PermissionConfigManagerRunView,
-	}
-	for _, perm := range v2Permissions {
-		if allPermissions[perm] {
-			t.Errorf("Duplicate permission constant: %s", perm)
-		}
-		allPermissions[perm] = true
-	}
+	// V2 permissions are now defined dynamically by callers
 
-	// Should have 5 unique permissions total
-	assert.Len(t, allPermissions, 5)
+	// Should have 2 V1 permissions
+	assert.Len(t, allPermissions, 2)
 }

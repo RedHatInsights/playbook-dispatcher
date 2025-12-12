@@ -504,7 +504,7 @@ func TestGetWorkspaceID_ClientNotInitialized(t *testing.T) {
 	assert.Contains(t, err.Error(), "RBAC client not initialized")
 }
 
-func TestCheckApplicationPermissions_Success(t *testing.T) {
+func TestCheckPermissions_Success(t *testing.T) {
 	mockService := &mockKesselInventoryService{
 		checkResponse: &kesselv2.CheckResponse{
 			Allowed: kesselv2.Allowed_ALLOWED_TRUE,
@@ -523,7 +523,15 @@ func TestCheckApplicationPermissions_Success(t *testing.T) {
 	ctx := identity.WithIdentity(context.Background(), xrhid)
 	log := zap.NewNop().Sugar()
 
-	allowedApps, err := CheckApplicationPermissions(ctx, "workspace-789", log)
+	permissions := ServicePermissions{
+		Services: []ServicePermission{
+			{Name: "config_manager", Permission: "playbook_dispatcher_config_manager_run_view"},
+			{Name: "remediations", Permission: "playbook_dispatcher_remediations_run_view"},
+			{Name: "tasks", Permission: "playbook_dispatcher_tasks_run_view"},
+		},
+	}
+
+	allowedApps, err := CheckPermissions(ctx, "workspace-789", permissions, log)
 
 	assert.NoError(t, err)
 	assert.Len(t, allowedApps, 3) // All 3 applications
@@ -532,7 +540,7 @@ func TestCheckApplicationPermissions_Success(t *testing.T) {
 	assert.Contains(t, allowedApps, "tasks")
 }
 
-func TestCheckApplicationPermissions_PartialAccess(t *testing.T) {
+func TestCheckPermissions_PartialAccess(t *testing.T) {
 	callCount := 0
 	mockService := &mockKesselInventoryService{}
 
@@ -541,7 +549,7 @@ func TestCheckApplicationPermissions_PartialAccess(t *testing.T) {
 		callCount++
 
 		// Only allow remediations
-		if in.Relation == PermissionRemediationsRunView {
+		if in.Relation == "playbook_dispatcher_remediations_run_view" {
 			return &kesselv2.CheckResponse{Allowed: kesselv2.Allowed_ALLOWED_TRUE}, nil
 		}
 		return &kesselv2.CheckResponse{Allowed: kesselv2.Allowed_ALLOWED_FALSE}, nil
@@ -560,7 +568,15 @@ func TestCheckApplicationPermissions_PartialAccess(t *testing.T) {
 	ctx := identity.WithIdentity(context.Background(), xrhid)
 	log := zap.NewNop().Sugar()
 
-	allowedApps, err := CheckApplicationPermissions(ctx, "workspace-789", log)
+	permissions := ServicePermissions{
+		Services: []ServicePermission{
+			{Name: "config_manager", Permission: "playbook_dispatcher_config_manager_run_view"},
+			{Name: "remediations", Permission: "playbook_dispatcher_remediations_run_view"},
+			{Name: "tasks", Permission: "playbook_dispatcher_tasks_run_view"},
+		},
+	}
+
+	allowedApps, err := CheckPermissions(ctx, "workspace-789", permissions, log)
 
 	assert.NoError(t, err)
 	assert.Len(t, allowedApps, 1)
@@ -568,7 +584,7 @@ func TestCheckApplicationPermissions_PartialAccess(t *testing.T) {
 	assert.Equal(t, 3, callCount) // Should check all 3 applications
 }
 
-func TestCheckApplicationPermissions_NoAccess(t *testing.T) {
+func TestCheckPermissions_NoAccess(t *testing.T) {
 	mockService := &mockKesselInventoryService{
 		checkResponse: &kesselv2.CheckResponse{
 			Allowed: kesselv2.Allowed_ALLOWED_FALSE,
@@ -587,13 +603,21 @@ func TestCheckApplicationPermissions_NoAccess(t *testing.T) {
 	ctx := identity.WithIdentity(context.Background(), xrhid)
 	log := zap.NewNop().Sugar()
 
-	allowedApps, err := CheckApplicationPermissions(ctx, "workspace-789", log)
+	permissions := ServicePermissions{
+		Services: []ServicePermission{
+			{Name: "config_manager", Permission: "playbook_dispatcher_config_manager_run_view"},
+			{Name: "remediations", Permission: "playbook_dispatcher_remediations_run_view"},
+			{Name: "tasks", Permission: "playbook_dispatcher_tasks_run_view"},
+		},
+	}
+
+	allowedApps, err := CheckPermissions(ctx, "workspace-789", permissions, log)
 
 	assert.NoError(t, err)
 	assert.Empty(t, allowedApps)
 }
 
-func TestCheckApplicationPermissions_KesselError(t *testing.T) {
+func TestCheckPermissions_KesselError(t *testing.T) {
 	mockService := &mockKesselInventoryService{
 		checkError: errors.New("kessel unavailable"),
 	}
@@ -610,14 +634,20 @@ func TestCheckApplicationPermissions_KesselError(t *testing.T) {
 	ctx := identity.WithIdentity(context.Background(), xrhid)
 	log := zap.NewNop().Sugar()
 
-	allowedApps, err := CheckApplicationPermissions(ctx, "workspace-789", log)
+	permissions := ServicePermissions{
+		Services: []ServicePermission{
+			{Name: "config_manager", Permission: "playbook_dispatcher_config_manager_run_view"},
+		},
+	}
+
+	allowedApps, err := CheckPermissions(ctx, "workspace-789", permissions, log)
 
 	assert.Error(t, err)
 	assert.Nil(t, allowedApps)
 	assert.Contains(t, err.Error(), "structural failure")
 }
 
-func TestCheckApplicationPermissions_ClientNotInitialized(t *testing.T) {
+func TestCheckPermissions_ClientNotInitialized(t *testing.T) {
 	globalManager = nil
 
 	xrhid := identity.XRHID{
@@ -630,7 +660,13 @@ func TestCheckApplicationPermissions_ClientNotInitialized(t *testing.T) {
 	ctx := identity.WithIdentity(context.Background(), xrhid)
 	log := zap.NewNop().Sugar()
 
-	allowedApps, err := CheckApplicationPermissions(ctx, "workspace-789", log)
+	permissions := ServicePermissions{
+		Services: []ServicePermission{
+			{Name: "config_manager", Permission: "playbook_dispatcher_config_manager_run_view"},
+		},
+	}
+
+	allowedApps, err := CheckPermissions(ctx, "workspace-789", permissions, log)
 
 	assert.Error(t, err)
 	assert.Nil(t, allowedApps)

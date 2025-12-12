@@ -3,18 +3,16 @@
 // Coded in collaboration with AI
 package kessel
 
-// Playbook Dispatcher specific permissions for Kessel authorization
-// These map to the permissions defined in the RBAC Kessel schema
-// See: rbac-config PR #699 - configs/stage/schemas/src/playbook-dispatcher.ksl
-//
-// V1 Permissions (Current RBAC implementation):
-// - playbook-dispatcher:run:read -> playbook_dispatcher_run_read
-// - playbook-dispatcher:run:write -> playbook_dispatcher_run_write
-//
-// V2 Permissions (Kessel workspace-based, feature-flagged):
-// - playbook-dispatcher:remediations_run:read -> playbook_dispatcher_remediations_run_view
-// - playbook-dispatcher:tasks_run:read -> playbook_dispatcher_tasks_run_view
-// - playbook-dispatcher:config_manager_run:read -> playbook_dispatcher_config_manager_run_view
+// ServicePermission represents a mapping between a service name and its Kessel permission
+type ServicePermission struct {
+	Name       string `json:"name"`
+	Permission string `json:"permission"`
+}
+
+// ServicePermissions holds the collection of service permissions to check
+type ServicePermissions struct {
+	Services []ServicePermission `json:"services"`
+}
 
 const (
 	// V1 Permissions - Current RBAC implementation
@@ -26,20 +24,6 @@ const (
 	// PermissionRunWrite grants write access to playbook runs
 	// Maps to RBAC permission: playbook-dispatcher:run:write
 	PermissionRunWrite = "playbook_dispatcher_run_write"
-
-	// V2 Permissions - Service-specific Kessel workspace permissions (feature-flagged)
-
-	// PermissionRemediationsRunView grants view access to remediation playbook runs
-	// Maps to RBAC permission: playbook-dispatcher:remediations_run:read
-	PermissionRemediationsRunView = "playbook_dispatcher_remediations_run_view"
-
-	// PermissionTasksRunView grants view access to task playbook runs
-	// Maps to RBAC permission: playbook-dispatcher:tasks_run:read
-	PermissionTasksRunView = "playbook_dispatcher_tasks_run_view"
-
-	// PermissionConfigManagerRunView grants view access to config-manager playbook runs
-	// Maps to RBAC permission: playbook-dispatcher:config_manager_run:read
-	PermissionConfigManagerRunView = "playbook_dispatcher_config_manager_run_view"
 )
 
 const (
@@ -84,17 +68,4 @@ var PlaybookPermissions = map[string]Permission{
 		Relation:     PermissionRunWrite,
 		Description:  "Allows creating new playbook runs and canceling existing runs",
 	},
-}
-
-// V2ApplicationPermissions maps application names to their Kessel permission names
-// Used for checking service-specific access via Kessel workspace permissions
-//
-// The application names match the "service" field values used in the database:
-// - "config_manager" -> service field in runs table
-// - "remediations" -> service field in runs table
-// - "tasks" -> service field in runs table
-var V2ApplicationPermissions = map[string]string{
-	"config_manager": PermissionConfigManagerRunView,
-	"remediations":   PermissionRemediationsRunView,
-	"tasks":          PermissionTasksRunView,
 }
