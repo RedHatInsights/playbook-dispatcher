@@ -1,40 +1,57 @@
-# Kessel Scaffolding Implementation Summary
+# Kessel Authorization Scaffolding
 
-**Date**: 2025-12-09
-**Branch**: `rhineng21901_allowed_services_refactor`
-**Purpose**: Kessel authorization scaffolding (not wired into application)
+**Date**: 2025-12-15
+**Branch**: `rhineng21902_refactor_scaffolding_middleware`
+**Purpose**: Core kessel package for workspace-based authorization in playbook-dispatcher
 
 ---
 
 ## Overview
 
-This document summarizes the Kessel scaffolding implementation that has been created but **NOT wired into the application**. The scaffolding provides all the components needed for Kessel workspace-based authorization with four migration modes.
+This document describes the Kessel authorization scaffolding in playbook-dispatcher. The scaffolding provides the core kessel package with workspace-based permission checking functions, client management, RBAC integration for workspace lookups, and comprehensive retry logic. This forms the foundation for Kessel authorization, which will be integrated into the application middleware separately.
 
 ---
 
-## Files Created
+## Implementation Files
 
-### Core Implementation (`internal/common/kessel/`)
+### Kessel Package (`internal/common/kessel/`)
+
+The Kessel package provides the core authorization logic for workspace-based permission checking:
 
 | File | Lines | Purpose |
 |------|-------|---------|
-| `permissions.go` | 100 | V2 application permission constants and mappings |
-| `client.go` | 168 | Kessel client initialization and ClientManager |
-| `rbac.go` | 175 | RBAC client for workspace lookup with retry logic |
-| `authorization.go` | 319 | Permission checking functions (CheckPermission, CheckApplicationPermissions) |
+| `permissions.go` | 100 | Permission constants and V2ApplicationPermissions map |
+| `client.go` | 168 | Kessel client initialization and lifecycle management |
+| `rbac.go` | 175 | RBAC client for workspace ID lookup with retry logic and exponential backoff |
+| `authorization.go` | 319 | Permission checking functions including CheckApplicationPermissions |
 
-**Total Implementation**: 762 lines
+**Key Functions**:
+- `Initialize()` - Initializes Kessel client at application startup (non-fatal)
+- `GetWorkspaceID()` - Looks up workspace ID for an organization via RBAC service
+- `CheckApplicationPermissions()` - Checks user permissions for multiple applications, returns list of allowed service names
+- `CheckPermission()` - Checks single permission for user on workspace
+- `CheckPermissionForUpdate()` - Checks permission using CheckForUpdate RPC for write operations
 
-### Test Files (`internal/common/kessel/`)
+**Total**: 762 lines of implementation
 
-| File | Tests | Lines | Purpose |
-|------|-------|-------|---------|
-| `permissions_test.go` | 13 | 250 | Tests for permission constants and mappings |
-| `client_test.go` | 14 | 198 | Tests for ClientManager initialization and management |
-| `rbac_test.go` | 17 | 257 | Tests for RBAC client with retry logic, backoff, and timeout |
-| `authorization_test.go` | 22 | 523 | Tests with mock Kessel service for permission checks |
+### Kessel Tests (`internal/common/kessel/`)
 
-**Total Tests**: 66 test functions, 1,228 lines (4 test files)
+| File | Tests | Lines | Coverage |
+|------|-------|-------|----------|
+| `permissions_test.go` | 13 | 250 | Permission constants, V2ApplicationPermissions structure |
+| `client_test.go` | 14 | 198 | Client initialization, configuration, lifecycle |
+| `rbac_test.go` | 17 | 257 | Retry logic, exponential backoff, timeout, context cancellation |
+| `authorization_test.go` | 22 | 523 | Permission checks, identity validation, mock Kessel service |
+
+**Total**: 66 tests, 1,228 lines
+
+### Application Startup (`cmd/`)
+
+| File | Lines | Purpose |
+|------|-------|---------|
+| `run.go` | 79-85 | Kessel client initialization (non-fatal) |
+
+Initializes the Kessel client on application startup with graceful degradation if initialization fails.
 
 ### Feature Flag Logic (`internal/common/unleash/features/`)
 
@@ -58,7 +75,7 @@ Configuration constants and defaults **already exist** in `config.go`:
 
 ### 1. V2 Application Permissions
 
-The scaffolding defines service-specific permissions that map to Kessel workspace permissions:
+The implementation defines service-specific permissions that map to Kessel workspace permissions:
 
 ```go
 var V2ApplicationPermissions = map[string]string{
@@ -212,107 +229,31 @@ Kessel environment variables already configured:
 
 ---
 
-## What's NOT Done (Wiring)
+## Scaffolding Status
 
-The scaffolding is complete, but these integration tasks remain for the wiring PR:
+### Completed Components
 
-### 1. Initialize Kessel Client on Startup
+1. **Kessel Package** (`internal/common/kessel/`)
+   - Core authorization functions
+   - Client management and initialization
+   - RBAC client for workspace lookups
+   - Comprehensive test coverage (66 tests)
 
-**File**: `cmd/run.go`
+2. **Application Startup Integration** (`cmd/run.go`)
+   - Non-fatal Kessel client initialization
+   - Graceful degradation to RBAC-only mode if initialization fails
 
-**Status**: ✅ DONE - Added in this PR (lines 79-85)
+3. **Supporting Infrastructure**
+   - Feature flag logic for mode selection (pre-existing)
+   - Configuration constants and defaults (pre-existing)
+   - Deployment configuration (pre-existing)
 
-```go
-// Initialize Kessel client (non-fatal if it fails)
-if err := kessel.Initialize(cfg, log); err != nil {
-    log.Warnw("Failed to initialize Kessel client, will use RBAC-only authorization mode",
-        "error", err)
-}
-defer kessel.Close()
-```
+### Not Part of Scaffolding (Separate Work)
 
-**Note**: Made non-fatal to allow application to start even if Kessel is unavailable. Falls back to RBAC-only mode.
-
-### 2. Wire into `getAllowedServices()`
-
-**File**: `internal/api/controllers/public/services.go`
-
-**Status**: ❌ Not done - Needs to be implemented in future PR
-
-Current implementation (RBAC only):
-```go
-func getAllowedServices(ctx echo.Context) []string {
-    permissions := middleware.GetPermissions(ctx)
-    allowedServices := rbac.GetPredicateValues(permissions, "service")
-    return allowedServices
-}
-```
-
-**Proposed implementation** (with 4 modes - to be done in separate PR):
-```go
-func getAllowedServices(ctx echo.Context, cfg *viper.Viper, log *zap.SugaredLogger) []string {
-    mode := features.GetKesselAuthModeWithContext(ctx.Request().Context(), cfg, log)
-
-    switch mode {
-    case config.KesselModeRBACOnly:
-        return getRbacAllowedServices(ctx)
-
-    case config.KesselModeBothRBACEnforces:
-        rbacServices := getRbacAllowedServices(ctx)
-        kesselServices := getKesselAllowedServices(ctx, cfg, log)
-        logComparison(rbacServices, kesselServices, log)
-        return rbacServices
-
-    case config.KesselModeBothKesselEnforces:
-        rbacServices := getRbacAllowedServices(ctx)
-        kesselServices := getKesselAllowedServices(ctx, cfg, log)
-        logComparison(rbacServices, kesselServices, log)
-        return kesselServices
-
-    case config.KesselModeKesselOnly:
-        return getKesselAllowedServices(ctx, cfg, log)
-    }
-}
-
-func getRbacAllowedServices(ctx echo.Context) []string {
-    permissions := middleware.GetPermissions(ctx)
-    return rbac.GetPredicateValues(permissions, "service")
-}
-
-func getKesselAllowedServices(ctx echo.Context, cfg *viper.Viper, log *zap.SugaredLogger) []string {
-    // Get org ID from identity
-    xrhid := identity.GetIdentity(ctx.Request().Context())
-    orgID := xrhid.Identity.OrgID
-
-    // Get workspace ID
-    workspaceID, err := kessel.GetWorkspaceID(ctx.Request().Context(), orgID, log)
-    if err != nil {
-        log.Errorw("Failed to get workspace ID", "error", err, "org_id", orgID)
-        return []string{} // Return empty list on error
-    }
-
-    // Check application permissions
-    allowedApps, err := kessel.CheckApplicationPermissions(ctx.Request().Context(), workspaceID, log)
-    if err != nil {
-        log.Errorw("Failed to check application permissions", "error", err)
-        return []string{} // Return empty list on error
-    }
-
-    return allowedApps
-}
-```
-
-### 3. Add Prometheus Metrics
-
-**File**: New file `internal/common/kessel/metrics.go`
-
-**Status**: ❌ Not done - Needs to be created
-
-Metrics to track:
-- `kessel_permission_checks_total{app, result}` - Counter
-- `kessel_permission_check_duration_seconds{app}` - Histogram
-- `kessel_rbac_agreement_total{result="match|mismatch"}` - Counter (for validation mode)
-- `kessel_workspace_lookup_duration_seconds` - Histogram
+The following will be implemented separately:
+- Middleware integration for request-level authorization
+- Handler integration to use Kessel permission results
+- Prometheus metrics for monitoring Kessel performance
 
 ---
 
@@ -341,7 +282,7 @@ The scaffolding includes comprehensive test coverage:
 - Tests for RBAC client retry logic, exponential backoff, and timeout (17 tests)
 - Tests for authorization functions with mock Kessel service (22 tests)
 - Mock-based testing infrastructure with proper isolation
-- Support for User and ServiceAccount identity types (v2 middleware)
+- Support for User and ServiceAccount identity types
 
 #### Function-Level Coverage (from `make test-coverage`)
 
@@ -378,7 +319,7 @@ The scaffolding includes comprehensive test coverage:
 
 ## Comparison with config-manager
 
-Playbook-dispatcher's Kessel scaffolding is **significantly more production-ready** than config-manager:
+Playbook-dispatcher's Kessel implementation is **significantly more production-ready** than config-manager:
 
 | Feature | config-manager | playbook-dispatcher |
 |---------|---------------|---------------------|
@@ -395,33 +336,41 @@ Playbook-dispatcher's Kessel scaffolding is **significantly more production-read
 
 ---
 
-## Next Steps
+## Scaffolding Summary
 
-### PR #1: Kessel Scaffolding (This PR)
-**Status**: ✅ Complete - Ready for review
+### Files Created
 
-**Files**:
-- `internal/common/kessel/*.go` (4 implementation files - 762 lines)
-- `internal/common/kessel/*_test.go` (4 test files - 66 tests, 1,228 lines)
-- `cmd/run.go` (modified - added Kessel initialization)
-- `go.mod` and `go.sum` (modified - added Kessel dependencies)
-- Configuration already in place (`config.go`)
-- Feature flags already in place (`unleash/features/kessel.go`)
-- Deployment config already in place (`deploy/clowdapp.yaml`)
+**Kessel Package** (`internal/common/kessel/`):
+- `permissions.go` - Permission constants and V2ApplicationPermissions map (100 lines)
+- `client.go` - Client initialization and lifecycle management (168 lines)
+- `rbac.go` - RBAC client with retry logic and exponential backoff (175 lines)
+- `authorization.go` - Permission checking functions (319 lines)
+- `permissions_test.go` - 13 tests (250 lines)
+- `client_test.go` - 14 tests (198 lines)
+- `rbac_test.go` - 17 tests (257 lines)
+- `authorization_test.go` - 22 tests (523 lines)
 
-**Changes**:
-- 8 new files created (implementation + tests)
-- 3 existing files modified (cmd/run.go, go.mod, go.sum)
-- All tests passing (verified with `make test`)
+**Application Startup**:
+- `cmd/run.go` - Added Kessel client initialization (lines 79-85)
 
-### PR #2: Wire Kessel into getAllowedServices (Future PR)
-**Status**: ⏳ Pending - After PR #1 merges
+**Dependencies**:
+- `go.mod` and `go.sum` - Added Kessel and related dependencies
 
-**Files to modify**:
-- `internal/api/controllers/public/services.go` - Implement 4-mode logic in `getAllowedServices()`
-- `internal/api/controllers/public/runsList.go` - Update to pass cfg and log to `getAllowedServices()`
-- `internal/api/controllers/public/runHostsList.go` - Same update
-- `internal/common/kessel/metrics.go` - NEW: Add Prometheus metrics
+**Configuration** (pre-existing, not created by scaffolding):
+- `internal/common/config/config.go` - Kessel configuration constants
+- `internal/common/unleash/features/kessel.go` - Feature flag logic (221 lines)
+- `deploy/clowdapp.yaml` - Environment variables for Kessel
+
+### Test Results
+
+- **Total tests**: 66 (kessel package only)
+- **All tests passing**: Verified with `make test`
+- **No linting issues**: Verified with linting tools
+- **Coverage**: Production-ready with all critical authorization functions at 87-100%
+
+### Scaffolding Status
+
+✅ **Scaffolding complete and ready for integration** - Provides foundation for Kessel authorization with comprehensive testing and error handling
 
 ---
 
@@ -458,5 +407,6 @@ require (
 ---
 
 **Document Created**: 2025-12-09
+**Last Updated**: 2025-12-15
 **Author**: Claude Code (AI Assistant)
-**Purpose**: Enable PR creation and future wiring implementation
+**Purpose**: Kessel package scaffolding documentation
