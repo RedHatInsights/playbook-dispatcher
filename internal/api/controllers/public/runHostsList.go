@@ -31,7 +31,9 @@ func (this *controllers) ApiRunHostsList(ctx echo.Context, params ApiRunHostsLis
 		Where("runs.org_id = ?", identity.Identity.OrgID)
 
 	// rbac + kessel
-	if allowedServices := getAllowedServices(ctx); len(allowedServices) > 0 {
+	// Note: In Kessel-enforcing modes, middleware returns 403 if user has no permissions
+	// Empty allowedServices means no service runs will be returned
+	if allowedServices := middleware.GetAllowedServices(ctx); len(allowedServices) > 0 {
 		queryBuilder.Where("runs.service IN ?", allowedServices)
 	}
 

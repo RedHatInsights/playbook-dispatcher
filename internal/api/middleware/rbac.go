@@ -4,15 +4,24 @@ import (
 	"net/http"
 	"playbook-dispatcher/internal/api/instrumentation"
 	"playbook-dispatcher/internal/api/rbac"
+	"playbook-dispatcher/internal/common/config"
+	"playbook-dispatcher/internal/common/kessel"
+	"playbook-dispatcher/internal/common/unleash/features"
 	"playbook-dispatcher/internal/common/utils"
+	"reflect"
+	"sort"
 
 	"github.com/labstack/echo/v4"
+	"github.com/redhatinsights/platform-go-middlewares/v2/identity"
 	"github.com/spf13/viper"
+	"go.uber.org/zap"
 )
 
 type permissionsKeyType int
+type allowedServicesKeyType int
 
 const permissionsKey permissionsKeyType = iota
+const allowedServicesKey allowedServicesKeyType = iota
 
 func EnforcePermissions(cfg *viper.Viper, requiredPermissions ...rbac.RequiredPermission) echo.MiddlewareFunc {
 	var client rbac.RbacClient
@@ -26,23 +35,50 @@ func EnforcePermissions(cfg *viper.Viper, requiredPermissions ...rbac.RequiredPe
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			req := c.Request()
+			log := utils.GetLogFromEcho(c)
 
-			permissions, err := client.GetPermissions(req.Context())
-			if err != nil {
-				instrumentation.RbacError(c, err)
-				return echo.NewHTTPError(http.StatusServiceUnavailable, "error getting permissions from RBAC")
+			// Determine authorization mode (per-request, dynamic)
+			mode := features.GetKesselAuthModeWithContext(req.Context(), cfg, log)
+
+			var permissions []rbac.Access
+
+			// TIER 1: RBAC base permission check (skip in kessel-only mode)
+			// remains unchanged from RBAC v1 implementation
+			if mode != config.KesselModeKesselOnly {
+				var err error
+				permissions, err = client.GetPermissions(req.Context())
+				if err != nil {
+					instrumentation.RbacError(c, err)
+					return echo.NewHTTPError(http.StatusServiceUnavailable, "error getting permissions from RBAC")
+				}
+
+				for _, requiredPermission := range requiredPermissions {
+					matchingPermissions := rbac.FilterPermissions(permissions, requiredPermission)
+
+					if len(matchingPermissions) == 0 {
+						instrumentation.RbacRejected(c)
+						return echo.NewHTTPError(http.StatusForbidden)
+					}
+				}
+
+				utils.SetRequestContextValue(c, permissionsKey, permissions)
 			}
 
-			for _, requiredPermission := range requiredPermissions {
-				matchingPermissions := rbac.FilterPermissions(permissions, requiredPermission)
+			// TIER 2: Service-level authorization
+			allowedServices := computeAllowedServices(c, permissions, mode, log)
 
-				if len(matchingPermissions) == 0 {
-					instrumentation.RbacRejected(c)
+			// In Kessel-enforcing modes, empty allowedServices means no permissions (403)
+			if len(allowedServices) == 0 {
+				switch mode {
+				case config.KesselModeBothKesselEnforces, config.KesselModeKesselOnly:
+					log.Debugw("User has no Kessel permissions to any services", "mode", mode)
 					return echo.NewHTTPError(http.StatusForbidden)
 				}
+				// In RBAC modes, empty means all services (continue)
 			}
 
-			utils.SetRequestContextValue(c, permissionsKey, permissions)
+			// Cache allowed services for handler
+			utils.SetRequestContextValue(c, allowedServicesKey, allowedServices)
 
 			return next(c)
 		}
@@ -50,5 +86,109 @@ func EnforcePermissions(cfg *viper.Viper, requiredPermissions ...rbac.RequiredPe
 }
 
 func GetPermissions(c echo.Context) []rbac.Access {
-	return c.Request().Context().Value(permissionsKey).([]rbac.Access)
+	value := c.Request().Context().Value(permissionsKey)
+	if value == nil {
+		return []rbac.Access{}
+	}
+	permissions, ok := value.([]rbac.Access)
+	if !ok {
+		return []rbac.Access{}
+	}
+	return permissions
+}
+
+// GetAllowedServices retrieves the cached allowed services from context
+func GetAllowedServices(c echo.Context) []string {
+	value := c.Request().Context().Value(allowedServicesKey)
+	if value == nil {
+		return []string{}
+	}
+	services, ok := value.([]string)
+	if !ok {
+		return []string{}
+	}
+	return services
+}
+
+// computeAllowedServices determines which services the user can access
+// based on the authorization mode
+func computeAllowedServices(ctx echo.Context, rbacPermissions []rbac.Access, mode string, log *zap.SugaredLogger) []string {
+	switch mode {
+	case config.KesselModeRBACOnly:
+		log.Debugw("Using RBAC-only authorization mode")
+		return getRbacAllowedServices(rbacPermissions)
+
+	case config.KesselModeBothRBACEnforces:
+		log.Debugw("Using both-rbac-enforces authorization mode (validation)")
+		rbacServices := getRbacAllowedServices(rbacPermissions)
+		kesselServices := getKesselAllowedServices(ctx, log)
+		logComparison(rbacServices, kesselServices, log)
+		return rbacServices
+
+	case config.KesselModeBothKesselEnforces:
+		log.Debugw("Using both-kessel-enforces authorization mode (transition)")
+		rbacServices := getRbacAllowedServices(rbacPermissions)
+		kesselServices := getKesselAllowedServices(ctx, log)
+		logComparison(rbacServices, kesselServices, log)
+		return kesselServices
+
+	case config.KesselModeKesselOnly:
+		log.Debugw("Using kessel-only authorization mode")
+		return getKesselAllowedServices(ctx, log)
+
+	default:
+		log.Warnw("Unknown Kessel authorization mode, falling back to RBAC",
+			"mode", mode)
+		return getRbacAllowedServices(rbacPermissions)
+	}
+}
+
+// getRbacAllowedServices extracts allowed services from RBAC permissions
+func getRbacAllowedServices(permissions []rbac.Access) []string {
+	return rbac.GetPredicateValues(permissions, "service")
+}
+
+// getKesselAllowedServices queries Kessel for allowed services
+func getKesselAllowedServices(ctx echo.Context, log *zap.SugaredLogger) []string {
+	// Extract identity from context
+	xrhid := identity.GetIdentity(ctx.Request().Context())
+	orgID := xrhid.Identity.OrgID
+
+	// Get workspace ID for the organization
+	workspaceID, err := kessel.GetWorkspaceID(ctx.Request().Context(), orgID, log)
+	if err != nil {
+		log.Errorw("Failed to get workspace ID", "error", err, "org_id", orgID)
+		return []string{} // Return empty list on error
+	}
+
+	// Check permissions via Kessel (uses V2ApplicationPermissions map)
+	allowedServices, err := kessel.CheckApplicationPermissions(ctx.Request().Context(), workspaceID, log)
+	if err != nil {
+		log.Errorw("Failed to check permissions", "error", err)
+		return []string{} // Return empty list on error
+	}
+
+	return allowedServices
+}
+
+// logComparison compares RBAC and Kessel results and logs any discrepancies
+func logComparison(rbacServices, kesselServices []string, log *zap.SugaredLogger) {
+	// Sort for comparison
+	sortedRbac := make([]string, len(rbacServices))
+	copy(sortedRbac, rbacServices)
+	sort.Strings(sortedRbac)
+
+	sortedKessel := make([]string, len(kesselServices))
+	copy(sortedKessel, kesselServices)
+	sort.Strings(sortedKessel)
+
+	if !reflect.DeepEqual(sortedRbac, sortedKessel) {
+		log.Warnw("RBAC and Kessel permission mismatch",
+			"rbac_services", sortedRbac,
+			"kessel_services", sortedKessel)
+		// TODO: Increment Prometheus metric for mismatch
+	} else {
+		log.Debugw("RBAC and Kessel permissions match",
+			"services", sortedRbac)
+	}
 }
