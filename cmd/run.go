@@ -50,6 +50,7 @@ func run(cmd *cobra.Command, args []string) error {
 	if cfg.GetBool("kessel.enabled") {
 		log.Infow("Kessel authorization enabled",
 			"mode", cfg.GetString("kessel.auth.mode"),
+			"mode_source", "environment variable (may be overridden by Unleash per-request)",
 			"url", cfg.GetString("kessel.url"),
 			"auth_enabled", cfg.GetBool("kessel.auth.enabled"),
 			"insecure", cfg.GetBool("kessel.insecure"))
