@@ -95,6 +95,9 @@ func GetKesselAuthMode(cfg *viper.Viper, log *zap.SugaredLogger) string {
 func GetKesselAuthModeWithContext(ctx context.Context, cfg *viper.Viper, log *zap.SugaredLogger) string {
 	// Priority 1: If Kessel not enabled, always use RBAC-only mode
 	if !cfg.GetBool("kessel.enabled") {
+		log.Debugw("Kessel disabled, using RBAC-only mode",
+			"kessel_enabled", false,
+			"mode", config.KesselModeRBACOnly)
 		return config.KesselModeRBACOnly
 	}
 
@@ -111,6 +114,7 @@ func GetKesselAuthModeWithContext(ctx context.Context, cfg *viper.Viper, log *za
 			mode := mapVariantToMode(variant.Name, log)
 			if mode != "" {
 				log.Infow("Using Kessel auth mode from Unleash variant with context",
+					"feature_flag", KesselFeatureFlag,
 					"variant", variant.Name,
 					"mode", mode,
 					"org_id", unleashCtx.UserId)
