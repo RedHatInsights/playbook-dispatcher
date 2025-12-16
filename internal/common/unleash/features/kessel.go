@@ -36,37 +36,53 @@ const (
 func GetKesselAuthMode(cfg *viper.Viper, log *zap.SugaredLogger) string {
 	// Priority 1: If Kessel not enabled, always use RBAC-only mode
 	if !cfg.GetBool("kessel.enabled") {
+		log.Debugw("Kessel authorization mode selected",
+			"source", "disabled",
+			"kessel_enabled", false,
+			"mode", config.KesselModeRBACOnly)
 		return config.KesselModeRBACOnly
 	}
 
+	// Compute unleashEnabled once and reuse
+	unleashEnabled := cfg.GetBool("unleash.enabled")
+
 	// Priority 2: If Unleash enabled, try to get mode from variant
-	if cfg.GetBool("unleash.enabled") {
+	if unleashEnabled {
 		variant := unleash.GetVariant(KesselFeatureFlag)
 
 		// Check if variant is enabled and valid
 		if variant != nil && variant.Enabled {
 			mode := mapVariantToMode(variant.Name, log)
 			if mode != "" {
-				log.Infow("Using Kessel auth mode from Unleash variant",
+				log.Infow("Kessel authorization mode selected",
+					"source", "unleash",
+					"feature_flag", KesselFeatureFlag,
 					"variant", variant.Name,
 					"mode", mode)
 				return mode
 			}
 		} else {
-			log.Warnw("Unleash variant not enabled or not found, falling back to KESSEL_AUTH_MODE",
-				"feature_flag", KesselFeatureFlag)
+			log.Warnw("Kessel authorization mode selected",
+				"source", "environment-unleash-fallback",
+				"feature_flag", KesselFeatureFlag,
+				"unleash_enabled", unleashEnabled,
+				"variant_available", false)
 		}
 	}
 
 	// Priority 3: Use environment variable fallback
 	mode := cfg.GetString("kessel.auth.mode")
-	log.Infow("Using Kessel auth mode from environment variable",
+	log.Infow("Kessel authorization mode selected",
+		"source", "environment",
+		"unleash_enabled", unleashEnabled,
 		"mode", mode)
 
 	// Validate mode
 	if !isValidMode(mode) {
-		log.Errorw("Invalid KESSEL_AUTH_MODE, falling back to rbac-only",
-			"invalid_mode", mode)
+		log.Errorw("Kessel authorization mode selected",
+			"source", "environment-invalid",
+			"invalid_mode", mode,
+			"fallback_mode", config.KesselModeRBACOnly)
 		return config.KesselModeRBACOnly
 	}
 
@@ -95,11 +111,18 @@ func GetKesselAuthMode(cfg *viper.Viper, log *zap.SugaredLogger) string {
 func GetKesselAuthModeWithContext(ctx context.Context, cfg *viper.Viper, log *zap.SugaredLogger) string {
 	// Priority 1: If Kessel not enabled, always use RBAC-only mode
 	if !cfg.GetBool("kessel.enabled") {
+		log.Debugw("Kessel authorization mode selected",
+			"source", "disabled",
+			"kessel_enabled", false,
+			"mode", config.KesselModeRBACOnly)
 		return config.KesselModeRBACOnly
 	}
 
+	// Compute unleashEnabled once and reuse
+	unleashEnabled := cfg.GetBool("unleash.enabled")
+
 	// Priority 2: If Unleash enabled, try to get mode from variant with context
-	if cfg.GetBool("unleash.enabled") {
+	if unleashEnabled {
 		// Build Unleash context from request context
 		unleashCtx := buildUnleashContext(ctx, log)
 
@@ -110,28 +133,37 @@ func GetKesselAuthModeWithContext(ctx context.Context, cfg *viper.Viper, log *za
 		if variant != nil && variant.Enabled {
 			mode := mapVariantToMode(variant.Name, log)
 			if mode != "" {
-				log.Infow("Using Kessel auth mode from Unleash variant with context",
+				log.Infow("Kessel authorization mode selected",
+					"source", "unleash",
+					"feature_flag", KesselFeatureFlag,
 					"variant", variant.Name,
 					"mode", mode,
 					"org_id", unleashCtx.UserId)
 				return mode
 			}
 		} else {
-			log.Warnw("Unleash variant not enabled or not found, falling back to KESSEL_AUTH_MODE",
+			log.Warnw("Kessel authorization mode selected",
+				"source", "environment-unleash-fallback",
 				"feature_flag", KesselFeatureFlag,
+				"unleash_enabled", unleashEnabled,
+				"variant_available", false,
 				"org_id", unleashCtx.UserId)
 		}
 	}
 
 	// Priority 3: Use environment variable fallback
 	mode := cfg.GetString("kessel.auth.mode")
-	log.Infow("Using Kessel auth mode from environment variable",
+	log.Infow("Kessel authorization mode selected",
+		"source", "environment",
+		"unleash_enabled", unleashEnabled,
 		"mode", mode)
 
 	// Validate mode
 	if !isValidMode(mode) {
-		log.Errorw("Invalid KESSEL_AUTH_MODE, falling back to rbac-only",
-			"invalid_mode", mode)
+		log.Errorw("Kessel authorization mode selected",
+			"source", "environment-invalid",
+			"invalid_mode", mode,
+			"fallback_mode", config.KesselModeRBACOnly)
 		return config.KesselModeRBACOnly
 	}
 
