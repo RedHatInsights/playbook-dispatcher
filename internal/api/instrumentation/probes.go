@@ -25,6 +25,11 @@ const (
 	labelSatellite             = "satellite"
 	LabelAnsibleRequest        = "ansible"
 	LabelSatRequest            = "satellite"
+	labelKesselPassed          = "ok"
+	labelKesselFailed          = "failed"
+	labelKesselError           = "error"
+	labelKesselRbacMatch       = "match"
+	labelKesselRbacMismatch    = "mismatch"
 )
 
 var (
@@ -57,6 +62,16 @@ var (
 		Name: "api_rbac_rejected_total",
 		Help: "The total number of requests rejected due to RBAC",
 	})
+
+	kesselRequestTotal = promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: "api_kessel_requests_total",
+		Help: "The total number of Kessel authorization requests",
+	}, []string{"status"})
+
+	kesselRbacAgreementTotal = promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: "api_kessel_rbac_agreement_total",
+		Help: "The total number of RBAC and Kessel permission comparisons",
+	}, []string{"result"})
 
 	runCreatedTotal = promauto.NewCounterVec(prometheus.CounterOpts{
 		Name: "api_run_created_total",
@@ -138,6 +153,33 @@ func RbacRejected(ctx echo.Context) {
 	rbacRejectedTotal.Inc()
 }
 
+func KesselAuthorizationPassed(ctx echo.Context) {
+	utils.GetLogFromEcho(ctx).Debugw("Kessel authorization check passed")
+	kesselRequestTotal.WithLabelValues(labelKesselPassed).Inc()
+}
+
+func KesselAuthorizationFailed(ctx echo.Context) {
+	utils.GetLogFromEcho(ctx).Debugw("Kessel authorization check failed")
+	kesselRequestTotal.WithLabelValues(labelKesselFailed).Inc()
+}
+
+func KesselAuthorizationError(ctx echo.Context, err error) {
+	utils.GetLogFromEcho(ctx).Errorw("Kessel authorization error",
+		"error", err,
+		"request_id", ctx.Request().Header.Get("X-Request-Id"))
+	kesselRequestTotal.WithLabelValues(labelKesselError).Inc()
+}
+
+func KesselRbacMatch(ctx echo.Context) {
+	utils.GetLogFromEcho(ctx).Debugw("RBAC and Kessel permissions match")
+	kesselRbacAgreementTotal.WithLabelValues(labelKesselRbacMatch).Inc()
+}
+
+func KesselRbacMismatch(ctx echo.Context) {
+	utils.GetLogFromEcho(ctx).Debugw("RBAC and Kessel permissions mismatch")
+	kesselRbacAgreementTotal.WithLabelValues(labelKesselRbacMismatch).Inc()
+}
+
 func RunCreated(ctx context.Context, recipient uuid.UUID, runId uuid.UUID, payload string, service string, requestType string) {
 	utils.GetLogFromContext(ctx).Infow("Created new playbook run", "recipient", recipient.String(), "run_id", runId.String(), "payload", string(payload), "service", service)
 	runCreatedTotal.WithLabelValues(service, requestType, api.GetApiVersion(ctx)).Inc()
@@ -170,4 +212,11 @@ func Start() {
 	connectorErrorTotal.WithLabelValues(labelErrorGeneric, LabelSatRequest)
 	connectorErrorTotal.WithLabelValues(labelNoConnection, LabelAnsibleRequest)
 	connectorErrorTotal.WithLabelValues(labelNoConnection, LabelSatRequest)
+
+	kesselRequestTotal.WithLabelValues(labelKesselPassed)
+	kesselRequestTotal.WithLabelValues(labelKesselFailed)
+	kesselRequestTotal.WithLabelValues(labelKesselError)
+
+	kesselRbacAgreementTotal.WithLabelValues(labelKesselRbacMatch)
+	kesselRbacAgreementTotal.WithLabelValues(labelKesselRbacMismatch)
 }

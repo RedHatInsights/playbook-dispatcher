@@ -1,3 +1,6 @@
+// Package middleware provides HTTP middleware for the playbook-dispatcher API.
+//
+// Updated in collaboration with AI
 package middleware
 
 import (
@@ -122,14 +125,14 @@ func computeAllowedServices(ctx echo.Context, rbacPermissions []rbac.Access, mod
 		log.Debugw("Using both-rbac-enforces authorization mode (validation)")
 		rbacServices := getRbacAllowedServices(rbacPermissions)
 		kesselServices := getKesselAllowedServices(ctx, log)
-		logComparison(rbacServices, kesselServices, log)
+		logComparison(ctx, rbacServices, kesselServices, log)
 		return rbacServices
 
 	case config.KesselModeBothKesselEnforces:
 		log.Debugw("Using both-kessel-enforces authorization mode (transition)")
 		rbacServices := getRbacAllowedServices(rbacPermissions)
 		kesselServices := getKesselAllowedServices(ctx, log)
-		logComparison(rbacServices, kesselServices, log)
+		logComparison(ctx, rbacServices, kesselServices, log)
 		return kesselServices
 
 	case config.KesselModeKesselOnly:
@@ -153,26 +156,57 @@ func getKesselAllowedServices(ctx echo.Context, log *zap.SugaredLogger) []string
 	// Extract identity from context
 	xrhid := identity.GetIdentity(ctx.Request().Context())
 	orgID := xrhid.Identity.OrgID
+	identityType := xrhid.Identity.Type
+
+	// Extract user ID based on identity type
+	var userID string
+	switch identityType {
+	case "User":
+		userID = xrhid.Identity.User.UserID
+	case "ServiceAccount":
+		userID = xrhid.Identity.ServiceAccount.UserId
+	default:
+		userID = "unknown"
+	}
 
 	// Get workspace ID for the organization
 	workspaceID, err := kessel.GetWorkspaceID(ctx.Request().Context(), orgID, log)
 	if err != nil {
-		log.Errorw("Failed to get workspace ID", "error", err, "org_id", orgID)
+		instrumentation.KesselAuthorizationError(ctx, err)
 		return []string{} // Return empty list on error
 	}
 
 	// Check permissions via Kessel (uses V2ApplicationPermissions map)
 	allowedServices, err := kessel.CheckApplicationPermissions(ctx.Request().Context(), workspaceID, log)
 	if err != nil {
-		log.Errorw("Failed to check permissions", "error", err)
+		instrumentation.KesselAuthorizationError(ctx, err)
 		return []string{} // Return empty list on error
+	}
+
+	if len(allowedServices) == 0 {
+		log.Debugw("Kessel authorization returned no services",
+			"org_id", orgID,
+			"workspace_id", workspaceID,
+			"identity_type", identityType,
+			"user_id", userID,
+			"request_id", ctx.Request().Header.Get("X-Request-Id"))
+		instrumentation.KesselAuthorizationFailed(ctx)
+	} else {
+		log.Debugw("Kessel authorization succeeded",
+			"org_id", orgID,
+			"workspace_id", workspaceID,
+			"identity_type", identityType,
+			"user_id", userID,
+			"allowed_services", allowedServices,
+			"request_id", ctx.Request().Header.Get("X-Request-Id"))
+		instrumentation.KesselAuthorizationPassed(ctx)
 	}
 
 	return allowedServices
 }
 
 // logComparison compares RBAC and Kessel results and logs any discrepancies
-func logComparison(rbacServices, kesselServices []string, log *zap.SugaredLogger) {
+func logComparison(ctx echo.Context, rbacServices, kesselServices []string, log *zap.SugaredLogger) {
 	// Sort for comparison
 	sortedRbac := make([]string, len(rbacServices))
 	copy(sortedRbac, rbacServices)
@@ -186,9 +220,10 @@ func logComparison(rbacServices, kesselServices []string, log *zap.SugaredLogger
 		log.Warnw("RBAC and Kessel permission mismatch",
 			"rbac_services", sortedRbac,
 			"kessel_services", sortedKessel)
-		// TODO: Increment Prometheus metric for mismatch
+		instrumentation.KesselRbacMismatch(ctx)
 	} else {
 		log.Debugw("RBAC and Kessel permissions match",
 			"services", sortedRbac)
+		instrumentation.KesselRbacMatch(ctx)
 	}
 }
