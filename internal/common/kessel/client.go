@@ -26,8 +26,10 @@ var globalManager *ClientManager
 // Initialize creates and configures the Kessel inventory client
 // This should be called during application startup
 func Initialize(cfg *viper.Viper, log *zap.SugaredLogger) error {
-	if !cfg.GetBool("kessel.enabled") {
-		log.Info("Kessel client disabled")
+	kesselEnabled := cfg.GetBool("kessel.enabled")
+	if !kesselEnabled {
+		log.Infow("Kessel client disabled",
+			"kessel_enabled", kesselEnabled)
 		return nil
 	}
 
@@ -37,9 +39,13 @@ func Initialize(cfg *viper.Viper, log *zap.SugaredLogger) error {
 	}
 
 	log.Infow("Initializing Kessel client",
-		"url", kesselURL,
-		"auth_enabled", cfg.GetBool("kessel.auth.enabled"),
-		"insecure", cfg.GetBool("kessel.insecure"))
+		"kessel_enabled", kesselEnabled,
+		"kessel_url", kesselURL,
+		"kessel_auth_enabled", cfg.GetBool("kessel.auth.enabled"),
+		"kessel_insecure", cfg.GetBool("kessel.insecure"),
+		"kessel_auth_mode", cfg.GetString("kessel.auth.mode"),
+		"kessel_principal_domain", cfg.GetString("kessel.principal.domain"),
+		"kessel_auth_oidc_issuer", cfg.GetString("kessel.auth.oidc.issuer"))
 
 	options := []func(*common.Config){
 		common.WithgRPCUrl(kesselURL),
