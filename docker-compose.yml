@@ -32,7 +32,7 @@ services:
       - ZOOKEEPER_SERVER_ID=1
 
   kafka:
-    image: confluentinc/cp-kafka
+    image: confluentinc/cp-kafka:7.9.1
     ports:
       - '29092:29092'
     depends_on:
@@ -50,7 +50,7 @@ services:
       retries: 5
 
   kafka-init:
-    image: confluentinc/cp-kafka
+    image: confluentinc/cp-kafka:7.9.1
     depends_on:
       kafka:
         condition: service_healthy
