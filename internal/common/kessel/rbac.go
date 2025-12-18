@@ -43,23 +43,41 @@ type rbacWorkspaceResponse struct {
 }
 
 // NewRbacClient creates a new RBAC client for workspace lookups
-func NewRbacClient(rbacURL string, tokenClient *common.TokenClient) RbacClient {
+func NewRbacClient(rbacURL string, tokenClient *common.TokenClient, timeout time.Duration) RbacClient {
 	return &rbacClientImpl{
 		client: &http.Client{
-			Timeout: 10 * time.Second,
+			Timeout: timeout,
 		},
 		rbacURL:        rbacURL,
 		tokenClient:    tokenClient,
 		maxRetries:     3,
 		initialBackoff: 100 * time.Millisecond,
 		maxBackoff:     2 * time.Second,
-		requestTimeout: 10 * time.Second,
+		requestTimeout: timeout,
 	}
 }
 
 // GetDefaultWorkspaceID retrieves the default workspace ID for an organization
 // Returns the workspace ID or an error if the request fails
-func (r *rbacClientImpl) GetDefaultWorkspaceID(ctx context.Context, orgID string) (string, error) {
+func (r *rbacClientImpl) GetDefaultWorkspaceID(ctx context.Context, orgID string) (workspaceID string, err error) {
+	start := time.Now()
+	defer func() {
+		log := utils.GetLogFromContextIfAvailable(ctx)
+		if log != nil {
+			if err != nil {
+				log.Debugw("RBAC workspace lookup failed",
+					"duration_ms", time.Since(start).Milliseconds(),
+					"org_id", orgID,
+					"error", err.Error())
+			} else {
+				log.Debugw("RBAC workspace lookup succeeded",
+					"duration_ms", time.Since(start).Milliseconds(),
+					"org_id", orgID,
+					"workspace_id", workspaceID)
+			}
+		}
+	}()
+
 	requestURL := fmt.Sprintf("%s/api/rbac/v2/workspaces/?type=default", r.rbacURL)
 
 	req, err := http.NewRequestWithContext(ctx, "GET", requestURL, nil)
@@ -79,6 +97,14 @@ func (r *rbacClientImpl) GetDefaultWorkspaceID(ctx context.Context, orgID string
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return "", fmt.Errorf("failed to read response body: %w", err)
+	}
+
+	log := utils.GetLogFromContextIfAvailable(ctx)
+	if log != nil {
+		log.Debugw("RBAC workspace API response received",
+			"status_code", resp.StatusCode,
+			"response_body", string(body),
+			"org_id", orgID)
 	}
 
 	var workspaceResp rbacWorkspaceResponse
