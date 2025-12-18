@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"playbook-dispatcher/internal/common/config"
 	"strings"
+	"time"
 
 	"github.com/project-kessel/inventory-client-go/common"
 	v1beta2 "github.com/project-kessel/inventory-client-go/v1beta2"
@@ -95,13 +96,16 @@ func Initialize(cfg *viper.Viper, log *zap.SugaredLogger) error {
 		rbacURL = fmt.Sprintf("%s://%s:%d", scheme, host, port)
 	}
 
+	rbacTimeout := time.Duration(cfg.GetInt64("rbac.timeout")) * time.Second
+
 	log.Infow("Creating RBAC client for workspace lookups",
 		"rbac_url", rbacURL,
 		"rbac_scheme", scheme,
 		"rbac_host", host,
-		"rbac_port", port)
+		"rbac_port", port,
+		"rbac_timeout_seconds", cfg.GetInt64("rbac.timeout"))
 
-	rbacClient := NewRbacClient(rbacURL, tokenClient)
+	rbacClient := NewRbacClient(rbacURL, tokenClient, rbacTimeout)
 
 	// Store all clients in manager
 	globalManager = &ClientManager{

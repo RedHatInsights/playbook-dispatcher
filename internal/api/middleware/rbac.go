@@ -174,8 +174,7 @@ func getKesselAllowedServices(ctx echo.Context, log *zap.SugaredLogger) []string
 	if err != nil {
 		log.Errorw("Kessel authorization error",
 			"error", err,
-			"org_id", orgID,
-			"request_id", ctx.Request().Header.Get("X-Request-Id"))
+			"org_id", orgID)
 		instrumentation.KesselAuthorizationError(ctx)
 		return []string{} // Return empty list on error
 	}
@@ -186,8 +185,7 @@ func getKesselAllowedServices(ctx echo.Context, log *zap.SugaredLogger) []string
 		log.Errorw("Kessel authorization error",
 			"error", err,
 			"org_id", orgID,
-			"workspace_id", workspaceID,
-			"request_id", ctx.Request().Header.Get("X-Request-Id"))
+			"workspace_id", workspaceID)
 		instrumentation.KesselAuthorizationError(ctx)
 		return []string{} // Return empty list on error
 	}
@@ -197,8 +195,7 @@ func getKesselAllowedServices(ctx echo.Context, log *zap.SugaredLogger) []string
 			"org_id", orgID,
 			"workspace_id", workspaceID,
 			"identity_type", identityType,
-			"user_id", userID,
-			"request_id", ctx.Request().Header.Get("X-Request-Id"))
+			"user_id", userID)
 		instrumentation.KesselAuthorizationFailed(ctx)
 	} else {
 		log.Debugw("Kessel authorization succeeded",
@@ -206,8 +203,7 @@ func getKesselAllowedServices(ctx echo.Context, log *zap.SugaredLogger) []string
 			"workspace_id", workspaceID,
 			"identity_type", identityType,
 			"user_id", userID,
-			"allowed_services", allowedServices,
-			"request_id", ctx.Request().Header.Get("X-Request-Id"))
+			"allowed_services", allowedServices)
 		instrumentation.KesselAuthorizationPassed(ctx)
 	}
 

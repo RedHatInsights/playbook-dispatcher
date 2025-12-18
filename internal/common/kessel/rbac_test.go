@@ -12,7 +12,7 @@ import (
 )
 
 func TestNewRbacClient(t *testing.T) {
-	client := NewRbacClient("http://localhost:8080", nil)
+	client := NewRbacClient("http://localhost:8080", nil, 60*time.Second)
 
 	assert.NotNil(t, client)
 	impl, ok := client.(*rbacClientImpl)
@@ -21,7 +21,7 @@ func TestNewRbacClient(t *testing.T) {
 	assert.Equal(t, 3, impl.maxRetries)
 	assert.Equal(t, 100*time.Millisecond, impl.initialBackoff)
 	assert.Equal(t, 2*time.Second, impl.maxBackoff)
-	assert.Equal(t, 10*time.Second, impl.requestTimeout)
+	assert.Equal(t, 60*time.Second, impl.requestTimeout)
 }
 
 func TestGetDefaultWorkspaceID_Success(t *testing.T) {
@@ -37,7 +37,7 @@ func TestGetDefaultWorkspaceID_Success(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewRbacClient(server.URL, nil)
+	client := NewRbacClient(server.URL, nil, 10*time.Second)
 	workspaceID, err := client.GetDefaultWorkspaceID(context.Background(), "test-org")
 
 	assert.NoError(t, err)
@@ -53,7 +53,7 @@ func TestGetDefaultWorkspaceID_NoWorkspaceFound(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewRbacClient(server.URL, nil)
+	client := NewRbacClient(server.URL, nil, 10*time.Second)
 	workspaceID, err := client.GetDefaultWorkspaceID(context.Background(), "test-org")
 
 	assert.Error(t, err)
@@ -70,7 +70,7 @@ func TestGetDefaultWorkspaceID_InvalidJSON(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewRbacClient(server.URL, nil)
+	client := NewRbacClient(server.URL, nil, 10*time.Second)
 	workspaceID, err := client.GetDefaultWorkspaceID(context.Background(), "test-org")
 
 	assert.Error(t, err)
@@ -180,7 +180,7 @@ func TestGetDefaultWorkspaceID_RetryOn503(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewRbacClient(server.URL, nil)
+	client := NewRbacClient(server.URL, nil, 10*time.Second)
 	workspaceID, err := client.GetDefaultWorkspaceID(context.Background(), "test-org")
 
 	assert.NoError(t, err)
@@ -198,7 +198,7 @@ func TestGetDefaultWorkspaceID_MaxRetriesExceeded(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewRbacClient(server.URL, nil)
+	client := NewRbacClient(server.URL, nil, 10*time.Second)
 	workspaceID, err := client.GetDefaultWorkspaceID(context.Background(), "test-org")
 
 	assert.Error(t, err)
@@ -217,7 +217,7 @@ func TestGetDefaultWorkspaceID_NoRetryOn404(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewRbacClient(server.URL, nil)
+	client := NewRbacClient(server.URL, nil, 10*time.Second)
 	workspaceID, err := client.GetDefaultWorkspaceID(context.Background(), "test-org")
 
 	assert.Error(t, err)
@@ -258,7 +258,7 @@ func TestGetDefaultWorkspaceID_ContextTimeout(t *testing.T) {
 func TestNewRbacClient_URLConstruction_HostWithoutPort(t *testing.T) {
 	// Test that the client stores the URL correctly when host doesn't have port
 	url := "http://localhost:8080"
-	client := NewRbacClient(url, nil)
+	client := NewRbacClient(url, nil, 10*time.Second)
 
 	impl, ok := client.(*rbacClientImpl)
 	assert.True(t, ok)
@@ -268,7 +268,7 @@ func TestNewRbacClient_URLConstruction_HostWithoutPort(t *testing.T) {
 func TestNewRbacClient_URLConstruction_HostWithPort(t *testing.T) {
 	// Test that the client stores the URL correctly when host already has port
 	url := "http://localhost:8080"
-	client := NewRbacClient(url, nil)
+	client := NewRbacClient(url, nil, 10*time.Second)
 
 	impl, ok := client.(*rbacClientImpl)
 	assert.True(t, ok)
@@ -286,7 +286,7 @@ func TestGetDefaultWorkspaceID_URLFormatting(t *testing.T) {
 	defer server.Close()
 
 	// Test with host:port in the rbacURL (should not double the port)
-	client := NewRbacClient(server.URL, nil)
+	client := NewRbacClient(server.URL, nil, 10*time.Second)
 	ctx := context.Background()
 	workspaceID, err := client.GetDefaultWorkspaceID(ctx, "test-org")
 
