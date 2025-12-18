@@ -66,6 +66,9 @@ func (r *rbacClientImpl) GetDefaultWorkspaceID(ctx context.Context, orgID string
 		return "", fmt.Errorf("failed to create request: %w", err)
 	}
 
+	// Add org ID header for RBAC v2 authentication
+	req.Header.Set("x-rh-rbac-org-id", orgID)
+
 	resp, err := r.doRequestWithRetry(ctx, req)
 	if err != nil {
 		return "", err
