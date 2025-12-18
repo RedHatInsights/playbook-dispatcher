@@ -95,6 +95,12 @@ func Initialize(cfg *viper.Viper, log *zap.SugaredLogger) error {
 		rbacURL = fmt.Sprintf("%s://%s:%d", scheme, host, port)
 	}
 
+	log.Infow("Creating RBAC client for workspace lookups",
+		"rbac_url", rbacURL,
+		"rbac_scheme", scheme,
+		"rbac_host", host,
+		"rbac_port", port)
+
 	rbacClient := NewRbacClient(rbacURL, tokenClient)
 
 	// Store all clients in manager

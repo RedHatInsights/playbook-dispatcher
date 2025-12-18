@@ -10,8 +10,9 @@ import (
 	"io"
 	"math/rand"
 	"net/http"
-	"net/url"
 	"time"
+
+	"playbook-dispatcher/internal/common/utils"
 
 	"github.com/project-kessel/inventory-client-go/common"
 )
@@ -59,7 +60,7 @@ func NewRbacClient(rbacURL string, tokenClient *common.TokenClient) RbacClient {
 // GetDefaultWorkspaceID retrieves the default workspace ID for an organization
 // Returns the workspace ID or an error if the request fails
 func (r *rbacClientImpl) GetDefaultWorkspaceID(ctx context.Context, orgID string) (string, error) {
-	requestURL := fmt.Sprintf("%s/api/rbac/v2/workspaces/?org_id=%s&type=default", r.rbacURL, url.QueryEscape(orgID))
+	requestURL := fmt.Sprintf("%s/api/rbac/v2/workspaces/?type=default", r.rbacURL)
 
 	req, err := http.NewRequestWithContext(ctx, "GET", requestURL, nil)
 	if err != nil {
@@ -85,8 +86,8 @@ func (r *rbacClientImpl) GetDefaultWorkspaceID(ctx context.Context, orgID string
 		return "", fmt.Errorf("failed to parse response: %w", err)
 	}
 
-	if len(workspaceResp.Data) == 0 {
-		return "", fmt.Errorf("no default workspace found for org %s", orgID)
+	if len(workspaceResp.Data) != 1 {
+		return "", fmt.Errorf("unexpected number of default workspaces: %d", len(workspaceResp.Data))
 	}
 
 	return workspaceResp.Data[0].ID, nil
@@ -115,6 +116,28 @@ func (r *rbacClientImpl) doRequestWithRetry(ctx context.Context, req *http.Reque
 				return nil, fmt.Errorf("failed to get auth token: %w", err)
 			}
 			reqWithTimeout.Header.Set("Authorization", fmt.Sprintf("Bearer %s", tokenResp.AccessToken))
+		}
+
+		// Debug logging for outgoing request
+		log := utils.GetLogFromContextIfAvailable(ctx)
+		if log != nil {
+			headers := make(map[string]string)
+			for k, v := range reqWithTimeout.Header {
+				if len(v) > 0 {
+					// Redact sensitive headers
+					if k == "Authorization" {
+						headers[k] = "Bearer [REDACTED]"
+					} else {
+						headers[k] = v[0]
+					}
+				}
+			}
+			log.Debugw("Sending RBAC workspace lookup request",
+				"method", reqWithTimeout.Method,
+				"url", reqWithTimeout.URL.String(),
+				"headers", headers,
+				"attempt", attempt+1,
+				"max_retries", r.maxRetries+1)
 		}
 
 		resp, err := r.client.Do(reqWithTimeout)
