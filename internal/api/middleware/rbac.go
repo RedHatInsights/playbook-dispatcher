@@ -172,14 +172,23 @@ func getKesselAllowedServices(ctx echo.Context, log *zap.SugaredLogger) []string
 	// Get workspace ID for the organization
 	workspaceID, err := kessel.GetWorkspaceID(ctx.Request().Context(), orgID, log)
 	if err != nil {
-		instrumentation.KesselAuthorizationError(ctx, err)
+		log.Errorw("Kessel authorization error",
+			"error", err,
+			"org_id", orgID,
+			"request_id", ctx.Request().Header.Get("X-Request-Id"))
+		instrumentation.KesselAuthorizationError(ctx)
 		return []string{} // Return empty list on error
 	}
 
 	// Check permissions via Kessel (uses V2ApplicationPermissions map)
 	allowedServices, err := kessel.CheckApplicationPermissions(ctx.Request().Context(), workspaceID, log)
 	if err != nil {
-		instrumentation.KesselAuthorizationError(ctx, err)
+		log.Errorw("Kessel authorization error",
+			"error", err,
+			"org_id", orgID,
+			"workspace_id", workspaceID,
+			"request_id", ctx.Request().Header.Get("X-Request-Id"))
+		instrumentation.KesselAuthorizationError(ctx)
 		return []string{} // Return empty list on error
 	}
 

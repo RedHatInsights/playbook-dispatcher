@@ -163,10 +163,7 @@ func KesselAuthorizationFailed(ctx echo.Context) {
 	kesselRequestTotal.WithLabelValues(labelKesselFailed).Inc()
 }
 
-func KesselAuthorizationError(ctx echo.Context, err error) {
-	utils.GetLogFromEcho(ctx).Errorw("Kessel authorization error",
-		"error", err,
-		"request_id", ctx.Request().Header.Get("X-Request-Id"))
+func KesselAuthorizationError(ctx echo.Context) {
 	kesselRequestTotal.WithLabelValues(labelKesselError).Inc()
 }
 

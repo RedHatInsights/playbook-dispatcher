@@ -106,11 +106,18 @@ func checkPermissionInternal(
 			Subject:  subject,
 		}
 
-		log.Debugw("Performing Kessel permission check for update",
+		log.Debugw("Sending Kessel permission check for update request",
 			"workspace_id", workspaceID,
 			"permission", permission,
 			"principal_id", principalID,
-			"org_id", xrhid.Identity.OrgID)
+			"org_id", xrhid.Identity.OrgID,
+			"object_type", object.ResourceType,
+			"object_id", object.ResourceId,
+			"object_reporter", object.Reporter.Type,
+			"subject_type", subject.Resource.ResourceType,
+			"subject_id", subject.Resource.ResourceId,
+			"subject_reporter", subject.Resource.Reporter.Type,
+			"relation", permission)
 
 		response, err := globalManager.client.KesselInventoryService.CheckForUpdate(ctx, request, opts...)
 		if err != nil {
@@ -130,11 +137,18 @@ func checkPermissionInternal(
 			Subject:  subject,
 		}
 
-		log.Debugw("Performing Kessel permission check",
+		log.Debugw("Sending Kessel permission check request",
 			"workspace_id", workspaceID,
 			"permission", permission,
 			"principal_id", principalID,
-			"org_id", xrhid.Identity.OrgID)
+			"org_id", xrhid.Identity.OrgID,
+			"object_type", object.ResourceType,
+			"object_id", object.ResourceId,
+			"object_reporter", object.Reporter.Type,
+			"subject_type", subject.Resource.ResourceType,
+			"subject_id", subject.Resource.ResourceId,
+			"subject_reporter", subject.Resource.Reporter.Type,
+			"relation", permission)
 
 		response, err := globalManager.client.KesselInventoryService.Check(ctx, request, opts...)
 		if err != nil {

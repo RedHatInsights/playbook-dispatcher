@@ -28,8 +28,8 @@ func TestGetDefaultWorkspaceID_Success(t *testing.T) {
 	// Create test server
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		assert.Contains(t, r.URL.Path, "/api/rbac/v2/workspaces/")
-		assert.Contains(t, r.URL.Query().Get("org_id"), "test-org")
-		assert.Contains(t, r.URL.Query().Get("type"), "default")
+		assert.Equal(t, "default", r.URL.Query().Get("type"))
+		assert.Equal(t, "test-org", r.Header.Get("x-rh-rbac-org-id"))
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
@@ -57,7 +57,7 @@ func TestGetDefaultWorkspaceID_NoWorkspaceFound(t *testing.T) {
 	workspaceID, err := client.GetDefaultWorkspaceID(context.Background(), "test-org")
 
 	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "no default workspace found")
+	assert.Contains(t, err.Error(), "unexpected number of default workspaces: 0")
 	assert.Empty(t, workspaceID)
 }
 
@@ -292,8 +292,8 @@ func TestGetDefaultWorkspaceID_URLFormatting(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Equal(t, "workspace-123", workspaceID)
-	// Verify the URL doesn't have malformed port duplication
+	// Verify the URL format matches config-manager (no org_id query param)
 	assert.Contains(t, capturedURL, "/api/rbac/v2/workspaces/")
-	assert.Contains(t, capturedURL, "org_id=test-org")
 	assert.Contains(t, capturedURL, "type=default")
+	assert.NotContains(t, capturedURL, "org_id")
 }
