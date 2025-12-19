@@ -61,8 +61,18 @@ func NewRbacClient(rbacURL string, tokenClient *common.TokenClient, timeout time
 // Returns the workspace ID or an error if the request fails
 func (r *rbacClientImpl) GetDefaultWorkspaceID(ctx context.Context, orgID string) (workspaceID string, err error) {
 	start := time.Now()
+
+	// Diagnostic: Check if parent context is already canceled before we start
+	log := utils.GetLogFromContextIfAvailable(ctx)
+	if ctx.Err() != nil {
+		if log != nil {
+			log.Warnw("Parent context already canceled before workspace lookup",
+				"org_id", orgID,
+				"error", ctx.Err())
+		}
+	}
+
 	defer func() {
-		log := utils.GetLogFromContextIfAvailable(ctx)
 		if log != nil {
 			if err != nil {
 				log.Debugw("RBAC workspace lookup failed",
@@ -99,7 +109,6 @@ func (r *rbacClientImpl) GetDefaultWorkspaceID(ctx context.Context, orgID string
 		return "", fmt.Errorf("failed to read response body: %w", err)
 	}
 
-	log := utils.GetLogFromContextIfAvailable(ctx)
 	if log != nil {
 		log.Debugw("RBAC workspace API response received",
 			"status_code", resp.StatusCode,
@@ -122,6 +131,25 @@ func (r *rbacClientImpl) GetDefaultWorkspaceID(ctx context.Context, orgID string
 // doRequestWithRetry executes an HTTP request with retry logic and exponential backoff
 func (r *rbacClientImpl) doRequestWithRetry(ctx context.Context, req *http.Request) (*http.Response, error) {
 	var lastErr error
+
+	// Diagnostic: Track parent context cancellation
+	// Use a done channel to ensure the goroutine exits when the function returns
+	done := make(chan struct{})
+	defer close(done)
+
+	go func() {
+		select {
+		case <-ctx.Done():
+			log := utils.GetLogFromContextIfAvailable(ctx)
+			if log != nil {
+				log.Debugw("Parent context canceled during RBAC workspace lookup",
+					"error", ctx.Err())
+			}
+		case <-done:
+			// Function returned, exit goroutine
+			return
+		}
+	}()
 
 	for attempt := 0; attempt <= r.maxRetries; attempt++ {
 		// Check if parent context was canceled before starting attempt
@@ -167,6 +195,14 @@ func (r *rbacClientImpl) doRequestWithRetry(ctx context.Context, req *http.Reque
 		}
 
 		resp, err := r.client.Do(reqWithTimeout)
+
+		// Diagnostic: Check if request context was canceled
+		if requestCtx.Err() != nil && log != nil {
+			log.Debugw("Request context canceled",
+				"attempt", attempt+1,
+				"request_error", requestCtx.Err(),
+				"parent_error", ctx.Err())
+		}
 
 		// Success case
 		if err == nil && resp.StatusCode >= 200 && resp.StatusCode < 300 {
