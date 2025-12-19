@@ -42,19 +42,6 @@ type rbacWorkspaceResponse struct {
 	} `json:"data"`
 }
 
-// cancelOnCloseBody wraps an io.ReadCloser to call a cancel function when closed
-// This ensures the request context is cleaned up after the response body is consumed
-type cancelOnCloseBody struct {
-	io.ReadCloser
-	cancel context.CancelFunc
-}
-
-func (c *cancelOnCloseBody) Close() error {
-	err := c.ReadCloser.Close()
-	c.cancel() // Clean up request context when body is closed
-	return err
-}
-
 // NewRbacClient creates a new RBAC client for workspace lookups
 func NewRbacClient(rbacURL string, tokenClient *common.TokenClient, timeout time.Duration) RbacClient {
 	return &rbacClientImpl{
@@ -111,35 +98,14 @@ func (r *rbacClientImpl) GetDefaultWorkspaceID(ctx context.Context, orgID string
 	// Add org ID header for RBAC v2 authentication
 	req.Header.Set("x-rh-rbac-org-id", orgID)
 
-	resp, err := r.doRequestWithRetry(ctx, req)
+	body, statusCode, err := r.doRequestWithRetry(ctx, req)
 	if err != nil {
 		return "", err
-	}
-	defer resp.Body.Close()
-
-	// Diagnostic: Check context state before reading response body
-	if ctx.Err() != nil && log != nil {
-		log.Debugw("Context already canceled before reading response body",
-			"org_id", orgID,
-			"context_error", ctx.Err())
-	}
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		// Diagnostic: Check if error is due to context cancellation
-		if log != nil {
-			log.Debugw("Failed to read RBAC response body",
-				"org_id", orgID,
-				"read_error", err,
-				"context_error", ctx.Err(),
-				"context_canceled", ctx.Err() != nil)
-		}
-		return "", fmt.Errorf("failed to read response body: %w", err)
 	}
 
 	if log != nil {
 		log.Debugw("RBAC workspace API response received",
-			"status_code", resp.StatusCode,
+			"status_code", statusCode,
 			"response_body", string(body),
 			"org_id", orgID)
 	}
@@ -157,7 +123,8 @@ func (r *rbacClientImpl) GetDefaultWorkspaceID(ctx context.Context, orgID string
 }
 
 // doRequestWithRetry executes an HTTP request with retry logic and exponential backoff
-func (r *rbacClientImpl) doRequestWithRetry(ctx context.Context, req *http.Request) (*http.Response, error) {
+// Returns the response body bytes, status code, and any error
+func (r *rbacClientImpl) doRequestWithRetry(ctx context.Context, req *http.Request) ([]byte, int, error) {
 	var lastErr error
 
 	// Diagnostic: Track parent context cancellation
@@ -182,7 +149,7 @@ func (r *rbacClientImpl) doRequestWithRetry(ctx context.Context, req *http.Reque
 	for attempt := 0; attempt <= r.maxRetries; attempt++ {
 		// Check if parent context was canceled before starting attempt
 		if ctx.Err() != nil {
-			return nil, fmt.Errorf("request canceled: %w", ctx.Err())
+			return nil, 0, fmt.Errorf("request canceled: %w", ctx.Err())
 		}
 
 		// Apply per-request timeout (defense-in-depth)
@@ -195,7 +162,7 @@ func (r *rbacClientImpl) doRequestWithRetry(ctx context.Context, req *http.Reque
 			tokenResp, err := r.tokenClient.GetToken()
 			if err != nil {
 				cancel() // Clean up timeout context before returning error
-				return nil, fmt.Errorf("failed to get auth token: %w", err)
+				return nil, 0, fmt.Errorf("failed to get auth token: %w", err)
 			}
 			reqWithTimeout.Header.Set("Authorization", fmt.Sprintf("Bearer %s", tokenResp.AccessToken))
 		}
@@ -234,26 +201,33 @@ func (r *rbacClientImpl) doRequestWithRetry(ctx context.Context, req *http.Reque
 
 		// Success case
 		if err == nil && resp.StatusCode >= 200 && resp.StatusCode < 300 {
-			// Wrap body so cancel is called when body is closed
-			resp.Body = &cancelOnCloseBody{
-				ReadCloser: resp.Body,
-				cancel:     cancel,
+			// Read body while context is still alive
+			body, readErr := io.ReadAll(resp.Body)
+			resp.Body.Close()
+			cancel() // Clean up context immediately after body is consumed
+
+			if readErr != nil {
+				return nil, resp.StatusCode, fmt.Errorf("failed to read response body: %w", readErr)
 			}
-			return resp, nil
+
+			return body, resp.StatusCode, nil
 		}
 
 		// Store error for later
+		var statusCode int
 		if err != nil {
 			lastErr = fmt.Errorf("HTTP request failed: %w", err)
+			statusCode = 0
 		} else {
 			lastErr = fmt.Errorf("HTTP %d: %s", resp.StatusCode, resp.Status)
+			statusCode = resp.StatusCode
 			resp.Body.Close()
 		}
 
 		// Check if we should retry
 		if !r.shouldRetry(resp, err) || attempt == r.maxRetries {
 			cancel() // Clean up timeout context before returning error
-			return nil, lastErr
+			return nil, statusCode, lastErr
 		}
 
 		// Clean up this attempt's context before sleeping and retrying
@@ -261,7 +235,7 @@ func (r *rbacClientImpl) doRequestWithRetry(ctx context.Context, req *http.Reque
 
 		// Check if parent context was canceled before sleeping
 		if ctx.Err() != nil {
-			return nil, fmt.Errorf("request canceled during retry: %w", ctx.Err())
+			return nil, 0, fmt.Errorf("request canceled during retry: %w", ctx.Err())
 		}
 
 		// Calculate backoff with jitter
@@ -269,7 +243,7 @@ func (r *rbacClientImpl) doRequestWithRetry(ctx context.Context, req *http.Reque
 		time.Sleep(backoff)
 	}
 
-	return nil, lastErr
+	return nil, 0, lastErr
 }
 
 // shouldRetry determines if a request should be retried based on the error or response
