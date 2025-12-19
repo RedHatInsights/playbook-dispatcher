@@ -13,6 +13,7 @@ import (
 	"playbook-dispatcher/internal/common/utils"
 	"reflect"
 	"sort"
+	"time"
 
 	"github.com/labstack/echo/v4"
 	"github.com/redhatinsights/platform-go-middlewares/v2/identity"
@@ -49,7 +50,27 @@ func EnforcePermissions(cfg *viper.Viper, requiredPermissions ...rbac.RequiredPe
 			// remains unchanged from RBAC v1 implementation
 			if mode != config.KesselModeKesselOnly {
 				var err error
-				permissions, err = client.GetPermissions(req.Context())
+
+				// Log RBAC v1 calls when Kessel is active for comparison/debugging
+				if mode == config.KesselModeBothRBACEnforces || mode == config.KesselModeBothKesselEnforces {
+					log.Debugw("RBAC v1 permission lookup started for Kessel comparison", "mode", mode)
+					start := time.Now()
+					permissions, err = client.GetPermissions(req.Context())
+					if err == nil {
+						log.Debugw("RBAC v1 permission lookup succeeded",
+							"duration_ms", time.Since(start).Milliseconds(),
+							"permission_count", len(permissions),
+							"mode", mode)
+					} else {
+						log.Debugw("RBAC v1 permission lookup failed",
+							"duration_ms", time.Since(start).Milliseconds(),
+							"error", err,
+							"mode", mode)
+					}
+				} else {
+					permissions, err = client.GetPermissions(req.Context())
+				}
+
 				if err != nil {
 					instrumentation.RbacError(c, err)
 					return echo.NewHTTPError(http.StatusServiceUnavailable, "error getting permissions from RBAC")
