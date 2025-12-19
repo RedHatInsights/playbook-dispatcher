@@ -42,6 +42,19 @@ type rbacWorkspaceResponse struct {
 	} `json:"data"`
 }
 
+// cancelOnCloseBody wraps an io.ReadCloser to call a cancel function when closed
+// This ensures the request context is cleaned up after the response body is consumed
+type cancelOnCloseBody struct {
+	io.ReadCloser
+	cancel context.CancelFunc
+}
+
+func (c *cancelOnCloseBody) Close() error {
+	err := c.ReadCloser.Close()
+	c.cancel() // Clean up request context when body is closed
+	return err
+}
+
 // NewRbacClient creates a new RBAC client for workspace lookups
 func NewRbacClient(rbacURL string, tokenClient *common.TokenClient, timeout time.Duration) RbacClient {
 	return &rbacClientImpl{
@@ -221,7 +234,11 @@ func (r *rbacClientImpl) doRequestWithRetry(ctx context.Context, req *http.Reque
 
 		// Success case
 		if err == nil && resp.StatusCode >= 200 && resp.StatusCode < 300 {
-			cancel() // Clean up timeout context
+			// Wrap body so cancel is called when body is closed
+			resp.Body = &cancelOnCloseBody{
+				ReadCloser: resp.Body,
+				cancel:     cancel,
+			}
 			return resp, nil
 		}
 
