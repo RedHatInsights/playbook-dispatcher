@@ -66,7 +66,7 @@ func (r *rbacClientImpl) GetDefaultWorkspaceID(ctx context.Context, orgID string
 	log := utils.GetLogFromContextIfAvailable(ctx)
 	if ctx.Err() != nil {
 		if log != nil {
-			log.Warnw("Parent context already canceled before workspace lookup",
+			log.Debugw("Parent context already canceled before workspace lookup",
 				"org_id", orgID,
 				"error", ctx.Err())
 		}
@@ -104,8 +104,23 @@ func (r *rbacClientImpl) GetDefaultWorkspaceID(ctx context.Context, orgID string
 	}
 	defer resp.Body.Close()
 
+	// Diagnostic: Check context state before reading response body
+	if ctx.Err() != nil && log != nil {
+		log.Debugw("Context already canceled before reading response body",
+			"org_id", orgID,
+			"context_error", ctx.Err())
+	}
+
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
+		// Diagnostic: Check if error is due to context cancellation
+		if log != nil {
+			log.Debugw("Failed to read RBAC response body",
+				"org_id", orgID,
+				"read_error", err,
+				"context_error", ctx.Err(),
+				"context_canceled", ctx.Err() != nil)
+		}
 		return "", fmt.Errorf("failed to read response body: %w", err)
 	}
 
