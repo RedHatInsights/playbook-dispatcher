@@ -78,7 +78,7 @@ func (r *rbacClientImpl) GetDefaultWorkspaceID(ctx context.Context, orgID string
 				log.Debugw("RBAC workspace lookup failed",
 					"duration_ms", time.Since(start).Milliseconds(),
 					"org_id", orgID,
-					"error", err.Error())
+					"error", err)
 			} else {
 				log.Debugw("RBAC workspace lookup succeeded",
 					"duration_ms", time.Since(start).Milliseconds(),
