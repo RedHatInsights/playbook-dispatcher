@@ -14,9 +14,17 @@ func RequestLogger(next echo.HandlerFunc) echo.HandlerFunc {
 
 		start := time.Now()
 
+		// Log request start to help identify retries/timeouts
+		req := c.Request()
+		log.Debugw("request started",
+			"method", req.Method,
+			"url", req.RequestURI,
+			"remote_addr", req.RemoteAddr,
+			"x_forwarded_for", req.Header.Get("X-Forwarded-For"),
+			"user_agent", req.UserAgent())
+
 		err := next(c)
 
-		req := c.Request()
 		res := c.Response()
 
 		statusCode := res.Status
