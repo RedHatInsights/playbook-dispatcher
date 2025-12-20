@@ -12,7 +12,7 @@ import (
 )
 
 func TestNewRbacClient(t *testing.T) {
-	client := NewRbacClient("http://localhost:8080", nil, 60*time.Second)
+	client := NewRbacClient("http://localhost:8080", nil, 10*time.Second)
 
 	assert.NotNil(t, client)
 	impl, ok := client.(*rbacClientImpl)
@@ -21,7 +21,7 @@ func TestNewRbacClient(t *testing.T) {
 	assert.Equal(t, 3, impl.maxRetries)
 	assert.Equal(t, 100*time.Millisecond, impl.initialBackoff)
 	assert.Equal(t, 2*time.Second, impl.maxBackoff)
-	assert.Equal(t, 60*time.Second, impl.requestTimeout)
+	assert.Equal(t, 10*time.Second, impl.requestTimeout)
 }
 
 func TestGetDefaultWorkspaceID_Success(t *testing.T) {

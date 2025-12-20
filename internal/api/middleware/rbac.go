@@ -57,9 +57,11 @@ func EnforcePermissions(cfg *viper.Viper, requiredPermissions ...rbac.RequiredPe
 					start := time.Now()
 					permissions, err = client.GetPermissions(req.Context())
 					if err == nil {
+						allowedServices := getRbacAllowedServices(permissions)
 						log.Debugw("RBAC v1 permission lookup succeeded",
 							"duration_ms", time.Since(start).Milliseconds(),
 							"permission_count", len(permissions),
+							"allowed_services", allowedServices,
 							"mode", mode)
 					} else {
 						log.Debugw("RBAC v1 permission lookup failed",
@@ -179,13 +181,31 @@ func getKesselAllowedServices(ctx echo.Context, log *zap.SugaredLogger) []string
 	orgID := xrhid.Identity.OrgID
 	identityType := xrhid.Identity.Type
 
-	// Extract user ID based on identity type
+	// Provide fallback for missing identity fields
+	if orgID == "" {
+		orgID = "unknown"
+	}
+	if identityType == "" {
+		identityType = "unknown"
+	}
+
+	// Extract user ID based on identity type with nil guards
 	var userID string
 	switch identityType {
 	case "User":
-		userID = xrhid.Identity.User.UserID
+		if xrhid.Identity.User != nil {
+			userID = xrhid.Identity.User.UserID
+		}
+		if userID == "" {
+			userID = "unknown"
+		}
 	case "ServiceAccount":
-		userID = xrhid.Identity.ServiceAccount.UserId
+		if xrhid.Identity.ServiceAccount != nil {
+			userID = xrhid.Identity.ServiceAccount.UserId
+		}
+		if userID == "" {
+			userID = "unknown"
+		}
 	default:
 		userID = "unknown"
 	}
@@ -195,7 +215,9 @@ func getKesselAllowedServices(ctx echo.Context, log *zap.SugaredLogger) []string
 	if err != nil {
 		log.Errorw("Kessel authorization error",
 			"error", err,
-			"org_id", orgID)
+			"org_id", orgID,
+			"identity_type", identityType,
+			"user_id", userID)
 		instrumentation.KesselAuthorizationError(ctx)
 		return []string{} // Return empty list on error
 	}
@@ -206,7 +228,9 @@ func getKesselAllowedServices(ctx echo.Context, log *zap.SugaredLogger) []string
 		log.Errorw("Kessel authorization error",
 			"error", err,
 			"org_id", orgID,
-			"workspace_id", workspaceID)
+			"workspace_id", workspaceID,
+			"identity_type", identityType,
+			"user_id", userID)
 		instrumentation.KesselAuthorizationError(ctx)
 		return []string{} // Return empty list on error
 	}
@@ -242,14 +266,56 @@ func logComparison(ctx echo.Context, rbacServices, kesselServices []string, log 
 	copy(sortedKessel, kesselServices)
 	sort.Strings(sortedKessel)
 
+	// Extract identity information for diagnostics (used by both match and mismatch)
+	// Guard against malformed identities
+	xrhid := identity.GetIdentity(ctx.Request().Context())
+	orgID := xrhid.Identity.OrgID
+	identityType := xrhid.Identity.Type
+
+	// Provide fallback for missing org ID
+	if orgID == "" {
+		orgID = "unknown"
+	}
+	if identityType == "" {
+		identityType = "unknown"
+	}
+
+	// Extract user ID based on identity type
+	var userID string
+	switch identityType {
+	case "User":
+		if xrhid.Identity.User != nil {
+			userID = xrhid.Identity.User.UserID
+		}
+		if userID == "" {
+			userID = "unknown"
+		}
+	case "ServiceAccount":
+		if xrhid.Identity.ServiceAccount != nil {
+			userID = xrhid.Identity.ServiceAccount.UserId
+		}
+		if userID == "" {
+			userID = "unknown"
+		}
+	default:
+		userID = "unknown"
+	}
+
 	if !reflect.DeepEqual(sortedRbac, sortedKessel) {
 		log.Warnw("RBAC and Kessel permission mismatch",
 			"rbac_services", sortedRbac,
-			"kessel_services", sortedKessel)
+			"kessel_services", sortedKessel,
+			"org_id", orgID,
+			"identity_type", identityType,
+			"user_id", userID)
 		instrumentation.KesselRbacMismatch(ctx)
 	} else {
 		log.Debugw("RBAC and Kessel permissions match",
-			"services", sortedRbac)
+			"rbac_services", sortedRbac,
+			"kessel_services", sortedKessel,
+			"org_id", orgID,
+			"identity_type", identityType,
+			"user_id", userID)
 		instrumentation.KesselRbacMatch(ctx)
 	}
 }
