@@ -89,7 +89,7 @@ func Get() *viper.Viper {
 	options.SetDefault("rbac.host", "rbac")
 	options.SetDefault("rbac.port", "8080")
 	options.SetDefault("rbac.scheme", "http")
-	options.SetDefault("rbac.timeout", 60)
+	options.SetDefault("rbac.timeout", 10)
 
 	options.SetDefault("inventory.connector.impl", "mock")
 	options.SetDefault("inventory.connector.host", "localhost")

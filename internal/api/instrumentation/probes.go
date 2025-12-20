@@ -168,12 +168,10 @@ func KesselAuthorizationError(ctx echo.Context) {
 }
 
 func KesselRbacMatch(ctx echo.Context) {
-	utils.GetLogFromEcho(ctx).Debugw("RBAC and Kessel permissions match")
 	kesselRbacAgreementTotal.WithLabelValues(labelKesselRbacMatch).Inc()
 }
 
 func KesselRbacMismatch(ctx echo.Context) {
-	utils.GetLogFromEcho(ctx).Debugw("RBAC and Kessel permissions mismatch")
 	kesselRbacAgreementTotal.WithLabelValues(labelKesselRbacMismatch).Inc()
 }
 
