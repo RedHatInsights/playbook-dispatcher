@@ -27,6 +27,51 @@ type allowedServicesKeyType int
 const permissionsKey permissionsKeyType = iota
 const allowedServicesKey allowedServicesKeyType = iota
 
+// identityContext holds extracted identity information for logging and authorization
+type identityContext struct {
+	OrgID        string
+	IdentityType string
+	UserID       string
+}
+
+// extractIdentityContext extracts identity information from XRHID
+// useFallbacks controls whether to use "unknown" for missing values
+func extractIdentityContext(xrhid identity.XRHID, useFallbacks bool) identityContext {
+	ctx := identityContext{
+		OrgID:        xrhid.Identity.OrgID,
+		IdentityType: xrhid.Identity.Type,
+	}
+
+	// Set fallbacks for missing org/type if requested
+	if useFallbacks {
+		if ctx.OrgID == "" {
+			ctx.OrgID = "unknown"
+		}
+		if ctx.IdentityType == "" {
+			ctx.IdentityType = "unknown"
+		}
+	}
+
+	// Extract user ID based on identity type with nil guards
+	switch ctx.IdentityType {
+	case "User":
+		if xrhid.Identity.User != nil {
+			ctx.UserID = xrhid.Identity.User.UserID
+		}
+	case "ServiceAccount":
+		if xrhid.Identity.ServiceAccount != nil {
+			ctx.UserID = xrhid.Identity.ServiceAccount.UserId
+		}
+	}
+
+	// Set fallback for userID if requested and still empty
+	if useFallbacks && ctx.UserID == "" {
+		ctx.UserID = "unknown"
+	}
+
+	return ctx
+}
+
 func EnforcePermissions(cfg *viper.Viper, requiredPermissions ...rbac.RequiredPermission) echo.MiddlewareFunc {
 	var client rbac.RbacClient
 
@@ -91,7 +136,40 @@ func EnforcePermissions(cfg *viper.Viper, requiredPermissions ...rbac.RequiredPe
 			}
 
 			// TIER 2: Service-level authorization
-			allowedServices := computeAllowedServices(c, permissions, mode, log)
+			// Extract identity context for error logging
+			xrhid := identity.GetIdentity(req.Context())
+			idCtx := extractIdentityContext(xrhid, false) // no fallbacks for error logging
+
+			allowedServices, err := computeAllowedServices(c, permissions, mode, log)
+			if err != nil {
+				// Distinguish error types for appropriate HTTP status codes
+				if kessel.IsIdentityValidationError(err) {
+					log.Errorw("Identity validation failed",
+						"error", err,
+						"mode", mode,
+						"org_id", idCtx.OrgID,
+						"identity_type", idCtx.IdentityType,
+						"user_id", idCtx.UserID)
+					return echo.NewHTTPError(http.StatusBadRequest, "invalid identity")
+				}
+				if kessel.IsServiceUnavailableError(err) {
+					log.Errorw("Authorization service unavailable",
+						"error", err,
+						"mode", mode,
+						"org_id", idCtx.OrgID,
+						"identity_type", idCtx.IdentityType,
+						"user_id", idCtx.UserID)
+					return echo.NewHTTPError(http.StatusServiceUnavailable, "authorization service unavailable")
+				}
+				// Other errors
+				log.Errorw("Authorization check failed",
+					"error", err,
+					"mode", mode,
+					"org_id", idCtx.OrgID,
+					"identity_type", idCtx.IdentityType,
+					"user_id", idCtx.UserID)
+				return echo.NewHTTPError(http.StatusInternalServerError, "authorization check failed")
+			}
 
 			// In Kessel-enforcing modes, empty allowedServices means no permissions (403)
 			if len(allowedServices) == 0 {
@@ -138,25 +216,36 @@ func GetAllowedServices(c echo.Context) []string {
 
 // computeAllowedServices determines which services the user can access
 // based on the authorization mode
-func computeAllowedServices(ctx echo.Context, rbacPermissions []rbac.Access, mode string, log *zap.SugaredLogger) []string {
+// Returns (services, error) where error can be typed (ErrIdentityValidation, ErrServiceUnavailable)
+func computeAllowedServices(ctx echo.Context, rbacPermissions []rbac.Access, mode string, log *zap.SugaredLogger) ([]string, error) {
 	switch mode {
 	case config.KesselModeRBACOnly:
 		log.Debugw("Using RBAC-only authorization mode")
-		return getRbacAllowedServices(rbacPermissions)
+		return getRbacAllowedServices(rbacPermissions), nil
 
 	case config.KesselModeBothRBACEnforces:
 		log.Debugw("Using both-rbac-enforces authorization mode (validation)")
 		rbacServices := getRbacAllowedServices(rbacPermissions)
-		kesselServices := getKesselAllowedServices(ctx, log)
-		logComparison(ctx, rbacServices, kesselServices, log)
-		return rbacServices
+		kesselServices, err := getKesselAllowedServices(ctx, log)
+		if err != nil {
+			// In validation mode, log the error but use RBAC results
+			log.Warnw("Kessel check failed in validation mode, using RBAC results",
+				"error", err)
+		} else {
+			logComparison(ctx, rbacServices, kesselServices, log)
+		}
+		return rbacServices, nil
 
 	case config.KesselModeBothKesselEnforces:
 		log.Debugw("Using both-kessel-enforces authorization mode (transition)")
 		rbacServices := getRbacAllowedServices(rbacPermissions)
-		kesselServices := getKesselAllowedServices(ctx, log)
+		kesselServices, err := getKesselAllowedServices(ctx, log)
+		if err != nil {
+			// In transition mode, return error since Kessel is enforcing
+			return nil, err
+		}
 		logComparison(ctx, rbacServices, kesselServices, log)
-		return kesselServices
+		return kesselServices, nil
 
 	case config.KesselModeKesselOnly:
 		log.Debugw("Using kessel-only authorization mode")
@@ -165,7 +254,7 @@ func computeAllowedServices(ctx echo.Context, rbacPermissions []rbac.Access, mod
 	default:
 		log.Warnw("Unknown Kessel authorization mode, falling back to RBAC",
 			"mode", mode)
-		return getRbacAllowedServices(rbacPermissions)
+		return getRbacAllowedServices(rbacPermissions), nil
 	}
 }
 
@@ -175,51 +264,22 @@ func getRbacAllowedServices(permissions []rbac.Access) []string {
 }
 
 // getKesselAllowedServices queries Kessel for allowed services
-func getKesselAllowedServices(ctx echo.Context, log *zap.SugaredLogger) []string {
+// Returns (services, error) where error can be typed (ErrIdentityValidation, ErrServiceUnavailable)
+func getKesselAllowedServices(ctx echo.Context, log *zap.SugaredLogger) ([]string, error) {
 	// Extract identity from context
 	xrhid := identity.GetIdentity(ctx.Request().Context())
-	orgID := xrhid.Identity.OrgID
-	identityType := xrhid.Identity.Type
-
-	// Provide fallback for missing identity fields
-	if orgID == "" {
-		orgID = "unknown"
-	}
-	if identityType == "" {
-		identityType = "unknown"
-	}
-
-	// Extract user ID based on identity type with nil guards
-	var userID string
-	switch identityType {
-	case "User":
-		if xrhid.Identity.User != nil {
-			userID = xrhid.Identity.User.UserID
-		}
-		if userID == "" {
-			userID = "unknown"
-		}
-	case "ServiceAccount":
-		if xrhid.Identity.ServiceAccount != nil {
-			userID = xrhid.Identity.ServiceAccount.UserId
-		}
-		if userID == "" {
-			userID = "unknown"
-		}
-	default:
-		userID = "unknown"
-	}
+	idCtx := extractIdentityContext(xrhid, true) // use fallbacks for Kessel logging
 
 	// Get workspace ID for the organization
-	workspaceID, err := kessel.GetWorkspaceID(ctx.Request().Context(), orgID, log)
+	workspaceID, err := kessel.GetWorkspaceID(ctx.Request().Context(), idCtx.OrgID, log)
 	if err != nil {
-		log.Errorw("Kessel authorization error",
+		log.Errorw("Kessel workspace lookup error",
 			"error", err,
-			"org_id", orgID,
-			"identity_type", identityType,
-			"user_id", userID)
+			"org_id", idCtx.OrgID,
+			"identity_type", idCtx.IdentityType,
+			"user_id", idCtx.UserID)
 		instrumentation.KesselAuthorizationError(ctx)
-		return []string{} // Return empty list on error
+		return nil, err // Return error for proper handling
 	}
 
 	// Check permissions via Kessel (uses V2ApplicationPermissions map)
@@ -242,32 +302,32 @@ func getKesselAllowedServices(ctx echo.Context, log *zap.SugaredLogger) []string
 	if err != nil {
 		log.Errorw("Kessel authorization error",
 			"error", err,
-			"org_id", orgID,
+			"org_id", idCtx.OrgID,
 			"workspace_id", workspaceID,
-			"identity_type", identityType,
-			"user_id", userID)
+			"identity_type", idCtx.IdentityType,
+			"user_id", idCtx.UserID)
 		instrumentation.KesselAuthorizationError(ctx)
-		return []string{} // Return empty list on error
+		return nil, err // Return error for proper handling
 	}
 
 	if len(allowedServices) == 0 {
 		log.Debugw("Kessel authorization returned no services",
-			"org_id", orgID,
+			"org_id", idCtx.OrgID,
 			"workspace_id", workspaceID,
-			"identity_type", identityType,
-			"user_id", userID)
+			"identity_type", idCtx.IdentityType,
+			"user_id", idCtx.UserID)
 		instrumentation.KesselAuthorizationFailed(ctx)
 	} else {
 		log.Debugw("Kessel authorization succeeded",
-			"org_id", orgID,
+			"org_id", idCtx.OrgID,
 			"workspace_id", workspaceID,
-			"identity_type", identityType,
-			"user_id", userID,
+			"identity_type", idCtx.IdentityType,
+			"user_id", idCtx.UserID,
 			"allowed_services", allowedServices)
 		instrumentation.KesselAuthorizationPassed(ctx)
 	}
 
-	return allowedServices
+	return allowedServices, nil
 }
 
 // logComparison compares RBAC and Kessel results and logs any discrepancies
