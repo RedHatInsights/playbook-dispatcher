@@ -121,7 +121,7 @@ func checkPermissionInternal(
 
 		response, err := globalManager.client.KesselInventoryService.CheckForUpdate(ctx, request, opts...)
 		if err != nil {
-			return false, fmt.Errorf("Kessel check for update failed: %w", err)
+			return false, fmt.Errorf("%w: Kessel check for update failed: %v", ErrServiceUnavailable, err)
 		}
 		allowed = response.GetAllowed() == kesselv2.Allowed_ALLOWED_TRUE
 
@@ -152,7 +152,7 @@ func checkPermissionInternal(
 
 		response, err := globalManager.client.KesselInventoryService.Check(ctx, request, opts...)
 		if err != nil {
-			return false, fmt.Errorf("Kessel check failed: %w", err)
+			return false, fmt.Errorf("%w: Kessel check failed: %v", ErrServiceUnavailable, err)
 		}
 		allowed = response.GetAllowed() == kesselv2.Allowed_ALLOWED_TRUE
 
@@ -244,17 +244,17 @@ func extractUserID(xrhid identity.XRHID) (string, error) {
 	switch xrhid.Identity.Type {
 	case "User":
 		if xrhid.Identity.User == nil || xrhid.Identity.User.UserID == "" {
-			return "", errors.New("user ID is empty")
+			return "", fmt.Errorf("%w: user ID is empty", ErrIdentityValidation)
 		}
 		return xrhid.Identity.User.UserID, nil
 	case "ServiceAccount":
 		if xrhid.Identity.ServiceAccount == nil || xrhid.Identity.ServiceAccount.UserId == "" {
-			return "", errors.New("service account user ID is empty")
+			return "", fmt.Errorf("%w: service account user ID is empty", ErrIdentityValidation)
 		}
 		// Note: ServiceAccount uses UserId (lowercase 'd') due to upstream library inconsistency
 		return xrhid.Identity.ServiceAccount.UserId, nil
 	default:
-		return "", fmt.Errorf("unsupported identity type: %s (only User and ServiceAccount are supported)", xrhid.Identity.Type)
+		return "", fmt.Errorf("%w: unsupported identity type: %s (only User and ServiceAccount are supported)", ErrIdentityValidation, xrhid.Identity.Type)
 	}
 }
 
@@ -269,7 +269,7 @@ func GetWorkspaceID(ctx context.Context, orgID string, log *zap.SugaredLogger) (
 
 	workspaceID, err := globalManager.rbacClient.GetDefaultWorkspaceID(ctx, orgID)
 	if err != nil {
-		return "", fmt.Errorf("failed to get default workspace ID: %w", err)
+		return "", fmt.Errorf("%w: failed to get default workspace ID: %v", ErrServiceUnavailable, err)
 	}
 
 	log.Debugw("Found default workspace ID",
