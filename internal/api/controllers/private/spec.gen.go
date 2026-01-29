@@ -15,7 +15,7 @@ import (
 	externalRef0 "playbook-dispatcher/internal/api/controllers/public"
 
 	"github.com/getkin/kin-openapi/openapi3"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
 // ServerInterface represents all server handlers.
