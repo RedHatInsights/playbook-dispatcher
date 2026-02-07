@@ -140,6 +140,34 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
 
+  /internal/v2/run_hosts:
+    get:
+      summary: List hosts involved in Playbook runs
+      description: >
+        Returns a list of objects representing hosts involved in Playbook runs.
+        Unless restricted using filters the resources spread across multiple Playbook runs.
+        No merging or deduplication is performed by this resource - i.e. if a host X is involved in playbook runs A and B
+        then two subresources will exist, one representing X running A and one for B.
+      operationId: api.internal.v2.run.hosts.list
+      parameters:
+      - $ref: './public.openapi.yaml#/components/parameters/RunHostFilter'
+      - $ref: './public.openapi.yaml#/components/parameters/RunHostFields'
+      - $ref: './public.openapi.yaml#/components/parameters/Limit'
+      - $ref: './public.openapi.yaml#/components/parameters/Offset'
+
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: './public.openapi.yaml#/components/schemas/RunHosts'
+
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
 components:
   schemas:
     RunInput:
@@ -415,6 +443,13 @@ components:
   responses:
     BadRequest:
       description: Bad Request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    Forbidden:
+      description: Access to the given resource is not allowed
       content:
         application/json:
           schema:

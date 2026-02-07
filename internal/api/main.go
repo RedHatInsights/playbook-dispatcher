@@ -124,6 +124,7 @@ func Start(
 
 	privateController := private.CreateController(db, cloudConnectorClient, inventoryConnectorClient, sourcesConnectorClient, cfg, translator)
 	internal := server.Group("/internal")
+	internal.GET("/v2/run_hosts", privateController.ApiInternalV2RunHostsList, middleware.CheckPskAuth(authConfig), echo.WrapMiddleware(identity.EnforceIdentity), middleware.ExtractHeaders(constants.HeaderIdentity), middleware.CaptureQueryString(), middleware.Hack("filter", "labels"), middleware.Hack("filter", "run"), middleware.Hack("filter", "run", "labels"), middleware.Hack("fields"), oapiMiddleware.OapiRequestValidator(privateSpec))
 	internal.Use(oapiMiddleware.OapiRequestValidator(privateSpec))
 	// Authorization header not required for GET /internal/version
 	internal.GET("/version", privateController.ApiInternalVersion)
