@@ -21,6 +21,7 @@ func CreateController(database *gorm.DB, cloudConnectorClient connectors.CloudCo
 
 	return ServerInterfaceWrapper{
 		Handler: &controllers{
+			database:                 database,
 			cloudConnectorClient:     cloudConnectorClient,
 			inventoryConnectorClient: inventoryConnectorClient,
 			sourcesConnectorClient:   sourcesConnectorClient,
@@ -34,6 +35,7 @@ func CreateController(database *gorm.DB, cloudConnectorClient connectors.CloudCo
 
 // implements api.ServerInterface
 type controllers struct {
+	database                 *gorm.DB
 	cloudConnectorClient     connectors.CloudConnectorClient
 	inventoryConnectorClient inventory.InventoryConnector
 	sourcesConnectorClient   sources.SourcesConnector

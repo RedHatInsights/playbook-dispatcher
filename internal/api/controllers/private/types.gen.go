@@ -23,6 +23,16 @@ const (
 	RhcNotConfigured RecipientWithConnectionInfoStatus = "rhc_not_configured"
 )
 
+// Defines values for ApiInternalV2RunHostsListParamsFieldsData.
+const (
+	Host        ApiInternalV2RunHostsListParamsFieldsData = "host"
+	InventoryId ApiInternalV2RunHostsListParamsFieldsData = "inventory_id"
+	Links       ApiInternalV2RunHostsListParamsFieldsData = "links"
+	Run         ApiInternalV2RunHostsListParamsFieldsData = "run"
+	Status      ApiInternalV2RunHostsListParamsFieldsData = "status"
+	Stdout      ApiInternalV2RunHostsListParamsFieldsData = "stdout"
+)
+
 // CancelInputV2 defines model for CancelInputV2.
 type CancelInputV2 struct {
 	// OrgId Identifies the organization that the given resource belongs to
@@ -232,6 +242,9 @@ type Version = string
 // BadRequest defines model for BadRequest.
 type BadRequest = Error
 
+// Forbidden defines model for Forbidden.
+type Forbidden = Error
+
 // ApiInternalRunsCreateJSONBody defines parameters for ApiInternalRunsCreate.
 type ApiInternalRunsCreateJSONBody = []RunInput
 
@@ -243,6 +256,24 @@ type ApiInternalV2RunsCreateJSONBody = []RunInputV2
 
 // ApiInternalV2RecipientsStatusJSONBody defines parameters for ApiInternalV2RecipientsStatus.
 type ApiInternalV2RecipientsStatusJSONBody = []RecipientWithOrg
+
+// ApiInternalV2RunHostsListParams defines parameters for ApiInternalV2RunHostsList.
+type ApiInternalV2RunHostsListParams struct {
+	// Filter Allows for filtering based on various criteria
+	Filter *externalRef0.RunHostFilter `json:"filter,omitempty"`
+
+	// Fields Defines fields to be returned in the response.
+	Fields *externalRef0.RunHostFields `json:"fields,omitempty"`
+
+	// Limit Maximum number of results to return
+	Limit *externalRef0.Limit `form:"limit,omitempty" json:"limit,omitempty"`
+
+	// Offset Indicates the starting position of the query relative to the complete set of items that match the query
+	Offset *externalRef0.Offset `form:"offset,omitempty" json:"offset,omitempty"`
+}
+
+// ApiInternalV2RunHostsListParamsFieldsData defines parameters for ApiInternalV2RunHostsList.
+type ApiInternalV2RunHostsListParamsFieldsData string
 
 // ApiInternalRunsCreateJSONRequestBody defines body for ApiInternalRunsCreate for application/json ContentType.
 type ApiInternalRunsCreateJSONRequestBody = ApiInternalRunsCreateJSONBody
