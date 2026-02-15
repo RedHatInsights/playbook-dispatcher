@@ -4,7 +4,7 @@ go 1.24.5
 
 require (
 	github.com/RedHatInsights/tenant-utils v1.0.0
-	github.com/Unleash/unleash-go-sdk/v5 v5.0.3
+	github.com/Unleash/unleash-go-sdk/v5 v5.1.0
 	github.com/aws/aws-sdk-go v1.55.7
 	github.com/confluentinc/confluent-kafka-go/v2 v2.12.0
 	github.com/getkin/kin-openapi v0.133.0
@@ -70,6 +70,7 @@ require (
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/labstack/gommon v0.4.2 // indirect
+	github.com/launchdarkly/eventsource v1.10.0 // indirect
 	github.com/lib/pq v1.10.9 // indirect
 	github.com/magiconair/properties v1.8.10 // indirect
 	github.com/mailru/easyjson v0.9.1 // indirect
