@@ -41,7 +41,7 @@
 
         <version.compiler.plugin>3.15.0</version.compiler.plugin>
         <version.jsonschema2pojo.plugin>1.0.2</version.jsonschema2pojo.plugin>
-        <version.pmd.plugin>3.13.0</version.pmd.plugin>
+        <version.pmd.plugin>3.28.0</version.pmd.plugin>
         <version.surefire.plugin>2.22.2</version.surefire.plugin>
 
         <schema.event.run>${project.basedir}/../schema/run.event.yaml</schema.event.run>
