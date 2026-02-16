@@ -56,8 +56,8 @@ github.com/Microsoft/hcsshim v0.11.5/go.mod h1:MV8xMfmECjl5HdO7U/3/hFVnkmSBjAjmA
 github.com/RaveNoX/go-jsoncommentstrip v1.0.0/go.mod h1:78ihd09MekBnJnxpICcwzCMzGrKSKYe4AqU6PDYYpjk=
 github.com/RedHatInsights/tenant-utils v1.0.0 h1:LylA40ClMyhPfPhMmCd+sKzHlbq6KAPqWsIrD8mi81w=
 github.com/RedHatInsights/tenant-utils v1.0.0/go.mod h1:IAxX+qWDD6/fxHdLcH0fDFHfmKaghL61BCmYGjh4pwc=
-github.com/Unleash/unleash-go-sdk/v5 v5.0.3 h1:tkXvNb7aJtOx1lSVV1riXUdNkXTrhriisVStLWlcZl0=
-github.com/Unleash/unleash-go-sdk/v5 v5.0.3/go.mod h1:gSSfyX/8pUEpx9lla15HuVd30/XG6dcd17M4VhR0Y38=
+github.com/Unleash/unleash-go-sdk/v5 v5.1.0 h1:W+HHQklU5/H9kjYTn/T4TKvDHE0BxnZ0+MyTk06RdYw=
+github.com/Unleash/unleash-go-sdk/v5 v5.1.0/go.mod h1:1u8BfdyjlkV5j43la61n9A9ul4E+YQC2kKQotz8z7BE=
 github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d h1:licZJFw2RwpHMqeKTCYkitsPqHNxTmd4SNR5r94FGM8=
 github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d/go.mod h1:asat636LX7Bqt5lYEZ27JNDcqxfjdBQuJ/MM4CN/Lzo=
 github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=
@@ -430,6 +430,10 @@ github.com/labstack/echo/v4 v4.13.4/go.mod h1:g63b33BZ5vZzcIUF8AtRH40DrTlXnx4UMC
 github.com/labstack/gommon v0.3.0/go.mod h1:MULnywXg0yavhxWKc+lOruYdAhDwPK9wf0OL7NoOu+k=
 github.com/labstack/gommon v0.4.2 h1:F8qTUNXgG1+6WQmqoUWnz8WiEU60mXVVw0P4ht1WRA0=
 github.com/labstack/gommon v0.4.2/go.mod h1:QlUFxVM+SNXhDL/Z7YhocGIBYOiwB0mXm1+1bAPHPyU=
+github.com/launchdarkly/eventsource v1.10.0 h1:H9Tp6AfGu/G2qzBJC26iperrvwhzdbiA/gx7qE2nDFI=
+github.com/launchdarkly/eventsource v1.10.0/go.mod h1:J3oa50bPvJesZqNAJtb5btSIo5N6roDWhiAS3IpsKck=
+github.com/launchdarkly/go-test-helpers/v3 v3.1.0 h1:E3bxJMzMoA+cJSF3xxtk2/chr1zshl1ZWa0/oR+8bvg=
+github.com/launchdarkly/go-test-helpers/v3 v3.1.0/go.mod h1:Ake5+hZFS/DmIGKx/cizhn5W9pGA7pplcR7xCxWiLIo=
 github.com/lib/pq v1.10.9 h1:YXG7RB+JIjhP29X+OtkiDnYaXQwpS4JEWq7dtCCRUEw=
 github.com/lib/pq v1.10.9/go.mod h1:AlVN5x4E4T544tWzH6hKfbfQvm3HdbOxrmggDNAPY9o=
 github.com/lufia/plan9stats v0.0.0-20230326075908-cb1d2100619a h1:N9zuLhTvBSRt0gWSiJswwQ2HqDmtX/ZCDJURnKUt1Ik=
