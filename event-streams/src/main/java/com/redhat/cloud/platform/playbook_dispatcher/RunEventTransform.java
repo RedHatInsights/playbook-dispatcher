@@ -100,7 +100,9 @@ public class RunEventTransform<T extends ConnectRecord<T>> implements Transforma
 
         try {
             final String marshalledValue = objectMapper.writeValueAsString(event);
-            LOG.info("processed message; key: {}, event_type: {}, service: {}", newKey, event.getEventType(), event.getPayload().getService());
+            if (LOG.isInfoEnabled()) {
+                LOG.info("processed message; key: {}, event_type: {}, service: {}", newKey, event.getEventType(), event.getPayload().getService());
+            }
             return record.newRecord(this.topic, record.kafkaPartition(), null, newKey, null, marshalledValue, record.timestamp(), headers);
         } catch (JsonProcessingException e) {
             LOG.error("Error marshalling JSON", e);
@@ -172,7 +174,9 @@ public class RunEventTransform<T extends ConnectRecord<T>> implements Transforma
         try {
             labels = this.objectMapper.readValue(input.getString("labels"), Labels.class);
         } catch (JsonProcessingException e) {
-            LOG.warn("Ignoring message labels due to parsing error, id={}, labels={}", input.getString("id"), input.getString("labels"));
+            if (LOG.isWarnEnabled()) {
+                LOG.warn("Ignoring message labels due to parsing error, id={}, labels={}", input.getString("id"), input.getString("labels"));
+            }
             labels = new Labels();
         }
 
