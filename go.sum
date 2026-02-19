@@ -56,8 +56,8 @@ github.com/Microsoft/hcsshim v0.11.5/go.mod h1:MV8xMfmECjl5HdO7U/3/hFVnkmSBjAjmA
 github.com/RaveNoX/go-jsoncommentstrip v1.0.0/go.mod h1:78ihd09MekBnJnxpICcwzCMzGrKSKYe4AqU6PDYYpjk=
 github.com/RedHatInsights/tenant-utils v1.0.0 h1:LylA40ClMyhPfPhMmCd+sKzHlbq6KAPqWsIrD8mi81w=
 github.com/RedHatInsights/tenant-utils v1.0.0/go.mod h1:IAxX+qWDD6/fxHdLcH0fDFHfmKaghL61BCmYGjh4pwc=
-github.com/Unleash/unleash-go-sdk/v5 v5.1.0 h1:W+HHQklU5/H9kjYTn/T4TKvDHE0BxnZ0+MyTk06RdYw=
-github.com/Unleash/unleash-go-sdk/v5 v5.1.0/go.mod h1:1u8BfdyjlkV5j43la61n9A9ul4E+YQC2kKQotz8z7BE=
+github.com/Unleash/unleash-go-sdk/v6 v6.1.0 h1:ACbRNAgnsJzmbBMPP9+hllzQXPVAqtOJrm9Y0Z4n12c=
+github.com/Unleash/unleash-go-sdk/v6 v6.1.0/go.mod h1:t+E1trTXqBK2FtkOfTICnIoqW1WNIZ6X6yp/TNw6KEU=
 github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d h1:licZJFw2RwpHMqeKTCYkitsPqHNxTmd4SNR5r94FGM8=
 github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d/go.mod h1:asat636LX7Bqt5lYEZ27JNDcqxfjdBQuJ/MM4CN/Lzo=
 github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=
