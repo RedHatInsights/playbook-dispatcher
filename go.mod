@@ -1,6 +1,6 @@
 module playbook-dispatcher
 
-go 1.24.5
+go 1.25.5
 
 require (
 	github.com/RedHatInsights/tenant-utils v1.0.0
@@ -30,7 +30,7 @@ require (
 	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8
 	go.uber.org/zap v1.27.1
 	golang.org/x/time v0.14.0
-	google.golang.org/grpc v1.74.2
+	google.golang.org/grpc v1.78.0
 	gorm.io/driver/postgres v1.6.0
 	gorm.io/gorm v1.31.1
 )
@@ -39,7 +39,7 @@ require (
 	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.11-20260209202127-80ab13bee0bf.1 // indirect
 	github.com/Masterminds/semver/v3 v3.4.0 // indirect
 	github.com/apapsch/go-jsonmerge/v2 v2.0.0 // indirect
-	github.com/authzed/grpcutil v0.0.0-20250221190651-1985b19b35b8 // indirect
+	github.com/authzed/grpcutil v0.0.0-20260105210157-e237581949c2 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/certifi/gocertifi v0.0.0-20210507211836-431795d63e8d // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
