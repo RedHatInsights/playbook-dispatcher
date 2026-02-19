@@ -6,7 +6,7 @@ require (
 	github.com/RedHatInsights/tenant-utils v1.0.0
 	github.com/Unleash/unleash-go-sdk/v5 v5.1.0
 	github.com/aws/aws-sdk-go v1.55.7
-	github.com/confluentinc/confluent-kafka-go/v2 v2.12.0
+	github.com/confluentinc/confluent-kafka-go/v2 v2.13.0
 	github.com/getkin/kin-openapi v0.133.0
 	github.com/ghodss/yaml v1.0.0
 	github.com/globocom/echo-prometheus v0.1.2
