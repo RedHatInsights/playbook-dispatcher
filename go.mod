@@ -15,7 +15,7 @@ require (
 	github.com/labstack/echo/v4 v4.15.1
 	github.com/mec07/cloudwatchwriter v0.2.6
 	github.com/oapi-codegen/echo-middleware v1.0.2
-	github.com/oapi-codegen/runtime v1.1.2
+	github.com/oapi-codegen/runtime v1.2.0
 	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.39.1
 	github.com/project-kessel/inventory-api v0.0.0-20250507142859-a4225659a5b2
