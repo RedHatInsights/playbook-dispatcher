@@ -9,8 +9,14 @@ import (
 
 func ContextLogger(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		reqId := request_id.GetReqID(c.Request().Context())
+		ctx := c.Request().Context()
+		reqId := request_id.GetReqID(ctx)
 		logger := utils.LogWithRequestId(utils.GetLoggerOrDie(), reqId)
+
+		// Add internal request ID to logger context
+		if internalReqId := utils.GetInternalRequestID(ctx); internalReqId != "" {
+			logger = logger.With("internal_request_id", internalReqId)
+		}
 
 		req := c.Request()
 		c.SetRequest(req.WithContext(utils.SetLog(req.Context(), logger)))

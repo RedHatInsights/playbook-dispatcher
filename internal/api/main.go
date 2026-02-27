@@ -66,6 +66,7 @@ func Start(
 	server.Use(
 		echoPrometheus.MetricsMiddleware(),
 		echo.WrapMiddleware(request_id.ConfiguredRequestID(constants.HeaderRequestId)),
+		middleware.InternalRequestId,
 		middleware.ContextLogger,
 		middleware.RequestLogger,
 		echoMiddleware.Recover(),
