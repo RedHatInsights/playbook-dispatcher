@@ -22,8 +22,8 @@ import (
 
 	"github.com/getkin/kin-openapi/openapi3"
 	echoPrometheus "github.com/globocom/echo-prometheus"
-	"github.com/labstack/echo/v4"
-	echoMiddleware "github.com/labstack/echo/v4/middleware"
+	"github.com/labstack/echo/v5"
+	echoMiddleware "github.com/labstack/echo/v5/middleware"
 	oapiMiddleware "github.com/oapi-codegen/echo-middleware"
 	"github.com/redhatinsights/platform-go-middlewares/v2/identity"
 	"github.com/redhatinsights/platform-go-middlewares/v2/request_id"

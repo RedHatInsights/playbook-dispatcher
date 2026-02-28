@@ -3,7 +3,7 @@ package middleware
 import (
 	"playbook-dispatcher/internal/common/utils"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/redhatinsights/platform-go-middlewares/v2/request_id"
 )
 

@@ -8,7 +8,7 @@ import (
 	"net/http/httptest"
 	"playbook-dispatcher/internal/common/utils"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"go.uber.org/zap"

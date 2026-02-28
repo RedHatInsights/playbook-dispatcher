@@ -15,7 +15,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/redhatinsights/platform-go-middlewares/v2/identity"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
