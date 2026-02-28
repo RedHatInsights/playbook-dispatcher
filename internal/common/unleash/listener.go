@@ -1,7 +1,7 @@
 package unleash
 
 import (
-	unleash "github.com/Unleash/unleash-go-sdk/v5"
+	unleash "github.com/Unleash/unleash-go-sdk/v6"
 	"go.uber.org/zap"
 )
 
