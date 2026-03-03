@@ -15,6 +15,7 @@ import (
 	"playbook-dispatcher/internal/common/utils"
 
 	"github.com/project-kessel/inventory-client-go/common"
+	"github.com/redhatinsights/platform-go-middlewares/v2/request_id"
 )
 
 // RbacClient provides methods for interacting with the RBAC service
@@ -160,18 +161,55 @@ func (r *rbacClientImpl) doRequestWithRetry(ctx context.Context, req *http.Reque
 
 		reqWithTimeout := req.Clone(requestCtx)
 
+		// Get logger early for token acquisition logging
+		log := utils.GetLogFromContextIfAvailable(ctx)
+
 		// Add authentication token if available
 		if r.tokenClient != nil {
+			tokenStart := time.Now()
+
+			// Capture request IDs once for consistency and efficiency
+			reqID := request_id.GetReqID(ctx)
+			internalReqID := utils.GetInternalRequestID(ctx)
+
+			// Log token acquisition start with request IDs
+			if log != nil {
+				log.Debugw("OIDC token acquisition started",
+					"request_id", reqID,
+					"internal_request_id", internalReqID,
+					"attempt", attempt+1)
+			}
+
 			tokenResp, err := r.tokenClient.GetToken()
+			tokenDuration := time.Since(tokenStart)
+
 			if err != nil {
+				// Log token acquisition failure
+				if log != nil {
+					log.Errorw("OIDC token acquisition failed",
+						"request_id", reqID,
+						"internal_request_id", internalReqID,
+						"duration_ms", tokenDuration.Milliseconds(),
+						"attempt", attempt+1,
+						"error", err)
+				}
 				cancel() // Clean up timeout context before returning error
 				return nil, 0, fmt.Errorf("failed to get auth token: %w", err)
 			}
+
+			// Log token acquisition success
+			if log != nil {
+				log.Debugw("OIDC token acquisition succeeded",
+					"request_id", reqID,
+					"internal_request_id", internalReqID,
+					"duration_ms", tokenDuration.Milliseconds(),
+					"attempt", attempt+1)
+			}
+
 			reqWithTimeout.Header.Set("Authorization", fmt.Sprintf("Bearer %s", tokenResp.AccessToken))
 		}
 
 		// Debug logging for outgoing request
-		log := utils.GetLogFromContextIfAvailable(ctx)
 		if log != nil {
 			headers := make(map[string]string)
 			for k, v := range reqWithTimeout.Header {
