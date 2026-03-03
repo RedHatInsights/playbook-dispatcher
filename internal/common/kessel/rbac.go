@@ -189,7 +189,7 @@ func (r *rbacClientImpl) doRequestWithRetry(ctx context.Context, req *http.Reque
 					log.Errorw("OIDC token acquisition failed",
 						"request_id", reqID,
 						"internal_request_id", internalReqID,
-						"duration_ms", tokenDuration.Milliseconds(),
+						"duration_seconds", fmt.Sprintf("%.3f", tokenDuration.Seconds()),
 						"attempt", attempt+1,
 						"error", err)
 				}
@@ -202,7 +202,7 @@ func (r *rbacClientImpl) doRequestWithRetry(ctx context.Context, req *http.Reque
 				log.Debugw("OIDC token acquisition succeeded",
 					"request_id", reqID,
 					"internal_request_id", internalReqID,
-					"duration_ms", tokenDuration.Milliseconds(),
+					"duration_seconds", fmt.Sprintf("%.3f", tokenDuration.Seconds()),
 					"attempt", attempt+1)
 			}
 
