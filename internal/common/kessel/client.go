@@ -17,9 +17,10 @@ import (
 
 // ClientManager holds all Kessel-related clients (replaces separate global variables)
 type ClientManager struct {
-	client      *v1beta2.InventoryClient
-	tokenClient *common.TokenClient
-	rbacClient  RbacClient
+	client                *v1beta2.InventoryClient
+	tokenClient           *common.TokenClient
+	rbacClient            RbacClient
+	kesselClientWithCache *KesselClientWithCache
 }
 
 var globalManager *ClientManager
@@ -74,6 +75,9 @@ func Initialize(cfg *viper.Viper, log *zap.SugaredLogger) error {
 		return fmt.Errorf("failed to create Kessel client: %w", err)
 	}
 
+	// Create Kessel client with caching
+	kesselClientWithCache := NewKesselClientWithCache(client)
+
 	// Create token client for authentication if enabled
 	var tokenClient *common.TokenClient
 	if cfg.GetBool("kessel.auth.enabled") {
@@ -109,9 +113,10 @@ func Initialize(cfg *viper.Viper, log *zap.SugaredLogger) error {
 
 	// Store all clients in manager
 	globalManager = &ClientManager{
-		client:      client,
-		tokenClient: tokenClient,
-		rbacClient:  rbacClient,
+		client:                client,
+		tokenClient:           tokenClient,
+		rbacClient:            rbacClient,
+		kesselClientWithCache: kesselClientWithCache,
 	}
 
 	log.Info("Kessel client initialized successfully")
@@ -143,6 +148,15 @@ func GetRbacClient() RbacClient {
 		return nil
 	}
 	return globalManager.rbacClient
+}
+
+// GetKesselClientWithCache returns the Kessel client with caching
+// Returns nil if Kessel is not enabled or not initialized
+func GetKesselClientWithCache() *KesselClientWithCache {
+	if globalManager == nil {
+		return nil
+	}
+	return globalManager.kesselClientWithCache
 }
 
 // IsEnabled returns true if the Kessel client is initialized and ready to use
@@ -188,9 +202,10 @@ func GetAuthMode(cfg *viper.Viper) string {
 func SetClientForTesting(client *v1beta2.InventoryClient, tokenClient *common.TokenClient, rbacClient RbacClient) func() {
 	oldManager := globalManager
 	globalManager = &ClientManager{
-		client:      client,
-		tokenClient: tokenClient,
-		rbacClient:  rbacClient,
+		client:                client,
+		tokenClient:           tokenClient,
+		rbacClient:            rbacClient,
+		kesselClientWithCache: NewKesselClientWithCache(client),
 	}
 	return func() {
 		globalManager = oldManager
