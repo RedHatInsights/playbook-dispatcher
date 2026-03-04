@@ -15,6 +15,7 @@ import (
 	"playbook-dispatcher/internal/common/unleash/features"
 	"playbook-dispatcher/internal/common/utils"
 
+	"github.com/patrickmn/go-cache"
 	"github.com/project-kessel/inventory-client-go/common"
 	"github.com/redhatinsights/platform-go-middlewares/v2/request_id"
 	"go.uber.org/zap"
@@ -78,6 +79,7 @@ type rbacClientImpl struct {
 	requestTimeout  time.Duration
 	tokenTimeout    time.Duration // Timeout for individual token requests
 	tokenMaxRetries int           // Max retry attempts for token acquisition
+	workspaceCache  *cache.Cache
 }
 
 // rbacWorkspaceResponse represents the RBAC API response for workspace queries
@@ -133,6 +135,7 @@ func NewRbacClient(rbacURL string, tokenClient TokenClient, timeout time.Duratio
 		requestTimeout:  timeout,
 		tokenTimeout:    tokenTimeout,
 		tokenMaxRetries: tokenMaxRetries,
+		workspaceCache:  cache.New(5*time.Minute, 1*time.Minute),
 	}
 
 	// Log the clamped configuration values
