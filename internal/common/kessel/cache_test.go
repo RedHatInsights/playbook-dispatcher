@@ -9,9 +9,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/patrickmn/go-cache"
 	kesselv2 "github.com/project-kessel/inventory-api/api/kessel/inventory/v1beta2"
 	v1beta2 "github.com/project-kessel/inventory-client-go/v1beta2"
-	"github.com/patrickmn/go-cache"
 	"github.com/redhatinsights/platform-go-middlewares/v2/identity"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"

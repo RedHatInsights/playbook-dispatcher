@@ -35,6 +35,7 @@ func NewKesselClientWithCache(client *v1beta2.InventoryClient) *KesselClientWith
 }
 
 func getUserIDFromContext(ctx context.Context) string {
+<<<<<<< HEAD
 	// Extract identity from context
 	// Note: In v2, GetIdentity returns an empty XRHID if identity is not in context
 	xrhid := identity.GetIdentity(ctx)
@@ -46,6 +47,13 @@ func getUserIDFromContext(ctx context.Context) string {
 
 	// Extract user ID based on identity type
 	switch xrhid.Identity.Type {
+=======
+	xrhid := identity.GetIdentity(ctx)
+
+	// Extract user ID based on identity type
+	identityType := xrhid.Identity.Type
+	switch identityType {
+>>>>>>> 4754dcc (RHINENG-24346: add kessel client cache scaffolding)
 	case "User":
 		if xrhid.Identity.User != nil {
 			return xrhid.Identity.User.UserID
