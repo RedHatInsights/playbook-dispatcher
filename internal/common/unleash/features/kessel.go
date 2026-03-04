@@ -22,6 +22,9 @@ const (
 	// KesselBulkCheckFeatureFlag controls whether to use CheckBulk API or individual Check calls
 	KesselBulkCheckFeatureFlag = "playbook-dispatcher-kessel-bulkcheck"
 
+	// KesselWorkspaceCacheFeatureFlag controls whether to use caching for RBAC workspace lookups
+	KesselWorkspaceCacheFeatureFlag = "playbook-dispatcher-kessel-workspace-cache"
+
 	// Variant names matching Unleash dashboard configuration
 	VariantRBACOnly           = "rbac-only"
 	VariantBothRBACEnforces   = "both-rbac-enforces"
@@ -291,4 +294,16 @@ func IsBulkCheckEnabled(ctx context.Context) bool {
 	// Check if feature is enabled with context
 	// Returns false by default if feature flag not found or Unleash not initialized
 	return unleash.IsEnabledWithContext(KesselBulkCheckFeatureFlag, unleashCtx)
+}
+
+// IsWorkspaceCacheEnabled checks if the workspace cache feature is enabled
+// Returns false by default (uses direct RBAC API calls)
+// Returns true when enabled (uses cached workspace lookups)
+func IsWorkspaceCacheEnabled(ctx context.Context) bool {
+	// Build Unleash context from request context for per-org targeting
+	unleashCtx := buildUnleashContext(ctx, nil)
+
+	// Check if feature is enabled with context
+	// Returns false by default if feature flag not found or Unleash not initialized
+	return unleash.IsEnabledWithContext(KesselWorkspaceCacheFeatureFlag, unleashCtx)
 }

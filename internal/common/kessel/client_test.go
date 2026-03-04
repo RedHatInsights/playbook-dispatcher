@@ -197,6 +197,10 @@ func (m *mockRbacClient) GetDefaultWorkspaceID(ctx context.Context, orgID string
 	return "mock-workspace-id", nil
 }
 
+func (m *mockRbacClient) GetDefaultWorkspaceIDWithCache(ctx context.Context, orgID string) (string, error) {
+	return "mock-workspace-id", nil
+}
+
 func TestInitialize_RbacURLConstruction_HostWithoutPort(t *testing.T) {
 	cfg := viper.New()
 	cfg.Set("kessel.enabled", true)

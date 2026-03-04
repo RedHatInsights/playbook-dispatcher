@@ -58,6 +58,8 @@ const (
 type RbacClient interface {
 	// GetDefaultWorkspaceID retrieves the default workspace ID for an organization
 	GetDefaultWorkspaceID(ctx context.Context, orgID string) (string, error)
+	// GetDefaultWorkspaceIDWithCache retrieves the default workspace ID with caching
+	GetDefaultWorkspaceIDWithCache(ctx context.Context, orgID string) (string, error)
 }
 
 // TokenClient interface wraps the Kessel token client for testability
