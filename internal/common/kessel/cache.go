@@ -20,22 +20,21 @@ import (
 	"go.uber.org/zap"
 )
 
-// KesselClientWithCache wraps the Kessel inventory client with permission caching
+// KesselClientWithCache wraps the Kessel inventory client with application caching
 type KesselClientWithCache struct {
-	client          *v1beta2.InventoryClient
-	permissionCache *cache.Cache
+	client           *v1beta2.InventoryClient
+	applicationCache *cache.Cache
 }
 
 // NewKesselClientWithCache creates a new Kessel client wrapper with caching
 func NewKesselClientWithCache(client *v1beta2.InventoryClient) *KesselClientWithCache {
 	return &KesselClientWithCache{
-		client:          client,
-		permissionCache: cache.New(1*time.Minute, 30*time.Second),
+		client:           client,
+		applicationCache: cache.New(1*time.Minute, 30*time.Second),
 	}
 }
 
 func getUserIDFromContext(ctx context.Context) string {
-<<<<<<< HEAD
 	// Extract identity from context
 	// Note: In v2, GetIdentity returns an empty XRHID if identity is not in context
 	xrhid := identity.GetIdentity(ctx)
@@ -47,13 +46,6 @@ func getUserIDFromContext(ctx context.Context) string {
 
 	// Extract user ID based on identity type
 	switch xrhid.Identity.Type {
-=======
-	xrhid := identity.GetIdentity(ctx)
-
-	// Extract user ID based on identity type
-	identityType := xrhid.Identity.Type
-	switch identityType {
->>>>>>> 4754dcc (RHINENG-24346: add kessel client cache scaffolding)
 	case "User":
 		if xrhid.Identity.User != nil {
 			return xrhid.Identity.User.UserID
@@ -133,71 +125,67 @@ func (r *rbacClientImpl) GetDefaultWorkspaceIDWithCache(ctx context.Context, org
 	return workspaceID, nil
 }
 
-// CheckPermissionWithCache performs a Kessel authorization check with caching
-// Cache key is a hash of: request_id + org_id + user_id + workspace_id + permission
-func (k *KesselClientWithCache) CheckPermissionWithCache(ctx context.Context, workspaceID string, permission string, log *zap.SugaredLogger) (bool, error) {
+// CheckApplicationPermissionsWithCache performs application permission checks with caching
+// Cache key is a hash of: request_id + org_id + user_id + workspace_id
+func (k *KesselClientWithCache) CheckApplicationPermissionsWithCache(ctx context.Context, workspaceID string, log *zap.SugaredLogger) ([]string, error) {
 	reqID := request_id.GetReqID(ctx)
 	xrhid := identity.GetIdentity(ctx)
 	orgID := xrhid.Identity.OrgID
 	userID := getUserIDFromContext(ctx)
 
 	// Validate all cache key components (security: prevent cache leakage)
-	if reqID == "" {
-		return false, errors.New("request_id is required for caching")
-	}
-	if orgID == "" {
-		return false, errors.New("org_id is required for caching")
-	}
-	if userID == "" || userID == "unknown" {
-		return false, errors.New("valid user_id is required for caching")
-	}
-	if workspaceID == "" {
-		return false, errors.New("workspace_id is required for caching")
-	}
-	if permission == "" {
-		return false, errors.New("permission is required for caching")
+	// If any required component is missing, fall back to non-cached check
+	if reqID == "" || orgID == "" || userID == "" || userID == "unknown" || workspaceID == "" {
+		if log != nil {
+			log.Debugw("Cache key validation failed, falling back to non-cached permission check",
+				"request_id", reqID,
+				"org_id", orgID,
+				"user_id", userID,
+				"workspace_id", workspaceID)
+		}
+		// Fall back to non-cached check
+		return CheckApplicationPermissions(ctx, workspaceID, log)
 	}
 
 	// NOTE: reqID can be externally provided by the calling application and may be
 	// the same across multiple endpoint requests, enabling cross-request caching
-	cacheKey := hashCacheKey("permission", reqID, orgID, userID, workspaceID, permission)
+	cacheKey := hashCacheKey("applications", reqID, orgID, userID, workspaceID)
 
 	// Check cache
-	if cached, found := k.permissionCache.Get(cacheKey); found {
-		allowed, ok := cached.(bool)
+	if cached, found := k.applicationCache.Get(cacheKey); found {
+		allowedApps, ok := cached.([]string)
 		if !ok {
-			// Type mismatch - delete bad entry and fall through to Kessel check
+			// Type mismatch - delete bad entry and fall through to permission check
 			if log != nil {
-				log.Warnw("Permission cache type mismatch, deleting entry",
+				log.Warnw("Application cache type mismatch, deleting entry",
 					"request_id", reqID,
 					"internal_request_id", utils.GetInternalRequestID(ctx),
 					"org_id", orgID,
-					"permission", permission,
 					"cache_key", cacheKey)
 			}
-			k.permissionCache.Delete(cacheKey)
-			// Fall through to check permission via Kessel
+			k.applicationCache.Delete(cacheKey)
+			// Fall through to check permissions via Kessel
 		} else {
 			if log != nil {
-				log.Debugw("Permission cache hit",
+				log.Debugw("Application cache hit",
 					"request_id", reqID,
 					"internal_request_id", utils.GetInternalRequestID(ctx),
 					"org_id", orgID,
-					"permission", permission,
+					"allowed_apps", allowedApps,
 					"cache_key", cacheKey)
 			}
-			return allowed, nil
+			return allowedApps, nil
 		}
 	}
 
-	// Cache miss - check permission via Kessel
-	allowed, err := CheckPermission(ctx, workspaceID, permission, log)
+	// Cache miss - check permissions via Kessel
+	allowedApps, err := CheckApplicationPermissions(ctx, workspaceID, log)
 	if err != nil {
-		return false, err
+		return nil, err
 	}
 
-	// Store in cache (cache both allowed and denied results)
-	k.permissionCache.Set(cacheKey, allowed, cache.DefaultExpiration)
+	// Store in cache
+	k.applicationCache.Set(cacheKey, allowedApps, cache.DefaultExpiration)
 
-	return allowed, nil
+	return allowedApps, nil
 }
