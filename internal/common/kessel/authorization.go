@@ -267,7 +267,7 @@ func GetWorkspaceID(ctx context.Context, orgID string, log *zap.SugaredLogger) (
 
 	log.Debugw("Looking up default workspace ID", "org_id", orgID)
 
-	workspaceID, err := globalManager.rbacClient.GetDefaultWorkspaceID(ctx, orgID)
+	workspaceID, err := globalManager.rbacClient.GetDefaultWorkspaceIDWithCache(ctx, orgID)
 	if err != nil {
 		return "", fmt.Errorf("failed to get default workspace ID: %w", err)
 	}
