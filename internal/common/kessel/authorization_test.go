@@ -691,3 +691,8 @@ func (m *mockRbacClientWithWorkspace) GetDefaultWorkspaceID(ctx context.Context,
 	m.lastOrgID = orgID
 	return m.workspaceID, m.err
 }
+
+func (m *mockRbacClientWithWorkspace) GetDefaultWorkspaceIDWithCache(ctx context.Context, orgID string) (string, error) {
+	m.lastOrgID = orgID
+	return m.workspaceID, m.err
+}

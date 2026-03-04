@@ -14,6 +14,7 @@ import (
 
 	"playbook-dispatcher/internal/common/utils"
 
+	"github.com/patrickmn/go-cache"
 	"github.com/project-kessel/inventory-client-go/common"
 	"github.com/redhatinsights/platform-go-middlewares/v2/request_id"
 )
@@ -23,6 +24,8 @@ import (
 type RbacClient interface {
 	// GetDefaultWorkspaceID retrieves the default workspace ID for an organization
 	GetDefaultWorkspaceID(ctx context.Context, orgID string) (string, error)
+	// GetDefaultWorkspaceIDWithCache retrieves the default workspace ID with caching
+	GetDefaultWorkspaceIDWithCache(ctx context.Context, orgID string) (string, error)
 }
 
 // rbacClientImpl implements RbacClient using the RBAC HTTP API
@@ -34,6 +37,7 @@ type rbacClientImpl struct {
 	initialBackoff time.Duration
 	maxBackoff     time.Duration
 	requestTimeout time.Duration
+	workspaceCache *cache.Cache
 }
 
 // rbacWorkspaceResponse represents the RBAC API response for workspace queries
@@ -55,6 +59,7 @@ func NewRbacClient(rbacURL string, tokenClient *common.TokenClient, timeout time
 		initialBackoff: 100 * time.Millisecond,
 		maxBackoff:     2 * time.Second,
 		requestTimeout: timeout,
+		workspaceCache: cache.New(5*time.Minute, 1*time.Minute),
 	}
 }
 
