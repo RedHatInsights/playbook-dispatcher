@@ -98,14 +98,27 @@ func Initialize(cfg *viper.Viper, log *zap.SugaredLogger) error {
 
 	rbacTimeout := time.Duration(cfg.GetInt64("rbac.timeout")) * time.Second
 
-	log.Infow("Creating RBAC client for workspace lookups",
-		"rbac_url", rbacURL,
-		"rbac_scheme", scheme,
-		"rbac_host", host,
-		"rbac_port", port,
-		"rbac_timeout_seconds", cfg.GetInt64("rbac.timeout"))
+	rbacClient := NewRbacClient(rbacURL, tokenClient, rbacTimeout, cfg)
 
-	rbacClient := NewRbacClient(rbacURL, tokenClient, rbacTimeout)
+	// Log actual values being used (after clamping)
+	rbacImpl, ok := rbacClient.(*rbacClientImpl)
+	if ok {
+		log.Infow("Created RBAC client for workspace lookups",
+			"rbac_url", rbacURL,
+			"rbac_scheme", scheme,
+			"rbac_host", host,
+			"rbac_port", port,
+			"rbac_timeout_seconds", cfg.GetInt64("rbac.timeout"),
+			"token_timeout_seconds", rbacImpl.tokenTimeout.Seconds(),
+			"token_max_retries", rbacImpl.tokenMaxRetries)
+	} else {
+		log.Infow("Created RBAC client for workspace lookups",
+			"rbac_url", rbacURL,
+			"rbac_scheme", scheme,
+			"rbac_host", host,
+			"rbac_port", port,
+			"rbac_timeout_seconds", cfg.GetInt64("rbac.timeout"))
+	}
 
 	// Store all clients in manager
 	globalManager = &ClientManager{
