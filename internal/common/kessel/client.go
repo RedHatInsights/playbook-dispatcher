@@ -98,14 +98,14 @@ func Initialize(cfg *viper.Viper, log *zap.SugaredLogger) error {
 
 	rbacTimeout := time.Duration(cfg.GetInt64("rbac.timeout")) * time.Second
 
-	log.Infow("Creating RBAC client for workspace lookups",
-		"rbac_url", rbacURL,
-		"rbac_scheme", scheme,
-		"rbac_host", host,
-		"rbac_port", port,
-		"rbac_timeout_seconds", cfg.GetInt64("rbac.timeout"))
+	// Build RBAC client configuration
+	rbacClientConfig := RbacClientConfig{
+		TokenTimeout:       time.Duration(cfg.GetInt64("kessel.token.timeout")) * time.Second,
+		TokenMaxRetries:    cfg.GetInt("kessel.token.max_retries"),
+		TokenMaxRetriesSet: cfg.IsSet("kessel.token.max_retries"),
+	}
 
-	rbacClient := NewRbacClient(rbacURL, tokenClient, rbacTimeout)
+	rbacClient := NewRbacClient(rbacURL, tokenClient, rbacTimeout, rbacClientConfig, log)
 
 	// Store all clients in manager
 	globalManager = &ClientManager{

@@ -19,7 +19,7 @@ require (
 	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.39.1
 	github.com/project-kessel/inventory-api v0.0.0-20250507142859-a4225659a5b2
-	github.com/project-kessel/inventory-client-go v0.0.0-20250703155410-0ece2b1f2d03
+	github.com/project-kessel/inventory-client-go v0.0.0-20260306140941-8afa3f9c87d5
 	github.com/prometheus/client_golang v1.23.2
 	github.com/qri-io/jsonschema v0.2.1
 	github.com/redhatinsights/app-common-go v1.6.9

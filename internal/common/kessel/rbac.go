@@ -12,11 +12,30 @@ import (
 	"net/http"
 	"time"
 
+	"playbook-dispatcher/internal/common/unleash/features"
 	"playbook-dispatcher/internal/common/utils"
 
 	"github.com/project-kessel/inventory-client-go/common"
 	"github.com/redhatinsights/platform-go-middlewares/v2/request_id"
+	"go.uber.org/zap"
 )
+
+// RbacClientConfig holds configuration for RBAC client
+type RbacClientConfig struct {
+	// TokenTimeout is the timeout for individual token requests (when feature flag is enabled)
+	// Zero or negative values will use the default (3 seconds)
+	TokenTimeout time.Duration
+
+	// TokenMaxRetries is the maximum number of retry attempts for token acquisition
+	// Negative values will use the default (2 retries)
+	// Explicitly set to 0 for no retries (single attempt only)
+	// Values > 5 will be clamped to 5
+	TokenMaxRetries int
+
+	// TokenMaxRetriesSet indicates if TokenMaxRetries was explicitly set
+	// This allows distinguishing between "not set" and "explicitly set to 0"
+	TokenMaxRetriesSet bool
+}
 
 // RbacClient provides methods for interacting with the RBAC service
 // Used for workspace lookups required by Kessel authorization
@@ -27,13 +46,15 @@ type RbacClient interface {
 
 // rbacClientImpl implements RbacClient using the RBAC HTTP API
 type rbacClientImpl struct {
-	client         *http.Client
-	rbacURL        string
-	tokenClient    *common.TokenClient
-	maxRetries     int
-	initialBackoff time.Duration
-	maxBackoff     time.Duration
-	requestTimeout time.Duration
+	client          *http.Client
+	rbacURL         string
+	tokenClient     *common.TokenClient
+	maxRetries      int
+	initialBackoff  time.Duration
+	maxBackoff      time.Duration
+	requestTimeout  time.Duration
+	tokenTimeout    time.Duration // Timeout for individual token requests
+	tokenMaxRetries int           // Max retry attempts for token acquisition
 }
 
 // rbacWorkspaceResponse represents the RBAC API response for workspace queries
@@ -44,18 +65,70 @@ type rbacWorkspaceResponse struct {
 }
 
 // NewRbacClient creates a new RBAC client for workspace lookups
-func NewRbacClient(rbacURL string, tokenClient *common.TokenClient, timeout time.Duration) RbacClient {
-	return &rbacClientImpl{
+func NewRbacClient(rbacURL string, tokenClient *common.TokenClient, timeout time.Duration, cfg RbacClientConfig, log *zap.SugaredLogger) RbacClient {
+	const (
+		defaultTokenTimeout    = 3 * time.Second
+		minTokenTimeout        = 1 * time.Second
+		defaultTokenMaxRetries = 2
+		maxTokenMaxRetries     = 5
+	)
+
+	// Token timeout configuration (used when feature flag is enabled)
+	// Values <= 0 use default; otherwise clamp to [minTokenTimeout, requestTimeout]
+	tokenTimeout := cfg.TokenTimeout
+	if tokenTimeout <= 0 {
+		tokenTimeout = defaultTokenTimeout
+	} else if tokenTimeout < minTokenTimeout {
+		tokenTimeout = minTokenTimeout
+	} else if tokenTimeout > timeout {
+		// Can't exceed the overall request timeout
+		tokenTimeout = timeout
+	}
+
+	// Token retry configuration (used when feature flag is enabled)
+	// If not set: use default
+	// If set to negative: use default (invalid value)
+	// If set to 0: no retries (1 attempt only)
+	// If set to 1-5: use that value
+	// If set > 5: clamp to 5
+	tokenMaxRetries := defaultTokenMaxRetries
+	if cfg.TokenMaxRetriesSet {
+		if cfg.TokenMaxRetries < 0 {
+			// Negative is invalid, use default
+			tokenMaxRetries = defaultTokenMaxRetries
+		} else if cfg.TokenMaxRetries > maxTokenMaxRetries {
+			// Too large, clamp to max
+			tokenMaxRetries = maxTokenMaxRetries
+		} else {
+			// Valid range [0, maxTokenMaxRetries], use as-is
+			tokenMaxRetries = cfg.TokenMaxRetries
+		}
+	}
+
+	impl := &rbacClientImpl{
 		client: &http.Client{
 			Timeout: timeout,
 		},
-		rbacURL:        rbacURL,
-		tokenClient:    tokenClient,
-		maxRetries:     3,
-		initialBackoff: 100 * time.Millisecond,
-		maxBackoff:     2 * time.Second,
-		requestTimeout: timeout,
+		rbacURL:         rbacURL,
+		tokenClient:     tokenClient,
+		maxRetries:      3,
+		initialBackoff:  100 * time.Millisecond,
+		maxBackoff:      2 * time.Second,
+		requestTimeout:  timeout,
+		tokenTimeout:    tokenTimeout,
+		tokenMaxRetries: tokenMaxRetries,
 	}
+
+	// Log the clamped configuration values
+	if log != nil {
+		log.Infow("Created RBAC client with configuration",
+			"rbac_url", rbacURL,
+			"rbac_timeout_seconds", timeout.Seconds(),
+			"token_timeout_seconds", tokenTimeout.Seconds(),
+			"token_max_retries", tokenMaxRetries)
+	}
+
+	return impl
 }
 
 // GetDefaultWorkspaceID retrieves the default workspace ID for an organization
@@ -161,52 +234,70 @@ func (r *rbacClientImpl) doRequestWithRetry(ctx context.Context, req *http.Reque
 
 		reqWithTimeout := req.Clone(requestCtx)
 
-		// Get logger early for token acquisition logging
+		// Get logger for this attempt
 		log := utils.GetLogFromContextIfAvailable(ctx)
 
-		// Add authentication token if available
+		// Acquire authentication token if token client is configured
+		var accessToken string
+		var err error
 		if r.tokenClient != nil {
-			tokenStart := time.Now()
+			// Check if token timeout/retry feature is enabled
+			if features.IsTokenTimeoutEnabled(ctx) {
+				// New behavior: retry with configurable timeout
+				reqID := request_id.GetReqID(ctx)
+				internalReqID := utils.GetInternalRequestID(ctx)
+				accessToken, err = r.acquireTokenWithRetry(ctx, reqID, internalReqID, attempt+1, log)
+				if err != nil {
+					cancel() // Clean up timeout context before returning error
+					return nil, 0, err
+				}
+			} else {
+				// Legacy behavior: single attempt, no timeout
+				tokenStart := time.Now()
+				reqID := request_id.GetReqID(ctx)
+				internalReqID := utils.GetInternalRequestID(ctx)
 
-			// Capture request IDs once for consistency and efficiency
-			reqID := request_id.GetReqID(ctx)
-			internalReqID := utils.GetInternalRequestID(ctx)
-
-			// Log token acquisition start with request IDs
-			if log != nil {
-				log.Debugw("OIDC token acquisition started",
-					"request_id", reqID,
-					"internal_request_id", internalReqID,
-					"attempt", attempt+1)
-			}
-
-			tokenResp, err := r.tokenClient.GetToken()
-			tokenDuration := time.Since(tokenStart)
-
-			if err != nil {
-				// Log token acquisition failure
 				if log != nil {
-					log.Errorw("OIDC token acquisition failed",
+					log.Debugw("OIDC token acquisition started",
+						"request_id", reqID,
+						"internal_request_id", internalReqID,
+						"attempt", attempt+1,
+						"token_timeout_enabled", false)
+				}
+
+				tokenResp, tokenErr := r.tokenClient.GetToken()
+				tokenDuration := time.Since(tokenStart)
+
+				if tokenErr != nil {
+					if log != nil {
+						log.Errorw("OIDC token acquisition failed",
+							"request_id", reqID,
+							"internal_request_id", internalReqID,
+							"duration_seconds", fmt.Sprintf("%.3f", tokenDuration.Seconds()),
+							"attempt", attempt+1,
+							"error", tokenErr,
+							"token_timeout_enabled", false)
+					}
+					cancel() // Clean up timeout context before returning error
+					return nil, 0, fmt.Errorf("failed to get auth token: %w", tokenErr)
+				}
+
+				if log != nil {
+					log.Debugw("OIDC token acquisition succeeded",
 						"request_id", reqID,
 						"internal_request_id", internalReqID,
 						"duration_seconds", fmt.Sprintf("%.3f", tokenDuration.Seconds()),
 						"attempt", attempt+1,
-						"error", err)
+						"token_timeout_enabled", false)
 				}
-				cancel() // Clean up timeout context before returning error
-				return nil, 0, fmt.Errorf("failed to get auth token: %w", err)
-			}
 
-			// Log token acquisition success
-			if log != nil {
-				log.Debugw("OIDC token acquisition succeeded",
-					"request_id", reqID,
-					"internal_request_id", internalReqID,
-					"duration_seconds", fmt.Sprintf("%.3f", tokenDuration.Seconds()),
-					"attempt", attempt+1)
+				accessToken = tokenResp.AccessToken
 			}
+		}
 
-			reqWithTimeout.Header.Set("Authorization", fmt.Sprintf("Bearer %s", tokenResp.AccessToken))
+		// Add token to request if acquired
+		if accessToken != "" {
+			reqWithTimeout.Header.Set("Authorization", fmt.Sprintf("Bearer %s", accessToken))
 		}
 
 		// Debug logging for outgoing request
