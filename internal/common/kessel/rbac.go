@@ -10,12 +10,15 @@ import (
 	"io"
 	"math/rand"
 	"net/http"
+	"strings"
 	"time"
 
+	"playbook-dispatcher/internal/common/unleash/features"
 	"playbook-dispatcher/internal/common/utils"
 
 	"github.com/project-kessel/inventory-client-go/common"
 	"github.com/redhatinsights/platform-go-middlewares/v2/request_id"
+	"github.com/spf13/viper"
 )
 
 // RbacClient provides methods for interacting with the RBAC service
@@ -27,13 +30,15 @@ type RbacClient interface {
 
 // rbacClientImpl implements RbacClient using the RBAC HTTP API
 type rbacClientImpl struct {
-	client         *http.Client
-	rbacURL        string
-	tokenClient    *common.TokenClient
-	maxRetries     int
-	initialBackoff time.Duration
-	maxBackoff     time.Duration
-	requestTimeout time.Duration
+	client          *http.Client
+	rbacURL         string
+	tokenClient     *common.TokenClient
+	maxRetries      int
+	initialBackoff  time.Duration
+	maxBackoff      time.Duration
+	requestTimeout  time.Duration
+	tokenTimeout    time.Duration // Timeout for individual token requests
+	tokenMaxRetries int           // Max retry attempts for token acquisition
 }
 
 // rbacWorkspaceResponse represents the RBAC API response for workspace queries
@@ -44,17 +49,48 @@ type rbacWorkspaceResponse struct {
 }
 
 // NewRbacClient creates a new RBAC client for workspace lookups
-func NewRbacClient(rbacURL string, tokenClient *common.TokenClient, timeout time.Duration) RbacClient {
+func NewRbacClient(rbacURL string, tokenClient *common.TokenClient, timeout time.Duration, cfg *viper.Viper) RbacClient {
+	const (
+		defaultTokenTimeout    = 3 * time.Second
+		minTokenTimeout        = 1 * time.Second
+		defaultTokenMaxRetries = 2
+		maxTokenMaxRetries     = 5
+	)
+
+	// Token timeout configuration (used when feature flag is enabled)
+	// Clamp to sane range: [minTokenTimeout, requestTimeout]
+	tokenTimeout := time.Duration(cfg.GetInt64("kessel.token.timeout")) * time.Second
+	if tokenTimeout <= 0 {
+		tokenTimeout = defaultTokenTimeout
+	} else if tokenTimeout < minTokenTimeout {
+		tokenTimeout = minTokenTimeout
+	} else if tokenTimeout > timeout {
+		// Can't exceed the overall request timeout
+		tokenTimeout = timeout
+	}
+
+	// Token retry configuration (used when feature flag is enabled)
+	// Clamp to sane range: [0, maxTokenMaxRetries]
+	tokenMaxRetries := cfg.GetInt("kessel.token.max_retries")
+	if tokenMaxRetries < 0 {
+		tokenMaxRetries = defaultTokenMaxRetries
+	} else if tokenMaxRetries > maxTokenMaxRetries {
+		tokenMaxRetries = maxTokenMaxRetries
+	}
+	// If explicitly set to 0, allow it (no retries)
+
 	return &rbacClientImpl{
 		client: &http.Client{
 			Timeout: timeout,
 		},
-		rbacURL:        rbacURL,
-		tokenClient:    tokenClient,
-		maxRetries:     3,
-		initialBackoff: 100 * time.Millisecond,
-		maxBackoff:     2 * time.Second,
-		requestTimeout: timeout,
+		rbacURL:         rbacURL,
+		tokenClient:     tokenClient,
+		maxRetries:      3,
+		initialBackoff:  100 * time.Millisecond,
+		maxBackoff:      2 * time.Second,
+		requestTimeout:  timeout,
+		tokenTimeout:    tokenTimeout,
+		tokenMaxRetries: tokenMaxRetries,
 	}
 }
 
@@ -166,44 +202,140 @@ func (r *rbacClientImpl) doRequestWithRetry(ctx context.Context, req *http.Reque
 
 		// Add authentication token if available
 		if r.tokenClient != nil {
-			tokenStart := time.Now()
+			var tokenResp *common.TokenResponse
+			var tokenErr error
 
-			// Capture request IDs once for consistency and efficiency
+			// Capture request IDs once for consistency
 			reqID := request_id.GetReqID(ctx)
 			internalReqID := utils.GetInternalRequestID(ctx)
 
-			// Log token acquisition start with request IDs
-			if log != nil {
-				log.Debugw("OIDC token acquisition started",
-					"request_id", reqID,
-					"internal_request_id", internalReqID,
-					"attempt", attempt+1)
-			}
+			// Check if token timeout/retry feature is enabled
+			if features.IsTokenTimeoutEnabled(ctx) {
+				// NEW: Token acquisition with retry and configurable timeout
+				// Configuration is read from kessel.token.timeout and kessel.token.max_retries
 
-			tokenResp, err := r.tokenClient.GetToken()
-			tokenDuration := time.Since(tokenStart)
+				// Retry token acquisition with shorter timeout per attempt
+				for tokenAttempt := 0; tokenAttempt <= r.tokenMaxRetries; tokenAttempt++ {
+					// Check if parent context was canceled
+					if ctx.Err() != nil {
+						cancel()
+						return nil, 0, fmt.Errorf("upstream request canceled, token acquisition aborted: %w", ctx.Err())
+					}
 
-			if err != nil {
-				// Log token acquisition failure
+					tokenStart := time.Now()
+
+					// Log token acquisition start
+					if log != nil {
+						log.Debugw("OIDC token acquisition started",
+							"request_id", reqID,
+							"internal_request_id", internalReqID,
+							"token_attempt", tokenAttempt+1,
+							"workspace_attempt", attempt+1,
+							"token_timeout_enabled", true)
+					}
+
+					// Create context with timeout just for token request
+					tokenCtx, tokenCancel := context.WithTimeout(ctx, r.tokenTimeout)
+					tokenResp, tokenErr = r.tokenClient.GetTokenWithContext(tokenCtx)
+					tokenDuration := time.Since(tokenStart)
+					tokenCancel() // Clean up immediately
+
+					if tokenErr == nil {
+						// Success!
+						if log != nil {
+							log.Debugw("OIDC token acquisition succeeded",
+								"request_id", reqID,
+								"internal_request_id", internalReqID,
+								"duration_seconds", fmt.Sprintf("%.3f", tokenDuration.Seconds()),
+								"token_attempt", tokenAttempt+1,
+								"workspace_attempt", attempt+1,
+								"token_timeout_enabled", true)
+						}
+						break // Exit retry loop
+					}
+
+					// Token acquisition failed - distinguish error types
+					// Check if parent context was canceled during token request
+					if ctx.Err() != nil {
+						if log != nil {
+							log.Warnw("OIDC token acquisition failed due to upstream context cancellation",
+								"request_id", reqID,
+								"internal_request_id", internalReqID,
+								"duration_seconds", fmt.Sprintf("%.3f", tokenDuration.Seconds()),
+								"token_attempt", tokenAttempt+1,
+								"workspace_attempt", attempt+1,
+								"upstream_error", ctx.Err(),
+								"token_error", tokenErr,
+								"token_timeout_enabled", true)
+						}
+						cancel()
+						return nil, 0, fmt.Errorf("upstream request canceled during token acquisition: %w", ctx.Err())
+					}
+
+					// Token request failed (timeout, network, TLS, etc.) but parent context still valid
+					if log != nil {
+						log.Warnw("OIDC token acquisition failed",
+							"request_id", reqID,
+							"internal_request_id", internalReqID,
+							"duration_seconds", fmt.Sprintf("%.3f", tokenDuration.Seconds()),
+							"token_attempt", tokenAttempt+1,
+							"workspace_attempt", attempt+1,
+							"error", tokenErr,
+							"token_timeout_enabled", true)
+					}
+
+					// If this was the last retry, give up
+					if tokenAttempt == r.tokenMaxRetries {
+						cancel()
+						// Categorize error for clearer alerting
+						errorCategory := categorizeTokenError(tokenErr)
+						return nil, 0, fmt.Errorf("token acquisition failed after %d attempts (%s): %w", r.tokenMaxRetries+1, errorCategory, tokenErr)
+					}
+
+					// Brief backoff before retry (50-100ms)
+					backoff := time.Duration(50+rand.Intn(50)) * time.Millisecond
+					time.Sleep(backoff)
+				}
+			} else {
+				// ORIGINAL: Legacy token acquisition (default)
+				tokenStart := time.Now()
+
+				// Log token acquisition start with request IDs
 				if log != nil {
-					log.Errorw("OIDC token acquisition failed",
+					log.Debugw("OIDC token acquisition started",
+						"request_id", reqID,
+						"internal_request_id", internalReqID,
+						"attempt", attempt+1,
+						"token_timeout_enabled", false)
+				}
+
+				tokenResp, tokenErr = r.tokenClient.GetToken()
+				tokenDuration := time.Since(tokenStart)
+
+				if tokenErr != nil {
+					// Log token acquisition failure
+					if log != nil {
+						log.Errorw("OIDC token acquisition failed",
+							"request_id", reqID,
+							"internal_request_id", internalReqID,
+							"duration_seconds", fmt.Sprintf("%.3f", tokenDuration.Seconds()),
+							"attempt", attempt+1,
+							"error", tokenErr,
+							"token_timeout_enabled", false)
+					}
+					cancel() // Clean up timeout context before returning error
+					return nil, 0, fmt.Errorf("failed to get auth token: %w", tokenErr)
+				}
+
+				// Log token acquisition success
+				if log != nil {
+					log.Debugw("OIDC token acquisition succeeded",
 						"request_id", reqID,
 						"internal_request_id", internalReqID,
 						"duration_seconds", fmt.Sprintf("%.3f", tokenDuration.Seconds()),
 						"attempt", attempt+1,
-						"error", err)
+						"token_timeout_enabled", false)
 				}
-				cancel() // Clean up timeout context before returning error
-				return nil, 0, fmt.Errorf("failed to get auth token: %w", err)
-			}
-
-			// Log token acquisition success
-			if log != nil {
-				log.Debugw("OIDC token acquisition succeeded",
-					"request_id", reqID,
-					"internal_request_id", internalReqID,
-					"duration_seconds", fmt.Sprintf("%.3f", tokenDuration.Seconds()),
-					"attempt", attempt+1)
 			}
 
 			reqWithTimeout.Header.Set("Authorization", fmt.Sprintf("Bearer %s", tokenResp.AccessToken))
@@ -324,4 +456,36 @@ func (r *rbacClientImpl) calculateBackoff(attempt int) time.Duration {
 	// Apply jitter: multiply by random value in range [0.5, 1.0]
 	jitter := 0.5 + rand.Float64()*0.5
 	return time.Duration(float64(backoff) * jitter)
+}
+
+// errorPatterns maps error substrings to categories for alerting
+var errorPatterns = []struct {
+	pattern  string
+	category string
+}{
+	{"TLS handshake timeout", "tls-timeout"},
+	{"context deadline exceeded", "timeout"},
+	{"i/o timeout", "io-timeout"},
+	{"connection refused", "connection-refused"},
+	{"connection reset", "connection-reset"},
+	{"no such host", "dns-error"},
+	{"context canceled", "canceled"},
+}
+
+// categorizeTokenError inspects the error and returns a category for alerting
+func categorizeTokenError(err error) string {
+	if err == nil {
+		return "unknown"
+	}
+
+	errStr := err.Error()
+
+	// Check patterns in order (most specific first)
+	for _, p := range errorPatterns {
+		if strings.Contains(errStr, p.pattern) {
+			return p.category
+		}
+	}
+
+	return "network-error"
 }

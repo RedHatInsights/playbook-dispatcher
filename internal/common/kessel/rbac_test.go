@@ -8,11 +8,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestNewRbacClient(t *testing.T) {
-	client := NewRbacClient("http://localhost:8080", nil, 10*time.Second)
+	client := NewRbacClient("http://localhost:8080", nil, 10*time.Second, viper.New())
 
 	assert.NotNil(t, client)
 	impl, ok := client.(*rbacClientImpl)
@@ -22,6 +23,9 @@ func TestNewRbacClient(t *testing.T) {
 	assert.Equal(t, 100*time.Millisecond, impl.initialBackoff)
 	assert.Equal(t, 2*time.Second, impl.maxBackoff)
 	assert.Equal(t, 10*time.Second, impl.requestTimeout)
+	// Test default token config values
+	assert.Equal(t, 3*time.Second, impl.tokenTimeout)
+	assert.Equal(t, 2, impl.tokenMaxRetries)
 }
 
 func TestGetDefaultWorkspaceID_Success(t *testing.T) {
@@ -37,7 +41,7 @@ func TestGetDefaultWorkspaceID_Success(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewRbacClient(server.URL, nil, 10*time.Second)
+	client := NewRbacClient(server.URL, nil, 10*time.Second, viper.New())
 	workspaceID, err := client.GetDefaultWorkspaceID(context.Background(), "test-org")
 
 	assert.NoError(t, err)
@@ -53,7 +57,7 @@ func TestGetDefaultWorkspaceID_NoWorkspaceFound(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewRbacClient(server.URL, nil, 10*time.Second)
+	client := NewRbacClient(server.URL, nil, 10*time.Second, viper.New())
 	workspaceID, err := client.GetDefaultWorkspaceID(context.Background(), "test-org")
 
 	assert.Error(t, err)
@@ -70,7 +74,7 @@ func TestGetDefaultWorkspaceID_InvalidJSON(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewRbacClient(server.URL, nil, 10*time.Second)
+	client := NewRbacClient(server.URL, nil, 10*time.Second, viper.New())
 	workspaceID, err := client.GetDefaultWorkspaceID(context.Background(), "test-org")
 
 	assert.Error(t, err)
@@ -180,7 +184,7 @@ func TestGetDefaultWorkspaceID_RetryOn503(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewRbacClient(server.URL, nil, 10*time.Second)
+	client := NewRbacClient(server.URL, nil, 10*time.Second, viper.New())
 	workspaceID, err := client.GetDefaultWorkspaceID(context.Background(), "test-org")
 
 	assert.NoError(t, err)
@@ -198,7 +202,7 @@ func TestGetDefaultWorkspaceID_MaxRetriesExceeded(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewRbacClient(server.URL, nil, 10*time.Second)
+	client := NewRbacClient(server.URL, nil, 10*time.Second, viper.New())
 	workspaceID, err := client.GetDefaultWorkspaceID(context.Background(), "test-org")
 
 	assert.Error(t, err)
@@ -217,7 +221,7 @@ func TestGetDefaultWorkspaceID_NoRetryOn404(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewRbacClient(server.URL, nil, 10*time.Second)
+	client := NewRbacClient(server.URL, nil, 10*time.Second, viper.New())
 	workspaceID, err := client.GetDefaultWorkspaceID(context.Background(), "test-org")
 
 	assert.Error(t, err)
@@ -258,7 +262,7 @@ func TestGetDefaultWorkspaceID_ContextTimeout(t *testing.T) {
 func TestNewRbacClient_URLConstruction_HostWithoutPort(t *testing.T) {
 	// Test that the client stores the URL correctly when host doesn't have port
 	url := "http://localhost:8080"
-	client := NewRbacClient(url, nil, 10*time.Second)
+	client := NewRbacClient(url, nil, 10*time.Second, viper.New())
 
 	impl, ok := client.(*rbacClientImpl)
 	assert.True(t, ok)
@@ -268,7 +272,7 @@ func TestNewRbacClient_URLConstruction_HostWithoutPort(t *testing.T) {
 func TestNewRbacClient_URLConstruction_HostWithPort(t *testing.T) {
 	// Test that the client stores the URL correctly when host already has port
 	url := "http://localhost:8080"
-	client := NewRbacClient(url, nil, 10*time.Second)
+	client := NewRbacClient(url, nil, 10*time.Second, viper.New())
 
 	impl, ok := client.(*rbacClientImpl)
 	assert.True(t, ok)
@@ -286,7 +290,7 @@ func TestGetDefaultWorkspaceID_URLFormatting(t *testing.T) {
 	defer server.Close()
 
 	// Test with host:port in the rbacURL (should not double the port)
-	client := NewRbacClient(server.URL, nil, 10*time.Second)
+	client := NewRbacClient(server.URL, nil, 10*time.Second, viper.New())
 	ctx := context.Background()
 	workspaceID, err := client.GetDefaultWorkspaceID(ctx, "test-org")
 
@@ -296,4 +300,91 @@ func TestGetDefaultWorkspaceID_URLFormatting(t *testing.T) {
 	assert.Contains(t, capturedURL, "/api/rbac/v2/workspaces/")
 	assert.Contains(t, capturedURL, "type=default")
 	assert.NotContains(t, capturedURL, "org_id")
+}
+
+func TestNewRbacClient_TokenTimeoutClamping(t *testing.T) {
+	tests := []struct {
+		name            string
+		configValue     int64 // seconds
+		requestTimeout  time.Duration
+		expectedTimeout time.Duration
+	}{
+		{
+			name:            "default when zero",
+			configValue:     0,
+			requestTimeout:  10 * time.Second,
+			expectedTimeout: 3 * time.Second,
+		},
+		{
+			name:            "default when negative",
+			configValue:     -5,
+			requestTimeout:  10 * time.Second,
+			expectedTimeout: 3 * time.Second,
+		},
+		{
+			name:            "clamp to request timeout when too large",
+			configValue:     20,
+			requestTimeout:  10 * time.Second,
+			expectedTimeout: 10 * time.Second,
+		},
+		{
+			name:            "accept valid value",
+			configValue:     5,
+			requestTimeout:  10 * time.Second,
+			expectedTimeout: 5 * time.Second,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := viper.New()
+			cfg.Set("kessel.token.timeout", tt.configValue)
+
+			client := NewRbacClient("http://localhost:8080", nil, tt.requestTimeout, cfg)
+			impl, ok := client.(*rbacClientImpl)
+			assert.True(t, ok)
+			assert.Equal(t, tt.expectedTimeout, impl.tokenTimeout)
+		})
+	}
+}
+
+func TestNewRbacClient_TokenMaxRetriesClamping(t *testing.T) {
+	tests := []struct {
+		name            string
+		configValue     int
+		expectedRetries int
+	}{
+		{
+			name:            "default when zero (explicit no retries)",
+			configValue:     0,
+			expectedRetries: 0,
+		},
+		{
+			name:            "default when negative",
+			configValue:     -1,
+			expectedRetries: 2,
+		},
+		{
+			name:            "clamp to maximum",
+			configValue:     10,
+			expectedRetries: 5,
+		},
+		{
+			name:            "accept valid value",
+			configValue:     3,
+			expectedRetries: 3,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := viper.New()
+			cfg.Set("kessel.token.max_retries", tt.configValue)
+
+			client := NewRbacClient("http://localhost:8080", nil, 10*time.Second, cfg)
+			impl, ok := client.(*rbacClientImpl)
+			assert.True(t, ok)
+			assert.Equal(t, tt.expectedRetries, impl.tokenMaxRetries)
+		})
+	}
 }

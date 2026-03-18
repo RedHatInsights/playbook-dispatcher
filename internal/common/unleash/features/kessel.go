@@ -16,6 +16,9 @@ const (
 	// KesselFeatureFlag is the name of the Unleash feature flag for Kessel authorization
 	KesselFeatureFlag = "playbook-dispatcher-kessel"
 
+	// KesselTokenTimeoutFeatureFlag is the name of the Unleash feature flag for token timeout/retry
+	KesselTokenTimeoutFeatureFlag = "playbook-dispatcher-kessel-tokentimeout"
+
 	// Variant names matching Unleash dashboard configuration
 	VariantRBACOnly           = "rbac-only"
 	VariantBothRBACEnforces   = "both-rbac-enforces"
@@ -257,4 +260,16 @@ func GetVariantWithFallback(fallbackVariant string) *api.Variant {
 		Name:    fallbackVariant,
 		Enabled: true,
 	}
+}
+
+// IsTokenTimeoutEnabled checks if the token timeout/retry feature is enabled
+// Returns false by default (uses current GetToken() implementation)
+// Returns true when enabled (uses new GetTokenWithContext() with retry)
+func IsTokenTimeoutEnabled(ctx context.Context) bool {
+	// Build Unleash context from request context for per-org targeting
+	unleashCtx := buildUnleashContext(ctx, nil)
+
+	// Check if feature is enabled with context
+	// Returns false by default if feature flag not found or Unleash not initialized
+	return unleash.IsEnabledWithContext(KesselTokenTimeoutFeatureFlag, unleashCtx)
 }
