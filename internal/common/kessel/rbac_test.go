@@ -12,7 +12,7 @@ import (
 )
 
 func TestNewRbacClient(t *testing.T) {
-	client := NewRbacClient("http://localhost:8080", nil, 10*time.Second)
+	client := NewRbacClient("http://localhost:8080", nil, 10*time.Second, RbacClientConfig{}, nil)
 
 	assert.NotNil(t, client)
 	impl, ok := client.(*rbacClientImpl)
@@ -22,6 +22,9 @@ func TestNewRbacClient(t *testing.T) {
 	assert.Equal(t, 100*time.Millisecond, impl.initialBackoff)
 	assert.Equal(t, 2*time.Second, impl.maxBackoff)
 	assert.Equal(t, 10*time.Second, impl.requestTimeout)
+	// Test default token config values
+	assert.Equal(t, DefaultTokenTimeout, impl.tokenTimeout)
+	assert.Equal(t, DefaultTokenMaxRetries, impl.tokenMaxRetries)
 }
 
 func TestGetDefaultWorkspaceID_Success(t *testing.T) {
@@ -37,7 +40,7 @@ func TestGetDefaultWorkspaceID_Success(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewRbacClient(server.URL, nil, 10*time.Second)
+	client := NewRbacClient(server.URL, nil, 10*time.Second, RbacClientConfig{}, nil)
 	workspaceID, err := client.GetDefaultWorkspaceID(context.Background(), "test-org")
 
 	assert.NoError(t, err)
@@ -53,7 +56,7 @@ func TestGetDefaultWorkspaceID_NoWorkspaceFound(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewRbacClient(server.URL, nil, 10*time.Second)
+	client := NewRbacClient(server.URL, nil, 10*time.Second, RbacClientConfig{}, nil)
 	workspaceID, err := client.GetDefaultWorkspaceID(context.Background(), "test-org")
 
 	assert.Error(t, err)
@@ -70,7 +73,7 @@ func TestGetDefaultWorkspaceID_InvalidJSON(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewRbacClient(server.URL, nil, 10*time.Second)
+	client := NewRbacClient(server.URL, nil, 10*time.Second, RbacClientConfig{}, nil)
 	workspaceID, err := client.GetDefaultWorkspaceID(context.Background(), "test-org")
 
 	assert.Error(t, err)
@@ -180,7 +183,7 @@ func TestGetDefaultWorkspaceID_RetryOn503(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewRbacClient(server.URL, nil, 10*time.Second)
+	client := NewRbacClient(server.URL, nil, 10*time.Second, RbacClientConfig{}, nil)
 	workspaceID, err := client.GetDefaultWorkspaceID(context.Background(), "test-org")
 
 	assert.NoError(t, err)
@@ -198,7 +201,7 @@ func TestGetDefaultWorkspaceID_MaxRetriesExceeded(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewRbacClient(server.URL, nil, 10*time.Second)
+	client := NewRbacClient(server.URL, nil, 10*time.Second, RbacClientConfig{}, nil)
 	workspaceID, err := client.GetDefaultWorkspaceID(context.Background(), "test-org")
 
 	assert.Error(t, err)
@@ -217,7 +220,7 @@ func TestGetDefaultWorkspaceID_NoRetryOn404(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewRbacClient(server.URL, nil, 10*time.Second)
+	client := NewRbacClient(server.URL, nil, 10*time.Second, RbacClientConfig{}, nil)
 	workspaceID, err := client.GetDefaultWorkspaceID(context.Background(), "test-org")
 
 	assert.Error(t, err)
@@ -258,7 +261,7 @@ func TestGetDefaultWorkspaceID_ContextTimeout(t *testing.T) {
 func TestNewRbacClient_URLConstruction_HostWithoutPort(t *testing.T) {
 	// Test that the client stores the URL correctly when host doesn't have port
 	url := "http://localhost:8080"
-	client := NewRbacClient(url, nil, 10*time.Second)
+	client := NewRbacClient(url, nil, 10*time.Second, RbacClientConfig{}, nil)
 
 	impl, ok := client.(*rbacClientImpl)
 	assert.True(t, ok)
@@ -268,7 +271,7 @@ func TestNewRbacClient_URLConstruction_HostWithoutPort(t *testing.T) {
 func TestNewRbacClient_URLConstruction_HostWithPort(t *testing.T) {
 	// Test that the client stores the URL correctly when host already has port
 	url := "http://localhost:8080"
-	client := NewRbacClient(url, nil, 10*time.Second)
+	client := NewRbacClient(url, nil, 10*time.Second, RbacClientConfig{}, nil)
 
 	impl, ok := client.(*rbacClientImpl)
 	assert.True(t, ok)
@@ -286,7 +289,7 @@ func TestGetDefaultWorkspaceID_URLFormatting(t *testing.T) {
 	defer server.Close()
 
 	// Test with host:port in the rbacURL (should not double the port)
-	client := NewRbacClient(server.URL, nil, 10*time.Second)
+	client := NewRbacClient(server.URL, nil, 10*time.Second, RbacClientConfig{}, nil)
 	ctx := context.Background()
 	workspaceID, err := client.GetDefaultWorkspaceID(ctx, "test-org")
 
@@ -296,4 +299,111 @@ func TestGetDefaultWorkspaceID_URLFormatting(t *testing.T) {
 	assert.Contains(t, capturedURL, "/api/rbac/v2/workspaces/")
 	assert.Contains(t, capturedURL, "type=default")
 	assert.NotContains(t, capturedURL, "org_id")
+}
+
+func TestNewRbacClient_TokenTimeoutClamping(t *testing.T) {
+	tests := []struct {
+		name            string
+		tokenTimeout    time.Duration
+		requestTimeout  time.Duration
+		expectedTimeout time.Duration
+	}{
+		{
+			name:            "default when zero",
+			tokenTimeout:    0,
+			requestTimeout:  10 * time.Second,
+			expectedTimeout: DefaultTokenTimeout,
+		},
+		{
+			name:            "default when negative",
+			tokenTimeout:    -5 * time.Second,
+			requestTimeout:  10 * time.Second,
+			expectedTimeout: DefaultTokenTimeout,
+		},
+		{
+			name:            "clamp to request timeout when too large",
+			tokenTimeout:    20 * time.Second,
+			requestTimeout:  10 * time.Second,
+			expectedTimeout: 10 * time.Second,
+		},
+		{
+			name:            "accept valid value",
+			tokenTimeout:    5 * time.Second,
+			requestTimeout:  10 * time.Second,
+			expectedTimeout: 5 * time.Second,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := RbacClientConfig{
+				TokenTimeout: tt.tokenTimeout,
+			}
+
+			client := NewRbacClient("http://localhost:8080", nil, tt.requestTimeout, cfg, nil)
+			impl, ok := client.(*rbacClientImpl)
+			assert.True(t, ok)
+			assert.Equal(t, tt.expectedTimeout, impl.tokenTimeout)
+		})
+	}
+}
+
+func TestNewRbacClient_TokenMaxRetriesClamping(t *testing.T) {
+	tests := []struct {
+		name            string
+		retries         int
+		retriesSet      bool
+		expectedRetries int
+	}{
+		{
+			name:            "default when not set",
+			retries:         0,
+			retriesSet:      false,
+			expectedRetries: DefaultTokenMaxRetries, // Uses default
+		},
+		{
+			name:            "explicit zero (no retries)",
+			retries:         0,
+			retriesSet:      true,
+			expectedRetries: 0, // Allows 0 retries explicitly
+		},
+		{
+			name:            "default when negative (invalid)",
+			retries:         -1,
+			retriesSet:      true,
+			expectedRetries: DefaultTokenMaxRetries, // Uses default for invalid value
+		},
+		{
+			name:            "clamp to maximum",
+			retries:         10,
+			retriesSet:      true,
+			expectedRetries: MaxTokenMaxRetries, // Clamped to max
+		},
+		{
+			name:            "accept valid value",
+			retries:         3,
+			retriesSet:      true,
+			expectedRetries: 3,
+		},
+		{
+			name:            "accept minimum valid value",
+			retries:         1,
+			retriesSet:      true,
+			expectedRetries: 1,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := RbacClientConfig{
+				TokenMaxRetries:    tt.retries,
+				TokenMaxRetriesSet: tt.retriesSet,
+			}
+
+			client := NewRbacClient("http://localhost:8080", nil, 10*time.Second, cfg, nil)
+			impl, ok := client.(*rbacClientImpl)
+			assert.True(t, ok)
+			assert.Equal(t, tt.expectedRetries, impl.tokenMaxRetries)
+		})
+	}
 }
