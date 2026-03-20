@@ -70,7 +70,7 @@ require (
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
-	github.com/klauspost/compress v1.18.4 // indirect
+	github.com/klauspost/compress v1.18.5 // indirect
 	github.com/labstack/gommon v0.4.2 // indirect
 	github.com/launchdarkly/eventsource v1.11.0 // indirect
 	github.com/lib/pq v1.11.2 // indirect
