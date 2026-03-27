@@ -70,8 +70,8 @@ github.com/apapsch/go-jsonmerge/v2 v2.0.0/go.mod h1:lvDnEdqiQrp0O42VQGgmlKpxL1AP
 github.com/authzed/grpcutil v0.0.0-20260105210157-e237581949c2 h1:ymPD1ugBsXVUpLIG/lnRn1ndgOrsrki/0ZX7uP/S1GI=
 github.com/authzed/grpcutil v0.0.0-20260105210157-e237581949c2/go.mod h1:FLssYBs1DrwuItfI411kzqcV8QSqGb/B7PC6snNhjvU=
 github.com/aws/aws-sdk-go v1.44.116/go.mod h1:y4AeaBuwd2Lk+GepC1E9v0qOiTws0MIWAX4oIKwKHZo=
-github.com/aws/aws-sdk-go v1.55.7 h1:UJrkFq7es5CShfBwlWAC8DA077vp8PyVbQd3lqLiztE=
-github.com/aws/aws-sdk-go v1.55.7/go.mod h1:eRwEWoyTWFMVYVQzKMNHWP5/RV4xIUGMQfXQHfHkpNU=
+github.com/aws/aws-sdk-go v1.55.8 h1:JRmEUbU52aJQZ2AjX4q4Wu7t4uZjOu71uyNmaWlUkJQ=
+github.com/aws/aws-sdk-go v1.55.8/go.mod h1:ZkViS9AqA6otK+JBBNH2++sx1sgxrPKcSzPPvQkUtXk=
 github.com/aws/aws-sdk-go-v2 v1.26.1 h1:5554eUqIYVWpU0YmeeYZ0wU64H2VLBs8TlhRB2L+EkA=
 github.com/aws/aws-sdk-go-v2 v1.26.1/go.mod h1:ffIFB97e2yNsv4aTSGkqtHnppsIJzw7G7BReUZ3jCXM=
 github.com/aws/aws-sdk-go-v2/config v1.27.10 h1:PS+65jThT0T/snC5WjyfHHyUgG+eBoupSDV+f838cro=
@@ -609,8 +609,8 @@ github.com/r3labs/sse v0.0.0-20210224172625-26fe804710bc h1:zAsgcP8MhzAbhMnB1QQ2
 github.com/r3labs/sse v0.0.0-20210224172625-26fe804710bc/go.mod h1:S8xSOnV3CgpNrWd0GQ/OoQfMtlg2uPRSuTzcSGrzwK8=
 github.com/redhatinsights/app-common-go v1.6.9 h1:juGobZnDvMqpx6DAO2qq9aFk/g93MblQQVVPPwTAfdM=
 github.com/redhatinsights/app-common-go v1.6.9/go.mod h1:KW0BK+bnhp3kXU8BFwebQXqCqjdkcRewZsDlXCSNMyo=
-github.com/redhatinsights/platform-go-middlewares/v2 v2.0.0 h1:h/Dj/puWcGxaevSmuFW7IhF0fInlvWjCrxDoS9i3EY4=
-github.com/redhatinsights/platform-go-middlewares/v2 v2.0.0/go.mod h1:W5XsWVaMd+bIjULyCrls2dH4FFPnfxySY1PTzTZl1Dg=
+github.com/redhatinsights/platform-go-middlewares/v2 v2.1.0 h1:io0kfNdS5xnMQgpa/dvD2zESDmDo/1hHyA1fIljnQTs=
+github.com/redhatinsights/platform-go-middlewares/v2 v2.1.0/go.mod h1:n81kaowKWiBb+uudfS4tlhEUCVeVky0D/n+6LIVaiU4=
 github.com/rivo/uniseg v0.2.0 h1:S1pD9weZBuJdFmowNwbpi7BJ8TNftyUImj/0WQi72jY=
 github.com/rivo/uniseg v0.2.0/go.mod h1:J6wj4VEh+S6ZtnVlnTBMWIodfgj8LQOQFoIToxlJtxc=
 github.com/rogpeppe/go-internal v1.3.0/go.mod h1:M8bDsm7K2OlrFYOpmOWEs/qY81heoFRclV5y23lUDJ4=
@@ -635,8 +635,8 @@ github.com/shoenig/go-m1cpu v0.1.6/go.mod h1:1JJMcUBvfNwpq05QDQVAnx3gUHr9IYF7GNg
 github.com/sirupsen/logrus v1.2.0/go.mod h1:LxeOpSwHxABJmUn/MG1IvRgCAasNZTLOkJPxbbu5VWo=
 github.com/sirupsen/logrus v1.4.2/go.mod h1:tLMulIdttU9McNUspp0xgXVQah82FyeX6MwdIuYE2rE=
 github.com/sirupsen/logrus v1.6.0/go.mod h1:7uNnSEd1DgxDLC74fIahvMZmmYsHGZGEOFrfsX/uA88=
-github.com/sirupsen/logrus v1.9.3 h1:dueUQJ1C2q9oE3F7wvmSGAaVtTmUizReu6fjN8uqzbQ=
-github.com/sirupsen/logrus v1.9.3/go.mod h1:naHLuLoDiP4jHNo9R0sCBMtWGeIprob74mVsIT4qYEQ=
+github.com/sirupsen/logrus v1.9.4 h1:TsZE7l11zFCLZnZ+teH4Umoq5BhEIfIzfRDZ1Uzql2w=
+github.com/sirupsen/logrus v1.9.4/go.mod h1:ftWc9WdOfJ0a92nsE2jF5u5ZwH8Bv2zdeOC42RjbV2g=
 github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966 h1:JIAuq3EEf9cgbU6AtGPK4CTG3Zf6CKMNqf0MHTggAUA=
 github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966/go.mod h1:sUM3LWHvSMaG192sy56D9F7CNvL7jUJVXoqM1QKLnog=
 github.com/speakeasy-api/jsonpath v0.6.0 h1:IhtFOV9EbXplhyRqsVhHoBmmYjblIRh5D1/g8DHMXJ8=

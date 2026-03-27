@@ -5,7 +5,7 @@ go 1.25.7
 require (
 	github.com/RedHatInsights/tenant-utils v1.0.0
 	github.com/Unleash/unleash-go-sdk/v5 v5.1.0
-	github.com/aws/aws-sdk-go v1.55.7
+	github.com/aws/aws-sdk-go v1.55.8
 	github.com/confluentinc/confluent-kafka-go/v2 v2.13.0
 	github.com/getkin/kin-openapi v0.133.0
 	github.com/ghodss/yaml v1.0.0
@@ -23,7 +23,7 @@ require (
 	github.com/prometheus/client_golang v1.23.2
 	github.com/qri-io/jsonschema v0.2.1
 	github.com/redhatinsights/app-common-go v1.6.9
-	github.com/redhatinsights/platform-go-middlewares/v2 v2.0.0
+	github.com/redhatinsights/platform-go-middlewares/v2 v2.1.0
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/viper v1.21.0
 	github.com/stretchr/testify v1.11.1
