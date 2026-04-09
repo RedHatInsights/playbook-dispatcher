@@ -95,7 +95,9 @@ public class RunHostEventTransform<T extends ConnectRecord<T>> implements Transf
 
         try {
             final String marshalledValue = objectMapper.writeValueAsString(event);
-            LOG.info("processed message; key: {}, event_type: {}", newKey, event.getEventType());
+            if (LOG.isInfoEnabled()) {
+                LOG.info("processed message; key: {}, event_type: {}", newKey, event.getEventType());
+            }
             return record.newRecord(this.topic, record.kafkaPartition(), null, newKey, null, marshalledValue, record.timestamp(), headers);
         } catch (JsonProcessingException e) {
             LOG.error("Error marshalling JSON", e);
