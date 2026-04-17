@@ -46,7 +46,12 @@ func GetPredicateValues(permissions []Access, key string) (result []string) {
 					continue
 				}
 
-				result = append(result, operationIn.Value...)
+				// Dereference pointers from []*string to []string
+				for _, v := range operationIn.Value {
+					if v != nil {
+						result = append(result, *v)
+					}
+				}
 			}
 		}
 	}
