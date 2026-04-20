@@ -49,6 +49,26 @@ func (m *mockKesselInventoryService) StreamedListObjects(ctx context.Context, in
 	return nil, errors.New("not implemented")
 }
 
+func (m *mockKesselInventoryService) CheckSelf(ctx context.Context, in *kesselv2.CheckSelfRequest, opts ...grpc.CallOption) (*kesselv2.CheckSelfResponse, error) {
+	return nil, errors.New("not implemented")
+}
+
+func (m *mockKesselInventoryService) CheckBulk(ctx context.Context, in *kesselv2.CheckBulkRequest, opts ...grpc.CallOption) (*kesselv2.CheckBulkResponse, error) {
+	return nil, errors.New("not implemented")
+}
+
+func (m *mockKesselInventoryService) CheckForUpdateBulk(ctx context.Context, in *kesselv2.CheckForUpdateBulkRequest, opts ...grpc.CallOption) (*kesselv2.CheckForUpdateBulkResponse, error) {
+	return nil, errors.New("not implemented")
+}
+
+func (m *mockKesselInventoryService) CheckSelfBulk(ctx context.Context, in *kesselv2.CheckSelfBulkRequest, opts ...grpc.CallOption) (*kesselv2.CheckSelfBulkResponse, error) {
+	return nil, errors.New("not implemented")
+}
+
+func (m *mockKesselInventoryService) StreamedListSubjects(ctx context.Context, in *kesselv2.StreamedListSubjectsRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[kesselv2.StreamedListSubjectsResponse], error) {
+	return nil, errors.New("not implemented")
+}
+
 // Test helper to set up mock client
 func setupMockClient(mockService *mockKesselInventoryService) func() {
 	mockClient := &v1beta2.InventoryClient{
