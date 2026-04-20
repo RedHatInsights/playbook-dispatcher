@@ -62,6 +62,7 @@ public class RunHostEventTransform<T extends ConnectRecord<T>> implements Transf
     }
 
     @Override
+    @SuppressWarnings("PMD.GuardLogStatement")
     public T apply(T record) {
         if (record.topic() != null && record.topic().startsWith(HEARTBEAT_TOPIC_PREFIX)) {
             LOG.info("Received heartbeat");
