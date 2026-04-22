@@ -528,12 +528,12 @@ github.com/oapi-codegen/echo-middleware v1.0.2 h1:oNBqiE7jd/9bfGNk/bpbX2nqWrtPc+
 github.com/oapi-codegen/echo-middleware v1.0.2/go.mod h1:5J6MFcGqrpWLXpbKGZtRPZViLIHyyyUHlkqg6dT2R4E=
 github.com/oapi-codegen/oapi-codegen/v2 v2.6.0 h1:4i+F2cvwBFZeplxCssNdLy3MhNzUD87mI3HnayHZkAU=
 github.com/oapi-codegen/oapi-codegen/v2 v2.6.0/go.mod h1:eWHeJSohQJIINJZzzQriVynfGsnlQVh0UkN2UYYcw4Q=
-github.com/oapi-codegen/runtime v1.2.0 h1:RvKc1CVS1QeKSNzO97FBQbSMZyQ8s6rZd+LpmzwHMP4=
-github.com/oapi-codegen/runtime v1.2.0/go.mod h1:Y7ZhmmlE8ikZOmuHRRndiIm7nf3xcVv+YMweKgG1DT0=
 github.com/oasdiff/yaml v0.0.9 h1:zQOvd2UKoozsSsAknnWoDJlSK4lC0mpmjfDsfqNwX48=
 github.com/oasdiff/yaml v0.0.9/go.mod h1:8lvhgJG4xiKPj3HN5lDow4jZHPlx1i7dIwzkdAo6oAM=
 github.com/oasdiff/yaml3 v0.0.9 h1:rWPrKccrdUm8J0F3sGuU+fuh9+1K/RdJlWF7O/9yw2g=
 github.com/oasdiff/yaml3 v0.0.9/go.mod h1:y5+oSEHCPT/DGrS++Wc/479ERge0zTFxaF8PbGKcg2o=
+github.com/oapi-codegen/runtime v1.4.0 h1:KLOSFOp7UzkbS7Cs1ms6NBEKYr0WmH2wZG0KKbd2er4=
+github.com/oapi-codegen/runtime v1.4.0/go.mod h1:5sw5fxCDmnOzKNYmkVNF8d34kyUeejJEY8HNT2WaPec=
 github.com/oleiade/lane v1.0.1 h1:hXofkn7GEOubzTwNpeL9MaNy8WxolCYb9cInAIeqShU=
 github.com/oleiade/lane v1.0.1/go.mod h1:IyTkraa4maLfjq/GmHR+Dxb4kCMtEGeb+qmhlrQ5Mk4=
 github.com/onsi/ginkgo v1.6.0/go.mod h1:lLunBs/Ym6LB5Z9jYTR76FiuTmxDTDusOGeTQH+WWjE=
@@ -575,8 +575,8 @@ github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 h1:Jamvg5psRI
 github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/power-devops/perfstat v0.0.0-20221212215047-62379fc7944b h1:0LFwY6Q3gMACTjAbMZBjXAqTOzOwFaj2Ld6cjeQ7Rig=
 github.com/power-devops/perfstat v0.0.0-20221212215047-62379fc7944b/go.mod h1:OmDBASR4679mdNQnz2pUhc2G8CO2JrUAVFDRBDP/hJE=
-github.com/project-kessel/inventory-api v0.0.0-20260421171451-9e7e9ff28032 h1:SaIojqSV4VfOtX0R9T4c/utWkxUEfQj4xFOtXREC/xs=
-github.com/project-kessel/inventory-api v0.0.0-20260421171451-9e7e9ff28032/go.mod h1:VDWXeM1eP8xrYxEDQYuyEUMJZml5Bfrt86XOkWy+Fn8=
+github.com/project-kessel/inventory-api v0.0.0-20260422134415-ed4661018b7f h1:WT1WJ+tJRMftMB+Ks+AahmW7OB/7vD9IvMQ/pfI4GsY=
+github.com/project-kessel/inventory-api v0.0.0-20260422134415-ed4661018b7f/go.mod h1:VDWXeM1eP8xrYxEDQYuyEUMJZml5Bfrt86XOkWy+Fn8=
 github.com/project-kessel/inventory-client-go v0.0.0-20260306190649-906d3ba4a829 h1:Qha/6CvoGCgutE94MQO3lu10YmQ9pZYCU/CsnyXTNT0=
 github.com/project-kessel/inventory-client-go v0.0.0-20260306190649-906d3ba4a829/go.mod h1:SyQfr20EDYld5nVQK/K2aLj2Uu9DETwvWzAZDCYB1yM=
 github.com/prometheus/client_golang v0.9.1/go.mod h1:7SWBe2y4D6OKWSNQJUaRYU/AaXPKyh/dDVn+NZz0KFw=
@@ -1048,8 +1048,8 @@ google.golang.org/genproto v0.0.0-20200804131852-c06518451d9c/go.mod h1:FWY/as6D
 google.golang.org/genproto v0.0.0-20200825200019-8632dd797987/go.mod h1:FWY/as6DDZQgahTzZj3fqbO1CbirC29ZNUFHwi0/+no=
 google.golang.org/genproto v0.0.0-20260406210006-6f92a3bedf2d h1:N1Ec54vZnIPd7MnxRiYLW+oY4fDR4BOS/LrssdD9+ek=
 google.golang.org/genproto v0.0.0-20260406210006-6f92a3bedf2d/go.mod h1:c2hJ1grtnH0xUiEKGDGkjGNTJ1Hy2LrblyKOHF0sqRM=
-google.golang.org/genproto/googleapis/api v0.0.0-20260414002931-afd174a4e478 h1:yQugLulqltosq0B/f8l4w9VryjV+N/5gcW0jQ3N8Qec=
-google.golang.org/genproto/googleapis/api v0.0.0-20260414002931-afd174a4e478/go.mod h1:C6ADNqOxbgdUUeRTU+LCHDPB9ttAMCTff6auwCVa4uc=
+google.golang.org/genproto/googleapis/api v0.0.0-20260420184626-e10c466a9529 h1:zUWMZsvo/IJcD1t6MNCPO/azZTwz0TvwCBqr5aifoVY=
+google.golang.org/genproto/googleapis/api v0.0.0-20260420184626-e10c466a9529/go.mod h1:a5OGAgyRr4lqco7AG9hQM9Fwh0N2ZV4grR0eXFEsXQg=
 google.golang.org/genproto/googleapis/rpc v0.0.0-20260420184626-e10c466a9529 h1:XF8+t6QQiS0o9ArVan/HW8Q7cycNPGsJf6GA2nXxYAg=
 google.golang.org/genproto/googleapis/rpc v0.0.0-20260420184626-e10c466a9529/go.mod h1:4Hqkh8ycfw05ld/3BWL7rJOSfebL2Q+DVDeRgYgxUU8=
 google.golang.org/grpc v1.19.0/go.mod h1:mqu4LbDTu4XGKhr4mRzUsmM4RtVoemTSY81AxZiDr8c=
