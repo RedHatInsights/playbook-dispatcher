@@ -57,21 +57,21 @@ func (apii *controllers) ApiInternalV2RunHostsList(ctx echo.Context, params ApiI
 			}
 		}
 
-		if params.Filter.Run != nil {
-			if params.Filter.Run.Id != nil {
-				queryBuilder.Where("run_hosts.run_id = ?", *params.Filter.Run.Id)
+		if runFilters := middleware.GetDeepObject(ctx, "filter", "run"); len(runFilters) > 0 {
+			if id, ok := runFilters["id"]; ok {
+				queryBuilder.Where("run_hosts.run_id = ?", id)
 			}
 
-			if params.Filter.Run.Service != nil {
-				queryBuilder.Where("runs.service = ?", *params.Filter.Run.Service)
+			if service, ok := runFilters["service"]; ok {
+				queryBuilder.Where("runs.service = ?", service)
 			}
+		}
 
-			if params.Filter.Run.Labels != nil {
-				queryBuilder, err = addLabelFilterToQueryAsWhereClause(queryBuilder, *params.Filter.Run.Labels)
-				if err != nil {
-					instrumentation.PlaybookApiRequestError(ctx, err)
-					return echo.NewHTTPError(http.StatusInternalServerError, "Unable to handle labels query!")
-				}
+		if labelFilters := middleware.GetDeepObject(ctx, "filter", "run", "labels"); len(labelFilters) > 0 {
+			queryBuilder, err = addLabelFilterToQueryAsWhereClause(queryBuilder, labelFilters)
+			if err != nil {
+				instrumentation.PlaybookApiRequestError(ctx, err)
+				return echo.NewHTTPError(http.StatusInternalServerError, "Unable to handle labels query!")
 			}
 		}
 
@@ -193,14 +193,10 @@ func parseFields(input map[string][]string, key string, knownFields map[string]s
 
 	for _, value := range selectedFields {
 		for _, field := range strings.Split(value, ",") {
-			trimmed := strings.TrimSpace(field)
-			if trimmed == "" {
-				continue
-			}
-			if _, ok := knownFields[trimmed]; ok {
-				result = append(result, trimmed)
+			if _, ok := knownFields[field]; ok {
+				result = append(result, field)
 			} else {
-				return nil, fmt.Errorf("unknown field: %s", trimmed)
+				return nil, fmt.Errorf("unknown field: %s", field)
 			}
 		}
 	}
@@ -264,7 +260,15 @@ func inventoryLink(inventoryID *uuid.UUID) *string {
 	return &link
 }
 
-func addLabelFilterToQueryAsWhereClause(queryBuilder *gorm.DB, labels map[string]string) (*gorm.DB, error) {
+func addLabelFilterToQueryAsWhereClause(queryBuilder *gorm.DB, labelFilters map[string][]string) (*gorm.DB, error) {
+	labels := make(map[string]string)
+
+	for key, values := range labelFilters {
+		for _, value := range values {
+			labels[key] = value
+		}
+	}
+
 	if len(labels) == 0 {
 		return queryBuilder, nil
 	}

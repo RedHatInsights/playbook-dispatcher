@@ -96,8 +96,8 @@ func (this *controllers) ApiRunsList(ctx echo.Context, params ApiRunsListParams)
 		}
 	}
 
-	if params.Filter != nil && params.Filter.Labels != nil {
-		queryBuilder, err = addLabelFilterToQueryAsWhereClause(queryBuilder, *params.Filter.Labels)
+	if labelFilters := middleware.GetDeepObject(ctx, "filter", "labels"); len(labelFilters) > 0 {
+		queryBuilder, err = addLabelFilterToQueryAsWhereClause(queryBuilder, labelFilters)
 		if err != nil {
 			instrumentation.PlaybookApiRequestError(ctx, err)
 			return echo.NewHTTPError(http.StatusInternalServerError, "Unable to handle labels query!")
@@ -143,7 +143,21 @@ func (this *controllers) ApiRunsList(ctx echo.Context, params ApiRunsListParams)
 	})
 }
 
-func addLabelFilterToQueryAsWhereClause(queryBuilder *gorm.DB, labels map[string]string) (*gorm.DB, error) {
+func addLabelFilterToQueryAsWhereClause(queryBuilder *gorm.DB, labelFilters map[string][]string) (*gorm.DB, error) {
+	labels := make(map[string]string)
+
+	for key, values := range labelFilters {
+		// The inner for loop seems kind of odd.  The labels are basically a
+		// hash map. As a result, you cannot have duplicate keys.  However, it
+		// seems to be possible to pass in multiple values for the same key in
+		// the web request url.  With the approach below, we will take the last
+		// value for duplicate keys that are passed in on the url.
+		// example:  api/playbook-dispatcher/v1/runs?filter[labels][bar]=5678&filter[labels][bar]=1234"
+		for _, value := range values {
+			labels[key] = value
+		}
+	}
+
 	if len(labels) == 0 {
 		return queryBuilder, nil
 	}
