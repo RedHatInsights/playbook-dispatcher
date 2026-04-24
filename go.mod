@@ -18,7 +18,7 @@ require (
 	github.com/oapi-codegen/runtime v1.2.0
 	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.39.1
-	github.com/project-kessel/inventory-api v0.0.0-20260423155625-f021d46314ec
+	github.com/project-kessel/inventory-api v0.0.0-20260424123641-dab68a2415c5
 	github.com/project-kessel/inventory-client-go v0.0.0-20260306190649-906d3ba4a829
 	github.com/prometheus/client_golang v1.23.2
 	github.com/qri-io/jsonschema v0.2.1
@@ -81,6 +81,7 @@ require (
 	github.com/moby/go-archive v0.2.0 // indirect
 	github.com/moby/moby/api v1.54.2 // indirect
 	github.com/moby/moby/client v0.4.1 // indirect
+	github.com/moby/sys/atomicwriter v0.1.0 // indirect
 	github.com/moby/sys/capability v0.4.0 // indirect
 	github.com/moby/sys/user v0.4.0 // indirect
 	github.com/moby/term v0.5.2 // indirect
