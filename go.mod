@@ -18,7 +18,7 @@ require (
 	github.com/oapi-codegen/runtime v1.2.0
 	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.39.1
-	github.com/project-kessel/inventory-api v0.0.0-20260424123641-dab68a2415c5
+	github.com/project-kessel/inventory-api v0.0.0-20260428124017-21936e7f7e6d
 	github.com/project-kessel/inventory-client-go v0.0.0-20260306190649-906d3ba4a829
 	github.com/prometheus/client_golang v1.23.2
 	github.com/qri-io/jsonschema v0.2.1
