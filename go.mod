@@ -43,7 +43,7 @@ require (
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/certifi/gocertifi v0.0.0-20210507211836-431795d63e8d // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
-	github.com/containerd/continuity v0.4.5 // indirect
+	github.com/containerd/continuity v0.5.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/docker/cli v29.4.1+incompatible // indirect
 	github.com/docker/go-connections v0.7.0 // indirect
