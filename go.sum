@@ -179,8 +179,8 @@ github.com/docker/go-metrics v0.0.1/go.mod h1:cG1hvH2utMXtqgqqYE9plW6lDxS3/5ayHz
 github.com/docker/go-units v0.5.0 h1:69rxXcBk27SvSaaxTtLh/8llcHD8vYHT7WSdRZ/jvr4=
 github.com/docker/go-units v0.5.0/go.mod h1:fgPhTUdO+D/Jk86RDLlptpiXQzgHJF7gydDDbaIK4Dk=
 github.com/dprotaso/go-yit v0.0.0-20191028211022-135eb7262960/go.mod h1:9HQzr9D/0PGwMEbC3d5AB7oi67+h4TsQqItC1GVYG58=
-github.com/dprotaso/go-yit v0.0.0-20260209000607-dfb86291624d h1:/USl0X37Afc2SyjRG4/eNrbm4CZRfZLdzwTy9YXxowA=
-github.com/dprotaso/go-yit v0.0.0-20260209000607-dfb86291624d/go.mod h1:k03zg0AFMepR2TrssNeMUISoI0QcX2N58Sl0qPU6MZs=
+github.com/dprotaso/go-yit v0.0.0-20260505203253-b1e9c41b42c9 h1:bk/7BZZJzVXleFAd2d3k+ON5Lx7EgtnPdxrPwsYg0dw=
+github.com/dprotaso/go-yit v0.0.0-20260505203253-b1e9c41b42c9/go.mod h1:N9wtRAOYaB2BW9u04V5jFd3YC4czqMUnXPXcN+GvkO4=
 github.com/eiannone/keyboard v0.0.0-20220611211555-0d226195f203 h1:XBBHcIb256gUJtLmY22n99HaZTz+r2Z51xUPi01m3wg=
 github.com/eiannone/keyboard v0.0.0-20220611211555-0d226195f203/go.mod h1:E1jcSv8FaEny+OP/5k9UxZVw9YFWGj7eI4KR/iOBqCg=
 github.com/emicklei/go-restful/v3 v3.11.0 h1:rAQeMHw1c7zTmncogyy8VvRZwtkmkZ4FxERmMY4rD+g=
