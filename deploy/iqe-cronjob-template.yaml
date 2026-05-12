@@ -59,7 +59,7 @@ objects:
                     - name: IQE_NETLOG
                       value: '${IQE_NETLOG}'
                     - name: IQE_PLUGINS 
-                      value: 'playbook-dispatcher'
+                      value: '${IQE_PLUGINS}'
                     - name: IQE_MARKER_EXPRESSION
                       value: '${IQE_MARKER_EXPRESSION}'
                     - name: IQE_FILTER_EXPRESSION
@@ -146,10 +146,6 @@ objects:
                     requests:
                       cpu: '${SEL_REQUESTS_CPU}'
                       memory: '${SEL_REQUESTS_MEMORY}'
-                  volumeMounts:
-                    - name: sel-shm
-                      mountPath: /dev/shm
-                  restartPolicy: Always # im a sidecar 🤡
 parameters:
   - name: IMAGE_TAG
     value: ''
@@ -166,7 +162,7 @@ parameters:
     description: container image path for the iqe plugin
     value: quay.io/cloudservices/iqe-tests
   - name: IQE_PLUGINS
-    value: 'platbook-dispatcher'
+    value: ''
     required: true
   - name: IQE_IMAGE_TAG
     value: ''
