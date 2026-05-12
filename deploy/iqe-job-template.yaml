@@ -202,7 +202,7 @@ parameters:
   - name: SEL_REQUESTS_MEMORY
     value: 256Mi
   - name: DYNACONF_DEFAULT_USER
-    value: 'insights_qa'
+    value: 'playbook_dispatcher_1'
   - name: IQE_RP_ARGS
     value: 'true'
   - name: RP_LAUNCH_DESCRIPTION
