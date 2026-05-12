@@ -48,7 +48,7 @@ require (
 	github.com/docker/cli v29.4.2+incompatible // indirect
 	github.com/docker/go-connections v0.7.0 // indirect
 	github.com/dprotaso/go-yit v0.0.0-20260209000607-dfb86291624d // indirect
-	github.com/fsnotify/fsnotify v1.10.0 // indirect
+	github.com/fsnotify/fsnotify v1.10.1 // indirect
 	github.com/go-kratos/aegis v0.2.0 // indirect
 	github.com/go-kratos/kratos/v2 v2.9.2 // indirect
 	github.com/go-openapi/jsonpointer v0.23.1 // indirect
