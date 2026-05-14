@@ -179,14 +179,6 @@ parameters:
     value: 250m
   - name: IQE_REQUESTS_MEMORY
     value: 2Gi
-  - name: SEL_LIMITS_CPU
-    value: 500m
-  - name: SEL_LIMITS_MEMORY
-    value: 2Gi
-  - name: SEL_REQUESTS_CPU
-    value: 100m
-  - name: SEL_REQUESTS_MEMORY
-    value: 256Mi
   - name: DYNACONF_DEFAULT_USER
     value: 'playbook_dispatcher_1'
   - name: IQE_RP_ARGS
