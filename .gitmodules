@@ -1,3 +1,0 @@
-[submodule "sre-testing-templates"]
-	path = sre-testing-templates
-	url = https://github.com/RedHatInsights/sre-testing-templates.git
