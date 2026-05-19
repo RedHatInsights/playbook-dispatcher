@@ -1,0 +1,221 @@
+apiVersion: template.openshift.io/v1
+kind: Template
+metadata:
+  name: 'playbook-dispatcher-e2e-tests-job'
+objects:
+  - apiVersion: batch/v1
+    kind: Job
+    metadata:
+      name: 'playbook-dispatcher-e2e-tests-job'
+      annotations:
+        ignore-check.kube-linter.io/no-liveness-probe: probes not required on Job pods
+        ignore-check.kube-linter.io/no-readiness-probe: probes not required on Job pods
+    spec:
+      activeDeadlineSeconds: ${{PIPELINE_TIMEOUT}}
+      backoffLimit: 0
+      template:
+        metadata:
+          labels:
+            iqe-metrics: "true"
+        spec:
+          imagePullSecrets:
+            - name: quay-cloudservices-pull
+          restartPolicy: Never
+          volumes:
+            - name: sel-shm
+              emptyDir:
+                medium: Memory
+            - name: insights-qa-private-key
+              secret:
+                secretName: insights-qa-private-key
+                defaultMode: 384 # Means 0600
+                optional: true
+          containers:
+            - name: 'iqe-runner-playbook-dispatcher-e2e-tests-job-${IMAGE_TAG}-${UID}'
+              image: '${IQE_IMAGE}:${IQE_IMAGE_TAG}'
+              imagePullPolicy: Always
+              args:
+                - run
+              envFrom:
+                - secretRef:
+                    name: iqe-ibutsu-token
+                    optional: true
+                - configMapRef:
+                    name: '${CONFIGMAP_NAME}'
+              env:
+                - name: ENV_FOR_DYNACONF
+                  value: '${ENV_FOR_DYNACONF}'
+                - name: DYNACONF_MAIN__use_beta
+                  value: '${USE_BETA}'
+                - name: IBUTSU_SOURCE
+                  value: 'playbook-dispatcher-${IMAGE_TAG}-${UID}'
+                - name: IQE_BROWSERLOG
+                  value: '${IQE_BROWSERLOG}'
+                - name: IQE_NETLOG
+                  value: '${IQE_NETLOG}'
+                - name: IQE_PLUGINS
+                  value: 'playbook-dispatcher'
+                - name: IQE_MARKER_EXPRESSION
+                  value: '${IQE_MARKER_EXPRESSION}'
+                - name: IQE_FILTER_EXPRESSION
+                  value: '${IQE_FILTER_EXPRESSION}'
+                - name: IQE_LOG_LEVEL
+                  value: '${IQE_LOG_LEVEL}'
+                - name: IQE_REQUIREMENTS
+                  value: '${IQE_REQUIREMENTS}'
+                - name: IQE_REQUIREMENTS_PRIORITY
+                  value: '${IQE_REQUIREMENTS_PRIORITY}'
+                - name: IQE_TEST_IMPORTANCE
+                  value: '${IQE_TEST_IMPORTANCE}'
+                - name: IQE_PROMETHEUS_ENABLED
+                  value: '${IQE_PROMETHEUS_ENABLED}'
+                - name: DYNACONF_IQE_VAULT_LOADER_ENABLED
+                  value: 'true'
+                - name: DYNACONF_IQE_VAULT_VERIFY
+                  value: 'true'
+                - name: DYNACONF_DEFAULT_USER
+                  value: '${DYNACONF_DEFAULT_USER}'
+                - name: DYNACONF_IQE_VAULT_URL
+                  valueFrom:
+                    secretKeyRef:
+                      key: url
+                      name: iqe-vault
+                      optional: true
+                - name: DYNACONF_IQE_VAULT_MOUNT_POINT
+                  valueFrom:
+                    secretKeyRef:
+                      key: mountPoint
+                      name: iqe-vault
+                      optional: true
+                - name: DYNACONF_IQE_VAULT_ROLE_ID
+                  valueFrom:
+                    secretKeyRef:
+                      key: roleId
+                      name: iqe-vault
+                      optional: true
+                - name: DYNACONF_IQE_VAULT_SECRET_ID
+                  valueFrom:
+                    secretKeyRef:
+                      key: secretId
+                      name: iqe-vault
+                      optional: true
+                - name: PYTEST_ADDOPTS
+                  value: '${PYTEST_ADDOPTS}'
+              ports:
+                - containerPort: 9091
+                  name: metrics
+                  protocol: TCP
+              resources:
+                limits:
+                  cpu: '${IQE_LIMITS_CPU}'
+                  memory: '${IQE_LIMITS_MEMORY}'
+                requests:
+                  cpu: '${IQE_REQUESTS_CPU}'
+                  memory: '${IQE_REQUESTS_MEMORY}'
+              volumeMounts:
+                - name: insights-qa-private-key
+                  mountPath: /iqe_venv/.ssh
+                  readOnly: true
+              terminationMessagePath: /dev/termination-log
+              terminationMessagePolicy: File
+          initContainers:
+            - name: 'iqe-sel-${IMAGE_TAG}-${UID}'
+              image: '${IQE_SEL_IMAGE}'
+              env:
+                - name: _JAVA_OPTIONS
+                  value: '${SELENIUM_JAVA_OPTS}'
+                - name: SE_NODE_MAX_SESSIONS
+                  value: '${SE_NODE_MAX_SESSIONS}'
+                - name: SE_NODE_OVERRIDE_MAX_SESSIONS
+                  value: '${SE_NODE_OVERRIDE_MAX_SESSIONS}'
+              resources:
+                limits:
+                  cpu: '${SEL_LIMITS_CPU}'
+                  memory: '${SEL_LIMITS_MEMORY}'
+                requests:
+                  cpu: '${SEL_REQUESTS_CPU}'
+                  memory: '${SEL_REQUESTS_MEMORY}'
+parameters:
+  - name: IMAGE_TAG
+    value: ''
+    required: true
+  - name: UID
+    description: Unique job name suffix
+    generate: expression
+    from: '[a-z0-9]{6}'
+  - name: IQE_IMAGE
+    description: container image path for the iqe plugin
+    value: quay.io/cloudservices/iqe-tests
+  - name: IQE_PLUGINS
+    value: '${IQE_PLUGINS}'
+    required: true
+  - name: IQE_IMAGE_TAG
+    value: ''
+  - name: ENV_FOR_DYNACONF
+    value: ''
+  - name: USE_BETA
+    value: 'true'
+  - name: IQE_MARKER_EXPRESSION
+    value: ''
+  - name: IQE_FILTER_EXPRESSION
+    value: ''
+  - name: IQE_LOG_LEVEL
+    value: info
+  - name: IQE_REQUIREMENTS
+    value: ''
+  - name: IQE_REQUIREMENTS_PRIORITY
+    value: ''
+  - name: IQE_TEST_IMPORTANCE
+    value: ''
+  - name: IQE_SEL_IMAGE
+    value: 'quay.io/app-sre/selenium-standalone-chrome:136.0-20250828'
+  - name: IQE_BROWSERLOG
+    value: '1'
+  - name: IQE_NETLOG
+    value: '1'
+  - name: NAME_STUB
+    value: ''
+  - name: SELENIUM_JAVA_OPTS
+    value: ''
+  - name: SE_NODE_MAX_SESSIONS
+    value: '2'
+  - name: SE_NODE_OVERRIDE_MAX_SESSIONS
+    value: 'true'
+  - name: IQE_LIMITS_CPU
+    value: '1.5'
+  - name: IQE_LIMITS_MEMORY
+    value: 1.5Gi
+  - name: IQE_REQUESTS_CPU
+    value: 250m
+  - name: IQE_REQUESTS_MEMORY
+    value: 512Mi
+  - name: SEL_LIMITS_CPU
+    value: 500m
+  - name: SEL_LIMITS_MEMORY
+    value: 2Gi
+  - name: SEL_REQUESTS_CPU
+    value: 100m
+  - name: SEL_REQUESTS_MEMORY
+    value: 256Mi
+  - name: DYNACONF_DEFAULT_USER
+    value: 'playbook_dispatcher_1'
+  - name: IQE_RP_ARGS
+    value: 'true'
+  - name: RP_LAUNCH_DESCRIPTION
+    value: ''
+  - name: RP_LAUNCH
+    value: ''
+  - name: RP_PROJECT
+    value: ''
+  - name: IQE_ENV_VARS
+    value: '' # KEY1=VALUE1,KEY2=VALUE2,
+  - name: CONFIGMAP_NAME
+    value: 'ibutsu-config'
+  - name: IQE_PROMETHEUS_ENABLED
+    value: 'true'
+  - name: PIPELINE_TIMEOUT
+    description: Max pipeline runtime in seconds before termination (default 6h)
+    value: '21600'
+  - name: PYTEST_ADDOPTS
+    value: ''
+    description: Example value "--foobar1 --foobar2=value"
