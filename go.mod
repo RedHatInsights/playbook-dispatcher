@@ -12,12 +12,12 @@ require (
 	github.com/globocom/echo-prometheus v0.1.2
 	github.com/golang-migrate/migrate/v4 v4.19.1
 	github.com/google/uuid v1.6.0
-	github.com/labstack/echo/v4 v4.15.1
+	github.com/labstack/echo/v4 v4.15.2
 	github.com/mec07/cloudwatchwriter v0.2.6
 	github.com/oapi-codegen/echo-middleware v1.0.2
 	github.com/oapi-codegen/runtime v1.2.0
 	github.com/onsi/ginkgo v1.16.5
-	github.com/onsi/gomega v1.40.0
+	github.com/onsi/gomega v1.41.0
 	github.com/project-kessel/inventory-api v0.0.0-20260430175816-9b3d4db43ab0
 	github.com/project-kessel/inventory-client-go v0.0.0-20260306190649-906d3ba4a829
 	github.com/prometheus/client_golang v1.23.2
