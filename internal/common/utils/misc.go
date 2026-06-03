@@ -72,14 +72,27 @@ func BuildUrl(base string, keysAndValues ...interface{}) string {
 		panic(fmt.Sprintf("Odd number of parameters: %s", keysAndValues))
 	}
 
-	params := make([]string, len(keysAndValues)/2)
+	params := make([]string, 0, len(keysAndValues)/2)
 	for i := 0; i < len(keysAndValues)/2; i++ {
-		params[i] = fmt.Sprintf("%s=%s",
+		value := keysAndValues[(i*2)+1]
+		if value == nil {
+			continue
+		}
+		// Skip empty strings (e.g., zero values from typed nils in table tests)
+		// Convert to string first to handle both string types and custom string-based types
+		stringValue := fmt.Sprintf("%v", value)
+		if stringValue == "" {
+			continue
+		}
+		params = append(params, fmt.Sprintf("%s=%s",
 			url.QueryEscape(fmt.Sprintf("%s", keysAndValues[i*2])),
-			url.QueryEscape(fmt.Sprintf("%v", keysAndValues[(i*2)+1])),
-		)
+			url.QueryEscape(stringValue),
+		))
 	}
 
+	if len(params) == 0 {
+		return base
+	}
 	return fmt.Sprintf("%s?%s", base, strings.Join(params, "&"))
 }
 
