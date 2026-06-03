@@ -4,6 +4,7 @@
 package middleware
 
 import (
+	"maps"
 	"net/http"
 	"playbook-dispatcher/internal/api/instrumentation"
 	"playbook-dispatcher/internal/api/rbac"
@@ -13,6 +14,7 @@ import (
 	"playbook-dispatcher/internal/common/utils"
 	"reflect"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/labstack/echo/v4"
@@ -174,6 +176,46 @@ func getRbacAllowedServices(permissions []rbac.Access) []string {
 	return rbac.GetPredicateValues(permissions, "service")
 }
 
+// extractServicesToCheck determines which services to check based on request query parameters
+// Returns a map of service names to their kessel permissions
+func extractServicesToCheck(ctx echo.Context, log *zap.SugaredLogger) map[string]string {
+	var serviceFilter string
+
+	// Try to get service from filter[service] (runs endpoint)
+	serviceFilter = ctx.QueryParam("filter[service]")
+
+	// If not found, try filter[run][service] (run_hosts endpoint)
+	if serviceFilter == "" {
+		serviceFilter = ctx.QueryParam("filter[run][service]")
+	}
+
+	// If a service filter is specified, validate and check only that service
+	if serviceFilter != "" {
+		// Normalize: trim spaces
+		serviceFilter = strings.TrimSpace(serviceFilter)
+
+		if permission, exists := kessel.V2ApplicationPermissions[serviceFilter]; exists {
+			log.Debugw("Service filter detected, checking single service",
+				"service", serviceFilter)
+			return map[string]string{serviceFilter: permission}
+		}
+
+		// Invalid service name - don't fall back to all services for security
+		// If user explicitly filters for non-existent service, deny access
+		log.Warnw("Invalid service filter, returning no services to check",
+			"service", serviceFilter)
+		return map[string]string{}
+	}
+
+	// No filter - check all services
+	// Return a copy to prevent callers from mutating the global V2ApplicationPermissions map
+	log.Debugw("No service filter, checking all services")
+	servicesCopy := make(map[string]string, len(kessel.V2ApplicationPermissions))
+	maps.Copy(servicesCopy, kessel.V2ApplicationPermissions)
+
+	return servicesCopy
+}
+
 // getKesselAllowedServices queries Kessel for allowed services
 func getKesselAllowedServices(ctx echo.Context, log *zap.SugaredLogger) []string {
 	// Extract identity from context
@@ -222,8 +264,12 @@ func getKesselAllowedServices(ctx echo.Context, log *zap.SugaredLogger) []string
 		return []string{} // Return empty list on error
 	}
 
-	// Check permissions via Kessel (uses V2ApplicationPermissions map)
-	allowedServices, err := kessel.CheckApplicationPermissions(ctx.Request().Context(), workspaceID, log)
+	// Extract service filter from request query parameters
+	// Supports both filter[service] (runs endpoint) and filter[run][service] (run_hosts endpoint)
+	servicesToCheck := extractServicesToCheck(ctx, log)
+
+	// Check permissions via Kessel
+	allowedServices, err := kessel.CheckApplicationPermissions(ctx.Request().Context(), workspaceID, log, servicesToCheck)
 	if err != nil {
 		log.Errorw("Kessel authorization error",
 			"error", err,
