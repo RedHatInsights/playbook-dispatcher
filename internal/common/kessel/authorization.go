@@ -76,7 +76,7 @@ func getAuthCallOptions() ([]grpc.CallOption, error) {
 	if globalManager != nil && globalManager.tokenClient != nil {
 		tokenOpts, err := globalManager.client.GetTokenCallOption()
 		if err != nil {
-			return nil, fmt.Errorf("failed to get auth token: %w", err)
+			return nil, fmt.Errorf("OIDC token acquisition failed: %w", err)
 		}
 		opts = tokenOpts
 	}

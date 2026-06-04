@@ -9,7 +9,6 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/redhatinsights/platform-go-middlewares/v2/request_id"
 	"github.com/spf13/viper"
 )
 
@@ -28,7 +27,7 @@ func NewRbacClientWithHttpRequestDoer(cfg *viper.Viper, doer HttpRequestDoer) Rb
 			Server: fmt.Sprintf("%s://%s:%d%s", cfg.GetString("rbac.scheme"), cfg.GetString("rbac.host"), cfg.GetInt("rbac.port"), basePath),
 			Client: utils.NewMeasuredHttpRequestDoer(doer, "rbac", "getPermissions"),
 			RequestEditors: []RequestEditorFn{func(ctx context.Context, req *http.Request) error {
-				req.Header.Set(constants.HeaderRequestId, request_id.GetReqID(ctx))
+				utils.PropagateRequestIDs(ctx, req)
 
 				if identity, ok := ctx.Value(constants.HeaderIdentity).(string); ok {
 					req.Header.Set(constants.HeaderIdentity, identity)

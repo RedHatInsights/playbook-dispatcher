@@ -137,6 +137,9 @@ sample_request_sat:
 sample_request_sat_subman:
 	curl -v -H "content-type: application/json" -H "Authorization: PSK xwKhCUzgJ8" -d "@examples/payload-sat-subman.json" http://localhost:8000/internal/v2/dispatch
 
+sample_request_stdout:
+	curl -v -H "content-type: application/json" -H "Authorization: PSK xwKhCUzgJ8" -H "x-rh-identity: eyJpZGVudGl0eSI6IHsiYWNjb3VudF9udW1iZXIiOiAiMDAwMDAwMSIsICJ0eXBlIjogIlN5c3RlbSIsICJpbnRlcm5hbCI6IHsib3JnX2lkIjogIjAwMDAwMSJ9fX0=" http://localhost:8000/internal/v2/run_hosts?fields%5Bdata%5D=stdout&filter%5Brun%5D%5Bid%5D=dd018b96-da04-4651-84d1-187fa5c23f6c
+
 sample_recipient_status:
 	curl -v -H "content-type: application/json" -H "Authorization: PSK xwKhCUzgJ8" -d '[{"recipient": "35720ecb-bc23-4b06-a8cd-f0c264edf2c1", "org_id": "5318290"}]' http://localhost:8000/internal/v2/recipients/status
 

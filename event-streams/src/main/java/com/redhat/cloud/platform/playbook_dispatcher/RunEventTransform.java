@@ -67,6 +67,7 @@ public class RunEventTransform<T extends ConnectRecord<T>> implements Transforma
     }
 
     @Override
+    @SuppressWarnings("PMD.GuardLogStatement")
     public T apply(T record) {
         if (record.topic() != null && record.topic().startsWith(HEARTBEAT_TOPIC_PREFIX)) {
             LOG.info("Received heartbeat");
@@ -139,6 +140,7 @@ public class RunEventTransform<T extends ConnectRecord<T>> implements Transforma
         return newRunEvent(payload, eventType);
     }
 
+    @SuppressWarnings("PMD.GuardLogStatement")
     Payload buildRunPayload(Struct input) {
         final Payload payload = new Payload();
         payload.setId(input.getString("id"));

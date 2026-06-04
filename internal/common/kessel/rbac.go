@@ -12,9 +12,44 @@ import (
 	"net/http"
 	"time"
 
+	"playbook-dispatcher/internal/common/unleash/features"
 	"playbook-dispatcher/internal/common/utils"
 
 	"github.com/project-kessel/inventory-client-go/common"
+	"github.com/redhatinsights/platform-go-middlewares/v2/request_id"
+	"go.uber.org/zap"
+)
+
+// RbacClientConfig holds configuration for RBAC client
+type RbacClientConfig struct {
+	// TokenTimeout is the timeout for individual token requests (when feature flag is enabled)
+	// Zero or negative values will use the default (3 seconds)
+	TokenTimeout time.Duration
+
+	// TokenMaxRetries is the maximum number of retry attempts for token acquisition
+	// Negative values will use the default (2 retries)
+	// Explicitly set to 0 for no retries (single attempt only)
+	// Values > 5 will be clamped to 5
+	TokenMaxRetries int
+
+	// TokenMaxRetriesSet indicates if TokenMaxRetries was explicitly set
+	// This allows distinguishing between "not set" and "explicitly set to 0"
+	TokenMaxRetriesSet bool
+}
+
+// Token configuration constants for RBAC client
+const (
+	// DefaultTokenTimeout is the default timeout for individual token requests
+	DefaultTokenTimeout = 3 * time.Second
+
+	// MinTokenTimeout is the minimum allowed timeout for token requests
+	MinTokenTimeout = 1 * time.Second
+
+	// DefaultTokenMaxRetries is the default number of retry attempts for token acquisition
+	DefaultTokenMaxRetries = 2
+
+	// MaxTokenMaxRetries is the maximum allowed number of retry attempts for token acquisition
+	MaxTokenMaxRetries = 5
 )
 
 // RbacClient provides methods for interacting with the RBAC service
@@ -24,15 +59,25 @@ type RbacClient interface {
 	GetDefaultWorkspaceID(ctx context.Context, orgID string) (string, error)
 }
 
+// TokenClient interface wraps the Kessel token client for testability
+type TokenClient interface {
+	// GetToken acquires an OIDC token without context (legacy behavior)
+	GetToken() (*common.TokenResponse, error)
+	// GetTokenWithContext acquires an OIDC token with context support for timeout/cancellation
+	GetTokenWithContext(ctx context.Context) (*common.TokenResponse, error)
+}
+
 // rbacClientImpl implements RbacClient using the RBAC HTTP API
 type rbacClientImpl struct {
-	client         *http.Client
-	rbacURL        string
-	tokenClient    *common.TokenClient
-	maxRetries     int
-	initialBackoff time.Duration
-	maxBackoff     time.Duration
-	requestTimeout time.Duration
+	client          *http.Client
+	rbacURL         string
+	tokenClient     TokenClient
+	maxRetries      int
+	initialBackoff  time.Duration
+	maxBackoff      time.Duration
+	requestTimeout  time.Duration
+	tokenTimeout    time.Duration // Timeout for individual token requests
+	tokenMaxRetries int           // Max retry attempts for token acquisition
 }
 
 // rbacWorkspaceResponse represents the RBAC API response for workspace queries
@@ -43,18 +88,63 @@ type rbacWorkspaceResponse struct {
 }
 
 // NewRbacClient creates a new RBAC client for workspace lookups
-func NewRbacClient(rbacURL string, tokenClient *common.TokenClient, timeout time.Duration) RbacClient {
-	return &rbacClientImpl{
+func NewRbacClient(rbacURL string, tokenClient TokenClient, timeout time.Duration, cfg RbacClientConfig, log *zap.SugaredLogger) RbacClient {
+	// Token timeout configuration (used when feature flag is enabled)
+	// Values <= 0 use default; otherwise clamp to [MinTokenTimeout, requestTimeout]
+	tokenTimeout := cfg.TokenTimeout
+	if tokenTimeout <= 0 {
+		tokenTimeout = DefaultTokenTimeout
+	} else if tokenTimeout < MinTokenTimeout {
+		tokenTimeout = MinTokenTimeout
+	} else if tokenTimeout > timeout {
+		// Can't exceed the overall request timeout
+		tokenTimeout = timeout
+	}
+
+	// Token retry configuration (used when feature flag is enabled)
+	// If not set: use default
+	// If set to negative: use default (invalid value)
+	// If set to 0: no retries (1 attempt only)
+	// If set to 1-5: use that value
+	// If set > 5: clamp to 5
+	tokenMaxRetries := DefaultTokenMaxRetries
+	if cfg.TokenMaxRetriesSet {
+		if cfg.TokenMaxRetries < 0 {
+			// Negative is invalid, use default
+			tokenMaxRetries = DefaultTokenMaxRetries
+		} else if cfg.TokenMaxRetries > MaxTokenMaxRetries {
+			// Too large, clamp to max
+			tokenMaxRetries = MaxTokenMaxRetries
+		} else {
+			// Valid range [0, MaxTokenMaxRetries], use as-is
+			tokenMaxRetries = cfg.TokenMaxRetries
+		}
+	}
+
+	impl := &rbacClientImpl{
 		client: &http.Client{
 			Timeout: timeout,
 		},
-		rbacURL:        rbacURL,
-		tokenClient:    tokenClient,
-		maxRetries:     3,
-		initialBackoff: 100 * time.Millisecond,
-		maxBackoff:     2 * time.Second,
-		requestTimeout: timeout,
+		rbacURL:         rbacURL,
+		tokenClient:     tokenClient,
+		maxRetries:      3,
+		initialBackoff:  100 * time.Millisecond,
+		maxBackoff:      2 * time.Second,
+		requestTimeout:  timeout,
+		tokenTimeout:    tokenTimeout,
+		tokenMaxRetries: tokenMaxRetries,
 	}
+
+	// Log the clamped configuration values
+	if log != nil {
+		log.Infow("Created RBAC client with configuration",
+			"rbac_url", rbacURL,
+			"rbac_timeout_seconds", timeout.Seconds(),
+			"token_timeout_seconds", tokenTimeout.Seconds(),
+			"token_max_retries", tokenMaxRetries)
+	}
+
+	return impl
 }
 
 // GetDefaultWorkspaceID retrieves the default workspace ID for an organization
@@ -71,6 +161,9 @@ func (r *rbacClientImpl) GetDefaultWorkspaceID(ctx context.Context, orgID string
 				"error", ctx.Err())
 		}
 	}
+
+	// Evaluate feature flag once per request to avoid repeated context building on retries
+	tokenTimeoutEnabled := features.IsTokenTimeoutEnabled(ctx)
 
 	defer func() {
 		if log != nil {
@@ -98,7 +191,10 @@ func (r *rbacClientImpl) GetDefaultWorkspaceID(ctx context.Context, orgID string
 	// Add org ID header for RBAC v2 authentication
 	req.Header.Set("x-rh-rbac-org-id", orgID)
 
-	body, statusCode, err := r.doRequestWithRetry(ctx, req)
+	// Add request ID headers for traceability
+	utils.PropagateRequestIDs(ctx, req)
+
+	body, statusCode, err := r.doRequestWithRetry(ctx, req, tokenTimeoutEnabled)
 	if err != nil {
 		return "", err
 	}
@@ -124,7 +220,8 @@ func (r *rbacClientImpl) GetDefaultWorkspaceID(ctx context.Context, orgID string
 
 // doRequestWithRetry executes an HTTP request with retry logic and exponential backoff
 // Returns the response body bytes, status code, and any error
-func (r *rbacClientImpl) doRequestWithRetry(ctx context.Context, req *http.Request) ([]byte, int, error) {
+// tokenTimeoutEnabled is evaluated once per request to avoid repeated feature flag checks
+func (r *rbacClientImpl) doRequestWithRetry(ctx context.Context, req *http.Request, tokenTimeoutEnabled bool) ([]byte, int, error) {
 	var lastErr error
 
 	// Diagnostic: Track parent context cancellation
@@ -157,18 +254,78 @@ func (r *rbacClientImpl) doRequestWithRetry(ctx context.Context, req *http.Reque
 
 		reqWithTimeout := req.Clone(requestCtx)
 
-		// Add authentication token if available
+		// Get logger for this attempt
+		log := utils.GetLogFromContextIfAvailable(ctx)
+
+		// Acquire authentication token if token client is configured
+		var accessToken string
+		var err error
 		if r.tokenClient != nil {
-			tokenResp, err := r.tokenClient.GetToken()
-			if err != nil {
-				cancel() // Clean up timeout context before returning error
-				return nil, 0, fmt.Errorf("failed to get auth token: %w", err)
+			// Use pre-evaluated feature flag to avoid repeated context building
+			if tokenTimeoutEnabled {
+				// New behavior: retry with configurable timeout
+				reqID := request_id.GetReqID(ctx)
+				internalReqID := utils.GetInternalRequestID(ctx)
+
+				if log != nil {
+					log.Debugw("OIDC token acquisition started",
+						"request_id", reqID,
+						"internal_request_id", internalReqID,
+						"token_timeout_enabled", true)
+				}
+
+				accessToken, err = r.acquireTokenWithRetry(ctx, reqID, internalReqID, attempt+1, log)
+				if err != nil {
+					cancel() // Clean up timeout context before returning error
+					return nil, 0, err
+				}
+			} else {
+				// Legacy behavior: single attempt, no timeout
+				tokenStart := time.Now()
+				reqID := request_id.GetReqID(ctx)
+				internalReqID := utils.GetInternalRequestID(ctx)
+
+				if log != nil {
+					log.Debugw("OIDC token acquisition started",
+						"request_id", reqID,
+						"internal_request_id", internalReqID,
+						"token_timeout_enabled", false)
+				}
+
+				tokenResp, tokenErr := r.tokenClient.GetToken()
+				tokenDuration := time.Since(tokenStart)
+
+				if tokenErr != nil {
+					if log != nil {
+						log.Errorw("OIDC token acquisition failed",
+							"request_id", reqID,
+							"internal_request_id", internalReqID,
+							"duration_seconds", fmt.Sprintf("%.3f", tokenDuration.Seconds()),
+							"error", tokenErr,
+							"token_timeout_enabled", false)
+					}
+					cancel() // Clean up timeout context before returning error
+					return nil, 0, fmt.Errorf("OIDC token acquisition failed: %w", tokenErr)
+				}
+
+				if log != nil {
+					log.Debugw("OIDC token acquisition succeeded",
+						"request_id", reqID,
+						"internal_request_id", internalReqID,
+						"duration_seconds", fmt.Sprintf("%.3f", tokenDuration.Seconds()),
+						"token_timeout_enabled", false)
+				}
+
+				accessToken = tokenResp.AccessToken
 			}
-			reqWithTimeout.Header.Set("Authorization", fmt.Sprintf("Bearer %s", tokenResp.AccessToken))
+		}
+
+		// Add token to request if acquired
+		if accessToken != "" {
+			reqWithTimeout.Header.Set("Authorization", fmt.Sprintf("Bearer %s", accessToken))
 		}
 
 		// Debug logging for outgoing request
-		log := utils.GetLogFromContextIfAvailable(ctx)
 		if log != nil {
 			headers := make(map[string]string)
 			for k, v := range reqWithTimeout.Header {
