@@ -1,7 +1,7 @@
 apiVersion: template.openshift.io/v1
 kind: Template
 metadata:
-  name: '${IQE_PLUGINS}-test-job'
+  name: 'playbook-dispatcher-test-job'
 objects:
   - apiVersion: batch/v1
     kind: Job
