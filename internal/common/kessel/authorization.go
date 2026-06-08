@@ -279,10 +279,10 @@ func GetWorkspaceID(ctx context.Context, orgID string, log *zap.SugaredLogger) (
 	return workspaceID, nil
 }
 
-// CheckApplicationPermissions checks V2 Kessel permissions for multiple applications
+// CheckApplicationPermissions checks V2 Kessel permissions for the provided applications
 // and returns a list of application names that the user has access to.
 //
-// This function loops through the V2 application-specific permissions:
+// This function loops through the provided servicesToCheck map and validates permissions:
 // - playbook-dispatcher:config_manager_run:read -> playbook_dispatcher_config_manager_run_view
 // - playbook-dispatcher:remediations_run:read -> playbook_dispatcher_remediations_run_view
 // - playbook-dispatcher:tasks_run:read -> playbook_dispatcher_tasks_run_view
@@ -291,6 +291,8 @@ func GetWorkspaceID(ctx context.Context, orgID string, log *zap.SugaredLogger) (
 //   - ctx: Request context containing identity information
 //   - workspaceID: The workspace resource ID to check permissions against
 //   - log: Logger for debugging and error reporting
+//   - servicesToCheck: Map of service names to their kessel permissions to check.
+//     Pass V2ApplicationPermissions to check all services, or a subset map for specific services.
 //
 // Returns:
 //   - allowedApps: List of application names the user has access to (e.g., ["remediations", "tasks"])
@@ -302,9 +304,9 @@ func GetWorkspaceID(ctx context.Context, orgID string, log *zap.SugaredLogger) (
 //   - Structural failures (client == nil, auth config issues, bad identity): Returns error immediately
 //   - This allows callers to distinguish system failures from legitimate authorization denials
 //
-// Example usage:
+// Example usage (check all services):
 //
-//	allowedApps, err := kessel.CheckApplicationPermissions(ctx, workspaceID, log)
+//	allowedApps, err := kessel.CheckApplicationPermissions(ctx, workspaceID, log, kessel.V2ApplicationPermissions)
 //	if err != nil {
 //	    log.Error("Kessel authorization system failure", err)
 //	    return http.StatusServiceUnavailable  // System issue, not auth denial
@@ -314,7 +316,23 @@ func GetWorkspaceID(ctx context.Context, orgID string, log *zap.SugaredLogger) (
 //	    return http.StatusForbidden  // Legitimate authorization denial
 //	}
 //	// allowedApps might be: []string{"remediations", "config_manager"}
-func CheckApplicationPermissions(ctx context.Context, workspaceID string, log *zap.SugaredLogger) ([]string, error) {
+//
+// Example usage (check specific service):
+//
+//	servicesToCheck := map[string]string{"remediations": kessel.PermissionRemediationsRunView}
+//	allowedApps, err := kessel.CheckApplicationPermissions(ctx, workspaceID, log, servicesToCheck)
+//	// Only checks permission for remediations service
+func CheckApplicationPermissions(ctx context.Context, workspaceID string, log *zap.SugaredLogger, servicesToCheck map[string]string) ([]string, error) {
+	// Guard against nil or empty maps
+	if servicesToCheck == nil {
+		log.Warnw("CheckApplicationPermissions called with nil servicesToCheck map")
+		return []string{}, nil
+	}
+	if len(servicesToCheck) == 0 {
+		log.Debugw("CheckApplicationPermissions called with empty servicesToCheck map, no services to check")
+		return []string{}, nil
+	}
+
 	// Validate client and extract identity once (shared across all permission checks)
 	// This detects structural failures early and avoids re-extracting identity for each app
 	xrhid, principalID, err := validateClientAndIdentity(ctx)
@@ -334,14 +352,14 @@ func CheckApplicationPermissions(ctx context.Context, workspaceID string, log *z
 		return nil, fmt.Errorf("failed to get auth options: %w", err)
 	}
 
-	allowedApps := make([]string, 0, len(V2ApplicationPermissions))
+	allowedApps := make([]string, 0, len(servicesToCheck))
 
 	// Loop through each application and check its permission
 	// NOTE: We call checkPermissionInternal directly (instead of CheckPermission) to reuse
 	// the resolved identity, principal ID, and Kessel references across all permission checks.
 	// This avoids redundant identity extraction and reference building for each application,
 	// which is important when checking multiple permissions for the same user.
-	for appName, permission := range V2ApplicationPermissions {
+	for appName, permission := range servicesToCheck {
 		allowed, err := checkPermissionInternal(ctx, workspaceID, permission, log, xrhid, principalID, object, subject, opts, false)
 		if err != nil {
 			// Any error from checkPermissionInternal indicates a structural failure
@@ -363,7 +381,7 @@ func CheckApplicationPermissions(ctx context.Context, workspaceID string, log *z
 
 	log.Infow("Application permission check complete",
 		"allowed_apps", allowedApps,
-		"total_checked", len(V2ApplicationPermissions))
+		"total_checked", len(servicesToCheck))
 
 	return allowedApps, nil
 }
