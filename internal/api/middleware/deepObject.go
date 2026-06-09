@@ -12,29 +12,32 @@ import (
 func Hack(param string, fields ...string) echo.MiddlewareFunc {
 	prefix := buildPrefix(param, fields...)
 	escapedPrefix := strings.ReplaceAll(strings.ReplaceAll(prefix, `[`, `\[`), `]`, `\]`)
-	regex := regexp.MustCompile(fmt.Sprintf(`^%s\[([^\[\]]+)\]$`, escapedPrefix))
+	// Regex for deepObject style: fields[data][0]=value
+	deepObjectRegex := regexp.MustCompile(fmt.Sprintf(`^%s\[([^\[\]]+)\]$`, escapedPrefix))
+	// Regex for form style: fields[data]=value (repeated key)
+	formStyleRegex := regexp.MustCompile(fmt.Sprintf(`^%s$`, escapedPrefix))
 
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			labelFilters := parseDeepObject(c, c.QueryParams(), regex, prefix)
+			labelFilters := parseParameters(c, c.QueryParams(), deepObjectRegex, formStyleRegex, prefix)
 			c.Set(buildKey(prefix), labelFilters)
 			return next(c)
 		}
 	}
 }
 
-func parseDeepObject(ctx echo.Context, queryParams url.Values, regex *regexp.Regexp, prefix string) map[string][]string {
+func parseParameters(ctx echo.Context, queryParams url.Values, deepObjectRegex *regexp.Regexp, formStyleRegex *regexp.Regexp, prefix string) map[string][]string {
 	result := make(map[string][]string)
 
 	for key, values := range queryParams {
-		matches := regex.FindStringSubmatch(key)
-
-		if len(matches) > 0 {
+		// Try deepObject style first: fields[data][0]=value
+		deepObjectMatches := deepObjectRegex.FindStringSubmatch(key)
+		if len(deepObjectMatches) > 0 {
 			for _, value := range values {
-				result[matches[1]] = append(result[matches[1]], value)
+				result[deepObjectMatches[1]] = append(result[deepObjectMatches[1]], value)
 
 				requestUrl := ctx.Request().URL
-				toRemove := fmt.Sprintf("%s[%s]=%s", prefix, url.PathEscape(matches[1]), value)
+				toRemove := fmt.Sprintf("%s[%s]=%s", prefix, url.PathEscape(deepObjectMatches[1]), value)
 				// THIS IS AN UGLY UGLY hack
 				// Before you judge me, note that all I really wanted is a simple JSONAPI-like filter
 				// using OpenAPI's deepObject style query parameter, e.g.:
@@ -51,10 +54,43 @@ func parseDeepObject(ctx echo.Context, queryParams url.Values, regex *regexp.Reg
 				requestUrl.RawQuery = url.QueryEscape(replaced)
 				queryParams.Del(key)
 			}
+			continue
+		}
+
+		// Try form style: fields[data]=value (repeated key)
+		if formStyleRegex.MatchString(key) {
+			// For form style, the key itself is "data" and we get it from the last part of prefix
+			// e.g., prefix="fields[data]" -> we want to store under "data"
+			// Extract the key from the prefix
+			keyName := extractKeyFromPrefix(prefix)
+			for _, value := range values {
+				result[keyName] = append(result[keyName], value)
+			}
+
+			// Remove from query string
+			requestUrl := ctx.Request().URL
+			for _, value := range values {
+				toRemove := fmt.Sprintf("%s=%s", prefix, url.QueryEscape(value))
+				unescapedRaw, _ := url.QueryUnescape(requestUrl.RawQuery)
+				replaced := strings.Replace(unescapedRaw, toRemove, "", 1)
+				requestUrl.RawQuery = url.QueryEscape(replaced)
+			}
+			queryParams.Del(key)
 		}
 	}
 
 	return result
+}
+
+// extractKeyFromPrefix extracts the last bracketed key from a prefix like "fields[data]" -> "data"
+func extractKeyFromPrefix(prefix string) string {
+	// Match the last [key] in the prefix
+	regex := regexp.MustCompile(`\[([^\[\]]+)\]$`)
+	matches := regex.FindStringSubmatch(prefix)
+	if len(matches) > 1 {
+		return matches[1]
+	}
+	return prefix
 }
 
 func buildPrefix(param string, fields ...string) string {
