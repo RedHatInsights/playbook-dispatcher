@@ -68,7 +68,7 @@ func (this *controllers) ApiRunsList(ctx echo.Context, params ApiRunsListParams)
 	}
 
 	if params.Filter != nil {
-		if params.Filter.Status != nil {
+		if params.Filter.Status != nil && *params.Filter.Status != "" {
 			status := *params.Filter.Status
 			switch status {
 			case dbModel.RunStatusTimeout:
@@ -81,7 +81,7 @@ func (this *controllers) ApiRunsList(ctx echo.Context, params ApiRunsListParams)
 			}
 		}
 
-		if params.Filter.Recipient != nil {
+		if params.Filter.Recipient != nil && *params.Filter.Recipient != "" {
 			recipient, err := uuid.Parse(*params.Filter.Recipient)
 			if err != nil {
 				instrumentation.PlaybookApiRequestError(ctx, err)
@@ -91,7 +91,7 @@ func (this *controllers) ApiRunsList(ctx echo.Context, params ApiRunsListParams)
 			queryBuilder.Where("runs.recipient = ?", recipient)
 		}
 
-		if params.Filter.Service != nil {
+		if params.Filter.Service != nil && *params.Filter.Service != "" {
 			queryBuilder.Where("runs.service = ?", *params.Filter.Service)
 		}
 	}

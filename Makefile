@@ -128,6 +128,11 @@ sample_request:
 sample_request_v2:
 	curl -v -H "content-type: application/json" -H "Authorization: PSK xwKhCUzgJ8" -d "@examples/payload-v2.json" http://localhost:8000/internal/v2/dispatch
 
+# Test the fields[data] parameter format that was failing after kin-openapi update
+# This sends repeated fields[data] parameters (form style) which was returning 400 before the fix
+test-fields-parameter:
+	curl -v -H "Authorization: PSK xwKhCUzgJ8" "http://localhost:8000/internal/v2/run_hosts?fields%5Bdata%5D=host&fields%5Bdata%5D=run&fields%5Bdata%5D=status&fields%5Bdata%5D=stdout"
+
 sample_request_multiple_v2:
 	curl -v -H "content-type: application/json" -H "Authorization: PSK xwKhCUzgJ8" -d "@examples/payload-multiple-run-v2.json" http://localhost:8000/internal/v2/dispatch
 

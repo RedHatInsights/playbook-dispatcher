@@ -311,7 +311,7 @@ type ApiInternalV2RunHostsListParams struct {
 	Filter *externalRef0.RunHostFilter `json:"filter,omitempty"`
 
 	// Fields Defines fields to be returned in the response.
-	Fields *externalRef0.RunHostFields `json:"fields,omitempty"`
+	Fields *externalRef0.RunHostFields `form:"fields,omitempty" json:"fields,omitempty"`
 
 	// Limit Maximum number of results to return
 	Limit *externalRef0.Limit `form:"limit,omitempty" json:"limit,omitempty"`
