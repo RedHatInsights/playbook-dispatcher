@@ -391,7 +391,7 @@ components:
       in: query
       name: fields
       required: false
-      style: deepObject
+      style: form
       explode: true
       schema:
         type: object
@@ -429,7 +429,7 @@ components:
       in: query
       name: fields
       required: false
-      style: deepObject
+      style: form
       explode: true
       schema:
         type: object
@@ -458,6 +458,7 @@ components:
       schema:
         type: string
         enum:
+          - ""
           - created_at
           - created_at:asc
           - created_at:desc
