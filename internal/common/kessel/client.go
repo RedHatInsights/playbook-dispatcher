@@ -105,7 +105,16 @@ func Initialize(cfg *viper.Viper, log *zap.SugaredLogger) error {
 		TokenMaxRetriesSet: cfg.IsSet("kessel.token.max_retries"),
 	}
 
-	rbacClient := NewRbacClient(rbacURL, tokenClient, rbacTimeout, rbacClientConfig, log)
+	// Avoid nil pointer wrapped in interface gotcha:
+	// When kessel.auth.enabled=false, tokenClient is a nil *common.TokenClient pointer.
+	// Passing it directly to NewRbacClient creates a non-nil TokenClient interface
+	// (type descriptor exists but value is nil), which passes != nil checks but panics
+	// when methods are called. Instead, pass an explicit nil interface.
+	var tokenClientInterface TokenClient
+	if tokenClient != nil {
+		tokenClientInterface = tokenClient
+	}
+	rbacClient := NewRbacClient(rbacURL, tokenClientInterface, rbacTimeout, rbacClientConfig, log)
 
 	// Store all clients in manager
 	globalManager = &ClientManager{
