@@ -318,6 +318,26 @@ var _ = Describe("runsList", func() {
 			Expect(err).ToNot(HaveOccurred())
 			Expect(res.JSON400.Message).To(Equal("unknown field: salad"))
 		})
+
+		It("accepts repeated fields[data] parameters (production format)", func() {
+			// This tests the exact format sent by production clients that was causing 400s
+			// after kin-openapi update: fields[data]=id&fields[data]=labels&fields[data]=status...
+			// The key is that this should return 200 (not 400) with the form-style repeated parameters
+			runs, res := listRuns(
+				"fields[data]", "id",
+				"fields[data]", "labels",
+				"fields[data]", "status",
+				"fields[data]", "service",
+				"fields[data]", "created_at",
+				"fields[data]", "updated_at",
+			)
+			Expect(res.StatusCode()).To(Equal(http.StatusOK))
+			Expect(runs.Data).To(HaveLen(1))
+			// Verify the requested fields are present
+			Expect(runs.Data[0].Id).ToNot(BeNil())
+			Expect(runs.Data[0].Status).ToNot(BeNil())
+			Expect(runs.Data[0].Service).ToNot(BeNil())
+		})
 	})
 
 	Describe("sparse fieldsets satellite", func() {

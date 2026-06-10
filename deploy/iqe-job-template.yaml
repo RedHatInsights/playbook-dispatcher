@@ -1,12 +1,12 @@
 apiVersion: template.openshift.io/v1
 kind: Template
 metadata:
-  name: 'playbook-dispatcher-e2e-tests-job'
+  name: 'playbook-dispatcher-test-job'
 objects:
   - apiVersion: batch/v1
     kind: Job
     metadata:
-      name: 'playbook-dispatcher-e2e-tests-job'
+      name: '${NAME_STUB}-pipeline'
       annotations:
         ignore-check.kube-linter.io/no-liveness-probe: probes not required on Job pods
         ignore-check.kube-linter.io/no-readiness-probe: probes not required on Job pods
@@ -22,16 +22,13 @@ objects:
             - name: quay-cloudservices-pull
           restartPolicy: Never
           volumes:
-            - name: sel-shm
-              emptyDir:
-                medium: Memory
             - name: insights-qa-private-key
               secret:
                 secretName: insights-qa-private-key
                 defaultMode: 384 # Means 0600
                 optional: true
           containers:
-            - name: 'iqe-runner-playbook-dispatcher-e2e-tests-job-${IMAGE_TAG}-${UID}'
+            - name: 'iqe-runner-${NAME_STUB}-job-${IMAGE_TAG}-${UID}'
               image: '${IQE_IMAGE}:${IQE_IMAGE_TAG}'
               imagePullPolicy: Always
               args:
@@ -39,6 +36,9 @@ objects:
               envFrom:
                 - secretRef:
                     name: iqe-ibutsu-token
+                    optional: true
+                - secretRef:
+                    name: 'ibutsu-aws-credentials'
                     optional: true
                 - configMapRef:
                     name: '${CONFIGMAP_NAME}'
@@ -48,7 +48,7 @@ objects:
                 - name: DYNACONF_MAIN__use_beta
                   value: '${USE_BETA}'
                 - name: IBUTSU_SOURCE
-                  value: 'playbook-dispatcher-${IMAGE_TAG}-${UID}'
+                  value: '${IQE_PLUGINS}-saas-timer-${IMAGE_TAG}-${UID}'
                 - name: IQE_BROWSERLOG
                   value: '${IQE_BROWSERLOG}'
                 - name: IQE_NETLOG
@@ -118,23 +118,6 @@ objects:
                   readOnly: true
               terminationMessagePath: /dev/termination-log
               terminationMessagePolicy: File
-          initContainers:
-            - name: 'iqe-sel-${IMAGE_TAG}-${UID}'
-              image: '${IQE_SEL_IMAGE}'
-              env:
-                - name: _JAVA_OPTIONS
-                  value: '${SELENIUM_JAVA_OPTS}'
-                - name: SE_NODE_MAX_SESSIONS
-                  value: '${SE_NODE_MAX_SESSIONS}'
-                - name: SE_NODE_OVERRIDE_MAX_SESSIONS
-                  value: '${SE_NODE_OVERRIDE_MAX_SESSIONS}'
-              resources:
-                limits:
-                  cpu: '${SEL_LIMITS_CPU}'
-                  memory: '${SEL_LIMITS_MEMORY}'
-                requests:
-                  cpu: '${SEL_REQUESTS_CPU}'
-                  memory: '${SEL_REQUESTS_MEMORY}'
 parameters:
   - name: IMAGE_TAG
     value: ''
@@ -147,7 +130,7 @@ parameters:
     description: container image path for the iqe plugin
     value: quay.io/cloudservices/iqe-tests
   - name: IQE_PLUGINS
-    value: '${IQE_PLUGINS}'
+    value: 'playbook-dispatcher'
     required: true
   - name: IQE_IMAGE_TAG
     value: ''
@@ -167,20 +150,12 @@ parameters:
     value: ''
   - name: IQE_TEST_IMPORTANCE
     value: ''
-  - name: IQE_SEL_IMAGE
-    value: 'quay.io/app-sre/selenium-standalone-chrome:136.0-20250828'
   - name: IQE_BROWSERLOG
     value: '1'
   - name: IQE_NETLOG
     value: '1'
   - name: NAME_STUB
     value: ''
-  - name: SELENIUM_JAVA_OPTS
-    value: ''
-  - name: SE_NODE_MAX_SESSIONS
-    value: '2'
-  - name: SE_NODE_OVERRIDE_MAX_SESSIONS
-    value: 'true'
   - name: IQE_LIMITS_CPU
     value: '1.5'
   - name: IQE_LIMITS_MEMORY
@@ -189,14 +164,6 @@ parameters:
     value: 250m
   - name: IQE_REQUESTS_MEMORY
     value: 512Mi
-  - name: SEL_LIMITS_CPU
-    value: 500m
-  - name: SEL_LIMITS_MEMORY
-    value: 2Gi
-  - name: SEL_REQUESTS_CPU
-    value: 100m
-  - name: SEL_REQUESTS_MEMORY
-    value: 256Mi
   - name: DYNACONF_DEFAULT_USER
     value: 'playbook_dispatcher_1'
   - name: IQE_RP_ARGS
