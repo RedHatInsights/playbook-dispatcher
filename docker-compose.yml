@@ -5,7 +5,7 @@
 version: "3"
 services:
   dispatcher:
-    image: quay.io/cloudservices/playbook-dispatcher
+    image: quay.io/redhat-services-prod/insights-management-tenant/playbook-dispatcher
     build:
       context: .
     depends_on:
@@ -23,6 +23,7 @@ services:
       DB_HOST: "db"
       PSK_AUTH_TEST: "xwKhCUzgJ8"
       BLOCKLIST_ORG_IDS: "1337,7331"
+      KESSEL_AUTH_MODE: "both-kessel-enforces"
     restart: unless-stopped
 
   zookeeper:
