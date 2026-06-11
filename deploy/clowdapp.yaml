@@ -550,7 +550,7 @@ parameters:
 - name: KESSEL_URL
   value: 'kessel-inventory-api:9000'
 - name: KESSEL_AUTH_ENABLED
-  value: 'false'
+  value: 'true'
 - name: KESSEL_AUTH_OIDC_ISSUER
 - name: KESSEL_INSECURE
   value: 'true'
@@ -559,4 +559,4 @@ parameters:
 
 - name: KESSEL_AUTH_MODE
   description: Mode for feature flag testing (rbac-only, both-rbac-enforces, both-kessel-enforces, kessel-only)
-  value: 'rbac-only'
+  value: 'kessel-only'
