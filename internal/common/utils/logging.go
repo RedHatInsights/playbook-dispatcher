@@ -4,21 +4,22 @@ import (
 	"context"
 	"os"
 	"playbook-dispatcher/internal/common/config"
+	"time"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/credentials"
+	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs"
 	"github.com/labstack/echo/v4"
-	"github.com/mec07/cloudwatchwriter"
+	cww "github.com/lzap/cloudwatchwriter2"
 	"github.com/spf13/viper"
 )
 
 var (
 	sugar  *zap.SugaredLogger
-	writer *cloudwatchwriter.CloudWatchWriter
+	writer *cww.CloudWatchWriter
 )
 
 func GetLoggerOrDie() *zap.SugaredLogger {
@@ -66,15 +67,19 @@ func createCloudwatch(cfg *viper.Viper, level zap.AtomicLevel) (zap.Option, erro
 		return nil, err
 	}
 
-	awsConf := aws.NewConfig().
-		WithCredentials(credentials.NewStaticCredentials(
-			cfg.GetString("log.cw.accessKeyId"), cfg.GetString("log.cw.secretAccessKey"), "",
-		)).
-		WithRegion(cfg.GetString("log.cw.region"))
+	options := cloudwatchlogs.Options{
+		Region: cfg.GetString("log.cw.region"),
+		Credentials: aws.NewCredentialsCache(
+			credentials.NewStaticCredentialsProvider(
+				cfg.GetString("log.cw.accessKeyId"),
+				cfg.GetString("log.cw.secretAccessKey"),
+				"",
+			),
+		),
+	}
+	client := cloudwatchlogs.New(options)
 
-	cloudWatchSession := session.Must(session.NewSession(awsConf))
-
-	writer, err = cloudwatchwriter.New(cloudWatchSession, cfg.GetString("log.cw.group"), hostname)
+	writer, err = cww.NewWithClient(client, 500*time.Millisecond, cfg.GetString("log.cw.group"), hostname)
 	if err != nil {
 		return nil, err
 	}
