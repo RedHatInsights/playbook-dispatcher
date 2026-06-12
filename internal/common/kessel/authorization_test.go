@@ -543,7 +543,7 @@ func TestCheckApplicationPermissions_Success(t *testing.T) {
 	ctx := identity.WithIdentity(context.Background(), xrhid)
 	log := zap.NewNop().Sugar()
 
-	allowedApps, err := CheckApplicationPermissions(ctx, "workspace-789", log)
+	allowedApps, err := CheckApplicationPermissions(ctx, "workspace-789", "", log)
 
 	assert.NoError(t, err)
 	assert.Len(t, allowedApps, 3) // All 3 applications
@@ -580,7 +580,7 @@ func TestCheckApplicationPermissions_PartialAccess(t *testing.T) {
 	ctx := identity.WithIdentity(context.Background(), xrhid)
 	log := zap.NewNop().Sugar()
 
-	allowedApps, err := CheckApplicationPermissions(ctx, "workspace-789", log)
+	allowedApps, err := CheckApplicationPermissions(ctx, "workspace-789", "", log)
 
 	assert.NoError(t, err)
 	assert.Len(t, allowedApps, 1)
@@ -607,7 +607,7 @@ func TestCheckApplicationPermissions_NoAccess(t *testing.T) {
 	ctx := identity.WithIdentity(context.Background(), xrhid)
 	log := zap.NewNop().Sugar()
 
-	allowedApps, err := CheckApplicationPermissions(ctx, "workspace-789", log)
+	allowedApps, err := CheckApplicationPermissions(ctx, "workspace-789", "", log)
 
 	assert.NoError(t, err)
 	assert.Empty(t, allowedApps)
@@ -630,7 +630,7 @@ func TestCheckApplicationPermissions_KesselError(t *testing.T) {
 	ctx := identity.WithIdentity(context.Background(), xrhid)
 	log := zap.NewNop().Sugar()
 
-	allowedApps, err := CheckApplicationPermissions(ctx, "workspace-789", log)
+	allowedApps, err := CheckApplicationPermissions(ctx, "workspace-789", "", log)
 
 	assert.Error(t, err)
 	assert.Nil(t, allowedApps)
@@ -650,11 +650,78 @@ func TestCheckApplicationPermissions_ClientNotInitialized(t *testing.T) {
 	ctx := identity.WithIdentity(context.Background(), xrhid)
 	log := zap.NewNop().Sugar()
 
-	allowedApps, err := CheckApplicationPermissions(ctx, "workspace-789", log)
+	allowedApps, err := CheckApplicationPermissions(ctx, "workspace-789", "", log)
 
 	assert.Error(t, err)
 	assert.Nil(t, allowedApps)
 	assert.Contains(t, err.Error(), "cannot perform authorization checks")
+}
+
+func TestCheckApplicationPermissions_WithServiceFilter(t *testing.T) {
+	callCount := 0
+	mockService := &mockKesselInventoryService{}
+
+	// Set up response generator that allows only remediations
+	mockService.checkFunc = func(ctx context.Context, in *kesselv2.CheckRequest, opts ...grpc.CallOption) (*kesselv2.CheckResponse, error) {
+		callCount++
+
+		// Only allow remediations
+		if in.Relation == PermissionRemediationsRunView {
+			return &kesselv2.CheckResponse{Allowed: kesselv2.Allowed_ALLOWED_TRUE}, nil
+		}
+		return &kesselv2.CheckResponse{Allowed: kesselv2.Allowed_ALLOWED_FALSE}, nil
+	}
+
+	cleanup := setupMockClient(mockService)
+	defer cleanup()
+
+	xrhid := identity.XRHID{
+		Identity: identity.Identity{
+			Type:  "User",
+			User:  &identity.User{UserID: "user-123"},
+			OrgID: "org-456",
+		},
+	}
+	ctx := identity.WithIdentity(context.Background(), xrhid)
+	log := zap.NewNop().Sugar()
+
+	// Test with service filter - should only check one service
+	allowedApps, err := CheckApplicationPermissions(ctx, "workspace-789", "remediations", log)
+
+	assert.NoError(t, err)
+	assert.Len(t, allowedApps, 1)
+	assert.Contains(t, allowedApps, "remediations")
+	assert.Equal(t, 1, callCount) // Should only check 1 application, not all 3
+}
+
+func TestCheckApplicationPermissions_WithInvalidServiceFilter(t *testing.T) {
+	callCount := 0
+	mockService := &mockKesselInventoryService{}
+
+	mockService.checkFunc = func(ctx context.Context, in *kesselv2.CheckRequest, opts ...grpc.CallOption) (*kesselv2.CheckResponse, error) {
+		callCount++
+		return &kesselv2.CheckResponse{Allowed: kesselv2.Allowed_ALLOWED_TRUE}, nil
+	}
+
+	cleanup := setupMockClient(mockService)
+	defer cleanup()
+
+	xrhid := identity.XRHID{
+		Identity: identity.Identity{
+			Type:  "User",
+			User:  &identity.User{UserID: "user-123"},
+			OrgID: "org-456",
+		},
+	}
+	ctx := identity.WithIdentity(context.Background(), xrhid)
+	log := zap.NewNop().Sugar()
+
+	// Test with invalid service filter - should check all services
+	allowedApps, err := CheckApplicationPermissions(ctx, "workspace-789", "invalid_service", log)
+
+	assert.NoError(t, err)
+	assert.Len(t, allowedApps, 3) // Should check all 3 applications
+	assert.Equal(t, 3, callCount)
 }
 
 func TestBuildKesselReferences_Success(t *testing.T) {

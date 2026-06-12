@@ -19,6 +19,10 @@ const (
 	// KesselTokenTimeoutFeatureFlag is the name of the Unleash feature flag for token timeout/retry
 	KesselTokenTimeoutFeatureFlag = "playbook-dispatcher-kessel-tokentimeout"
 
+	// KesselSingleServiceOptimizationFeatureFlag controls whether to query only the specified service
+	// instead of all three services when a service filter is present in the request
+	KesselSingleServiceOptimizationFeatureFlag = "playbook-dispatcher-kessel-single-service"
+
 	// Variant names matching Unleash dashboard configuration
 	VariantRBACOnly           = "rbac-only"
 	VariantBothRBACEnforces   = "both-rbac-enforces"
@@ -276,4 +280,18 @@ func IsTokenTimeoutEnabled(ctx context.Context) bool {
 	// Check if feature is enabled with context
 	// Returns false by default if feature flag not found or Unleash not initialized
 	return unleash.IsEnabledWithContext(KesselTokenTimeoutFeatureFlag, unleashCtx)
+}
+
+// IsSingleServiceOptimizationEnabled checks if the single-service Kessel optimization is enabled
+// When enabled, if a service filter is present in the request, only that service's permission
+// will be checked instead of looping through all three services
+// Returns false by default (checks all services)
+// Returns true when enabled (only checks the specified service when filter is present)
+func IsSingleServiceOptimizationEnabled(ctx context.Context) bool {
+	// Build Unleash context from request context for per-org targeting
+	unleashCtx := buildUnleashContext(ctx, nil)
+
+	// Check if feature is enabled with context
+	// Returns false by default if feature flag not found or Unleash not initialized
+	return unleash.IsEnabledWithContext(KesselSingleServiceOptimizationFeatureFlag, unleashCtx)
 }
