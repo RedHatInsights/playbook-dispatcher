@@ -171,6 +171,7 @@ func Get() *viper.Viper {
 		options.SetDefault("log.cw.secretAccessKey", cfg.Logging.Cloudwatch.SecretAccessKey)
 		options.SetDefault("log.cw.region", cfg.Logging.Cloudwatch.Region)
 		options.SetDefault("log.cw.group", cfg.Logging.Cloudwatch.LogGroup)
+		options.SetDefault("log.cw.flushInterval", "500ms")
 
 		options.SetDefault("db.host", cfg.Database.Hostname)
 		options.SetDefault("db.port", cfg.Database.Port)
