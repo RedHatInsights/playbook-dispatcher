@@ -222,8 +222,23 @@ func getKesselAllowedServices(ctx echo.Context, log *zap.SugaredLogger) []string
 		return []string{} // Return empty list on error
 	}
 
+	// Extract service filter from request if single-service optimization is enabled
+	var serviceFilter string
+	if features.IsSingleServiceOptimizationEnabled(ctx.Request().Context()) {
+		if runFilters := GetDeepObject(ctx, "filter", "run"); len(runFilters) > 0 {
+			if service, ok := runFilters["service"]; ok {
+				// GetDeepObject returns []string, so extract the first value
+				if len(service) > 0 {
+					serviceFilter = service[0]
+					log.Debugw("Single-service optimization enabled, using service filter",
+						"service", serviceFilter)
+				}
+			}
+		}
+	}
+
 	// Check permissions via Kessel (uses V2ApplicationPermissions map)
-	allowedServices, err := kessel.CheckApplicationPermissions(ctx.Request().Context(), workspaceID, log)
+	allowedServices, err := kessel.CheckApplicationPermissions(ctx.Request().Context(), workspaceID, serviceFilter, log)
 	if err != nil {
 		log.Errorw("Kessel authorization error",
 			"error", err,

@@ -21,6 +21,9 @@ const (
 
 	// KesselBulkCheckFeatureFlag controls whether to use CheckBulk API or individual Check calls
 	KesselBulkCheckFeatureFlag = "playbook-dispatcher-kessel-bulkcheck"
+	// KesselSingleServiceOptimizationFeatureFlag controls whether to query only the specified service
+	// instead of all three services when a service filter is present in the request
+	KesselSingleServiceOptimizationFeatureFlag = "playbook-dispatcher-kessel-single-service"
 
 	// Variant names matching Unleash dashboard configuration
 	VariantRBACOnly           = "rbac-only"
@@ -34,6 +37,13 @@ const (
 	ModeSourceEnvironmentUnleashFallback = "environment-unleash-fallback"
 	ModeSourceEnvironment           = "environment"
 	ModeSourceEnvironmentInvalid    = "environment-invalid"
+)
+
+// Context key for test overrides
+type contextKey string
+
+const (
+	testSingleServiceKey contextKey = "test-single-service-override"
 )
 
 // GetKesselAuthMode determines the current Kessel authorization mode WITHOUT context
@@ -291,4 +301,28 @@ func IsBulkCheckEnabled(ctx context.Context) bool {
 	// Check if feature is enabled with context
 	// Returns false by default if feature flag not found or Unleash not initialized
 	return unleash.IsEnabledWithContext(KesselBulkCheckFeatureFlag, unleashCtx)
+}
+
+// IsSingleServiceOptimizationEnabled checks if the single-service Kessel optimization is enabled
+// When enabled, if a service filter is present in the request, only that service's permission
+// will be checked instead of looping through all three services
+// Returns false by default (checks all services)
+// Returns true when enabled (only checks the specified service when filter is present)
+func IsSingleServiceOptimizationEnabled(ctx context.Context) bool {
+	// Check for test override first
+	if override, ok := ctx.Value(testSingleServiceKey).(bool); ok {
+		return override
+	}
+
+	// Build Unleash context from request context for per-org targeting
+	unleashCtx := buildUnleashContext(ctx, nil)
+
+	// Check if feature is enabled with context
+	// Returns false by default if feature flag not found or Unleash not initialized
+	return unleash.IsEnabledWithContext(KesselSingleServiceOptimizationFeatureFlag, unleashCtx)
+}
+
+// WithSingleServiceOptimizationEnabled returns a context with single-service optimization override for testing
+func WithSingleServiceOptimizationEnabled(ctx context.Context, enabled bool) context.Context {
+	return context.WithValue(ctx, testSingleServiceKey, enabled)
 }
