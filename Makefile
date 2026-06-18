@@ -16,7 +16,7 @@ PSK ?= secret
 all: init generate build test run-lint
 
 init:
-	go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest
+	go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@v2.6.0
 	go install github.com/atombender/go-jsonschema@v0.17.0
 	go install github.com/kulshekhar/fungen@latest
 
@@ -127,6 +127,11 @@ sample_request:
 
 sample_request_v2:
 	curl -v -H "content-type: application/json" -H "Authorization: PSK xwKhCUzgJ8" -d "@examples/payload-v2.json" http://localhost:8000/internal/v2/dispatch
+
+# Test the fields[data] parameter format that was failing after kin-openapi update
+# This sends repeated fields[data] parameters (form style) which was returning 400 before the fix
+test-fields-parameter:
+	curl -v -H "Authorization: PSK xwKhCUzgJ8" -H "x-rh-identity: eyJpZGVudGl0eSI6IHsiYWNjb3VudF9udW1iZXIiOiAiMDAwMDAwMSIsICJ0eXBlIjogIlN5c3RlbSIsICJpbnRlcm5hbCI6IHsib3JnX2lkIjogIjAwMDAwMSJ9fX0=" "http://localhost:8000/internal/v2/run_hosts?fields%5Bdata%5D=host&fields%5Bdata%5D=run&fields%5Bdata%5D=status&fields%5Bdata%5D=stdout"
 
 sample_request_multiple_v2:
 	curl -v -H "content-type: application/json" -H "Authorization: PSK xwKhCUzgJ8" -d "@examples/payload-multiple-run-v2.json" http://localhost:8000/internal/v2/dispatch

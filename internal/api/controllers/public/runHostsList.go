@@ -38,7 +38,7 @@ func (this *controllers) ApiRunHostsList(ctx echo.Context, params ApiRunHostsLis
 	}
 
 	if params.Filter != nil {
-		if params.Filter.Status != nil {
+		if params.Filter.Status != nil && *params.Filter.Status != "" {
 			status := *params.Filter.Status
 			switch status {
 			case dbModel.RunStatusTimeout:
@@ -69,7 +69,7 @@ func (this *controllers) ApiRunHostsList(ctx echo.Context, params ApiRunHostsLis
 			}
 		}
 
-		if params.Filter.InventoryId != nil {
+		if params.Filter.InventoryId != nil && *params.Filter.InventoryId != "" {
 			inventoryId, err := uuid.Parse(*params.Filter.InventoryId)
 			if err != nil {
 				instrumentation.PlaybookApiRequestError(ctx, err)
