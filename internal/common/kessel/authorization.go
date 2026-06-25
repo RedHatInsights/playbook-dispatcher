@@ -12,6 +12,8 @@ import (
 	"github.com/redhatinsights/platform-go-middlewares/v2/identity"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
+
+	"playbook-dispatcher/internal/common/unleash/features"
 )
 
 // validateClientAndIdentity performs common validation checks for authorization requests
@@ -121,7 +123,7 @@ func checkPermissionInternal(
 
 		response, err := globalManager.client.KesselInventoryService.CheckForUpdate(ctx, request, opts...)
 		if err != nil {
-			return false, fmt.Errorf("Kessel check for update failed: %w", err)
+			return false, fmt.Errorf("kessel check for update failed: %w", err)
 		}
 		allowed = response.GetAllowed() == kesselv2.Allowed_ALLOWED_TRUE
 
@@ -152,7 +154,7 @@ func checkPermissionInternal(
 
 		response, err := globalManager.client.KesselInventoryService.Check(ctx, request, opts...)
 		if err != nil {
-			return false, fmt.Errorf("Kessel check failed: %w", err)
+			return false, fmt.Errorf("kessel check failed: %w", err)
 		}
 		allowed = response.GetAllowed() == kesselv2.Allowed_ALLOWED_TRUE
 
@@ -164,6 +166,134 @@ func checkPermissionInternal(
 	}
 
 	return allowed, nil
+}
+
+// checkPermissionsBulk performs multiple Kessel authorization checks in a single bulk request
+// Returns a slice of application names that the user has permission for
+func checkPermissionsBulk(
+	ctx context.Context,
+	workspaceID string,
+	permissions map[string]string,
+	log *zap.SugaredLogger,
+	xrhid identity.XRHID,
+	principalID string,
+	object *kesselv2.ResourceReference,
+	subject *kesselv2.SubjectReference,
+	opts []grpc.CallOption,
+) ([]string, error) {
+	// Build bulk request items and create reverse lookup map (permission -> appName)
+	// INVARIANT: Each app must have a unique permission string in V2ApplicationPermissions.
+	// This is enforced at compile-time by the map structure and validated by tests.
+	items := make([]*kesselv2.CheckBulkRequestItem, 0, len(permissions))
+	permissionToApp := make(map[string]string, len(permissions))
+
+	for appName, permission := range permissions {
+		items = append(items, &kesselv2.CheckBulkRequestItem{
+			Object:   object,
+			Relation: permission,
+			Subject:  subject,
+		})
+		permissionToApp[permission] = appName
+	}
+
+	request := &kesselv2.CheckBulkRequest{
+		Items: items,
+	}
+
+	log.Debugw("Sending Kessel bulk permission check request",
+		"workspace_id", workspaceID,
+		"principal_id", principalID,
+		"org_id", xrhid.Identity.OrgID,
+		"num_checks", len(items))
+
+	response, err := globalManager.client.KesselInventoryService.CheckBulk(ctx, request, opts...)
+	if err != nil {
+		return nil, fmt.Errorf("kessel bulk check failed: %w", err)
+	}
+
+	// Validate response structure
+	if response == nil {
+		return nil, fmt.Errorf("kessel bulk check returned nil response")
+	}
+
+	pairs := response.GetPairs()
+	if len(pairs) != len(items) {
+		// Log the mismatch but don't fail - treat missing pairs as denied
+		log.Warnw("Kessel bulk check response length mismatch",
+			"workspace_id", workspaceID,
+			"principal_id", principalID,
+			"org_id", xrhid.Identity.OrgID,
+			"requested_checks", len(items),
+			"received_pairs", len(pairs))
+	}
+
+	log.Debugw("Kessel bulk permission check complete",
+		"workspace_id", workspaceID,
+		"principal_id", principalID,
+		"num_responses", len(pairs))
+
+	// Process response pairs and collect allowed apps
+	// Use the echoed request in each pair to match back to app name
+	// Handle partial failures gracefully - bad pairs are treated as denied
+	allowedApps := []string{}
+	for _, pair := range pairs {
+		// Get the echoed request to determine which app this response is for
+		req := pair.GetRequest()
+		if req == nil {
+			log.Warnw("Bulk check response pair missing request echo, treating as denied",
+				"workspace_id", workspaceID,
+				"principal_id", principalID)
+			continue
+		}
+
+		relation := req.GetRelation()
+		appName, found := permissionToApp[relation]
+		if !found {
+			log.Warnw("Bulk check response contains unknown relation, treating as denied",
+				"workspace_id", workspaceID,
+				"principal_id", principalID,
+				"relation", relation)
+			continue
+		}
+
+		// Check if this pair has an error response - treat as denied for this app
+		if pairErr := pair.GetError(); pairErr != nil {
+			log.Warnw("Per-item error in bulk check response, treating as denied",
+				"workspace_id", workspaceID,
+				"principal_id", principalID,
+				"app", appName,
+				"permission", relation,
+				"error_code", pairErr.GetCode(),
+				"error_message", pairErr.GetMessage())
+			continue
+		}
+
+		// Get the response item
+		item := pair.GetItem()
+		if item == nil {
+			log.Warnw("Bulk check response pair missing item, treating as denied",
+				"workspace_id", workspaceID,
+				"principal_id", principalID,
+				"app", appName,
+				"permission", relation)
+			continue
+		}
+
+		// Check if allowed and log result (matches non-bulk logging)
+		allowed := item.GetAllowed() == kesselv2.Allowed_ALLOWED_TRUE
+		if allowed {
+			allowedApps = append(allowedApps, appName)
+			log.Debugw("User has access to application",
+				"app", appName,
+				"permission", relation)
+		} else {
+			log.Debugw("User does not have access to application",
+				"app", appName,
+				"permission", relation)
+		}
+	}
+
+	return allowedApps, nil
 }
 
 // CheckPermission performs a Kessel authorization check for a user's permission on a workspace
@@ -334,30 +464,52 @@ func CheckApplicationPermissions(ctx context.Context, workspaceID string, log *z
 		return nil, fmt.Errorf("failed to get auth options: %w", err)
 	}
 
-	allowedApps := make([]string, 0, len(V2ApplicationPermissions))
+	var allowedApps []string
 
-	// Loop through each application and check its permission
-	// NOTE: We call checkPermissionInternal directly (instead of CheckPermission) to reuse
-	// the resolved identity, principal ID, and Kessel references across all permission checks.
-	// This avoids redundant identity extraction and reference building for each application,
-	// which is important when checking multiple permissions for the same user.
-	for appName, permission := range V2ApplicationPermissions {
-		allowed, err := checkPermissionInternal(ctx, workspaceID, permission, log, xrhid, principalID, object, subject, opts, false)
+	// Check feature flag to decide between bulk or individual checks
+	if features.IsBulkCheckEnabled(ctx) {
+		// Use bulk check API (single network call for all permissions)
+		allowedApps, err = checkPermissionsBulk(
+			ctx,
+			workspaceID,
+			V2ApplicationPermissions,
+			log,
+			xrhid,
+			principalID,
+			object,
+			subject,
+			opts,
+		)
 		if err != nil {
-			// Any error from checkPermissionInternal indicates a structural failure
-			// (network error, auth issues) - return immediately
-			return nil, fmt.Errorf("structural failure checking permission for %s: %w", appName, err)
+			return nil, fmt.Errorf("bulk permission check failed: %w", err)
 		}
+	} else {
+		// Use individual checks (loop - original behavior)
+		allowedApps = make([]string, 0, len(V2ApplicationPermissions))
 
-		if allowed {
-			allowedApps = append(allowedApps, appName)
-			log.Debugw("User has access to application",
-				"app", appName,
-				"permission", permission)
-		} else {
-			log.Debugw("User does not have access to application",
-				"app", appName,
-				"permission", permission)
+		// Loop through each application and check its permission
+		// NOTE: We call checkPermissionInternal directly (instead of CheckPermission) to reuse
+		// the resolved identity, principal ID, and Kessel references across all permission checks.
+		// This avoids redundant identity extraction and reference building for each application,
+		// which is important when checking multiple permissions for the same user.
+		for appName, permission := range V2ApplicationPermissions {
+			allowed, err := checkPermissionInternal(ctx, workspaceID, permission, log, xrhid, principalID, object, subject, opts, false)
+			if err != nil {
+				// Any error from checkPermissionInternal indicates a structural failure
+				// (network error, auth issues) - return immediately
+				return nil, fmt.Errorf("structural failure checking permission for %s: %w", appName, err)
+			}
+
+			if allowed {
+				allowedApps = append(allowedApps, appName)
+				log.Debugw("User has access to application",
+					"app", appName,
+					"permission", permission)
+			} else {
+				log.Debugw("User does not have access to application",
+					"app", appName,
+					"permission", permission)
+			}
 		}
 	}
 
