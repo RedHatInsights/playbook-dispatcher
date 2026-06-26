@@ -10,6 +10,7 @@ import (
 	"github.com/redhatinsights/platform-go-middlewares/v2/identity"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
+	"google.golang.org/genproto/googleapis/rpc/status"
 	"google.golang.org/grpc"
 )
 
@@ -19,9 +20,12 @@ type mockKesselInventoryService struct {
 	checkError             error
 	checkForUpdateResponse *kesselv2.CheckForUpdateResponse
 	checkForUpdateError    error
+	checkBulkResponse      *kesselv2.CheckBulkResponse
+	checkBulkError         error
 	lastCheckRequest       *kesselv2.CheckRequest
 	lastUpdateRequest      *kesselv2.CheckForUpdateRequest
 	checkFunc              func(ctx context.Context, in *kesselv2.CheckRequest, opts ...grpc.CallOption) (*kesselv2.CheckResponse, error)
+	checkBulkFunc          func(ctx context.Context, in *kesselv2.CheckBulkRequest, opts ...grpc.CallOption) (*kesselv2.CheckBulkResponse, error)
 }
 
 func (m *mockKesselInventoryService) Check(ctx context.Context, in *kesselv2.CheckRequest, opts ...grpc.CallOption) (*kesselv2.CheckResponse, error) {
@@ -54,7 +58,10 @@ func (m *mockKesselInventoryService) CheckSelf(ctx context.Context, in *kesselv2
 }
 
 func (m *mockKesselInventoryService) CheckBulk(ctx context.Context, in *kesselv2.CheckBulkRequest, opts ...grpc.CallOption) (*kesselv2.CheckBulkResponse, error) {
-	return nil, errors.New("not implemented")
+	if m.checkBulkFunc != nil {
+		return m.checkBulkFunc(ctx, in, opts...)
+	}
+	return m.checkBulkResponse, m.checkBulkError
 }
 
 func (m *mockKesselInventoryService) CheckForUpdateBulk(ctx context.Context, in *kesselv2.CheckForUpdateBulkRequest, opts ...grpc.CallOption) (*kesselv2.CheckForUpdateBulkResponse, error) {
@@ -196,7 +203,7 @@ func TestCheckPermission_KesselError(t *testing.T) {
 
 	assert.Error(t, err)
 	assert.False(t, allowed)
-	assert.Contains(t, err.Error(), "Kessel check failed")
+	assert.Contains(t, err.Error(), "kessel check failed")
 }
 
 func TestCheckPermission_EmptyWorkspaceID(t *testing.T) {
@@ -379,7 +386,7 @@ func TestCheckPermissionForUpdate_KesselError(t *testing.T) {
 
 	assert.Error(t, err)
 	assert.False(t, allowed)
-	assert.Contains(t, err.Error(), "Kessel check for update failed")
+	assert.Contains(t, err.Error(), "kessel check for update failed")
 }
 
 func TestCheckPermissionForUpdate_NoIdentityInContext(t *testing.T) {
@@ -698,6 +705,514 @@ func TestGetAuthCallOptions_NoTokenClient(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Empty(t, opts)
+}
+
+func TestCheckPermissionsBulk_Success(t *testing.T) {
+	mockService := &mockKesselInventoryService{
+		checkBulkResponse: &kesselv2.CheckBulkResponse{
+			Pairs: []*kesselv2.CheckBulkResponsePair{
+				{
+					Request: &kesselv2.CheckBulkRequestItem{
+						Relation: PermissionConfigManagerRunView,
+					},
+					Response: &kesselv2.CheckBulkResponsePair_Item{
+						Item: &kesselv2.CheckBulkResponseItem{
+							Allowed: kesselv2.Allowed_ALLOWED_TRUE,
+						},
+					},
+				},
+				{
+					Request: &kesselv2.CheckBulkRequestItem{
+						Relation: PermissionRemediationsRunView,
+					},
+					Response: &kesselv2.CheckBulkResponsePair_Item{
+						Item: &kesselv2.CheckBulkResponseItem{
+							Allowed: kesselv2.Allowed_ALLOWED_TRUE,
+						},
+					},
+				},
+				{
+					Request: &kesselv2.CheckBulkRequestItem{
+						Relation: PermissionTasksRunView,
+					},
+					Response: &kesselv2.CheckBulkResponsePair_Item{
+						Item: &kesselv2.CheckBulkResponseItem{
+							Allowed: kesselv2.Allowed_ALLOWED_TRUE,
+						},
+					},
+				},
+			},
+		},
+	}
+	cleanup := setupMockClient(mockService)
+	defer cleanup()
+
+	xrhid := identity.XRHID{
+		Identity: identity.Identity{
+			Type:  "User",
+			User:  &identity.User{UserID: "user-123"},
+			OrgID: "org-456",
+		},
+	}
+	log := zap.NewNop().Sugar()
+
+	object, subject, _ := buildKesselReferences("workspace-789", "redhat/user-123")
+	opts, _ := getAuthCallOptions()
+
+	allowedApps, err := checkPermissionsBulk(
+		context.Background(),
+		"workspace-789",
+		V2ApplicationPermissions,
+		log,
+		xrhid,
+		"redhat/user-123",
+		object,
+		subject,
+		opts,
+	)
+
+	assert.NoError(t, err)
+	assert.Len(t, allowedApps, 3)
+	assert.Contains(t, allowedApps, "config_manager")
+	assert.Contains(t, allowedApps, "remediations")
+	assert.Contains(t, allowedApps, "tasks")
+}
+
+func TestCheckPermissionsBulk_PartialAccess(t *testing.T) {
+	mockService := &mockKesselInventoryService{
+		checkBulkResponse: &kesselv2.CheckBulkResponse{
+			Pairs: []*kesselv2.CheckBulkResponsePair{
+				{
+					Request: &kesselv2.CheckBulkRequestItem{
+						Relation: PermissionConfigManagerRunView,
+					},
+					Response: &kesselv2.CheckBulkResponsePair_Item{
+						Item: &kesselv2.CheckBulkResponseItem{
+							Allowed: kesselv2.Allowed_ALLOWED_FALSE,
+						},
+					},
+				},
+				{
+					Request: &kesselv2.CheckBulkRequestItem{
+						Relation: PermissionRemediationsRunView,
+					},
+					Response: &kesselv2.CheckBulkResponsePair_Item{
+						Item: &kesselv2.CheckBulkResponseItem{
+							Allowed: kesselv2.Allowed_ALLOWED_TRUE,
+						},
+					},
+				},
+				{
+					Request: &kesselv2.CheckBulkRequestItem{
+						Relation: PermissionTasksRunView,
+					},
+					Response: &kesselv2.CheckBulkResponsePair_Item{
+						Item: &kesselv2.CheckBulkResponseItem{
+							Allowed: kesselv2.Allowed_ALLOWED_FALSE,
+						},
+					},
+				},
+			},
+		},
+	}
+	cleanup := setupMockClient(mockService)
+	defer cleanup()
+
+	xrhid := identity.XRHID{
+		Identity: identity.Identity{
+			Type:  "User",
+			User:  &identity.User{UserID: "user-123"},
+			OrgID: "org-456",
+		},
+	}
+	log := zap.NewNop().Sugar()
+
+	object, subject, _ := buildKesselReferences("workspace-789", "redhat/user-123")
+	opts, _ := getAuthCallOptions()
+
+	allowedApps, err := checkPermissionsBulk(
+		context.Background(),
+		"workspace-789",
+		V2ApplicationPermissions,
+		log,
+		xrhid,
+		"redhat/user-123",
+		object,
+		subject,
+		opts,
+	)
+
+	assert.NoError(t, err)
+	assert.Len(t, allowedApps, 1)
+	assert.Contains(t, allowedApps, "remediations")
+}
+
+func TestCheckPermissionsBulk_NoAccess(t *testing.T) {
+	mockService := &mockKesselInventoryService{
+		checkBulkResponse: &kesselv2.CheckBulkResponse{
+			Pairs: []*kesselv2.CheckBulkResponsePair{
+				{
+					Request: &kesselv2.CheckBulkRequestItem{
+						Relation: PermissionConfigManagerRunView,
+					},
+					Response: &kesselv2.CheckBulkResponsePair_Item{
+						Item: &kesselv2.CheckBulkResponseItem{
+							Allowed: kesselv2.Allowed_ALLOWED_FALSE,
+						},
+					},
+				},
+				{
+					Request: &kesselv2.CheckBulkRequestItem{
+						Relation: PermissionRemediationsRunView,
+					},
+					Response: &kesselv2.CheckBulkResponsePair_Item{
+						Item: &kesselv2.CheckBulkResponseItem{
+							Allowed: kesselv2.Allowed_ALLOWED_FALSE,
+						},
+					},
+				},
+				{
+					Request: &kesselv2.CheckBulkRequestItem{
+						Relation: PermissionTasksRunView,
+					},
+					Response: &kesselv2.CheckBulkResponsePair_Item{
+						Item: &kesselv2.CheckBulkResponseItem{
+							Allowed: kesselv2.Allowed_ALLOWED_FALSE,
+						},
+					},
+				},
+			},
+		},
+	}
+	cleanup := setupMockClient(mockService)
+	defer cleanup()
+
+	xrhid := identity.XRHID{
+		Identity: identity.Identity{
+			Type:  "User",
+			User:  &identity.User{UserID: "user-123"},
+			OrgID: "org-456",
+		},
+	}
+	log := zap.NewNop().Sugar()
+
+	object, subject, _ := buildKesselReferences("workspace-789", "redhat/user-123")
+	opts, _ := getAuthCallOptions()
+
+	allowedApps, err := checkPermissionsBulk(
+		context.Background(),
+		"workspace-789",
+		V2ApplicationPermissions,
+		log,
+		xrhid,
+		"redhat/user-123",
+		object,
+		subject,
+		opts,
+	)
+
+	assert.NoError(t, err)
+	assert.Empty(t, allowedApps)
+}
+
+func TestCheckPermissionsBulk_Error(t *testing.T) {
+	mockService := &mockKesselInventoryService{
+		checkBulkError: errors.New("kessel service unavailable"),
+	}
+	cleanup := setupMockClient(mockService)
+	defer cleanup()
+
+	xrhid := identity.XRHID{
+		Identity: identity.Identity{
+			Type:  "User",
+			User:  &identity.User{UserID: "user-123"},
+			OrgID: "org-456",
+		},
+	}
+	log := zap.NewNop().Sugar()
+
+	object, subject, _ := buildKesselReferences("workspace-789", "redhat/user-123")
+	opts, _ := getAuthCallOptions()
+
+	allowedApps, err := checkPermissionsBulk(
+		context.Background(),
+		"workspace-789",
+		V2ApplicationPermissions,
+		log,
+		xrhid,
+		"redhat/user-123",
+		object,
+		subject,
+		opts,
+	)
+
+	assert.Error(t, err)
+	assert.Nil(t, allowedApps)
+	assert.Contains(t, err.Error(), "kessel bulk check failed")
+}
+
+func TestCheckPermissionsBulk_ResponsePairError(t *testing.T) {
+	mockService := &mockKesselInventoryService{
+		checkBulkResponse: &kesselv2.CheckBulkResponse{
+			Pairs: []*kesselv2.CheckBulkResponsePair{
+				{
+					Request: &kesselv2.CheckBulkRequestItem{
+						Relation: PermissionConfigManagerRunView,
+					},
+					Response: &kesselv2.CheckBulkResponsePair_Error{
+						Error: &status.Status{
+							Code:    int32(5),
+							Message: "permission check failed",
+						},
+					},
+				},
+				{
+					Request: &kesselv2.CheckBulkRequestItem{
+						Relation: PermissionRemediationsRunView,
+					},
+					Response: &kesselv2.CheckBulkResponsePair_Item{
+						Item: &kesselv2.CheckBulkResponseItem{
+							Allowed: kesselv2.Allowed_ALLOWED_TRUE,
+						},
+					},
+				},
+				{
+					Request: &kesselv2.CheckBulkRequestItem{
+						Relation: PermissionTasksRunView,
+					},
+					Response: &kesselv2.CheckBulkResponsePair_Item{
+						Item: &kesselv2.CheckBulkResponseItem{
+							Allowed: kesselv2.Allowed_ALLOWED_TRUE,
+						},
+					},
+				},
+			},
+		},
+	}
+	cleanup := setupMockClient(mockService)
+	defer cleanup()
+
+	xrhid := identity.XRHID{
+		Identity: identity.Identity{
+			Type:  "User",
+			User:  &identity.User{UserID: "user-123"},
+			OrgID: "org-456",
+		},
+	}
+	log := zap.NewNop().Sugar()
+
+	object, subject, _ := buildKesselReferences("workspace-789", "redhat/user-123")
+	opts, _ := getAuthCallOptions()
+
+	allowedApps, err := checkPermissionsBulk(
+		context.Background(),
+		"workspace-789",
+		V2ApplicationPermissions,
+		log,
+		xrhid,
+		"redhat/user-123",
+		object,
+		subject,
+		opts,
+	)
+
+	// Per-item error is now treated as denied for that app, not a failure
+	assert.NoError(t, err)
+	assert.Len(t, allowedApps, 2) // remediations and tasks allowed, config_manager denied due to error
+	assert.Contains(t, allowedApps, "remediations")
+	assert.Contains(t, allowedApps, "tasks")
+	assert.NotContains(t, allowedApps, "config_manager")
+}
+
+func TestCheckPermissionsBulk_ResponseLengthMismatch(t *testing.T) {
+	mockService := &mockKesselInventoryService{
+		checkBulkResponse: &kesselv2.CheckBulkResponse{
+			Pairs: []*kesselv2.CheckBulkResponsePair{
+				{
+					Request: &kesselv2.CheckBulkRequestItem{
+						Relation: PermissionConfigManagerRunView,
+					},
+					Response: &kesselv2.CheckBulkResponsePair_Item{
+						Item: &kesselv2.CheckBulkResponseItem{
+							Allowed: kesselv2.Allowed_ALLOWED_TRUE,
+						},
+					},
+				},
+				// Only 1 pair returned but we send 3 items - should warn but not fail
+			},
+		},
+	}
+	cleanup := setupMockClient(mockService)
+	defer cleanup()
+
+	xrhid := identity.XRHID{
+		Identity: identity.Identity{
+			Type:  "User",
+			User:  &identity.User{UserID: "user-123"},
+			OrgID: "org-456",
+		},
+	}
+	log := zap.NewNop().Sugar()
+
+	object, subject, _ := buildKesselReferences("workspace-789", "redhat/user-123")
+	opts, _ := getAuthCallOptions()
+
+	allowedApps, err := checkPermissionsBulk(
+		context.Background(),
+		"workspace-789",
+		V2ApplicationPermissions,
+		log,
+		xrhid,
+		"redhat/user-123",
+		object,
+		subject,
+		opts,
+	)
+
+	// Length mismatch is now a warning, not an error - partial results are used
+	assert.NoError(t, err)
+	assert.Len(t, allowedApps, 1) // Only config_manager in response
+	assert.Contains(t, allowedApps, "config_manager")
+}
+
+func TestCheckPermissionsBulk_MissingRequestEcho(t *testing.T) {
+	mockService := &mockKesselInventoryService{
+		checkBulkResponse: &kesselv2.CheckBulkResponse{
+			Pairs: []*kesselv2.CheckBulkResponsePair{
+				{
+					// No Request field - should be skipped
+					Request: nil,
+					Response: &kesselv2.CheckBulkResponsePair_Item{
+						Item: &kesselv2.CheckBulkResponseItem{
+							Allowed: kesselv2.Allowed_ALLOWED_TRUE,
+						},
+					},
+				},
+				{
+					Request: &kesselv2.CheckBulkRequestItem{
+						Relation: PermissionRemediationsRunView,
+					},
+					Response: &kesselv2.CheckBulkResponsePair_Item{
+						Item: &kesselv2.CheckBulkResponseItem{
+							Allowed: kesselv2.Allowed_ALLOWED_TRUE,
+						},
+					},
+				},
+				{
+					Request: &kesselv2.CheckBulkRequestItem{
+						Relation: PermissionTasksRunView,
+					},
+					Response: &kesselv2.CheckBulkResponsePair_Item{
+						Item: &kesselv2.CheckBulkResponseItem{
+							Allowed: kesselv2.Allowed_ALLOWED_TRUE,
+						},
+					},
+				},
+			},
+		},
+	}
+	cleanup := setupMockClient(mockService)
+	defer cleanup()
+
+	xrhid := identity.XRHID{
+		Identity: identity.Identity{
+			Type:  "User",
+			User:  &identity.User{UserID: "user-123"},
+			OrgID: "org-456",
+		},
+	}
+	log := zap.NewNop().Sugar()
+
+	object, subject, _ := buildKesselReferences("workspace-789", "redhat/user-123")
+	opts, _ := getAuthCallOptions()
+
+	allowedApps, err := checkPermissionsBulk(
+		context.Background(),
+		"workspace-789",
+		V2ApplicationPermissions,
+		log,
+		xrhid,
+		"redhat/user-123",
+		object,
+		subject,
+		opts,
+	)
+
+	// Missing request echo is logged and skipped
+	assert.NoError(t, err)
+	assert.Len(t, allowedApps, 2)
+	assert.Contains(t, allowedApps, "remediations")
+	assert.Contains(t, allowedApps, "tasks")
+}
+
+func TestCheckPermissionsBulk_MissingItem(t *testing.T) {
+	mockService := &mockKesselInventoryService{
+		checkBulkResponse: &kesselv2.CheckBulkResponse{
+			Pairs: []*kesselv2.CheckBulkResponsePair{
+				{
+					Request: &kesselv2.CheckBulkRequestItem{
+						Relation: PermissionConfigManagerRunView,
+					},
+					Response: &kesselv2.CheckBulkResponsePair_Item{
+						Item: nil, // Missing item
+					},
+				},
+				{
+					Request: &kesselv2.CheckBulkRequestItem{
+						Relation: PermissionRemediationsRunView,
+					},
+					Response: &kesselv2.CheckBulkResponsePair_Item{
+						Item: &kesselv2.CheckBulkResponseItem{
+							Allowed: kesselv2.Allowed_ALLOWED_TRUE,
+						},
+					},
+				},
+				{
+					Request: &kesselv2.CheckBulkRequestItem{
+						Relation: PermissionTasksRunView,
+					},
+					Response: &kesselv2.CheckBulkResponsePair_Item{
+						Item: &kesselv2.CheckBulkResponseItem{
+							Allowed: kesselv2.Allowed_ALLOWED_TRUE,
+						},
+					},
+				},
+			},
+		},
+	}
+	cleanup := setupMockClient(mockService)
+	defer cleanup()
+
+	xrhid := identity.XRHID{
+		Identity: identity.Identity{
+			Type:  "User",
+			User:  &identity.User{UserID: "user-123"},
+			OrgID: "org-456",
+		},
+	}
+	log := zap.NewNop().Sugar()
+
+	object, subject, _ := buildKesselReferences("workspace-789", "redhat/user-123")
+	opts, _ := getAuthCallOptions()
+
+	allowedApps, err := checkPermissionsBulk(
+		context.Background(),
+		"workspace-789",
+		V2ApplicationPermissions,
+		log,
+		xrhid,
+		"redhat/user-123",
+		object,
+		subject,
+		opts,
+	)
+
+	// Missing item is logged and treated as denied
+	assert.NoError(t, err)
+	assert.Len(t, allowedApps, 2)
+	assert.Contains(t, allowedApps, "remediations")
+	assert.Contains(t, allowedApps, "tasks")
+	assert.NotContains(t, allowedApps, "config_manager")
 }
 
 // mockRbacClientWithWorkspace for testing workspace lookup
