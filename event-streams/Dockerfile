@@ -47,6 +47,8 @@ COPY --from=builder /deps/plugins $CONNECT_PLUGIN_PATH
 COPY --from=builder /deps/libs $CONNECT_LIB_PATH
 
 COPY event-streams/log4j.properties /opt/kafka/custom-config
+
+# removes unused cruise control files
 RUN rm -rf /opt/kafka-exporter
 
 USER 1001
