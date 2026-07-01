@@ -6,13 +6,15 @@ import (
 	"crypto/sha256"
 	"errors"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 	"time"
 
-	kesselv2 "github.com/project-kessel/inventory-api/api/kessel/inventory/v1beta2"
-	v1beta2 "github.com/project-kessel/inventory-client-go/v1beta2"
 	"github.com/patrickmn/go-cache"
+	kesselv2 "github.com/project-kessel/inventory-api/api/kessel/inventory/v1beta2"
 	"github.com/redhatinsights/platform-go-middlewares/v2/identity"
+	"github.com/redhatinsights/platform-go-middlewares/v2/request_id"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -201,17 +203,9 @@ func TestGetDefaultWorkspaceIDWithCache_ErrorOnUnknownUser(t *testing.T) {
 	assert.Contains(t, err.Error(), "required")
 }
 
-func TestCheckPermissionWithCache_ErrorOnMissingRequestID(t *testing.T) {
-	// Create mock client
-	mockService := &mockKesselInventoryServiceForCache{
-		allowed: kesselv2.Allowed_ALLOWED_TRUE,
-	}
-	mockClient := &v1beta2.InventoryClient{
-		KesselInventoryService: mockService,
-	}
-
-	// Create cache client wrapper
-	kesselCache := NewKesselClientWithCache(mockClient)
+func TestCheckApplicationPermissionsWithCache_FallbackOnMissingRequestID(t *testing.T) {
+	// Create cache client wrapper (client not needed for validation tests)
+	kesselCache := NewKesselClientWithCache(nil)
 
 	ctx := context.Background()
 	ctx = identity.WithIdentity(ctx, identity.XRHID{
@@ -226,22 +220,16 @@ func TestCheckPermissionWithCache_ErrorOnMissingRequestID(t *testing.T) {
 
 	log := zap.NewNop().Sugar()
 
-	_, err := kesselCache.CheckPermissionWithCache(ctx, "workspace-abc", PermissionRemediationsRunView, log)
+	_, err := kesselCache.CheckApplicationPermissionsWithCache(ctx, "workspace-abc", log)
 
+	// Should return error for missing request_id
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "request_id is required")
 }
 
-func TestCheckPermissionWithCache_ErrorOnMissingWorkspaceID(t *testing.T) {
-	mockService := &mockKesselInventoryServiceForCache{
-		allowed: kesselv2.Allowed_ALLOWED_TRUE,
-	}
-	mockClient := &v1beta2.InventoryClient{
-		KesselInventoryService: mockService,
-	}
-
-	// Create cache client wrapper
-	kesselCache := NewKesselClientWithCache(mockClient)
+func TestCheckApplicationPermissionsWithCache_FallbackOnMissingWorkspaceID(t *testing.T) {
+	// Create cache client wrapper (client not needed for validation tests)
+	kesselCache := NewKesselClientWithCache(nil)
 
 	ctx := context.Background()
 	ctx = identity.WithIdentity(ctx, identity.XRHID{
@@ -256,42 +244,11 @@ func TestCheckPermissionWithCache_ErrorOnMissingWorkspaceID(t *testing.T) {
 
 	log := zap.NewNop().Sugar()
 
-	_, err := kesselCache.CheckPermissionWithCache(ctx, "", PermissionRemediationsRunView, log)
+	_, err := kesselCache.CheckApplicationPermissionsWithCache(ctx, "", log)
 
+	// Should return error for missing workspace_id (checked before request_id)
 	assert.Error(t, err)
-	// Will error on request_id first since we can't set it in tests
-	assert.Contains(t, err.Error(), "required")
-}
-
-func TestCheckPermissionWithCache_ErrorOnMissingPermission(t *testing.T) {
-	mockService := &mockKesselInventoryServiceForCache{
-		allowed: kesselv2.Allowed_ALLOWED_TRUE,
-	}
-	mockClient := &v1beta2.InventoryClient{
-		KesselInventoryService: mockService,
-	}
-
-	// Create cache client wrapper
-	kesselCache := NewKesselClientWithCache(mockClient)
-
-	ctx := context.Background()
-	ctx = identity.WithIdentity(ctx, identity.XRHID{
-		Identity: identity.Identity{
-			Type:  "User",
-			OrgID: "org-456",
-			User: &identity.User{
-				UserID: "user-789",
-			},
-		},
-	})
-
-	log := zap.NewNop().Sugar()
-
-	_, err := kesselCache.CheckPermissionWithCache(ctx, "workspace-abc", "", log)
-
-	assert.Error(t, err)
-	// Will error on request_id first since we can't set it in tests
-	assert.Contains(t, err.Error(), "required")
+	assert.Contains(t, err.Error(), "is required")
 }
 
 func TestWorkspaceCache_Expiration(t *testing.T) {
@@ -316,25 +273,25 @@ func TestWorkspaceCache_Expiration(t *testing.T) {
 	assert.False(t, found)
 }
 
-func TestPermissionCache_Expiration(t *testing.T) {
+func TestApplicationCache_Expiration(t *testing.T) {
 	// Create test client with short TTL cache
 	kesselClient := NewKesselClientWithCache(nil)
-	kesselClient.permissionCache = cache.New(100*time.Millisecond, 50*time.Millisecond)
+	kesselClient.applicationCache = cache.New(100*time.Millisecond, 50*time.Millisecond)
 
-	// Set value with hashed key including workspace_id
-	cacheKey := fmt.Sprintf("%x", sha256.Sum256([]byte("permission:req-123:org-456:user-789:workspace-abc:"+PermissionRemediationsRunView)))
-	kesselClient.permissionCache.Set(cacheKey, true, cache.DefaultExpiration)
+	// Set value with hashed key for application permissions
+	cacheKey := fmt.Sprintf("%x", sha256.Sum256([]byte("applications:req-123:org-456:user-789:workspace-abc")))
+	kesselClient.applicationCache.Set(cacheKey, []string{"config-manager", "remediations"}, cache.DefaultExpiration)
 
 	// Verify it's there
-	value, found := kesselClient.permissionCache.Get(cacheKey)
+	value, found := kesselClient.applicationCache.Get(cacheKey)
 	assert.True(t, found)
-	assert.Equal(t, true, value)
+	assert.Equal(t, []string{"config-manager", "remediations"}, value)
 
 	// Wait for expiration
 	time.Sleep(150 * time.Millisecond)
 
 	// Verify it's gone
-	_, found = kesselClient.permissionCache.Get(cacheKey)
+	_, found = kesselClient.applicationCache.Get(cacheKey)
 	assert.False(t, found)
 }
 
@@ -348,19 +305,203 @@ func TestHashCacheKey_WithDelimiter(t *testing.T) {
 
 func TestHashCacheKey_DifferentWorkspaces(t *testing.T) {
 	// Verify that different workspaces produce different cache keys (security test)
-	// Same user, same permission, different workspaces should have different keys
-	hash1 := hashCacheKey("permission", "req-123", "org-456", "user-789", "workspace-A", "playbook_dispatcher_remediations_run_view")
-	hash2 := hashCacheKey("permission", "req-123", "org-456", "user-789", "workspace-B", "playbook_dispatcher_remediations_run_view")
+	// Same user, different workspaces should have different keys
+	hash1 := hashCacheKey("applications", "req-123", "org-456", "user-789", "workspace-A")
+	hash2 := hashCacheKey("applications", "req-123", "org-456", "user-789", "workspace-B")
 
 	assert.NotEqual(t, hash1, hash2, "Different workspaces must produce different cache keys to prevent authorization leakage")
 }
 
-// NOTE: Full cache hit/miss functionality cannot be tested in unit tests because
-// request_id.GetReqID() uses a private context key type from platform-go-middlewares.
-// Without a valid request_id, the cache functions will return errors.
-//
-// Cache functionality is verified through:
-// 1. Error validation tests above - ensure errors are returned when components are missing
-// 2. Cache expiration tests - verify the TTL mechanism works
-// 3. Hash key delimiter test - verify keys are properly structured
-// 4. Integration/E2E tests with actual middleware that sets request_id in context
+// Test helper to create a context with request_id set via middleware
+func contextWithRequestID(t *testing.T) context.Context {
+	t.Helper()
+
+	var capturedCtx context.Context
+
+	// Create a test HTTP request
+	req := httptest.NewRequest("GET", "/test", nil)
+
+	// Apply RequestID middleware to capture the context
+	handler := request_id.RequestID(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		capturedCtx = r.Context()
+	}))
+
+	// Execute the handler to populate context
+	handler.ServeHTTP(httptest.NewRecorder(), req)
+
+	return capturedCtx
+}
+
+func TestCheckApplicationPermissionsWithCache_CacheHit_AllowedApps(t *testing.T) {
+	// Create context with request_id via middleware
+	ctx := contextWithRequestID(t)
+
+	// Add identity to context
+	ctx = identity.WithIdentity(ctx, identity.XRHID{
+		Identity: identity.Identity{
+			Type:  "User",
+			OrgID: "org-123",
+			User: &identity.User{
+				UserID: "user-456",
+			},
+		},
+	})
+
+	// Create mock permission check function with call counter
+	callCount := 0
+	mockPermissionCheck := func(ctx context.Context, workspaceID string, log *zap.SugaredLogger) ([]string, error) {
+		callCount++
+		return []string{"remediations", "tasks"}, nil
+	}
+
+	// Create cache client with mock
+	kesselCache := NewKesselClientWithCache(nil)
+	kesselCache.permissionCheckFunc = mockPermissionCheck
+
+	log := zap.NewNop().Sugar()
+
+	// First call - should hit backend
+	allowedApps1, err1 := kesselCache.CheckApplicationPermissionsWithCache(ctx, "workspace-abc", log)
+	assert.NoError(t, err1)
+	assert.Equal(t, []string{"remediations", "tasks"}, allowedApps1)
+	assert.Equal(t, 1, callCount, "First call should invoke backend")
+
+	// Second call with same params - should hit cache
+	allowedApps2, err2 := kesselCache.CheckApplicationPermissionsWithCache(ctx, "workspace-abc", log)
+	assert.NoError(t, err2)
+	assert.Equal(t, []string{"remediations", "tasks"}, allowedApps2)
+	assert.Equal(t, 1, callCount, "Second call should NOT invoke backend (cache hit)")
+}
+
+func TestCheckApplicationPermissionsWithCache_CacheHit_NoApps(t *testing.T) {
+	// Create context with request_id via middleware
+	ctx := contextWithRequestID(t)
+
+	// Add identity to context
+	ctx = identity.WithIdentity(ctx, identity.XRHID{
+		Identity: identity.Identity{
+			Type:  "User",
+			OrgID: "org-789",
+			User: &identity.User{
+				UserID: "user-101",
+			},
+		},
+	})
+
+	// Create mock that returns empty list (denied)
+	callCount := 0
+	mockPermissionCheck := func(ctx context.Context, workspaceID string, log *zap.SugaredLogger) ([]string, error) {
+		callCount++
+		return []string{}, nil
+	}
+
+	// Create cache client with mock
+	kesselCache := NewKesselClientWithCache(nil)
+	kesselCache.permissionCheckFunc = mockPermissionCheck
+
+	log := zap.NewNop().Sugar()
+
+	// First call - should hit backend
+	allowedApps1, err1 := kesselCache.CheckApplicationPermissionsWithCache(ctx, "workspace-xyz", log)
+	assert.NoError(t, err1)
+	assert.Equal(t, []string{}, allowedApps1)
+	assert.Equal(t, 1, callCount, "First call should invoke backend")
+
+	// Second call - should hit cache (even for denied result)
+	allowedApps2, err2 := kesselCache.CheckApplicationPermissionsWithCache(ctx, "workspace-xyz", log)
+	assert.NoError(t, err2)
+	assert.Equal(t, []string{}, allowedApps2)
+	assert.Equal(t, 1, callCount, "Second call should NOT invoke backend (denied results are cached)")
+}
+
+func TestCheckApplicationPermissionsWithCache_DifferentCacheKeys(t *testing.T) {
+	// Create context with request_id via middleware
+	ctx := contextWithRequestID(t)
+
+	// Add identity to context
+	ctx = identity.WithIdentity(ctx, identity.XRHID{
+		Identity: identity.Identity{
+			Type:  "User",
+			OrgID: "org-999",
+			User: &identity.User{
+				UserID: "user-888",
+			},
+		},
+	})
+
+	// Create mock with call counter
+	callCount := 0
+	mockPermissionCheck := func(ctx context.Context, workspaceID string, log *zap.SugaredLogger) ([]string, error) {
+		callCount++
+		// Return different results based on workspace
+		if workspaceID == "workspace-1" {
+			return []string{"remediations"}, nil
+		}
+		return []string{"tasks"}, nil
+	}
+
+	// Create cache client with mock
+	kesselCache := NewKesselClientWithCache(nil)
+	kesselCache.permissionCheckFunc = mockPermissionCheck
+
+	log := zap.NewNop().Sugar()
+
+	// Call with workspace-1
+	apps1, err1 := kesselCache.CheckApplicationPermissionsWithCache(ctx, "workspace-1", log)
+	assert.NoError(t, err1)
+	assert.Equal(t, []string{"remediations"}, apps1)
+	assert.Equal(t, 1, callCount)
+
+	// Call with workspace-2 (different cache key)
+	apps2, err2 := kesselCache.CheckApplicationPermissionsWithCache(ctx, "workspace-2", log)
+	assert.NoError(t, err2)
+	assert.Equal(t, []string{"tasks"}, apps2)
+	assert.Equal(t, 2, callCount, "Different workspace should be cache miss")
+
+	// Call workspace-1 again (cache hit)
+	apps3, err3 := kesselCache.CheckApplicationPermissionsWithCache(ctx, "workspace-1", log)
+	assert.NoError(t, err3)
+	assert.Equal(t, []string{"remediations"}, apps3)
+	assert.Equal(t, 2, callCount, "Same workspace should be cache hit")
+}
+
+func TestCheckApplicationPermissionsWithCache_ErrorNotCached(t *testing.T) {
+	// Create context with request_id via middleware
+	ctx := contextWithRequestID(t)
+
+	// Add identity to context
+	ctx = identity.WithIdentity(ctx, identity.XRHID{
+		Identity: identity.Identity{
+			Type:  "User",
+			OrgID: "org-555",
+			User: &identity.User{
+				UserID: "user-666",
+			},
+		},
+	})
+
+	// Create mock that returns error
+	callCount := 0
+	mockPermissionCheck := func(ctx context.Context, workspaceID string, log *zap.SugaredLogger) ([]string, error) {
+		callCount++
+		return nil, errors.New("backend error")
+	}
+
+	// Create cache client with mock
+	kesselCache := NewKesselClientWithCache(nil)
+	kesselCache.permissionCheckFunc = mockPermissionCheck
+
+	log := zap.NewNop().Sugar()
+
+	// First call - should fail
+	_, err1 := kesselCache.CheckApplicationPermissionsWithCache(ctx, "workspace-fail", log)
+	assert.Error(t, err1)
+	assert.Contains(t, err1.Error(), "backend error")
+	assert.Equal(t, 1, callCount)
+
+	// Second call - should try backend again (errors are not cached)
+	_, err2 := kesselCache.CheckApplicationPermissionsWithCache(ctx, "workspace-fail", log)
+	assert.Error(t, err2)
+	assert.Contains(t, err2.Error(), "backend error")
+	assert.Equal(t, 2, callCount, "Errors should NOT be cached")
+}

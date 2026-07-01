@@ -25,6 +25,9 @@ const (
 	// KesselWorkspaceCacheFeatureFlag controls whether to use caching for RBAC workspace lookups
 	KesselWorkspaceCacheFeatureFlag = "playbook-dispatcher-kessel-workspace-cache"
 
+	// KesselApplicationCacheFeatureFlag controls whether to use caching for application permission checks
+	KesselApplicationCacheFeatureFlag = "playbook-dispatcher-kessel-application-cache"
+
 	// Variant names matching Unleash dashboard configuration
 	VariantRBACOnly           = "rbac-only"
 	VariantBothRBACEnforces   = "both-rbac-enforces"
@@ -306,4 +309,16 @@ func IsWorkspaceCacheEnabled(ctx context.Context) bool {
 	// Check if feature is enabled with context
 	// Returns false by default if feature flag not found or Unleash not initialized
 	return unleash.IsEnabledWithContext(KesselWorkspaceCacheFeatureFlag, unleashCtx)
+}
+
+// IsApplicationCacheEnabled checks if the application cache feature is enabled
+// Returns false by default (uses direct CheckApplicationPermissions calls)
+// Returns true when enabled (uses cached application results)
+func IsApplicationCacheEnabled(ctx context.Context) bool {
+	// Build Unleash context from request context for per-org targeting
+	unleashCtx := buildUnleashContext(ctx, nil)
+
+	// Check if feature is enabled with context
+	// Returns false by default if feature flag not found or Unleash not initialized
+	return unleash.IsEnabledWithContext(KesselApplicationCacheFeatureFlag, unleashCtx)
 }
