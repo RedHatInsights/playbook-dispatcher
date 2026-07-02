@@ -24,7 +24,11 @@ echo "job tmp dir location: $TMP_JOB_DIR"
 
 function job_cleanup() {
     echo "cleaning up job tmp dir: $TMP_JOB_DIR"
-    rm -fr "$TMP_JOB_DIR"
+    if [[ -n "$TMP_JOB_DIR" && -d "$TMP_JOB_DIR" ]]; then
+        rm -fr "$TMP_JOB_DIR"
+    else
+        echo "Skipping cleanup: TMP_JOB_DIR is not set or is not a directory (TMP_JOB_DIR='$TMP_JOB_DIR')"
+    fi
 }
 
 trap job_cleanup EXIT ERR SIGINT SIGTERM
