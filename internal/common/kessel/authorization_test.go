@@ -204,6 +204,7 @@ func TestCheckPermission_KesselError(t *testing.T) {
 	assert.Error(t, err)
 	assert.False(t, allowed)
 	assert.Contains(t, err.Error(), "kessel check failed")
+	assert.True(t, IsServiceUnavailableError(err), "error should be ErrServiceUnavailable")
 }
 
 func TestCheckPermission_EmptyWorkspaceID(t *testing.T) {
@@ -266,6 +267,7 @@ func TestCheckPermission_UnsupportedIdentityType(t *testing.T) {
 	assert.False(t, allowed)
 	assert.Contains(t, err.Error(), "failed to extract user ID")
 	assert.Contains(t, err.Error(), "unsupported identity type: System")
+	assert.True(t, IsIdentityValidationError(err), "error should be ErrIdentityValidation")
 }
 
 func TestCheckPermission_EmptyUserID(t *testing.T) {
@@ -289,6 +291,7 @@ func TestCheckPermission_EmptyUserID(t *testing.T) {
 	assert.Error(t, err)
 	assert.False(t, allowed)
 	assert.Contains(t, err.Error(), "failed to extract user ID")
+	assert.True(t, IsIdentityValidationError(err), "error should be ErrIdentityValidation")
 	assert.Contains(t, err.Error(), "user ID is empty")
 }
 
@@ -312,6 +315,7 @@ func TestCheckPermission_NilUser(t *testing.T) {
 
 	assert.Error(t, err)
 	assert.False(t, allowed)
+	assert.True(t, IsIdentityValidationError(err), "error should be ErrIdentityValidation")
 	assert.Contains(t, err.Error(), "failed to extract user ID")
 	assert.Contains(t, err.Error(), "user ID is empty")
 }
@@ -386,6 +390,7 @@ func TestCheckPermissionForUpdate_KesselError(t *testing.T) {
 
 	assert.Error(t, err)
 	assert.False(t, allowed)
+	assert.True(t, IsServiceUnavailableError(err), "error should be ErrServiceUnavailable")
 	assert.Contains(t, err.Error(), "kessel check for update failed")
 }
 
@@ -427,6 +432,7 @@ func TestCheckPermissionForUpdate_UnsupportedIdentityType(t *testing.T) {
 	assert.False(t, allowed)
 	assert.Contains(t, err.Error(), "failed to extract user ID")
 	assert.Contains(t, err.Error(), "unsupported identity type: System")
+	assert.True(t, IsIdentityValidationError(err), "error should be ErrIdentityValidation")
 }
 
 func TestExtractUserID_User(t *testing.T) {
@@ -518,6 +524,7 @@ func TestGetWorkspaceID_RbacError(t *testing.T) {
 	assert.Error(t, err)
 	assert.Empty(t, workspaceID)
 	assert.Contains(t, err.Error(), "failed to get default workspace ID")
+	assert.True(t, IsServiceUnavailableError(err), "error should be ErrServiceUnavailable")
 }
 
 func TestGetWorkspaceID_ClientNotInitialized(t *testing.T) {
@@ -641,6 +648,7 @@ func TestCheckApplicationPermissions_KesselError(t *testing.T) {
 
 	assert.Error(t, err)
 	assert.Nil(t, allowedApps)
+	assert.True(t, IsServiceUnavailableError(err), "error should be ErrServiceUnavailable")
 	assert.Contains(t, err.Error(), "structural failure")
 }
 
