@@ -220,7 +220,7 @@ func TestCheckApplicationPermissionsWithCache_FallbackOnMissingRequestID(t *test
 
 	log := zap.NewNop().Sugar()
 
-	_, err := kesselCache.CheckApplicationPermissionsWithCache(ctx, "workspace-abc", log)
+	_, err := kesselCache.CheckApplicationPermissionsWithCache(ctx, "workspace-abc", "", log)
 
 	// Should return error for missing request_id
 	assert.Error(t, err)
@@ -244,7 +244,7 @@ func TestCheckApplicationPermissionsWithCache_FallbackOnMissingWorkspaceID(t *te
 
 	log := zap.NewNop().Sugar()
 
-	_, err := kesselCache.CheckApplicationPermissionsWithCache(ctx, "", log)
+	_, err := kesselCache.CheckApplicationPermissionsWithCache(ctx, "", "", log)
 
 	// Should return error for missing workspace_id (checked before request_id)
 	assert.Error(t, err)
@@ -349,7 +349,7 @@ func TestCheckApplicationPermissionsWithCache_CacheHit_AllowedApps(t *testing.T)
 
 	// Create mock permission check function with call counter
 	callCount := 0
-	mockPermissionCheck := func(ctx context.Context, workspaceID string, log *zap.SugaredLogger) ([]string, error) {
+	mockPermissionCheck := func(ctx context.Context, workspaceID string, serviceFilter string, log *zap.SugaredLogger) ([]string, error) {
 		callCount++
 		return []string{"remediations", "tasks"}, nil
 	}
@@ -361,13 +361,13 @@ func TestCheckApplicationPermissionsWithCache_CacheHit_AllowedApps(t *testing.T)
 	log := zap.NewNop().Sugar()
 
 	// First call - should hit backend
-	allowedApps1, err1 := kesselCache.CheckApplicationPermissionsWithCache(ctx, "workspace-abc", log)
+	allowedApps1, err1 := kesselCache.CheckApplicationPermissionsWithCache(ctx, "workspace-abc", "", log)
 	assert.NoError(t, err1)
 	assert.Equal(t, []string{"remediations", "tasks"}, allowedApps1)
 	assert.Equal(t, 1, callCount, "First call should invoke backend")
 
 	// Second call with same params - should hit cache
-	allowedApps2, err2 := kesselCache.CheckApplicationPermissionsWithCache(ctx, "workspace-abc", log)
+	allowedApps2, err2 := kesselCache.CheckApplicationPermissionsWithCache(ctx, "workspace-abc", "", log)
 	assert.NoError(t, err2)
 	assert.Equal(t, []string{"remediations", "tasks"}, allowedApps2)
 	assert.Equal(t, 1, callCount, "Second call should NOT invoke backend (cache hit)")
@@ -390,7 +390,7 @@ func TestCheckApplicationPermissionsWithCache_CacheHit_NoApps(t *testing.T) {
 
 	// Create mock that returns empty list (denied)
 	callCount := 0
-	mockPermissionCheck := func(ctx context.Context, workspaceID string, log *zap.SugaredLogger) ([]string, error) {
+	mockPermissionCheck := func(ctx context.Context, workspaceID string, serviceFilter string, log *zap.SugaredLogger) ([]string, error) {
 		callCount++
 		return []string{}, nil
 	}
@@ -402,13 +402,13 @@ func TestCheckApplicationPermissionsWithCache_CacheHit_NoApps(t *testing.T) {
 	log := zap.NewNop().Sugar()
 
 	// First call - should hit backend
-	allowedApps1, err1 := kesselCache.CheckApplicationPermissionsWithCache(ctx, "workspace-xyz", log)
+	allowedApps1, err1 := kesselCache.CheckApplicationPermissionsWithCache(ctx, "workspace-xyz", "", log)
 	assert.NoError(t, err1)
 	assert.Equal(t, []string{}, allowedApps1)
 	assert.Equal(t, 1, callCount, "First call should invoke backend")
 
 	// Second call - should hit cache (even for denied result)
-	allowedApps2, err2 := kesselCache.CheckApplicationPermissionsWithCache(ctx, "workspace-xyz", log)
+	allowedApps2, err2 := kesselCache.CheckApplicationPermissionsWithCache(ctx, "workspace-xyz", "", log)
 	assert.NoError(t, err2)
 	assert.Equal(t, []string{}, allowedApps2)
 	assert.Equal(t, 1, callCount, "Second call should NOT invoke backend (denied results are cached)")
@@ -431,7 +431,7 @@ func TestCheckApplicationPermissionsWithCache_DifferentCacheKeys(t *testing.T) {
 
 	// Create mock with call counter
 	callCount := 0
-	mockPermissionCheck := func(ctx context.Context, workspaceID string, log *zap.SugaredLogger) ([]string, error) {
+	mockPermissionCheck := func(ctx context.Context, workspaceID string, serviceFilter string, log *zap.SugaredLogger) ([]string, error) {
 		callCount++
 		// Return different results based on workspace
 		if workspaceID == "workspace-1" {
@@ -447,19 +447,19 @@ func TestCheckApplicationPermissionsWithCache_DifferentCacheKeys(t *testing.T) {
 	log := zap.NewNop().Sugar()
 
 	// Call with workspace-1
-	apps1, err1 := kesselCache.CheckApplicationPermissionsWithCache(ctx, "workspace-1", log)
+	apps1, err1 := kesselCache.CheckApplicationPermissionsWithCache(ctx, "workspace-1", "", log)
 	assert.NoError(t, err1)
 	assert.Equal(t, []string{"remediations"}, apps1)
 	assert.Equal(t, 1, callCount)
 
 	// Call with workspace-2 (different cache key)
-	apps2, err2 := kesselCache.CheckApplicationPermissionsWithCache(ctx, "workspace-2", log)
+	apps2, err2 := kesselCache.CheckApplicationPermissionsWithCache(ctx, "workspace-2", "", log)
 	assert.NoError(t, err2)
 	assert.Equal(t, []string{"tasks"}, apps2)
 	assert.Equal(t, 2, callCount, "Different workspace should be cache miss")
 
 	// Call workspace-1 again (cache hit)
-	apps3, err3 := kesselCache.CheckApplicationPermissionsWithCache(ctx, "workspace-1", log)
+	apps3, err3 := kesselCache.CheckApplicationPermissionsWithCache(ctx, "workspace-1", "", log)
 	assert.NoError(t, err3)
 	assert.Equal(t, []string{"remediations"}, apps3)
 	assert.Equal(t, 2, callCount, "Same workspace should be cache hit")
@@ -482,7 +482,7 @@ func TestCheckApplicationPermissionsWithCache_ErrorNotCached(t *testing.T) {
 
 	// Create mock that returns error
 	callCount := 0
-	mockPermissionCheck := func(ctx context.Context, workspaceID string, log *zap.SugaredLogger) ([]string, error) {
+	mockPermissionCheck := func(ctx context.Context, workspaceID string, serviceFilter string, log *zap.SugaredLogger) ([]string, error) {
 		callCount++
 		return nil, errors.New("backend error")
 	}
@@ -494,13 +494,13 @@ func TestCheckApplicationPermissionsWithCache_ErrorNotCached(t *testing.T) {
 	log := zap.NewNop().Sugar()
 
 	// First call - should fail
-	_, err1 := kesselCache.CheckApplicationPermissionsWithCache(ctx, "workspace-fail", log)
+	_, err1 := kesselCache.CheckApplicationPermissionsWithCache(ctx, "workspace-fail", "", log)
 	assert.Error(t, err1)
 	assert.Contains(t, err1.Error(), "backend error")
 	assert.Equal(t, 1, callCount)
 
 	// Second call - should try backend again (errors are not cached)
-	_, err2 := kesselCache.CheckApplicationPermissionsWithCache(ctx, "workspace-fail", log)
+	_, err2 := kesselCache.CheckApplicationPermissionsWithCache(ctx, "workspace-fail", "", log)
 	assert.Error(t, err2)
 	assert.Contains(t, err2.Error(), "backend error")
 	assert.Equal(t, 2, callCount, "Errors should NOT be cached")

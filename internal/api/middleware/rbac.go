@@ -282,22 +282,38 @@ func getKesselAllowedServices(ctx echo.Context, log *zap.SugaredLogger) ([]strin
 		return nil, err // Return error for proper handling
 	}
 
+	// Extract service filter from request if single-service optimization is enabled
+	var serviceFilter string
+	if features.IsSingleServiceOptimizationEnabled(ctx.Request().Context()) {
+		if runFilters := GetDeepObject(ctx, "filter", "run"); len(runFilters) > 0 {
+			if service, ok := runFilters["service"]; ok {
+				// GetDeepObject returns []string, so extract the first value
+				if len(service) > 0 {
+					serviceFilter = service[0]
+					log.Debugw("Single-service optimization enabled, using service filter",
+						"service", serviceFilter)
+				}
+			}
+		}
+	}
+
 	// Check permissions via Kessel (uses V2ApplicationPermissions map)
 	var allowedServices []string
 
 	if features.IsApplicationCacheEnabled(ctx.Request().Context()) {
 		kesselCache := kessel.GetKesselClientWithCache()
 		if kesselCache != nil {
-			log.Debugw("Checking application permissions with cache", "workspace_id", workspaceID)
-			allowedServices, err = kesselCache.CheckApplicationPermissionsWithCache(ctx.Request().Context(), workspaceID, log)
+			log.Debugw("Checking application permissions with cache", "workspace_id", workspaceID, "service_filter", serviceFilter)
+			allowedServices, err = kesselCache.CheckApplicationPermissionsWithCache(ctx.Request().Context(), workspaceID, serviceFilter, log)
 		} else {
 			// Cache client not initialized, fall back to non-cached
-			log.Debugw("Cache client not initialized, using non-cached permission check", "workspace_id", workspaceID)
-			allowedServices, err = kessel.CheckApplicationPermissions(ctx.Request().Context(), workspaceID, log)
+			log.Debugw("Cache client not initialized, using non-cached permission check", "workspace_id", workspaceID, "service_filter", serviceFilter)
+			allowedServices, err = kessel.CheckApplicationPermissions(ctx.Request().Context(), workspaceID, serviceFilter, log)
 		}
 	} else {
-		allowedServices, err = kessel.CheckApplicationPermissions(ctx.Request().Context(), workspaceID, log)
+		allowedServices, err = kessel.CheckApplicationPermissions(ctx.Request().Context(), workspaceID, serviceFilter, log)
 	}
+
 
 	if err != nil {
 		log.Errorw("Kessel authorization error",

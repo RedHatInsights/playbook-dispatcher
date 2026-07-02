@@ -26,7 +26,7 @@ type KesselClientWithCache struct {
 	applicationCache *cache.Cache
 	// permissionCheckFunc allows injecting a custom permission check function for testing
 	// Defaults to CheckApplicationPermissions if nil
-	permissionCheckFunc func(ctx context.Context, workspaceID string, log *zap.SugaredLogger) ([]string, error)
+	permissionCheckFunc func(ctx context.Context, workspaceID string, serviceFilter string, log *zap.SugaredLogger) ([]string, error)
 }
 
 // NewKesselClientWithCache creates a new Kessel client wrapper with caching
@@ -130,8 +130,8 @@ func (r *rbacClientImpl) GetDefaultWorkspaceIDWithCache(ctx context.Context, org
 }
 
 // CheckApplicationPermissionsWithCache performs application permission checks with caching
-// Cache key is a hash of: request_id + org_id + user_id + workspace_id
-func (k *KesselClientWithCache) CheckApplicationPermissionsWithCache(ctx context.Context, workspaceID string, log *zap.SugaredLogger) ([]string, error) {
+// Cache key is a hash of: request_id + org_id + user_id + workspace_id + service_filter
+func (k *KesselClientWithCache) CheckApplicationPermissionsWithCache(ctx context.Context, workspaceID string, serviceFilter string, log *zap.SugaredLogger) ([]string, error) {
 	reqID := request_id.GetReqID(ctx)
 	xrhid := identity.GetIdentity(ctx)
 	orgID := xrhid.Identity.OrgID
@@ -153,7 +153,7 @@ func (k *KesselClientWithCache) CheckApplicationPermissionsWithCache(ctx context
 
 	// NOTE: reqID can be externally provided by the calling application and may be
 	// the same across multiple endpoint requests, enabling cross-request caching
-	cacheKey := hashCacheKey("applications", reqID, orgID, userID, workspaceID)
+	cacheKey := hashCacheKey("applications", reqID, orgID, userID, workspaceID, serviceFilter)
 
 	// Check cache
 	if cached, found := k.applicationCache.Get(cacheKey); found {
@@ -187,7 +187,7 @@ func (k *KesselClientWithCache) CheckApplicationPermissionsWithCache(ctx context
 	if checkFunc == nil {
 		checkFunc = CheckApplicationPermissions
 	}
-	allowedApps, err := checkFunc(ctx, workspaceID, log)
+	allowedApps, err := checkFunc(ctx, workspaceID, serviceFilter, log)
 	if err != nil {
 		return nil, err
 	}
