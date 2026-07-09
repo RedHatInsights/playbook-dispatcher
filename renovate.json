@@ -5,5 +5,14 @@
   ],
   "tekton": {
     "schedule": ["at any time"]
-  }
+  },
+  "packageRules": [
+    {
+      "description": "Automerge Tekton pipeline updates on master",
+      "matchBaseBranches": ["master"],
+      "matchManagers": ["tekton"],
+      "automerge": true,
+      "autoApprove": true
+    }
+  ]
 }
