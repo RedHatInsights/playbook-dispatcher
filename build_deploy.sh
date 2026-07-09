@@ -18,12 +18,17 @@ if [[ -z "$RH_REGISTRY_USER" || -z "$RH_REGISTRY_TOKEN" ]]; then
 fi
 
 # Create tmp dir to store data in during job run (do NOT store in $WORKSPACE)
-export TMP_JOB_DIR=$(mktemp -d -p "$HOME" -t "jenkins-${JOB_NAME}-${BUILD_NUMBER}-XXXXXX")
+TMP_JOB_DIR=$(mktemp -d -p "$HOME" -t "jenkins-${JOB_NAME}-${BUILD_NUMBER}-XXXXXX")
+export TMP_JOB_DIR
 echo "job tmp dir location: $TMP_JOB_DIR"
 
 function job_cleanup() {
     echo "cleaning up job tmp dir: $TMP_JOB_DIR"
-    rm -fr $TMP_JOB_DIR
+    if [[ -n "$TMP_JOB_DIR" && -d "$TMP_JOB_DIR" ]]; then
+        rm -fr "$TMP_JOB_DIR"
+    else
+        echo "Skipping cleanup: TMP_JOB_DIR is not set or is not a directory (TMP_JOB_DIR='$TMP_JOB_DIR')"
+    fi
 }
 
 trap job_cleanup EXIT ERR SIGINT SIGTERM
@@ -34,12 +39,12 @@ mkdir -p "$DOCKER_CONF"
 docker --config="$DOCKER_CONF" login -u="$QUAY_USER" -p="$QUAY_TOKEN" quay.io
 docker --config="$DOCKER_CONF" login -u="$RH_REGISTRY_USER" -p="$RH_REGISTRY_TOKEN" registry.redhat.io
 
-docker --config="$DOCKER_CONF" build --build-arg BUILD_COMMIT=${BUILD_COMMIT} -t "${IMAGE}:${IMAGE_TAG}" .
+docker --config="$DOCKER_CONF" build --build-arg "BUILD_COMMIT=${BUILD_COMMIT}" -t "${IMAGE}:${IMAGE_TAG}" .
 docker --config="$DOCKER_CONF" tag "${IMAGE}:${IMAGE_TAG}" "${IMAGE}:latest"
 docker --config="$DOCKER_CONF" push "${IMAGE}:${IMAGE_TAG}"
 docker --config="$DOCKER_CONF" push "${IMAGE}:latest"
 
-docker --config="$DOCKER_CONF" build --build-arg BUILD_COMMIT=${BUILD_COMMIT} -f event-streams/Dockerfile -t "${IMAGE_CONNECT}:${IMAGE_TAG}" .
+docker --config="$DOCKER_CONF" build --build-arg "BUILD_COMMIT=${BUILD_COMMIT}" -f event-streams/Dockerfile -t "${IMAGE_CONNECT}:${IMAGE_TAG}" .
 docker --config="$DOCKER_CONF" tag "${IMAGE_CONNECT}:${IMAGE_TAG}" "${IMAGE_CONNECT}:latest"
 docker --config="$DOCKER_CONF" push "${IMAGE_CONNECT}:${IMAGE_TAG}"
 docker --config="$DOCKER_CONF" push "${IMAGE_CONNECT}:latest"
