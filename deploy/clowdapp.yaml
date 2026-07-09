@@ -56,6 +56,12 @@ objects:
     - replicas: 3
       partitions: 16
       topicName: platform.upload.validation
+    - replicas: 3
+      partitions: 16
+      topicName: platform.playbook-dispatcher.runs
+    - replicas: 3
+      partitions: 16
+      topicName: platform.playbook-dispatcher.run-hosts
 
     deployments:
     - name: api
