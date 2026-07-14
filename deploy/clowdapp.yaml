@@ -546,7 +546,7 @@ parameters:
   value: "hms_analytics/playbook-dispatcher/unknown"
 
 - name: KESSEL_ENABLED
-  value: 'true'
+  value: 'false'
 - name: KESSEL_URL
   value: 'kessel-inventory-api:9000'
 - name: KESSEL_AUTH_ENABLED
