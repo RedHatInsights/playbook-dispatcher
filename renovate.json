@@ -6,6 +6,10 @@
   "tekton": {
     "schedule": ["at any time"]
   },
+  "vulnerabilityAlerts": {
+    "enabled": true
+  },
+  "osvVulnerabilityAlerts": true,
   "packageRules": [
     {
       "description": "Automerge Tekton pipeline updates on master",
