@@ -186,7 +186,7 @@ func (r *rbacClientImpl) GetDefaultWorkspaceID(ctx context.Context, orgID string
 		}
 	}()
 
-	requestURL := fmt.Sprintf("%s/api/rbac/v2/workspaces/?type=default", r.rbacURL)
+	requestURL := fmt.Sprintf("%s/api/rbac/v2/workspaces/?type=default&with_ancestry=true", r.rbacURL)
 
 	req, err := http.NewRequestWithContext(ctx, "GET", requestURL, nil)
 	if err != nil {

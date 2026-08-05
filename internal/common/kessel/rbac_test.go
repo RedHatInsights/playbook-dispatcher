@@ -32,6 +32,7 @@ func TestGetDefaultWorkspaceID_Success(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		assert.Contains(t, r.URL.Path, "/api/rbac/v2/workspaces/")
 		assert.Equal(t, "default", r.URL.Query().Get("type"))
+		assert.Equal(t, "true", r.URL.Query().Get("with_ancestry"))
 		assert.Equal(t, "test-org", r.Header.Get("x-rh-rbac-org-id"))
 
 		w.Header().Set("Content-Type", "application/json")
@@ -298,6 +299,7 @@ func TestGetDefaultWorkspaceID_URLFormatting(t *testing.T) {
 	// Verify the URL format matches config-manager (no org_id query param)
 	assert.Contains(t, capturedURL, "/api/rbac/v2/workspaces/")
 	assert.Contains(t, capturedURL, "type=default")
+	assert.Contains(t, capturedURL, "with_ancestry=true")
 	assert.NotContains(t, capturedURL, "org_id")
 }
 
