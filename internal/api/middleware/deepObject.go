@@ -16,7 +16,8 @@ func Hack(param string, fields ...string) echo.MiddlewareFunc {
 
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			labelFilters := parseDeepObject(c, c.QueryParams(), regex, prefix)
+			// TODO: remove parseDeepObject once parseDeepObjectFixed is verified in all environments
+			labelFilters := parseDeepObjectFixed(c, c.QueryParams(), regex)
 			c.Set(buildKey(prefix), labelFilters)
 			return next(c)
 		}
@@ -53,6 +54,24 @@ func parseDeepObject(ctx echo.Context, queryParams url.Values, regex *regexp.Reg
 			}
 		}
 	}
+
+	return result
+}
+
+// parseDeepObjectFixed fixes a conflict between the Hack middleware and kin-openapi v0.144.0.
+// The original parseDeepObject used url.QueryEscape on the entire query string, mangling
+// & and = characters. kin-openapi v0.144.0's stricter validation rejects the mangled result.
+func parseDeepObjectFixed(ctx echo.Context, queryParams url.Values, regex *regexp.Regexp) map[string][]string {
+	result := make(map[string][]string)
+
+	for key, values := range queryParams {
+		matches := regex.FindStringSubmatch(key)
+		if len(matches) > 0 {
+			result[matches[1]] = append(result[matches[1]], values...)
+			queryParams.Del(key)
+		}
+	}
+	ctx.Request().URL.RawQuery = queryParams.Encode()
 
 	return result
 }

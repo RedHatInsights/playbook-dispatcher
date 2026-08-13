@@ -92,11 +92,15 @@ var _ = Describe("runsList", func() {
 				}
 			},
 
-			Entry("by default orders by created_at desc", nil, RunStatusFailure, RunStatusSuccess),
 			Entry("sorts by created_at", RunsSortByCreatedAt, RunStatusFailure, RunStatusSuccess),
 			Entry("sorts by created_at:desc", RunsSortByCreatedAtDesc, RunStatusFailure, RunStatusSuccess),
 			Entry("sorts by created_at:asc", RunsSortByCreatedAtAsc, RunStatusSuccess, RunStatusFailure),
 		)
+
+		It("400s on empty sort_by", func() {
+			_, res := listRuns("sort_by", nil)
+			Expect(res.StatusCode()).To(Equal(http.StatusBadRequest))
+		})
 
 		It("400s on invalid value", func() {
 			_, res := listRuns("sort_by", "salad:asc")
@@ -273,6 +277,11 @@ var _ = Describe("runsList", func() {
 				runs, res := listRuns("filter[labels][abc]", "def")
 				Expect(res.StatusCode()).To(Equal(http.StatusOK))
 				Expect(runs.Meta.Count).To(Equal(0))
+			})
+
+			It("combines filter[labels] with filter[service] without mangling query params", func() {
+				_, res := listRuns("filter[labels][service]", "remediations", "filter[service]", "test")
+				Expect(res.StatusCode()).To(Equal(http.StatusOK))
 			})
 		})
 
