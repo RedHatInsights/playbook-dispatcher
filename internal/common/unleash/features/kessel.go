@@ -5,8 +5,8 @@ import (
 	"playbook-dispatcher/internal/common/config"
 	"playbook-dispatcher/internal/common/unleash"
 
-	"github.com/Unleash/unleash-go-sdk/v5/api"
-	ucontext "github.com/Unleash/unleash-go-sdk/v5/context"
+	"github.com/Unleash/unleash-go-sdk/v6/api"
+	ucontext "github.com/Unleash/unleash-go-sdk/v6/context"
 	"github.com/redhatinsights/platform-go-middlewares/v2/identity"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
@@ -38,11 +38,11 @@ const (
 	VariantKesselOnly         = "kessel-only"
 
 	// Mode selection source values for logging
-	ModeSourceDisabled              = "disabled"
-	ModeSourceUnleash               = "unleash"
+	ModeSourceDisabled                   = "disabled"
+	ModeSourceUnleash                    = "unleash"
 	ModeSourceEnvironmentUnleashFallback = "environment-unleash-fallback"
-	ModeSourceEnvironment           = "environment"
-	ModeSourceEnvironmentInvalid    = "environment-invalid"
+	ModeSourceEnvironment                = "environment"
+	ModeSourceEnvironmentInvalid         = "environment-invalid"
 )
 
 // Context key for test overrides

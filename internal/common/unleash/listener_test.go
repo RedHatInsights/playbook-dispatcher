@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/Unleash/unleash-go-sdk/v5"
+	"github.com/Unleash/unleash-go-sdk/v6"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zaptest/observer"
