@@ -5,7 +5,7 @@ import (
 	"playbook-dispatcher/internal/api/instrumentation"
 	"playbook-dispatcher/internal/common/utils"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
 //go:generate fungen -types CancelInputV2,*RunCanceled -methods PMap -package private -filename cancel_utils.v2.gen.go

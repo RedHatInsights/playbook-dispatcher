@@ -6,7 +6,7 @@ import (
 	"playbook-dispatcher/internal/api/middleware"
 	"playbook-dispatcher/internal/common/utils"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
 //go:generate fungen -types RunInput,*RunCreated -methods PMap -package private -filename utils.gen.go
