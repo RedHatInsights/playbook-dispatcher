@@ -123,6 +123,18 @@ var _ = Describe("runHostList", func() {
 				Expect(runs.Data).To(HaveLen(0))
 			})
 
+			It("combines filter[run][labels] with filter[run][service] without mangling query params", func() {
+				run := test.NewRun(orgId())
+				run.Labels = map[string]string{"playbook-run": "abc-123"}
+				dbInsertRuns(run)
+				dbInsertHosts(test.NewRunHost(run.ID, "running", nil))
+
+				runs, res := listRunHosts("filter[run][labels][playbook-run]", "abc-123", "filter[run][service]", "test")
+				Expect(res.StatusCode()).To(Equal(http.StatusOK))
+				Expect(runs.Data).To(HaveLen(1))
+				Expect(*runs.Data[0].Run.Id).To(BeEquivalentTo(run.ID))
+			})
+
 			It("filters by inventory_id", func() {
 				data := []dbModel.Run{
 					test.NewRun(orgId()),
@@ -165,6 +177,19 @@ var _ = Describe("runHostList", func() {
 			Entry("defaults defined explicitly", "host", "status", "run"),
 			Entry("all fields", "host", "status", "run", "stdout", "links", "inventory_id"),
 		)
+
+		It("accepts repeated fields[data] parameters (production format)", func() {
+			runs, res := listRunHosts(
+				"fields[data]", "host",
+				"fields[data]", "status",
+				"fields[data]", "run",
+				"fields[data]", "stdout",
+			)
+			Expect(res.StatusCode()).To(Equal(http.StatusOK))
+			Expect(runs.Data).To(HaveLen(1))
+			Expect(runs.Data[0].Host).ToNot(BeNil())
+			Expect(runs.Data[0].Status).ToNot(BeNil())
+		})
 
 		It("400s on invalid value", func() {
 			raw := listRunHostsRaw("fields[data]", "host,salad")

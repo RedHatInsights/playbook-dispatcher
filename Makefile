@@ -133,6 +133,29 @@ sample_request_v2:
 test-fields-parameter:
 	curl -v -H "Authorization: PSK xwKhCUzgJ8" -H "x-rh-identity: eyJpZGVudGl0eSI6IHsiYWNjb3VudF9udW1iZXIiOiAiMDAwMDAwMSIsICJ0eXBlIjogIlN5c3RlbSIsICJpbnRlcm5hbCI6IHsib3JnX2lkIjogIjAwMDAwMSJ9fX0=" "http://localhost:8000/internal/v2/run_hosts?fields%5Bdata%5D=host&fields%5Bdata%5D=run&fields%5Bdata%5D=status&fields%5Bdata%5D=stdout"
 
+test-fields-parameter-public:
+	curl -v -H "x-rh-identity: eyJpZGVudGl0eSI6eyJhY2NvdW50X251bWJlciI6IjAwMDAwMDEiLCJ0eXBlIjoiVXNlciIsInVzZXIiOnt9LCJpbnRlcm5hbCI6eyJvcmdfaWQiOiIwMDAwMDEifX19" "http://localhost:8000/api/playbook-dispatcher/v1/run_hosts?fields%5Bdata%5D=host&fields%5Bdata%5D=run&fields%5Bdata%5D=status&fields%5Bdata%5D=stdout"
+
+# Test deepObject filter combined with other params - reproduces url.QueryEscape bug in Hack middleware
+# The Hack middleware strips filter[labels] but mangles remaining params with url.QueryEscape
+test-deepobject-bug:
+	curl -v -H "x-rh-identity: eyJpZGVudGl0eSI6eyJhY2NvdW50X251bWJlciI6IjAwMDAwMDEiLCJ0eXBlIjoiVXNlciIsInVzZXIiOnt9LCJpbnRlcm5hbCI6eyJvcmdfaWQiOiIwMDAwMDEifX19" "http://localhost:8000/api/playbook-dispatcher/v1/runs?filter%5Blabels%5D%5Bfoo%5D=bar&filter%5Bservice%5D=test"
+
+# Remediations fetchPlaybookRuns: filter[service] + filter[labels] + fields[data] (repeated)
+# fifi.js:339,354 createDispatcherRunsFilter + RUNSFIELDS
+test-remediations-runs:
+	curl -v -H "x-rh-identity: eyJpZGVudGl0eSI6eyJhY2NvdW50X251bWJlciI6IjAwMDAwMDEiLCJ0eXBlIjoiVXNlciIsInVzZXIiOnt9LCJpbnRlcm5hbCI6eyJvcmdfaWQiOiIwMDAwMDEifX19" "http://localhost:8000/api/playbook-dispatcher/v1/runs?filter%5Bservice%5D=remediations&filter%5Blabels%5D%5Bplaybook-run%5D=ef7a1078-4d33-4c5e-97ed-1fd3c3a0dfa0&fields%5Bdata%5D=id&fields%5Bdata%5D=labels&fields%5Bdata%5D=status&fields%5Bdata%5D=service&fields%5Bdata%5D=created_at&fields%5Bdata%5D=updated_at&fields%5Bdata%5D=url"
+
+# Remediations fetchPlaybookRunHosts: filter[run][service] + filter[run][labels] + filter[run][id] + fields[data]
+# fifi.js:144,241 createDispatcherRunHostsFilter + RHCRUNFIELDS
+test-remediations-run-hosts:
+	curl -v -H "x-rh-identity: eyJpZGVudGl0eSI6eyJhY2NvdW50X251bWJlciI6IjAwMDAwMDEiLCJ0eXBlIjoiVXNlciIsInVzZXIiOnt9LCJpbnRlcm5hbCI6eyJvcmdfaWQiOiIwMDAwMDEifX19" "http://localhost:8000/api/playbook-dispatcher/v1/run_hosts?filter%5Brun%5D%5Bservice%5D=remediations&filter%5Brun%5D%5Blabels%5D%5Bplaybook-run%5D=ef7a1078-4d33-4c5e-97ed-1fd3c3a0dfa0&filter%5Brun%5D%5Bid%5D=01eef63f-79b8-4630-a1d8-9a6c4440c995&fields%5Bdata%5D=host&fields%5Bdata%5D=status&fields%5Bdata%5D=inventory_id"
+
+# Remediations fetchPlaybookRunHosts with inventory_id: adds filter[inventory_id] + uses RUNHOSTFIELDS
+# fifi.js:373 createDispatcherRunHostsFilter(playbook_run_id, run.id, system_id) + RUNHOSTFIELDS
+test-remediations-run-hosts-inventory:
+	curl -v -H "x-rh-identity: eyJpZGVudGl0eSI6eyJhY2NvdW50X251bWJlciI6IjAwMDAwMDEiLCJ0eXBlIjoiVXNlciIsInVzZXIiOnt9LCJpbnRlcm5hbCI6eyJvcmdfaWQiOiIwMDAwMDEifX19" "http://localhost:8000/api/playbook-dispatcher/v1/run_hosts?filter%5Brun%5D%5Bservice%5D=remediations&filter%5Brun%5D%5Blabels%5D%5Bplaybook-run%5D=ef7a1078-4d33-4c5e-97ed-1fd3c3a0dfa0&filter%5Brun%5D%5Bid%5D=01eef63f-79b8-4630-a1d8-9a6c4440c995&filter%5Binventory_id%5D=8a823918-f801-474c-9f79-7cc7e9d79a7f&fields%5Bdata%5D=host&fields%5Bdata%5D=stdout&fields%5Bdata%5D=inventory_id"
+
 sample_request_multiple_v2:
 	curl -v -H "content-type: application/json" -H "Authorization: PSK xwKhCUzgJ8" -d "@examples/payload-multiple-run-v2.json" http://localhost:8000/internal/v2/dispatch
 

@@ -266,6 +266,27 @@ var _ = Describe("runHostsListV2", func() {
 			}
 		})
 
+		It("accepts repeated fields[data] parameters (production format)", func() {
+			run := test.NewRun(orgId())
+			dbInsertRuns(run)
+
+			inventoryId := uuid.New()
+			host := test.NewRunHost(run.ID, "success", &inventoryId)
+			dbInsertHosts(host)
+
+			result, resp := doGetRunHosts(
+				"fields[data]", "host",
+				"fields[data]", "run",
+				"fields[data]", "status",
+				"fields[data]", "stdout",
+			)
+			Expect(resp.StatusCode).To(Equal(http.StatusOK))
+
+			Expect(result.Data).To(HaveLen(1))
+			Expect(result.Data[0].Host).ToNot(BeNil())
+			Expect(result.Data[0].Status).ToNot(BeNil())
+		})
+
 		It("includes stdout data when requested", func() {
 			run := test.NewRun(orgId())
 			dbInsertRuns(run)
