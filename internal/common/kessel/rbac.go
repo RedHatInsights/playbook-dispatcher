@@ -19,6 +19,7 @@ import (
 	"github.com/project-kessel/inventory-client-go/common"
 	"github.com/redhatinsights/platform-go-middlewares/v2/request_id"
 	"go.uber.org/zap"
+	"golang.org/x/sync/singleflight"
 )
 
 // RbacClientConfig holds configuration for RBAC client
@@ -82,6 +83,7 @@ type rbacClientImpl struct {
 	tokenTimeout    time.Duration // Timeout for individual token requests
 	tokenMaxRetries int           // Max retry attempts for token acquisition
 	workspaceCache  *cache.Cache
+	workspaceFlight singleflight.Group
 }
 
 // rbacWorkspaceResponse represents the RBAC API response for workspace queries
