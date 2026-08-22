@@ -71,7 +71,7 @@ require (
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
-	github.com/klauspost/compress v1.18.7 // indirect
+	github.com/klauspost/compress v1.19.2 // indirect
 	github.com/labstack/gommon v0.5.0 // indirect
 	github.com/launchdarkly/eventsource v1.11.0 // indirect
 	github.com/lib/pq v1.12.3 // indirect
