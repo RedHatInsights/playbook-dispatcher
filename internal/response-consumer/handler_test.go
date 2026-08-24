@@ -64,12 +64,19 @@ func createRunnerEvents(events ...string) *[]messageModel.PlaybookRunResponseMes
 	result := make([]messageModel.PlaybookRunResponseMessageYamlEventsElem, len(events))
 
 	for i, event := range events {
+		counter := i
+		if event == messageModel.EventExecutorOnStart || event == EventExecutorOnFailed {
+			// rhc-worker-playbook sends counter = -1 for these events
+			counter = -1
+		}
+
 		result[i] = messageModel.PlaybookRunResponseMessageYamlEventsElem{
-			Counter: i,
+			Counter: counter,
 			Event:   event,
 			EventData: &messageModel.PlaybookRunResponseMessageYamlEventsElemEventData{
 				Host: &localhost,
 			},
+			Uuid: uuid.New().String(),
 		}
 	}
 
@@ -1174,6 +1181,252 @@ var _ = Describe("handler", func() {
 					Expect(hosts[1].Log).To(Equal("f\\n\\u2026\\nh"))
 				})
 			})
+		})
+	})
+	Describe("handling batched events from rhc-worker-playbook", func() {
+		It("handles successive full uploads", func() {
+			var data = test.NewRun(orgId())
+			Expect(db().Create(&data).Error).ToNot(HaveOccurred())
+
+			events := createRunnerEvents(
+				messageModel.EventExecutorOnStart,
+				"playbook_on_start",
+				"playbook_on_play_start",
+				"playbook_on_task_start",
+				"runner_on_start",
+				"runner_on_ok",
+				"playbook_on_stats",
+			)
+
+			events1 := (*events)[0:4]
+			events2 := (*events)[0:7]
+
+			// process the first request
+			instance.onMessage(test.TestContext(), newRunnerResponseMessage(&events1, data.CorrelationID))
+
+			// verify that it is running
+			run := fetchRun(data.ID)
+			Expect(run.Status).To(Equal("running"))
+			checkHost(data.ID, "running", nil, "", nil)
+
+			// check that the first set (length 4) has been processed
+			var runEvents []messageModel.PlaybookRunResponseMessageYamlEventsElem
+			utils.MustUnmarshal(run.Events, &runEvents)
+			Expect(len(runEvents)).To(Equal(4))
+
+			// process the second request
+			instance.onMessage(test.TestContext(), newRunnerResponseMessage(&events2, data.CorrelationID))
+
+			// verify success
+			run = fetchRun(data.ID)
+			Expect(run.Status).To(Equal("success"))
+			checkHost(data.ID, "success", nil, "", nil)
+
+			// check that the second set (length 7) has been processed
+			// should have been merged (as a union) with the first
+			utils.MustUnmarshal(run.Events, &runEvents)
+			Expect(len(runEvents)).To(Equal(7))
+		})
+
+		It("handles batched uploads", func() {
+			var data = test.NewRun(orgId())
+			Expect(db().Create(&data).Error).ToNot(HaveOccurred())
+
+			events := createRunnerEvents(
+				messageModel.EventExecutorOnStart,
+				"playbook_on_start",
+				"playbook_on_play_start",
+				"playbook_on_task_start",
+				"runner_on_start",
+				"runner_on_ok",
+				"playbook_on_stats",
+			)
+
+			events1 := (*events)[0:4]
+			events2 := (*events)[4:7]
+
+			// process the first request
+			instance.onMessage(test.TestContext(), newRunnerResponseMessage(&events1, data.CorrelationID))
+
+			// verify that it is running
+			run := fetchRun(data.ID)
+			Expect(run.Status).To(Equal("running"))
+			checkHost(data.ID, "running", nil, "", nil)
+
+			// check that the first set (length 4) has been processed
+			var runEvents []messageModel.PlaybookRunResponseMessageYamlEventsElem
+			utils.MustUnmarshal(run.Events, &runEvents)
+			Expect(len(runEvents)).To(Equal(4))
+
+			// process the second request
+			instance.onMessage(test.TestContext(), newRunnerResponseMessage(&events2, data.CorrelationID))
+
+			// verify success
+			run = fetchRun(data.ID)
+			Expect(run.Status).To(Equal("success"))
+			checkHost(data.ID, "success", nil, "", nil)
+
+			// check that the second set (length 3) has been processed
+			// should have been merged (as a union) with the first
+			utils.MustUnmarshal(run.Events, &runEvents)
+			Expect(len(runEvents)).To(Equal(7))
+		})
+		It("smoothly handles gaps in events", func() {
+			var data = test.NewRun(orgId())
+			Expect(db().Create(&data).Error).ToNot(HaveOccurred())
+
+			events := createRunnerEvents(
+				messageModel.EventExecutorOnStart,
+				"playbook_on_start",
+				"playbook_on_play_start",
+				"playbook_on_task_start",
+				"runner_on_start",
+				"runner_on_ok",
+				"playbook_on_stats",
+			)
+
+			events1 := (*events)[0:3]
+			events2 := (*events)[4:7] // missing events[3]
+
+			// process the first request
+			instance.onMessage(test.TestContext(), newRunnerResponseMessage(&events1, data.CorrelationID))
+
+			// verify that it is running
+			run := fetchRun(data.ID)
+			Expect(run.Status).To(Equal("running"))
+			checkHost(data.ID, "running", nil, "", nil)
+
+			// check that the first set (length 4) has been processed
+			var runEvents []messageModel.PlaybookRunResponseMessageYamlEventsElem
+			utils.MustUnmarshal(run.Events, &runEvents)
+			Expect(len(runEvents)).To(Equal(3))
+
+			// process the second request
+			instance.onMessage(test.TestContext(), newRunnerResponseMessage(&events2, data.CorrelationID))
+
+			// verify success
+			run = fetchRun(data.ID)
+			Expect(run.Status).To(Equal("success"))
+			checkHost(data.ID, "success", nil, "", nil)
+
+			// check that the second set (length 3) has been processed
+			// should have been merged (as a union) with the first
+			utils.MustUnmarshal(run.Events, &runEvents)
+			Expect(len(runEvents)).To(Equal(6))
+		})
+	})
+	Describe("checkForMissingAndDuplicateEvents", func() {
+		var events []messageModel.PlaybookRunResponseMessageYamlEventsElem
+
+		BeforeEach(func() {
+			events = *createRunnerEvents(
+				messageModel.EventExecutorOnStart,
+				"playbook_on_start",
+				"playbook_on_play_start",
+				"playbook_on_task_start",
+				"runner_on_start",
+				"runner_on_ok",
+				"playbook_on_stats",
+			)
+		})
+
+		It("returns nil when no events are missing", func() {
+			err := checkForMissingAndDuplicateEvents(events)
+
+			Expect(err).To(BeNil())
+		})
+		It("can detect one missing event and return an error", func() {
+			missingOneEvent := append(events[0:3], events[4:7]...)
+			err := checkForMissingAndDuplicateEvents(missingOneEvent)
+
+			Expect(err.Error()).To(Equal("missing event counter(s): 3"))
+		})
+		It("can detect multiple missing events and return an error", func() {
+			missingTwoEvents := append(events[0:3], events[6:7]...)
+			err := checkForMissingAndDuplicateEvents(missingTwoEvents)
+
+			Expect(err.Error()).To(Equal("missing event counter(s): 3, 4, 5"))
+		})
+		It("knows to ignore -1 for start and failure cases", func() {
+			duplicateNegativeOneEvents := append(
+				events[0:6],
+				(*createRunnerEvents(EventExecutorOnFailed))[0],
+			)
+			err := checkForMissingAndDuplicateEvents(duplicateNegativeOneEvents)
+
+			Expect(err).To(BeNil())
+		})
+		It("works when events are missing and the job also failed", func() {
+			missingEventsWithFailure := append(
+				events[0:3],
+				events[4],
+				(*createRunnerEvents(EventExecutorOnFailed))[0],
+			)
+			err := checkForMissingAndDuplicateEvents(missingEventsWithFailure)
+
+			Expect(err.Error()).To(Equal("missing event counter(s): 3"))
+		})
+		It("ignores lists of counters smaller than 2 elements", func() {
+			onlyOneEvent := events[0:1]
+			err := checkForMissingAndDuplicateEvents(onlyOneEvent)
+
+			Expect(err).To(BeNil())
+		})
+		It("ignores started and immediately failed jobs", func() {
+			startedAndFailed := append(
+				events[0:1],
+				*createRunnerEvents(EventExecutorOnFailed)...,
+			)
+			err := checkForMissingAndDuplicateEvents(startedAndFailed)
+
+			Expect(err).To(BeNil())
+		})
+		It("can detect multiple discontinuous instances of missing elements", func() {
+			events := *createRunnerEvents(
+				messageModel.EventExecutorOnStart,
+				"playbook_on_start",
+				"playbook_on_play_start",
+				"playbook_on_task_start",
+				"runner_on_start",
+				"runner_on_ok",
+				"playbook_on_play_start",
+				"playbook_on_task_start",
+				"runner_on_start",
+				"runner_on_ok",
+				"playbook_on_stats",
+			)
+
+			multipleGaps := append(
+				events[0:3],
+				events[6],
+				events[10],
+			)
+
+			err := checkForMissingAndDuplicateEvents(multipleGaps)
+
+			Expect(err.Error()).To(Equal("missing event counter(s): 3, 4, 5, 7, 8, 9"))
+		})
+		It("can detect a duplicate event counter and return an error", func() {
+			duplicateCounter := append(
+				events[0:2],
+				events[2],
+				events[2],
+				events[3],
+			)
+			err := checkForMissingAndDuplicateEvents(duplicateCounter)
+
+			Expect(err.Error()).To(Equal("duplicate event counter(s): 2"))
+		})
+		It("can detect both missing and duplicate event counters", func() {
+			duplicateAndMissing := append(
+				events[0:2],
+				events[2],
+				events[2],
+				events[5],
+			)
+			err := checkForMissingAndDuplicateEvents(duplicateAndMissing)
+
+			Expect(err.Error()).To(Equal("missing event counter(s): 3, 4\nduplicate event counter(s): 2"))
 		})
 	})
 })
