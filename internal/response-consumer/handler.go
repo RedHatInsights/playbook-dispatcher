@@ -2,7 +2,11 @@ package responseConsumer
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
+	"slices"
+	"strings"
 	"time"
 
 	"playbook-dispatcher/internal/common/ansible"
@@ -72,6 +76,7 @@ func (this *handler) onMessage(ctx context.Context, msg *k.Message) {
 	)
 
 	var status string
+	var mergedRunnerEvents []message.PlaybookRunResponseMessageYamlEventsElem
 	var eventsSerialized []byte
 
 	var runsUpdated int64
@@ -83,7 +88,7 @@ func (this *handler) onMessage(ctx context.Context, msg *k.Message) {
 			Where("org_id = ?", value.OrgId).
 			Where("correlation_id = ?", correlationId)
 
-		selectResult := baseQuery.Select("id", "status", "response_full").First(&run)
+		selectResult := baseQuery.Select("id", "status", "events", "response_full").Clauses(clause.Locking{Strength: "UPDATE"}).First(&run)
 
 		if requestType == satMessageHeaderValue {
 			satellite.SortSatEvents(value.SatEvents)
@@ -99,8 +104,17 @@ func (this *handler) onMessage(ctx context.Context, msg *k.Message) {
 				status = run.Status
 			}
 		} else {
-			status = inferStatus(value.RunnerEvents, nil)
-			eventsSerialized = utils.MustMarshal(value.RunnerEvents)
+			var existingRunnerEvents []message.PlaybookRunResponseMessageYamlEventsElem
+			if len(run.Events) > 0 {
+				if err := json.Unmarshal(run.Events, &existingRunnerEvents); err != nil {
+					utils.GetLogFromContext(ctx).Warnw("failed to unmarshal existing runner events, treating as empty", "error", err)
+				}
+			}
+
+			mergedRunnerEvents = mergeRunnerEvents(ctx, existingRunnerEvents, *value.RunnerEvents)
+			status = inferStatus(&mergedRunnerEvents, nil)
+
+			eventsSerialized = utils.MustMarshal(mergedRunnerEvents)
 		}
 
 		if selectResult.Error != nil {
@@ -136,7 +150,7 @@ func (this *handler) onMessage(ctx context.Context, msg *k.Message) {
 		var toCreate []db.RunHost
 
 		if requestType == runnerMessageHeaderValue {
-			hosts := ansible.GetAnsibleHosts(*value.RunnerEvents)
+			hosts := ansible.GetAnsibleHosts(mergedRunnerEvents)
 
 			if len(hosts) == 0 {
 				// If the the playbook fials the signature validation step or if ansible is not
@@ -153,8 +167,8 @@ func (this *handler) onMessage(ctx context.Context, msg *k.Message) {
 					ID:     uuid.New(),
 					RunID:  run.ID,
 					Host:   host,
-					Status: inferStatus(value.RunnerEvents, &host),
-					Log:    ansible.GetStdout(*value.RunnerEvents, nil),
+					Status: inferStatus(&mergedRunnerEvents, &host),
+					Log:    ansible.GetStdout(mergedRunnerEvents, nil),
 				}
 			})
 			return createRecord(ctx, tx, toCreate)
@@ -439,4 +453,98 @@ func mapHostsToRunHosts(hosts []string, fn func(host string) db.RunHost) []db.Ru
 	}
 
 	return result
+}
+
+// mergeRunnerEvents combines existing stored events with incoming events, deduplicating by UUID.
+// It is a "union" of existing and incoming, so it works whether or not the client has batch uploads enabled.
+// If there are any missing events, log it.
+func mergeRunnerEvents(
+	ctx context.Context,
+	existing []message.PlaybookRunResponseMessageYamlEventsElem,
+	incoming []message.PlaybookRunResponseMessageYamlEventsElem,
+) []message.PlaybookRunResponseMessageYamlEventsElem {
+	seenEvents := make(map[string]struct{})
+	var seenCounters []int
+	for _, e := range existing {
+		// record the "seen" event IDs already in the DB and their counters to check for continuity later
+		seenEvents[e.Uuid] = struct{}{}
+		seenCounters = append(seenCounters, e.Counter)
+	}
+
+	// initialize the complete combined events to what currently exists
+	merged := existing
+
+	for _, e := range incoming {
+		if _, ok := seenEvents[e.Uuid]; !ok {
+			// add events from the incoming request not yet "seen"
+			merged = append(merged, e)
+			seenEvents[e.Uuid] = struct{}{}
+			seenCounters = append(seenCounters, e.Counter)
+		}
+	}
+
+	err := checkForMissingEvents(seenCounters)
+	if err != nil {
+		utils.GetLogFromContext(ctx).Warnw(err.Error())
+	}
+
+	return merged
+}
+
+// checkForMissingEvents takes a slice of event counters, sorts them,
+// and checks that it is continuous and sequential. If there are any gaps,
+// they are noted and returned as an error string.
+func checkForMissingEvents(
+	counters []int,
+) error {
+	var totalErr error
+	slices.Sort(counters)
+
+	if len(counters) < 2 {
+		// nothing to compare
+		return nil
+	}
+
+	var missingEvents strings.Builder
+	var duplicateEvents strings.Builder
+	hasMissing := false
+	hasDuplicate := false
+	for i := range counters {
+		if i < 1 || counters[i] == -1 || counters[i-1] == -1 {
+			// -> must be at index 1 or higher to compare to previous value
+			// -> ignore -1, these are custom events sent by rhc-worker-playbook
+			// -> ignore -1 when it's the previous value
+			continue
+		}
+
+		curCounter := counters[i]
+		prevCounter := counters[i-1]
+
+		if curCounter == prevCounter {
+			hasDuplicate = true
+			fmt.Fprintf(&duplicateEvents, "%d, ", curCounter)
+		}
+
+		if curCounter > prevCounter+1 {
+			hasMissing = true
+			// calculate the # of missing events
+			for m := prevCounter + 1; m < curCounter; m++ {
+				fmt.Fprintf(&missingEvents, "%d, ", m)
+			}
+		}
+	}
+
+	if hasMissing {
+		totalErr = errors.Join(totalErr, fmt.Errorf("missing event counter(s): %s",
+			strings.TrimSuffix(missingEvents.String(), ", "),
+		))
+	}
+
+	if hasDuplicate {
+		totalErr = errors.Join(totalErr, fmt.Errorf("duplicate event counter(s): %s",
+			strings.TrimSuffix(duplicateEvents.String(), ", "),
+		))
+	}
+
+	return totalErr
 }
