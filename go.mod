@@ -41,6 +41,7 @@ require (
 
 require (
 	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.12-20260709200747-435963d16310.1 // indirect
+	cel.dev/expr v0.25.2 // indirect
 	github.com/Masterminds/semver/v3 v3.5.0 // indirect
 	github.com/apapsch/go-jsonmerge/v2 v2.0.0 // indirect
 	github.com/authzed/grpcutil v0.0.0-20260105210157-e237581949c2 // indirect
@@ -90,6 +91,7 @@ require (
 	github.com/prometheus/common v0.67.5 // indirect
 	github.com/prometheus/procfs v0.20.1 // indirect
 	github.com/qri-io/jsonpointer v0.1.1 // indirect
+	github.com/rogpeppe/go-internal v1.14.1 // indirect
 	github.com/sagikazarmark/locafero v0.12.0 // indirect
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.2 // indirect
 	github.com/speakeasy-api/jsonpath v0.6.0 // indirect

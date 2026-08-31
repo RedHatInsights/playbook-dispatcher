@@ -2,8 +2,8 @@ buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.12-202607092007
 buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.12-20260709200747-435963d16310.1/go.mod h1:TCt1lluMFnctISJXvkIQ4x3ABrPuUKCWKyjKdkJNBpw=
 buf.build/go/protovalidate v1.2.0 h1:DQVrUWkmGTBij+kOYv/x2LLxwcLaGKMdzShj1/6/3H0=
 buf.build/go/protovalidate v1.2.0/go.mod h1:7rYiQEhqvAipoazpVNBBH2S2f8bjG4huMVy1V2Yofn4=
-cel.dev/expr v0.25.1 h1:1KrZg61W6TWSxuNZ37Xy49ps13NUovb66QLprthtwi4=
-cel.dev/expr v0.25.1/go.mod h1:hrXvqGP6G6gyx8UAHSHJ5RGk//1Oj5nXQ2NI02Nrsg4=
+cel.dev/expr v0.25.2 h1:K6j46C81hXtZQfuX60cVWQFBJahKSE2gfRbNuvr5bFs=
+cel.dev/expr v0.25.2/go.mod h1:hrXvqGP6G6gyx8UAHSHJ5RGk//1Oj5nXQ2NI02Nrsg4=
 cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 cloud.google.com/go v0.34.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 cloud.google.com/go v0.38.0/go.mod h1:990N+gfupTy94rShfmMCWGDn0LpTmnzTp2qbd1dvSRU=
@@ -422,8 +422,8 @@ github.com/redhatinsights/app-common-go v1.6.9/go.mod h1:KW0BK+bnhp3kXU8BFwebQXq
 github.com/redhatinsights/platform-go-middlewares/v2 v2.1.0 h1:io0kfNdS5xnMQgpa/dvD2zESDmDo/1hHyA1fIljnQTs=
 github.com/redhatinsights/platform-go-middlewares/v2 v2.1.0/go.mod h1:n81kaowKWiBb+uudfS4tlhEUCVeVky0D/n+6LIVaiU4=
 github.com/rogpeppe/go-internal v1.3.0/go.mod h1:M8bDsm7K2OlrFYOpmOWEs/qY81heoFRclV5y23lUDJ4=
-github.com/rogpeppe/go-internal v1.13.1 h1:KvO1DLK/DRN07sQ1LQKScxyZJuNnedQ5/wKSR38lUII=
-github.com/rogpeppe/go-internal v1.13.1/go.mod h1:uMEvuHeurkdAXX61udpOXGD/AzZDWNMNyH2VO9fmH0o=
+github.com/rogpeppe/go-internal v1.14.1 h1:UQB4HGPB6osV0SQTLymcB4TgvyWu6ZyliaW0tI/otEQ=
+github.com/rogpeppe/go-internal v1.14.1/go.mod h1:MaRKkUm5W0goXpeCfT7UZI6fk/L7L7so1lCWt35ZSgc=
 github.com/russross/blackfriday/v2 v2.1.0/go.mod h1:+Rmxgy9KzJVeS9/2gXHxylqXiyQDYRxCVz55jmeOWTM=
 github.com/sagikazarmark/locafero v0.12.0 h1:/NQhBAkUb4+fH1jivKHWusDYFjMOOKU88eegjfxfHb4=
 github.com/sagikazarmark/locafero v0.12.0/go.mod h1:sZh36u/YSZ918v0Io+U9ogLYQJ9tLLBmM4eneO6WwsI=
