@@ -6,8 +6,8 @@ require (
 	github.com/RedHatInsights/tenant-utils v1.0.0
 	github.com/Unleash/unleash-go-sdk/v5 v5.1.0
 	github.com/aws/aws-sdk-go-v2 v1.45.1
-	github.com/aws/aws-sdk-go-v2/credentials v1.20.1
-	github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs v1.84.1
+	github.com/aws/aws-sdk-go-v2/credentials v1.20.2
+	github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs v1.85.0
 	github.com/confluentinc/confluent-kafka-go/v2 v2.15.0
 	github.com/getkin/kin-openapi v0.147.0
 	github.com/ghodss/yaml v1.0.0
