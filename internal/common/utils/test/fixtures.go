@@ -5,7 +5,7 @@ import (
 	"playbook-dispatcher/internal/common/config"
 
 	"github.com/google/uuid"
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
