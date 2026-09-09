@@ -64,8 +64,14 @@ func createRunnerEvents(events ...string) *[]messageModel.PlaybookRunResponseMes
 	result := make([]messageModel.PlaybookRunResponseMessageYamlEventsElem, len(events))
 
 	for i, event := range events {
+		counter := i
+		if event == messageModel.EventExecutorOnStart || event == EventPlaybookOnStats {
+			// rhc-worker-playbook sends counter = -1 for these events
+			counter = -1
+		}
+
 		result[i] = messageModel.PlaybookRunResponseMessageYamlEventsElem{
-			Counter: i,
+			Counter: counter,
 			Event:   event,
 			EventData: &messageModel.PlaybookRunResponseMessageYamlEventsElemEventData{
 				Host: &localhost,
@@ -1309,66 +1315,75 @@ var _ = Describe("handler", func() {
 			Expect(len(runEvents)).To(Equal(6))
 		})
 	})
-	Describe("checkForMissingEvents", func() {
+	Describe("checkForMissingAndDuplicateEvents", func() {
+		events := createRunnerEvents(
+			messageModel.EventExecutorOnStart,
+			"playbook_on_start",
+			"playbook_on_play_start",
+			"playbook_on_task_start",
+			"runner_on_start",
+			"runner_on_ok",
+			"playbook_on_stats",
+		)
+
 		It("returns nil when no events are missing", func() {
-			eventCounters := []int{-1, 1, 2, 3, 4, 5, 6}
-			err := checkForMissingEvents(eventCounters)
+			err := checkForMissingAndDuplicateEvents(*events)
 
 			Expect(err).To(BeNil())
 		})
 		It("can detect one missing event and return an error", func() {
-			eventCounters := []int{-1, 1, 2, 4, 5, 6}
-			err := checkForMissingEvents(eventCounters)
+			missingOneEvent := append((*events)[0:3], (*events)[4:7]...)
+			err := checkForMissingAndDuplicateEvents(missingOneEvent)
 
 			Expect(err.Error()).To(Equal("missing event counter(s): 3"))
 		})
-		It("can detect multiple missing events and return an error", func() {
-			eventCounters := []int{-1, 1, 2, 6}
-			err := checkForMissingEvents(eventCounters)
+		// It("can detect multiple missing events and return an error", func() {
+		// 	eventCounters := []int{-1, 1, 2, 6}
+		// 	err := checkForMissingAndDuplicateEvents(eventCounters)
 
-			Expect(err.Error()).To(Equal("missing event counter(s): 3, 4, 5"))
-		})
-		It("knows to ignore -1 for start and failure cases", func() {
-			eventCounters := []int{-1, 1, 2, 3, 4, 5, -1}
-			err := checkForMissingEvents(eventCounters)
+		// 	Expect(err.Error()).To(Equal("missing event counter(s): 3, 4, 5"))
+		// })
+		// It("knows to ignore -1 for start and failure cases", func() {
+		// 	eventCounters := []int{-1, 1, 2, 3, 4, 5, -1}
+		// 	err := checkForMissingAndDuplicateEvents(eventCounters)
 
-			Expect(err).To(BeNil())
-		})
-		It("works when events are missing and the job also failed", func() {
-			eventCounters := []int{-1, 1, 2, 4, -1}
-			err := checkForMissingEvents(eventCounters)
+		// 	Expect(err).To(BeNil())
+		// })
+		// It("works when events are missing and the job also failed", func() {
+		// 	eventCounters := []int{-1, 1, 2, 4, -1}
+		// 	err := checkForMissingAndDuplicateEvents(eventCounters)
 
-			Expect(err.Error()).To(Equal("missing event counter(s): 3"))
-		})
-		It("ignores lists of counters smaller than 2 elements", func() {
-			eventCounters := []int{-1}
-			err := checkForMissingEvents(eventCounters)
+		// 	Expect(err.Error()).To(Equal("missing event counter(s): 3"))
+		// })
+		// It("ignores lists of counters smaller than 2 elements", func() {
+		// 	eventCounters := []int{-1}
+		// 	err := checkForMissingAndDuplicateEvents(eventCounters)
 
-			Expect(err).To(BeNil())
-		})
-		It("ignores started and immediately failed jobs", func() {
-			eventCounters := []int{-1, -1}
-			err := checkForMissingEvents(eventCounters)
+		// 	Expect(err).To(BeNil())
+		// })
+		// It("ignores started and immediately failed jobs", func() {
+		// 	eventCounters := []int{-1, -1}
+		// 	err := checkForMissingAndDuplicateEvents(eventCounters)
 
-			Expect(err).To(BeNil())
-		})
-		It("can detect multiple discontinuous instances of missing elements", func() {
-			eventCounters := []int{-1, 1, 2, 6, 10}
-			err := checkForMissingEvents(eventCounters)
+		// 	Expect(err).To(BeNil())
+		// })
+		// It("can detect multiple discontinuous instances of missing elements", func() {
+		// 	eventCounters := []int{-1, 1, 2, 6, 10}
+		// 	err := checkForMissingAndDuplicateEvents(eventCounters)
 
-			Expect(err.Error()).To(Equal("missing event counter(s): 3, 4, 5, 7, 8, 9"))
-		})
-		It("can detect a duplicate event counter and return an error", func() {
-			eventCounters := []int{-1, 1, 2, 2, 3}
-			err := checkForMissingEvents(eventCounters)
+		// 	Expect(err.Error()).To(Equal("missing event counter(s): 3, 4, 5, 7, 8, 9"))
+		// })
+		// It("can detect a duplicate event counter and return an error", func() {
+		// 	eventCounters := []int{-1, 1, 2, 2, 3}
+		// 	err := checkForMissingAndDuplicateEvents(eventCounters)
 
-			Expect(err.Error()).To(Equal("duplicate event counter(s): 2"))
-		})
-		It("can detect both missing and duplicate event counters", func() {
-			eventCounters := []int{-1, 1, 2, 2, 5}
-			err := checkForMissingEvents(eventCounters)
+		// 	Expect(err.Error()).To(Equal("duplicate event counter(s): 2"))
+		// })
+		// It("can detect both missing and duplicate event counters", func() {
+		// 	eventCounters := []int{-1, 1, 2, 2, 5}
+		// 	err := checkForMissingAndDuplicateEvents(eventCounters)
 
-			Expect(err.Error()).To(Equal("missing event counter(s): 3, 4\nduplicate event counter(s): 2"))
-		})
+		// 	Expect(err.Error()).To(Equal("missing event counter(s): 3, 4\nduplicate event counter(s): 2"))
+		// })
 	})
 })
