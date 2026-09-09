@@ -4,7 +4,7 @@ go 1.25.9
 
 require (
 	github.com/RedHatInsights/tenant-utils v1.0.0
-	github.com/Unleash/unleash-go-sdk/v5 v5.1.0
+	github.com/Unleash/unleash-go-sdk/v6 v6.5.1
 	github.com/aws/aws-sdk-go-v2 v1.45.1
 	github.com/aws/aws-sdk-go-v2/credentials v1.20.1
 	github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs v1.84.1
@@ -64,6 +64,7 @@ require (
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/gorilla/mux v1.8.1 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // indirect
+	github.com/hashicorp/golang-lru/v2 v2.0.7 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
