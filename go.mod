@@ -1,6 +1,6 @@
 module playbook-dispatcher
 
-go 1.25.9
+go 1.26
 
 require (
 	github.com/RedHatInsights/tenant-utils v1.0.0
@@ -99,7 +99,7 @@ require (
 	github.com/spf13/pflag v1.0.10 // indirect
 	github.com/stretchr/objx v0.5.3 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
-	github.com/twmb/murmur3 v1.1.8 // indirect
+	github.com/twmb/murmur3 v1.2.0 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.2 // indirect
 	github.com/vmware-labs/yaml-jsonpath v0.3.2 // indirect
