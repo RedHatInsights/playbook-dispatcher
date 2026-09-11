@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -312,7 +313,7 @@ func TestHashCacheKey_DifferentWorkspaces(t *testing.T) {
 	assert.NotEqual(t, hash1, hash2, "Different workspaces must produce different cache keys to prevent authorization leakage")
 }
 
-// Test helper to create a context with request_id set via middleware
+// contextWithRequestID creates a context with request_id set via middleware.
 func contextWithRequestID(t *testing.T) context.Context {
 	t.Helper()
 
@@ -504,4 +505,423 @@ func TestCheckApplicationPermissionsWithCache_ErrorNotCached(t *testing.T) {
 	assert.Error(t, err2)
 	assert.Contains(t, err2.Error(), "backend error")
 	assert.Equal(t, 2, callCount, "Errors should NOT be cached")
+}
+
+func TestCheckApplicationPermissionsWithCache_SingleflightDeduplication(t *testing.T) {
+	// Create context with request_id via middleware
+	ctx := contextWithRequestID(t)
+
+	// Add identity to context
+	ctx = identity.WithIdentity(ctx, identity.XRHID{
+		Identity: identity.Identity{
+			Type:  "User",
+			OrgID: "org-concurrent",
+			User: &identity.User{
+				UserID: "user-concurrent",
+			},
+		},
+	})
+
+	// Create mock with delay to ensure concurrent calls overlap
+	// Note: We use time-based synchronization (sleep) rather than barriers because
+	// singleflight only executes this function ONCE (the leader), so a barrier waiting
+	// for all 5 callers would deadlock. The 50ms sleep is sufficient for goroutines to
+	// start (they launch in microseconds) and is reliable in practice.
+	var callCount atomic.Int32
+	mockPermissionCheck := func(ctx context.Context, workspaceID string, serviceFilter string, log *zap.SugaredLogger) ([]string, error) {
+		callCount.Add(1)
+		time.Sleep(50 * time.Millisecond)
+		return []string{"remediations", "tasks"}, nil
+	}
+
+	// Create cache client with mock
+	kesselCache := NewKesselClientWithCache(nil)
+	kesselCache.permissionCheckFunc = mockPermissionCheck
+
+	log := zap.NewNop().Sugar()
+
+	// Launch 5 concurrent requests
+	results := make(chan []string, 5)
+	errors := make(chan error, 5)
+
+	for i := 0; i < 5; i++ {
+		go func() {
+			apps, err := kesselCache.CheckApplicationPermissionsWithCache(ctx, "workspace-concurrent", "", log)
+			results <- apps
+			errors <- err
+		}()
+	}
+
+	// Collect all results
+	var allApps [][]string
+	var allErrors []error
+	for i := 0; i < 5; i++ {
+		allApps = append(allApps, <-results)
+		allErrors = append(allErrors, <-errors)
+	}
+
+	// Verify all succeeded
+	for i, err := range allErrors {
+		assert.NoError(t, err, "Request %d should succeed", i)
+	}
+
+	// Verify all got the same result
+	for i, apps := range allApps {
+		assert.Equal(t, []string{"remediations", "tasks"}, apps, "Request %d should get correct result", i)
+	}
+
+	// Most importantly: singleflight should deduplicate, so only 1 backend call
+	assert.Equal(t, int32(1), callCount.Load(), "Singleflight should deduplicate concurrent requests to 1 backend call")
+
+	// Verify cache was populated - make a subsequent request
+	apps6, err6 := kesselCache.CheckApplicationPermissionsWithCache(ctx, "workspace-concurrent", "", log)
+	assert.NoError(t, err6)
+	assert.Equal(t, []string{"remediations", "tasks"}, apps6, "Subsequent request should get cached result")
+
+	// Verify no additional backend call (still only 1 total)
+	assert.Equal(t, int32(1), callCount.Load(), "Subsequent request should hit cache, not backend")
+}
+
+func TestCheckApplicationPermissionsWithCache_CanceledCallerDoesNotFailOthers(t *testing.T) {
+	// Create base context with request_id via middleware
+	ctx := contextWithRequestID(t)
+
+	// Add identity to context
+	ctx = identity.WithIdentity(ctx, identity.XRHID{
+		Identity: identity.Identity{
+			Type:  "User",
+			OrgID: "org-cancel",
+			User: &identity.User{
+				UserID: "user-cancel",
+			},
+		},
+	})
+
+	// Create a short-lived context that will cancel before backend completes
+	cancelCtx, cancel := context.WithTimeout(ctx, 10*time.Millisecond)
+	defer cancel()
+
+	// Mock backend that delays longer than cancelCtx timeout
+	var callCount atomic.Int32
+	mockPermissionCheck := func(ctx context.Context, workspaceID string, serviceFilter string, log *zap.SugaredLogger) ([]string, error) {
+		callCount.Add(1)
+		time.Sleep(50 * time.Millisecond) // Outlives cancelCtx
+		return []string{"remediations", "tasks"}, nil
+	}
+
+	// Create cache client with mock
+	kesselCache := NewKesselClientWithCache(nil)
+	kesselCache.permissionCheckFunc = mockPermissionCheck
+
+	log := zap.NewNop().Sugar()
+
+	// Launch 2 concurrent requests with different contexts
+	type result struct {
+		callerID string
+		apps     []string
+		err      error
+	}
+	results := make(chan result, 2)
+
+	// First caller with short-lived context (will timeout)
+	go func() {
+		apps, err := kesselCache.CheckApplicationPermissionsWithCache(cancelCtx, "workspace-cancel", "", log)
+		results <- result{callerID: "canceled", apps: apps, err: err}
+	}()
+
+	// Second caller with normal context (should succeed)
+	go func() {
+		apps, err := kesselCache.CheckApplicationPermissionsWithCache(ctx, "workspace-cancel", "", log)
+		results <- result{callerID: "normal", apps: apps, err: err}
+	}()
+
+	// Collect and identify each caller's result
+	resultsMap := make(map[string]result)
+	for i := 0; i < 2; i++ {
+		r := <-results
+		resultsMap[r.callerID] = r
+	}
+
+	// Critical assertion: caller with normal context must succeed
+	normalResult := resultsMap["normal"]
+	assert.NoError(t, normalResult.err, "Caller with valid context should succeed even if another caller's context is canceled")
+	assert.Equal(t, []string{"remediations", "tasks"}, normalResult.apps)
+
+	// Canceled caller may succeed (if result arrives before 10ms timeout) or fail - both are valid
+	canceledResult := resultsMap["canceled"]
+	if canceledResult.err != nil {
+		t.Logf("Canceled caller returned error as expected: %v", canceledResult.err)
+	} else {
+		t.Logf("Canceled caller succeeded before timeout (received shared result from singleflight)")
+		assert.Equal(t, []string{"remediations", "tasks"}, canceledResult.apps)
+	}
+
+	// Backend should only be called once (singleflight deduplication worked)
+	assert.Equal(t, int32(1), callCount.Load(), "Backend should be called once despite context cancellation")
+}
+
+// TestCheckApplicationPermissionsWithCache_TypeAssertionFailure verifies that corrupted cache entries
+// (wrong type) are detected, deleted, and recovered from gracefully.
+func TestCheckApplicationPermissionsWithCache_TypeAssertionFailure(t *testing.T) {
+	// Create context with request_id via middleware
+	ctx := contextWithRequestID(t)
+
+	// Add identity to context
+	ctx = identity.WithIdentity(ctx, identity.XRHID{
+		Identity: identity.Identity{
+			Type:  "User",
+			OrgID: "org-type",
+			User: &identity.User{
+				UserID: "user-type",
+			},
+		},
+	})
+
+	// Create mock permission check
+	mockPermissionCheck := func(ctx context.Context, workspaceID string, serviceFilter string, log *zap.SugaredLogger) ([]string, error) {
+		return []string{"remediations"}, nil
+	}
+
+	// Create cache client with mock
+	kesselCache := NewKesselClientWithCache(nil)
+	kesselCache.permissionCheckFunc = mockPermissionCheck
+
+	log := zap.NewNop().Sugar()
+
+	// First call succeeds normally
+	apps1, err1 := kesselCache.CheckApplicationPermissionsWithCache(ctx, "workspace-type", "", log)
+	assert.NoError(t, err1)
+	assert.Equal(t, []string{"remediations"}, apps1)
+
+	// Manually corrupt the cache with wrong type
+	reqID := request_id.GetReqID(ctx)
+	cacheKey := hashCacheKey("applications", reqID, "org-type", "user-type", "workspace-type", "")
+	kesselCache.applicationCache.Set(cacheKey, "wrong-type-string", cache.DefaultExpiration)
+
+	// Verify corrupted entry exists
+	corrupted, found := kesselCache.applicationCache.Get(cacheKey)
+	assert.True(t, found, "Corrupted cache entry should exist")
+	assert.Equal(t, "wrong-type-string", corrupted, "Should have corrupted value")
+
+	// Second call should detect type mismatch, delete corrupted entry, fetch fresh data, and cache it
+	apps2, err2 := kesselCache.CheckApplicationPermissionsWithCache(ctx, "workspace-type", "", log)
+	assert.NoError(t, err2, "Should recover from type mismatch by fetching fresh data")
+	assert.Equal(t, []string{"remediations"}, apps2, "Should return fresh data after cache corruption")
+
+	// Verify cache now contains correct data (not corrupted)
+	cached, found := kesselCache.applicationCache.Get(cacheKey)
+	assert.True(t, found, "Cache entry should exist with fresh data")
+	correctData, ok := cached.([]string)
+	assert.True(t, ok, "Cached data should be correct type now")
+	assert.Equal(t, []string{"remediations"}, correctData, "Cached data should be correct")
+}
+
+func TestGetDefaultWorkspaceIDWithCache_SingleflightDeduplication(t *testing.T) {
+	// Create a mock RBAC server that tracks call count
+	// Note: We use time-based synchronization (sleep) rather than barriers because
+	// singleflight only executes this handler ONCE (the leader), so a barrier waiting
+	// for all 5 callers would deadlock. The 50ms sleep is sufficient for goroutines to
+	// start (they launch in microseconds) and is reliable in practice.
+	var callCount atomic.Int32
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		callCount.Add(1)
+		time.Sleep(50 * time.Millisecond)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		if _, err := w.Write([]byte(`{"data":[{"id":"workspace-123"}]}`)); err != nil {
+			t.Fatalf("failed to write mock response: %v", err)
+		}
+	}))
+	defer server.Close()
+
+	// Create RBAC client pointing to mock server
+	client := NewRbacClient(server.URL, nil, 10*time.Second, RbacClientConfig{}, nil).(*rbacClientImpl)
+
+	// Create context with request_id via middleware
+	ctx := contextWithRequestID(t)
+
+	// Add identity to context
+	ctx = identity.WithIdentity(ctx, identity.XRHID{
+		Identity: identity.Identity{
+			Type:  "User",
+			OrgID: "org-concurrent",
+			User: &identity.User{
+				UserID: "user-concurrent",
+			},
+		},
+	})
+
+	// Launch 5 concurrent requests
+	results := make(chan string, 5)
+	errors := make(chan error, 5)
+
+	for i := 0; i < 5; i++ {
+		go func() {
+			workspaceID, err := client.GetDefaultWorkspaceIDWithCache(ctx, "org-concurrent")
+			results <- workspaceID
+			errors <- err
+		}()
+	}
+
+	// Collect all results
+	var allWorkspaceIDs []string
+	var allErrors []error
+	for i := 0; i < 5; i++ {
+		allWorkspaceIDs = append(allWorkspaceIDs, <-results)
+		allErrors = append(allErrors, <-errors)
+	}
+
+	// Verify all succeeded
+	for i, err := range allErrors {
+		assert.NoError(t, err, "Request %d should succeed", i)
+	}
+
+	// Verify all got the same result
+	for i, workspaceID := range allWorkspaceIDs {
+		assert.Equal(t, "workspace-123", workspaceID, "Request %d should get correct workspace ID", i)
+	}
+
+	// Most importantly: singleflight should deduplicate, so only 1 backend call
+	assert.Equal(t, int32(1), callCount.Load(), "Singleflight should deduplicate concurrent requests to 1 backend call")
+
+	// Verify cache was populated - make a subsequent request
+	workspaceID6, err6 := client.GetDefaultWorkspaceIDWithCache(ctx, "org-concurrent")
+	assert.NoError(t, err6)
+	assert.Equal(t, "workspace-123", workspaceID6, "Subsequent request should get cached result")
+
+	// Verify no additional backend call (still only 1 total)
+	assert.Equal(t, int32(1), callCount.Load(), "Subsequent request should hit cache, not backend")
+}
+
+func TestGetDefaultWorkspaceIDWithCache_CanceledCallerDoesNotFailOthers(t *testing.T) {
+	// Create a mock RBAC server with delayed response
+	var callCount atomic.Int32
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		callCount.Add(1)
+		time.Sleep(50 * time.Millisecond) // Delay longer than cancelCtx timeout
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		if _, err := w.Write([]byte(`{"data":[{"id":"workspace-456"}]}`)); err != nil {
+			t.Fatalf("failed to write mock response: %v", err)
+		}
+	}))
+	defer server.Close()
+
+	// Create RBAC client pointing to mock server
+	client := NewRbacClient(server.URL, nil, 10*time.Second, RbacClientConfig{}, nil).(*rbacClientImpl)
+
+	// Create base context with request_id via middleware
+	ctx := contextWithRequestID(t)
+
+	// Add identity to context
+	ctx = identity.WithIdentity(ctx, identity.XRHID{
+		Identity: identity.Identity{
+			Type:  "User",
+			OrgID: "org-cancel",
+			User: &identity.User{
+				UserID: "user-cancel",
+			},
+		},
+	})
+
+	// Create a short-lived context that will cancel before backend completes
+	cancelCtx, cancel := context.WithTimeout(ctx, 10*time.Millisecond)
+	defer cancel()
+
+	// Launch 2 concurrent requests with different contexts
+	type result struct {
+		callerID    string
+		workspaceID string
+		err         error
+	}
+	results := make(chan result, 2)
+
+	// First caller with short-lived context (will timeout)
+	go func() {
+		workspaceID, err := client.GetDefaultWorkspaceIDWithCache(cancelCtx, "org-cancel")
+		results <- result{callerID: "canceled", workspaceID: workspaceID, err: err}
+	}()
+
+	// Second caller with normal context (should succeed)
+	go func() {
+		workspaceID, err := client.GetDefaultWorkspaceIDWithCache(ctx, "org-cancel")
+		results <- result{callerID: "normal", workspaceID: workspaceID, err: err}
+	}()
+
+	// Collect and identify each caller's result
+	resultsMap := make(map[string]result)
+	for i := 0; i < 2; i++ {
+		r := <-results
+		resultsMap[r.callerID] = r
+	}
+
+	// Critical assertion: caller with normal context must succeed
+	normalResult := resultsMap["normal"]
+	assert.NoError(t, normalResult.err, "Caller with valid context should succeed even if another caller's context is canceled")
+	assert.Equal(t, "workspace-456", normalResult.workspaceID)
+
+	// Canceled caller may succeed (if result arrives before 10ms timeout) or fail - both are valid
+	canceledResult := resultsMap["canceled"]
+	if canceledResult.err != nil {
+		t.Logf("Canceled caller returned error as expected: %v", canceledResult.err)
+	} else {
+		t.Logf("Canceled caller succeeded before timeout (received shared result from singleflight)")
+		assert.Equal(t, "workspace-456", canceledResult.workspaceID)
+	}
+
+	// Backend should only be called once (singleflight deduplication worked)
+	assert.Equal(t, int32(1), callCount.Load(), "Backend should be called once despite context cancellation")
+}
+
+// TestGetDefaultWorkspaceIDWithCache_TypeAssertionFailure verifies that corrupted workspace cache entries
+// (wrong type) are detected, deleted, and the code falls through to fetch from API.
+func TestGetDefaultWorkspaceIDWithCache_TypeAssertionFailure(t *testing.T) {
+	// Create a mock RBAC server that returns an error
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+		if _, err := w.Write([]byte(`{"error": "test error"}`)); err != nil {
+			t.Fatalf("failed to write response: %v", err)
+		}
+	}))
+	defer server.Close()
+
+	// Create RBAC client pointing to mock server
+	client := NewRbacClient(server.URL, nil, 10*time.Second, RbacClientConfig{}, nil).(*rbacClientImpl)
+
+	// Create context with request_id via middleware
+	ctx := contextWithRequestID(t)
+
+	// Add identity to context
+	ctx = identity.WithIdentity(ctx, identity.XRHID{
+		Identity: identity.Identity{
+			Type:  "User",
+			OrgID: "org-badtype",
+			User: &identity.User{
+				UserID: "user-badtype",
+			},
+		},
+	})
+
+	// Manually corrupt the cache with wrong type ([]string instead of string)
+	reqID := request_id.GetReqID(ctx)
+	cacheKey := hashCacheKey("workspace", reqID, "org-badtype", "user-badtype")
+	client.workspaceCache.Set(cacheKey, []string{"wrong", "type"}, cache.DefaultExpiration)
+
+	// Verify corrupted entry exists
+	corrupted, found := client.workspaceCache.Get(cacheKey)
+	assert.True(t, found, "Corrupted cache entry should exist")
+	corruptedValue, ok := corrupted.([]string)
+	assert.True(t, ok)
+	assert.Equal(t, []string{"wrong", "type"}, corruptedValue, "Should have corrupted value")
+
+	// Call should detect type mismatch in cache, delete it, then try to fetch from API
+	// API call will fail (mock returns error) but important thing is it didn't panic
+	_, err := client.GetDefaultWorkspaceIDWithCache(ctx, "org-badtype")
+
+	// Expect error from API call (mock server error), not panic from type assertion
+	assert.Error(t, err, "Should get error from API call, not panic from type assertion")
+
+	// Cache remains empty because API call failed (can't repopulate with fresh data)
+	_, found = client.workspaceCache.Get(cacheKey)
+	assert.False(t, found, "Corrupted cache entry should be deleted and not repopulated after failed API call")
 }
