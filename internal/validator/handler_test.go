@@ -165,7 +165,7 @@ N/Kl0lVn2BIPxggdj5H4qC/Fpj5qlsQYR2/78+KeyhtLY8GqVf/f9r/t1GTtrtO96erY7OnSdMb6
 			len, err := base64.StdEncoding.Decode(decoded, []byte(data))
 			Expect(err).ToNot(HaveOccurred())
 
-			content, err := readFile(bytes.NewReader(decoded[0:len]))
+			content, err := readFile(bytes.NewReader(decoded[0:len]), 10*1024*1024)
 			Expect(err).ToNot(HaveOccurred())
 			events, err := instance.validateContent(test.TestContext(), "playbook", content)
 			Expect(err).ToNot(HaveOccurred())
@@ -196,7 +196,7 @@ fdqPl7IwpOzJmfqrZ1duqTJ62NbTeDDPjOvQ6F70PsJi4KXiLSqngthpIkJLtF3l
 			len, err := base64.StdEncoding.Decode(decoded, []byte(data))
 			Expect(err).ToNot(HaveOccurred())
 
-			content, err := readFile(bytes.NewReader(decoded[0:len]))
+			content, err := readFile(bytes.NewReader(decoded[0:len]), 10*1024*1024)
 			Expect(err).ToNot(HaveOccurred())
 			events, err := instance.validateContent(test.TestContext(), "playbook", content)
 			Expect(err).ToNot(HaveOccurred())
