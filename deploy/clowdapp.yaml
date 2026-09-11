@@ -312,6 +312,8 @@ objects:
             value: ${STORAGE_MAX_CONCURRENCY}
           - name: ARTIFACT_MAX_SIZE
             value: ${ARTIFACT_MAX_SIZE}
+          - name: ARTIFACT_MAX_DECOMPRESSED_SIZE
+            value: ${ARTIFACT_MAX_DECOMPRESSED_SIZE}
           - name: BLOCKLIST_ORG_IDS
             value: ${BLOCKLIST_ORG_IDS}
         resources:
@@ -466,6 +468,8 @@ parameters:
   value: "5"
 - name: ARTIFACT_MAX_SIZE
   value: '3145728'
+- name: ARTIFACT_MAX_DECOMPRESSED_SIZE
+  value: '5242880'
 
 - name: RETURN_URL
   value: TBD

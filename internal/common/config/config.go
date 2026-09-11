@@ -65,6 +65,7 @@ func Get() *viper.Viper {
 	options.SetDefault("storage.retries", 3)
 	options.SetDefault("storage.max.concurrency", 5)
 	options.SetDefault("artifact.max.size", 1024*1024)
+	options.SetDefault("artifact.max.decompressed.size", 1024*1024)
 	options.SetDefault("artifact.truncate.stdout.field.after.lines", 500)
 	options.SetDefault("artifact.max.stdout.field.size", 1024)
 	options.SetDefault("artifact.max.kafka.message.size", 1024*1024)

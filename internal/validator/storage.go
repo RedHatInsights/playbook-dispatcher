@@ -3,8 +3,10 @@ package validator
 import (
 	"bufio"
 	"compress/gzip"
+	"fmt"
 	"io"
 	"net/http"
+	"playbook-dispatcher/internal/common/config"
 	commonInstrumentation "playbook-dispatcher/internal/common/instrumentation"
 	"playbook-dispatcher/internal/common/utils"
 	"playbook-dispatcher/internal/validator/instrumentation"
@@ -71,11 +73,17 @@ func (this *storageConnector) fetchPayload(url string) (payload []byte, err erro
 	}
 
 	defer res.Body.Close()
-	payload, err = readFile(res.Body)
+	maxDecompressedSize := config.Get().GetInt64("artifact.max.decompressed.size")
+	payload, err = readFile(res.Body, maxDecompressedSize)
 	return
 }
 
-func readFile(reader io.Reader) (result []byte, err error) {
+func readFile(reader io.Reader, maxDecompressedSize int64) (result []byte, err error) {
+	// Validate limit is positive
+	if maxDecompressedSize <= 0 {
+		return nil, fmt.Errorf("invalid configuration: artifact.max.decompressed.size must be positive, got %d", maxDecompressedSize)
+	}
+
 	reader = bufio.NewReaderSize(reader, 2)
 	compression, err := utils.GetCompressionType(reader)
 	if err != nil {
@@ -97,5 +105,31 @@ func readFile(reader io.Reader) (result []byte, err error) {
 		}
 	}
 
-	return io.ReadAll(reader)
+	// Read the file; if compressed, check against max size
+	// Max artifact size was checked earlier so using maxDecompressedSize for all reads
+	limitedReader := io.LimitReader(reader, maxDecompressedSize)
+	data, err := io.ReadAll(limitedReader)
+	if err != nil {
+		return nil, err
+	}
+
+	// If we read up to exactly the limit, peek ahead one more byte
+	if int64(len(data)) == maxDecompressedSize {
+		// Try to read one more byte to detect oversized files
+		// Assumes storage-backed readers return io.EOF when exhausted, not (0, nil) loops.
+		var extra [1]byte
+		n, err := reader.Read(extra[:])
+
+		// Check for read errors first
+		if err != nil && err != io.EOF {
+			return nil, fmt.Errorf("error reading decompressed archive: %w", err)
+		}
+
+		// Then check if file exceeds limit
+		if n > 0 {
+			return nil, fmt.Errorf("decompressed archive exceeds maximum allowed size (%d bytes)", maxDecompressedSize)
+		}
+	}
+
+	return data, nil
 }
