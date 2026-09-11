@@ -2,7 +2,11 @@ package responseConsumer
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
+	"slices"
+	"strings"
 	"time"
 
 	"playbook-dispatcher/internal/common/ansible"
@@ -72,6 +76,7 @@ func (this *handler) onMessage(ctx context.Context, msg *k.Message) {
 	)
 
 	var status string
+	var runnerEvents []message.PlaybookRunResponseMessageYamlEventsElem
 	var eventsSerialized []byte
 
 	var runsUpdated int64
@@ -83,7 +88,7 @@ func (this *handler) onMessage(ctx context.Context, msg *k.Message) {
 			Where("org_id = ?", value.OrgId).
 			Where("correlation_id = ?", correlationId)
 
-		selectResult := baseQuery.Select("id", "status", "response_full").First(&run)
+		selectResult := baseQuery.Select("id", "status", "events", "response_full").Clauses(clause.Locking{Strength: "UPDATE"}).First(&run)
 
 		if requestType == satMessageHeaderValue {
 			satellite.SortSatEvents(value.SatEvents)
@@ -99,8 +104,31 @@ func (this *handler) onMessage(ctx context.Context, msg *k.Message) {
 				status = run.Status
 			}
 		} else {
-			status = inferStatus(value.RunnerEvents, nil)
-			eventsSerialized = utils.MustMarshal(value.RunnerEvents)
+			var existingRunnerEvents []message.PlaybookRunResponseMessageYamlEventsElem
+			if err := json.Unmarshal(run.Events, &existingRunnerEvents); err != nil {
+				utils.GetLogFromContext(ctx).Warnw("failed to unmarshal existing runner events, treating as empty", "error", err)
+			}
+
+			// At first, assume NOT batched and initialize to the incoming events
+			runnerEvents = *value.RunnerEvents
+
+			if len(existingRunnerEvents) > 0 && len(runnerEvents) > 0 && runnerEvents[0].Event != message.EventExecutorOnStart {
+				// If there are events (existingRunnerEvents) already in the database for this job,
+				// this is NOT the first upload.
+				// If the first event in the incoming list for this upload (runnerEvents) is
+				// NOT executor_on_start, this client IS sending batched events.
+				// Merge the existing events with the incoming events.
+				runnerEvents = append(existingRunnerEvents, (*value.RunnerEvents)...)
+
+				err := checkForMissingAndDuplicateEvents(runnerEvents)
+				if err != nil {
+					utils.GetLogFromContext(ctx).Warnw(err.Error())
+				}
+
+			}
+
+			eventsSerialized = utils.MustMarshal(runnerEvents)
+			status = inferStatus(&runnerEvents, nil)
 		}
 
 		if selectResult.Error != nil {
@@ -136,7 +164,7 @@ func (this *handler) onMessage(ctx context.Context, msg *k.Message) {
 		var toCreate []db.RunHost
 
 		if requestType == runnerMessageHeaderValue {
-			hosts := ansible.GetAnsibleHosts(*value.RunnerEvents)
+			hosts := ansible.GetAnsibleHosts(runnerEvents)
 
 			if len(hosts) == 0 {
 				// If the the playbook fials the signature validation step or if ansible is not
@@ -153,8 +181,8 @@ func (this *handler) onMessage(ctx context.Context, msg *k.Message) {
 					ID:     uuid.New(),
 					RunID:  run.ID,
 					Host:   host,
-					Status: inferStatus(value.RunnerEvents, &host),
-					Log:    ansible.GetStdout(*value.RunnerEvents, nil),
+					Status: inferStatus(&runnerEvents, &host),
+					Log:    ansible.GetStdout(runnerEvents, nil),
 				}
 			})
 			return createRecord(ctx, tx, toCreate)
@@ -439,4 +467,68 @@ func mapHostsToRunHosts(hosts []string, fn func(host string) db.RunHost) []db.Ru
 	}
 
 	return result
+}
+
+// checkForMissingAndDuplicateEvents takes a slice of event counters, sorts them,
+// and checks that it is continuous and sequential. If there are any gaps or duplicates,
+// they are noted and returned as an error string.
+func checkForMissingAndDuplicateEvents(
+	events []message.PlaybookRunResponseMessageYamlEventsElem,
+) error {
+	var totalErr error
+	var counters []int
+
+	for _, e := range events {
+		counters = append(counters, e.Counter)
+	}
+
+	slices.Sort(counters)
+
+	if len(counters) < 2 {
+		// nothing to compare
+		return nil
+	}
+
+	var missingEvents strings.Builder
+	var duplicateEvents strings.Builder
+	hasMissing := false
+	hasDuplicate := false
+	for i := range counters {
+		if i < 1 || counters[i] == -1 || counters[i-1] == -1 {
+			// -> must be at index 1 or higher to compare to previous value
+			// -> ignore -1, these are custom events sent by rhc-worker-playbook
+			// -> ignore -1 when it's the previous value
+			continue
+		}
+
+		curCounter := counters[i]
+		prevCounter := counters[i-1]
+
+		if curCounter == prevCounter {
+			hasDuplicate = true
+			fmt.Fprintf(&duplicateEvents, "%d, ", curCounter)
+		}
+
+		if curCounter > prevCounter+1 {
+			hasMissing = true
+			// calculate the # of missing events
+			for m := prevCounter + 1; m < curCounter; m++ {
+				fmt.Fprintf(&missingEvents, "%d, ", m)
+			}
+		}
+	}
+
+	if hasMissing {
+		totalErr = errors.Join(totalErr, fmt.Errorf("missing event counter(s): %s",
+			strings.TrimSuffix(missingEvents.String(), ", "),
+		))
+	}
+
+	if hasDuplicate {
+		totalErr = errors.Join(totalErr, fmt.Errorf("duplicate event counter(s): %s",
+			strings.TrimSuffix(duplicateEvents.String(), ", "),
+		))
+	}
+
+	return totalErr
 }
