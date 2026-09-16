@@ -3,7 +3,7 @@ package private
 import (
 	"net/http"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
 func (this *controllers) ApiInternalVersion(ctx echo.Context) error {
