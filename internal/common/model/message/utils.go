@@ -21,7 +21,7 @@ func GetCorrelationId(events ValidatedMessages, playbookSatType string) (result 
 	}
 
 	for _, event := range events.Playbook {
-		if event.Event == EventExecutorOnStart && event.EventData != nil && event.EventData.CrcDispatcherCorrelationId != nil {
+		if event.EventData != nil && event.EventData.CrcDispatcherCorrelationId != nil {
 			result, err = uuid.Parse(*event.EventData.CrcDispatcherCorrelationId)
 			return
 		}
