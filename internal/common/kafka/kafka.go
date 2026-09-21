@@ -95,9 +95,24 @@ func NewConsumerEventLoop(
 	validationPredicate KafkaMessagePredicate,
 	handler func(context.Context, *kafka.Message),
 	errorsChan chan<- error,
+	cfg *viper.Viper,
 ) (start func()) {
 
 	return func() {
+		log := utils.GetLogFromContext(ctx)
+
+		// Track consecutive errors to distinguish transient blips from persistent
+		// failures; only shut down after hitting the threshold.
+		maxConsecutiveReadErrors := cfg.GetInt("kafka.consumer.max.consecutive.read.errors")
+		if maxConsecutiveReadErrors < 1 {
+			maxConsecutiveReadErrors = 10
+		}
+		readErrorBackoff := time.Duration(cfg.GetInt("kafka.consumer.read.error.backoff.seconds")) * time.Second
+		if readErrorBackoff < 1*time.Second {
+			readErrorBackoff = 2 * time.Second
+		}
+		consecutiveReadErrors := 0
+
 		for {
 			msg, err := consumer.ReadMessage(1 * time.Second) // TODO: configurable
 
@@ -108,15 +123,58 @@ func NewConsumerEventLoop(
 			}
 
 			if err != nil {
-				// Safe type check for kafka.Error to avoid panic on non-kafka.Error types
+				// Safe type check for kafka.Error
 				var kafkaErr kafka.Error
-				if !errors.As(err, &kafkaErr) || kafkaErr.Code() != kafka.ErrTimedOut {
-					utils.GetLogFromContext(ctx).Errorw("Error reading message from kafka", "err", err)
-					errorsChan <- err
+				isKafkaTimeout := errors.As(err, &kafkaErr) && kafkaErr.Code() == kafka.ErrTimedOut
+
+				if isKafkaTimeout {
+					// Check context before continuing on timeout to ensure prompt shutdown
+					select {
+					case <-ctx.Done():
+						return
+					default:
+					}
+					continue
 				}
 
+				// Non-timeout error - track and handle
+				if errors.Is(err, context.Canceled) {
+					return
+				}
+
+				consecutiveReadErrors++
+				log.Errorw("Error reading message from kafka",
+					"err", err,
+					"consecutive_errors", consecutiveReadErrors,
+					"max_errors", maxConsecutiveReadErrors,
+				)
+
+				if consecutiveReadErrors >= maxConsecutiveReadErrors {
+					log.Errorw("Reached max consecutive kafka read errors, shutting down",
+						"consecutive_errors", consecutiveReadErrors,
+						"max_errors", maxConsecutiveReadErrors,
+					)
+					// Send error with context check to prevent hanging during shutdown
+					select {
+					case errorsChan <- fmt.Errorf("exceeded max consecutive kafka read errors (%d): %w", maxConsecutiveReadErrors, err):
+					case <-ctx.Done():
+					}
+					return
+				}
+
+				// Backoff before retry
+				backoffTimer := time.NewTimer(readErrorBackoff)
+				select {
+				case <-backoffTimer.C:
+				case <-ctx.Done():
+					backoffTimer.Stop()
+					return
+				}
 				continue
 			}
+
+			// Reset error counter on successful read
+			consecutiveReadErrors = 0
 
 			if messagePredicate != nil && !messagePredicate(msg) {
 				continue
