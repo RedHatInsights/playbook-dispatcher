@@ -3,6 +3,7 @@ package kafka
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"playbook-dispatcher/internal/common/utils"
 	"time"
@@ -93,7 +94,7 @@ func NewConsumerEventLoop(
 	messagePredicate KafkaMessagePredicate,
 	validationPredicate KafkaMessagePredicate,
 	handler func(context.Context, *kafka.Message),
-	errors chan<- error,
+	errorsChan chan<- error,
 ) (start func()) {
 
 	return func() {
@@ -107,9 +108,11 @@ func NewConsumerEventLoop(
 			}
 
 			if err != nil {
-				if err.(kafka.Error).Code() != kafka.ErrTimedOut {
+				// Safe type check for kafka.Error to avoid panic on non-kafka.Error types
+				var kafkaErr kafka.Error
+				if !errors.As(err, &kafkaErr) || kafkaErr.Code() != kafka.ErrTimedOut {
 					utils.GetLogFromContext(ctx).Errorw("Error reading message from kafka", "err", err)
-					errors <- err
+					errorsChan <- err
 				}
 
 				continue
