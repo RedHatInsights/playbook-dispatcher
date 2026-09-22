@@ -25,7 +25,7 @@ require (
 	github.com/project-kessel/inventory-client-go v0.0.0-20260306190649-906d3ba4a829
 	github.com/prometheus/client_golang v1.24.1
 	github.com/qri-io/jsonschema v0.2.1
-	github.com/redhatinsights/app-common-go v1.6.9
+	github.com/redhatinsights/app-common-go v1.7.0
 	github.com/redhatinsights/platform-go-middlewares/v2 v2.1.0
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/viper v1.21.0
