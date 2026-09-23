@@ -24,7 +24,9 @@ type mockKesselInventoryService struct {
 	checkBulkResponse      *kesselv2.CheckBulkResponse
 	checkBulkError         error
 	lastCheckRequest       *kesselv2.CheckRequest
+	lastCheckBulkRequest   *kesselv2.CheckBulkRequest
 	lastUpdateRequest      *kesselv2.CheckForUpdateRequest
+	checkBulkCallCount     int
 	checkFunc              func(ctx context.Context, in *kesselv2.CheckRequest, opts ...grpc.CallOption) (*kesselv2.CheckResponse, error)
 	checkBulkFunc          func(ctx context.Context, in *kesselv2.CheckBulkRequest, opts ...grpc.CallOption) (*kesselv2.CheckBulkResponse, error)
 }
@@ -59,6 +61,8 @@ func (m *mockKesselInventoryService) CheckSelf(ctx context.Context, in *kesselv2
 }
 
 func (m *mockKesselInventoryService) CheckBulk(ctx context.Context, in *kesselv2.CheckBulkRequest, opts ...grpc.CallOption) (*kesselv2.CheckBulkResponse, error) {
+	m.lastCheckBulkRequest = in
+	m.checkBulkCallCount++
 	if m.checkBulkFunc != nil {
 		return m.checkBulkFunc(ctx, in, opts...)
 	}
@@ -541,8 +545,39 @@ func TestGetWorkspaceID_ClientNotInitialized(t *testing.T) {
 
 func TestCheckApplicationPermissions_Success(t *testing.T) {
 	mockService := &mockKesselInventoryService{
-		checkResponse: &kesselv2.CheckResponse{
-			Allowed: kesselv2.Allowed_ALLOWED_TRUE,
+		checkBulkResponse: &kesselv2.CheckBulkResponse{
+			Pairs: []*kesselv2.CheckBulkResponsePair{
+				{
+					Request: &kesselv2.CheckBulkRequestItem{
+						Relation: PermissionConfigManagerRunView,
+					},
+					Response: &kesselv2.CheckBulkResponsePair_Item{
+						Item: &kesselv2.CheckBulkResponseItem{
+							Allowed: kesselv2.Allowed_ALLOWED_TRUE,
+						},
+					},
+				},
+				{
+					Request: &kesselv2.CheckBulkRequestItem{
+						Relation: PermissionRemediationsRunView,
+					},
+					Response: &kesselv2.CheckBulkResponsePair_Item{
+						Item: &kesselv2.CheckBulkResponseItem{
+							Allowed: kesselv2.Allowed_ALLOWED_TRUE,
+						},
+					},
+				},
+				{
+					Request: &kesselv2.CheckBulkRequestItem{
+						Relation: PermissionTasksRunView,
+					},
+					Response: &kesselv2.CheckBulkResponsePair_Item{
+						Item: &kesselv2.CheckBulkResponseItem{
+							Allowed: kesselv2.Allowed_ALLOWED_TRUE,
+						},
+					},
+				},
+			},
 		},
 	}
 	cleanup := setupMockClient(mockService)
@@ -565,21 +600,58 @@ func TestCheckApplicationPermissions_Success(t *testing.T) {
 	assert.Contains(t, allowedApps, "config_manager")
 	assert.Contains(t, allowedApps, "remediations")
 	assert.Contains(t, allowedApps, "tasks")
+
+	// Verify bulk check behavior: single call with all permissions
+	assert.Equal(t, 1, mockService.checkBulkCallCount, "CheckBulk should be called exactly once")
+	assert.NotNil(t, mockService.lastCheckBulkRequest, "CheckBulk request should be captured")
+	assert.Len(t, mockService.lastCheckBulkRequest.Items, 3, "CheckBulk should include all 3 permissions in one request")
+
+	// Verify all expected permissions are present in the bulk request
+	permissions := make(map[string]bool)
+	for _, item := range mockService.lastCheckBulkRequest.Items {
+		permissions[item.Relation] = true
+	}
+	assert.True(t, permissions[PermissionConfigManagerRunView], "bulk request should include config_manager permission")
+	assert.True(t, permissions[PermissionRemediationsRunView], "bulk request should include remediations permission")
+	assert.True(t, permissions[PermissionTasksRunView], "bulk request should include tasks permission")
 }
 
 func TestCheckApplicationPermissions_PartialAccess(t *testing.T) {
-	callCount := 0
-	mockService := &mockKesselInventoryService{}
-
-	// Set up response generator that allows only remediations
-	mockService.checkFunc = func(ctx context.Context, in *kesselv2.CheckRequest, opts ...grpc.CallOption) (*kesselv2.CheckResponse, error) {
-		callCount++
-
-		// Only allow remediations
-		if in.Relation == PermissionRemediationsRunView {
-			return &kesselv2.CheckResponse{Allowed: kesselv2.Allowed_ALLOWED_TRUE}, nil
-		}
-		return &kesselv2.CheckResponse{Allowed: kesselv2.Allowed_ALLOWED_FALSE}, nil
+	mockService := &mockKesselInventoryService{
+		checkBulkResponse: &kesselv2.CheckBulkResponse{
+			Pairs: []*kesselv2.CheckBulkResponsePair{
+				{
+					Request: &kesselv2.CheckBulkRequestItem{
+						Relation: PermissionConfigManagerRunView,
+					},
+					Response: &kesselv2.CheckBulkResponsePair_Item{
+						Item: &kesselv2.CheckBulkResponseItem{
+							Allowed: kesselv2.Allowed_ALLOWED_FALSE,
+						},
+					},
+				},
+				{
+					Request: &kesselv2.CheckBulkRequestItem{
+						Relation: PermissionRemediationsRunView,
+					},
+					Response: &kesselv2.CheckBulkResponsePair_Item{
+						Item: &kesselv2.CheckBulkResponseItem{
+							Allowed: kesselv2.Allowed_ALLOWED_TRUE,
+						},
+					},
+				},
+				{
+					Request: &kesselv2.CheckBulkRequestItem{
+						Relation: PermissionTasksRunView,
+					},
+					Response: &kesselv2.CheckBulkResponsePair_Item{
+						Item: &kesselv2.CheckBulkResponseItem{
+							Allowed: kesselv2.Allowed_ALLOWED_FALSE,
+						},
+					},
+				},
+			},
+		},
 	}
 
 	cleanup := setupMockClient(mockService)
@@ -600,13 +672,43 @@ func TestCheckApplicationPermissions_PartialAccess(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Len(t, allowedApps, 1)
 	assert.Contains(t, allowedApps, "remediations")
-	assert.Equal(t, 3, callCount) // Should check all 3 applications
 }
 
 func TestCheckApplicationPermissions_NoAccess(t *testing.T) {
 	mockService := &mockKesselInventoryService{
-		checkResponse: &kesselv2.CheckResponse{
-			Allowed: kesselv2.Allowed_ALLOWED_FALSE,
+		checkBulkResponse: &kesselv2.CheckBulkResponse{
+			Pairs: []*kesselv2.CheckBulkResponsePair{
+				{
+					Request: &kesselv2.CheckBulkRequestItem{
+						Relation: PermissionConfigManagerRunView,
+					},
+					Response: &kesselv2.CheckBulkResponsePair_Item{
+						Item: &kesselv2.CheckBulkResponseItem{
+							Allowed: kesselv2.Allowed_ALLOWED_FALSE,
+						},
+					},
+				},
+				{
+					Request: &kesselv2.CheckBulkRequestItem{
+						Relation: PermissionRemediationsRunView,
+					},
+					Response: &kesselv2.CheckBulkResponsePair_Item{
+						Item: &kesselv2.CheckBulkResponseItem{
+							Allowed: kesselv2.Allowed_ALLOWED_FALSE,
+						},
+					},
+				},
+				{
+					Request: &kesselv2.CheckBulkRequestItem{
+						Relation: PermissionTasksRunView,
+					},
+					Response: &kesselv2.CheckBulkResponsePair_Item{
+						Item: &kesselv2.CheckBulkResponseItem{
+							Allowed: kesselv2.Allowed_ALLOWED_FALSE,
+						},
+					},
+				},
+			},
 		},
 	}
 	cleanup := setupMockClient(mockService)
@@ -629,8 +731,9 @@ func TestCheckApplicationPermissions_NoAccess(t *testing.T) {
 }
 
 func TestCheckApplicationPermissions_KesselError(t *testing.T) {
+	kesselErr := errors.New("kessel unavailable")
 	mockService := &mockKesselInventoryService{
-		checkError: errors.New("kessel unavailable"),
+		checkBulkError: kesselErr,
 	}
 	cleanup := setupMockClient(mockService)
 	defer cleanup()
@@ -649,8 +752,14 @@ func TestCheckApplicationPermissions_KesselError(t *testing.T) {
 
 	assert.Error(t, err)
 	assert.Nil(t, allowedApps)
-	assert.True(t, IsServiceUnavailableError(err), "error should be ErrServiceUnavailable")
-	assert.Contains(t, err.Error(), "structural failure")
+
+	// Verify error chain from checkPermissionsBulk wrapping
+	assert.ErrorIs(t, err, ErrServiceUnavailable, "error should be wrapped with ErrServiceUnavailable")
+	assert.ErrorIs(t, err, kesselErr, "underlying Kessel error should be preserved in error chain")
+
+	// Verify message context includes both wrapper layers
+	assert.Contains(t, err.Error(), "bulk permission check failed", "error should include CheckApplicationPermissions context")
+	assert.Contains(t, err.Error(), "kessel bulk check failed", "error should include checkPermissionsBulk context")
 }
 
 func TestCheckApplicationPermissions_ClientNotInitialized(t *testing.T) {
@@ -674,18 +783,21 @@ func TestCheckApplicationPermissions_ClientNotInitialized(t *testing.T) {
 }
 
 func TestCheckApplicationPermissions_WithServiceFilter(t *testing.T) {
-	callCount := 0
-	mockService := &mockKesselInventoryService{}
-
-	// Set up response generator that allows only remediations
-	mockService.checkFunc = func(ctx context.Context, in *kesselv2.CheckRequest, opts ...grpc.CallOption) (*kesselv2.CheckResponse, error) {
-		callCount++
-
-		// Only allow remediations
-		if in.Relation == PermissionRemediationsRunView {
-			return &kesselv2.CheckResponse{Allowed: kesselv2.Allowed_ALLOWED_TRUE}, nil
-		}
-		return &kesselv2.CheckResponse{Allowed: kesselv2.Allowed_ALLOWED_FALSE}, nil
+	mockService := &mockKesselInventoryService{
+		checkBulkResponse: &kesselv2.CheckBulkResponse{
+			Pairs: []*kesselv2.CheckBulkResponsePair{
+				{
+					Request: &kesselv2.CheckBulkRequestItem{
+						Relation: PermissionRemediationsRunView,
+					},
+					Response: &kesselv2.CheckBulkResponsePair_Item{
+						Item: &kesselv2.CheckBulkResponseItem{
+							Allowed: kesselv2.Allowed_ALLOWED_TRUE,
+						},
+					},
+				},
+			},
+		},
 	}
 
 	cleanup := setupMockClient(mockService)
@@ -710,16 +822,51 @@ func TestCheckApplicationPermissions_WithServiceFilter(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Len(t, allowedApps, 1)
 	assert.Contains(t, allowedApps, "remediations")
-	assert.Equal(t, 1, callCount) // Should only check 1 application, not all 3
+
+	// Verify service filter limited the bulk request
+	assert.Equal(t, 1, mockService.checkBulkCallCount, "CheckBulk should be called exactly once")
+	assert.NotNil(t, mockService.lastCheckBulkRequest, "CheckBulk request should be captured")
+	assert.Len(t, mockService.lastCheckBulkRequest.Items, 1, "Service filter should limit request to 1 permission")
+	assert.Equal(t, PermissionRemediationsRunView, mockService.lastCheckBulkRequest.Items[0].Relation,
+		"Request should only contain filtered service permission")
 }
 
 func TestCheckApplicationPermissions_WithInvalidServiceFilter(t *testing.T) {
-	callCount := 0
-	mockService := &mockKesselInventoryService{}
-
-	mockService.checkFunc = func(ctx context.Context, in *kesselv2.CheckRequest, opts ...grpc.CallOption) (*kesselv2.CheckResponse, error) {
-		callCount++
-		return &kesselv2.CheckResponse{Allowed: kesselv2.Allowed_ALLOWED_TRUE}, nil
+	mockService := &mockKesselInventoryService{
+		checkBulkResponse: &kesselv2.CheckBulkResponse{
+			Pairs: []*kesselv2.CheckBulkResponsePair{
+				{
+					Request: &kesselv2.CheckBulkRequestItem{
+						Relation: PermissionConfigManagerRunView,
+					},
+					Response: &kesselv2.CheckBulkResponsePair_Item{
+						Item: &kesselv2.CheckBulkResponseItem{
+							Allowed: kesselv2.Allowed_ALLOWED_TRUE,
+						},
+					},
+				},
+				{
+					Request: &kesselv2.CheckBulkRequestItem{
+						Relation: PermissionRemediationsRunView,
+					},
+					Response: &kesselv2.CheckBulkResponsePair_Item{
+						Item: &kesselv2.CheckBulkResponseItem{
+							Allowed: kesselv2.Allowed_ALLOWED_TRUE,
+						},
+					},
+				},
+				{
+					Request: &kesselv2.CheckBulkRequestItem{
+						Relation: PermissionTasksRunView,
+					},
+					Response: &kesselv2.CheckBulkResponsePair_Item{
+						Item: &kesselv2.CheckBulkResponseItem{
+							Allowed: kesselv2.Allowed_ALLOWED_TRUE,
+						},
+					},
+				},
+			},
+		},
 	}
 
 	cleanup := setupMockClient(mockService)
@@ -740,7 +887,20 @@ func TestCheckApplicationPermissions_WithInvalidServiceFilter(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Len(t, allowedApps, 3) // Should check all 3 applications
-	assert.Equal(t, 3, callCount)
+
+	// Verify invalid filter falls back to checking all services
+	assert.Equal(t, 1, mockService.checkBulkCallCount, "CheckBulk should be called exactly once")
+	assert.NotNil(t, mockService.lastCheckBulkRequest, "CheckBulk request should be captured")
+	assert.Len(t, mockService.lastCheckBulkRequest.Items, 3, "Invalid filter should fall back to checking all 3 permissions")
+
+	// Verify all three service permissions are present
+	permissions := make(map[string]bool)
+	for _, item := range mockService.lastCheckBulkRequest.Items {
+		permissions[item.Relation] = true
+	}
+	assert.True(t, permissions[PermissionConfigManagerRunView], "bulk request should include config_manager")
+	assert.True(t, permissions[PermissionRemediationsRunView], "bulk request should include remediations")
+	assert.True(t, permissions[PermissionTasksRunView], "bulk request should include tasks")
 }
 
 func TestBuildKesselReferences_Success(t *testing.T) {
@@ -1292,6 +1452,43 @@ func TestCheckPermissionsBulk_MissingItem(t *testing.T) {
 	assert.Contains(t, allowedApps, "remediations")
 	assert.Contains(t, allowedApps, "tasks")
 	assert.NotContains(t, allowedApps, "config_manager")
+}
+
+func TestCheckPermissionsBulk_NilResponse(t *testing.T) {
+	mockService := &mockKesselInventoryService{
+		checkBulkResponse: nil, // Nil response
+	}
+	cleanup := setupMockClient(mockService)
+	defer cleanup()
+
+	xrhid := identity.XRHID{
+		Identity: identity.Identity{
+			Type:  "User",
+			User:  &identity.User{UserID: "user-123"},
+			OrgID: "org-456",
+		},
+	}
+	log := zap.NewNop().Sugar()
+
+	object, subject, _ := buildKesselReferences("workspace-789", "redhat/user-123")
+	opts, _ := getAuthCallOptions()
+
+	allowedApps, err := checkPermissionsBulk(
+		context.Background(),
+		"workspace-789",
+		V2ApplicationPermissions,
+		log,
+		xrhid,
+		"redhat/user-123",
+		object,
+		subject,
+		opts,
+	)
+
+	// Nil response should return an error
+	assert.Error(t, err)
+	assert.Nil(t, allowedApps)
+	assert.Contains(t, err.Error(), "nil response")
 }
 
 // mockRbacClientWithWorkspace for testing workspace lookup
