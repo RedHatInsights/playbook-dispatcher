@@ -19,17 +19,9 @@ const (
 	// KesselTokenTimeoutFeatureFlag is the name of the Unleash feature flag for token timeout/retry
 	KesselTokenTimeoutFeatureFlag = "playbook-dispatcher-kessel-tokentimeout"
 
-	// KesselBulkCheckFeatureFlag controls whether to use CheckBulk API or individual Check calls
-	KesselBulkCheckFeatureFlag = "playbook-dispatcher-kessel-bulkcheck"
 	// KesselSingleServiceOptimizationFeatureFlag controls whether to query only the specified service
 	// instead of all three services when a service filter is present in the request
 	KesselSingleServiceOptimizationFeatureFlag = "playbook-dispatcher-kessel-single-service"
-
-	// KesselWorkspaceCacheFeatureFlag controls whether to use caching for RBAC workspace lookups
-	KesselWorkspaceCacheFeatureFlag = "playbook-dispatcher-kessel-workspace-cache"
-
-	// KesselApplicationCacheFeatureFlag controls whether to use caching for application permission checks
-	KesselApplicationCacheFeatureFlag = "playbook-dispatcher-kessel-application-cache"
 
 	// Variant names matching Unleash dashboard configuration
 	VariantRBACOnly           = "rbac-only"
@@ -295,42 +287,6 @@ func IsTokenTimeoutEnabled(ctx context.Context) bool {
 	// Check if feature is enabled with context
 	// Returns false by default if feature flag not found or Unleash not initialized
 	return unleash.IsEnabledWithContext(KesselTokenTimeoutFeatureFlag, unleashCtx)
-}
-
-// IsBulkCheckEnabled checks if the CheckBulk API feature is enabled
-// Returns false by default (uses loop of individual Check calls)
-// Returns true when enabled (uses single CheckBulk call)
-func IsBulkCheckEnabled(ctx context.Context) bool {
-	// Build Unleash context from request context for per-org targeting
-	unleashCtx := buildUnleashContext(ctx, nil)
-
-	// Check if feature is enabled with context
-	// Returns false by default if feature flag not found or Unleash not initialized
-	return unleash.IsEnabledWithContext(KesselBulkCheckFeatureFlag, unleashCtx)
-}
-
-// IsWorkspaceCacheEnabled checks if the workspace cache feature is enabled
-// Returns false by default (uses direct RBAC API calls)
-// Returns true when enabled (uses cached workspace lookups)
-func IsWorkspaceCacheEnabled(ctx context.Context) bool {
-	// Build Unleash context from request context for per-org targeting
-	unleashCtx := buildUnleashContext(ctx, nil)
-
-	// Check if feature is enabled with context
-	// Returns false by default if feature flag not found or Unleash not initialized
-	return unleash.IsEnabledWithContext(KesselWorkspaceCacheFeatureFlag, unleashCtx)
-}
-
-// IsApplicationCacheEnabled checks if the application cache feature is enabled
-// Returns false by default (uses direct CheckApplicationPermissions calls)
-// Returns true when enabled (uses cached application results)
-func IsApplicationCacheEnabled(ctx context.Context) bool {
-	// Build Unleash context from request context for per-org targeting
-	unleashCtx := buildUnleashContext(ctx, nil)
-
-	// Check if feature is enabled with context
-	// Returns false by default if feature flag not found or Unleash not initialized
-	return unleash.IsEnabledWithContext(KesselApplicationCacheFeatureFlag, unleashCtx)
 }
 
 // IsSingleServiceOptimizationEnabled checks if the single-service Kessel optimization is enabled

@@ -300,17 +300,17 @@ func getKesselAllowedServices(ctx echo.Context, log *zap.SugaredLogger) ([]strin
 	// Check permissions via Kessel (uses V2ApplicationPermissions map)
 	var allowedServices []string
 
-	if features.IsApplicationCacheEnabled(ctx.Request().Context()) {
+	if kessel.IsApplicationCacheEnabled() {
 		kesselCache := kessel.GetKesselClientWithCache()
 		if kesselCache != nil {
 			log.Debugw("Checking application permissions with cache", "workspace_id", workspaceID, "service_filter", serviceFilter)
 			allowedServices, err = kesselCache.CheckApplicationPermissionsWithCache(ctx.Request().Context(), workspaceID, serviceFilter, log)
 		} else {
-			// Cache client not initialized, fall back to non-cached
 			log.Debugw("Cache client not initialized, using non-cached permission check", "workspace_id", workspaceID, "service_filter", serviceFilter)
 			allowedServices, err = kessel.CheckApplicationPermissions(ctx.Request().Context(), workspaceID, serviceFilter, log)
 		}
 	} else {
+		log.Debugw("Application cache disabled, using non-cached permission check", "workspace_id", workspaceID, "service_filter", serviceFilter)
 		allowedServices, err = kessel.CheckApplicationPermissions(ctx.Request().Context(), workspaceID, serviceFilter, log)
 	}
 
