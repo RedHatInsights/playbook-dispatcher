@@ -24,6 +24,7 @@ import (
 	echoPrometheus "github.com/globocom/echo-prometheus"
 	"github.com/labstack/echo/v4"
 	echoMiddleware "github.com/labstack/echo/v4/middleware"
+	gommonLog "github.com/labstack/gommon/log"
 	oapiMiddleware "github.com/oapi-codegen/echo-middleware"
 	"github.com/redhatinsights/platform-go-middlewares/v2/identity"
 	"github.com/redhatinsights/platform-go-middlewares/v2/request_id"
@@ -69,7 +70,9 @@ func Start(
 		middleware.InternalRequestId,
 		middleware.ContextLogger,
 		middleware.RequestLogger,
-		echoMiddleware.Recover(),
+		echoMiddleware.RecoverWithConfig(echoMiddleware.RecoverConfig{
+			LogLevel: gommonLog.ERROR,
+		}),
 		echoMiddleware.BodyLimit(cfg.GetString("http.max.body.size")),
 	)
 
