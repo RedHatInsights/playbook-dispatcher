@@ -15,6 +15,7 @@ require (
 	github.com/golang-migrate/migrate/v4 v4.19.1
 	github.com/google/uuid v1.6.0
 	github.com/labstack/echo/v4 v4.15.4
+	github.com/labstack/gommon v0.5.0
 	github.com/lzap/cloudwatchwriter2 v1.6.0
 	github.com/oapi-codegen/echo-middleware v1.0.2
 	github.com/oapi-codegen/runtime v1.2.0
@@ -25,7 +26,7 @@ require (
 	github.com/project-kessel/inventory-client-go v0.0.0-20260306190649-906d3ba4a829
 	github.com/prometheus/client_golang v1.24.1
 	github.com/qri-io/jsonschema v0.2.1
-	github.com/redhatinsights/app-common-go v1.6.9
+	github.com/redhatinsights/app-common-go v1.7.0
 	github.com/redhatinsights/platform-go-middlewares/v2 v2.1.0
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/viper v1.21.0
@@ -71,7 +72,6 @@ require (
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
-	github.com/labstack/gommon v0.5.0 // indirect
 	github.com/launchdarkly/eventsource v1.11.0 // indirect
 	github.com/lib/pq v1.12.3 // indirect
 	github.com/mattn/go-colorable v0.1.15 // indirect
