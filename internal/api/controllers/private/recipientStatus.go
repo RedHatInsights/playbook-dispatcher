@@ -5,7 +5,7 @@ import (
 	"playbook-dispatcher/internal/api/connectors"
 	"playbook-dispatcher/internal/common/utils"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
 func (this *controllers) ApiInternalV2RecipientsStatus(ctx echo.Context) error {
