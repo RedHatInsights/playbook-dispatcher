@@ -18,12 +18,14 @@ import (
 	"github.com/redhatinsights/platform-go-middlewares/v2/identity"
 	"github.com/redhatinsights/platform-go-middlewares/v2/request_id"
 	"go.uber.org/zap"
+	"golang.org/x/sync/singleflight"
 )
 
 // KesselClientWithCache wraps the Kessel inventory client with application caching
 type KesselClientWithCache struct {
-	client           *v1beta2.InventoryClient
-	applicationCache *cache.Cache
+	client            *v1beta2.InventoryClient
+	applicationCache  *cache.Cache
+	applicationFlight singleflight.Group
 	// permissionCheckFunc allows injecting a custom permission check function for testing
 	// Defaults to CheckApplicationPermissions if nil
 	permissionCheckFunc func(ctx context.Context, workspaceID string, serviceFilter string, log *zap.SugaredLogger) ([]string, error)
@@ -111,19 +113,42 @@ func (r *rbacClientImpl) GetDefaultWorkspaceIDWithCache(ctx context.Context, org
 					"request_id", reqID,
 					"internal_request_id", utils.GetInternalRequestID(ctx),
 					"org_id", orgID,
-					"cache_key", cacheKey)
+					"cache_key", cacheKey,
+					"workspace_id", workspaceID)
 			}
 			return workspaceID, nil
 		}
 	}
 
-	// Cache miss - fetch from API
-	workspaceID, err := r.GetDefaultWorkspaceID(ctx, orgID)
+	// Cache miss - deduplicate concurrent API calls for the same key.
+	// Use context.WithoutCancel to prevent one caller's timeout from failing all deduplicated callers.
+	// Backend calls are still bounded by the RBAC client timeout configured at client construction.
+	result, err, shared := r.workspaceFlight.Do(cacheKey, func() (interface{}, error) {
+		callCtx := context.WithoutCancel(ctx)
+		return r.GetDefaultWorkspaceID(callCtx, orgID)
+	})
 	if err != nil {
 		return "", err
 	}
 
-	// Store in cache
+	workspaceID, ok := result.(string)
+	if !ok {
+		return "", fmt.Errorf("unexpected type from singleflight workspace lookup: %T", result)
+	}
+
+	// Log when request was deduped
+	if shared {
+		log := utils.GetLogFromContextIfAvailable(ctx)
+		if log != nil {
+			log.Debugw("Workspace lookup deduplicated via singleflight",
+				"request_id", reqID,
+				"internal_request_id", utils.GetInternalRequestID(ctx),
+				"org_id", orgID,
+				"cache_key", cacheKey,
+				"workspace_id", workspaceID)
+		}
+	}
+
 	r.workspaceCache.Set(cacheKey, workspaceID, cache.DefaultExpiration)
 
 	return workspaceID, nil
@@ -182,17 +207,39 @@ func (k *KesselClientWithCache) CheckApplicationPermissionsWithCache(ctx context
 		}
 	}
 
-	// Cache miss - check permissions via Kessel
-	checkFunc := k.permissionCheckFunc
-	if checkFunc == nil {
-		checkFunc = CheckApplicationPermissions
-	}
-	allowedApps, err := checkFunc(ctx, workspaceID, serviceFilter, log)
+	// Cache miss - deduplicate concurrent permission checks for the same key
+	// Use context.WithoutCancel to prevent one caller's timeout from failing all deduplicated callers.
+	result, err, shared := k.applicationFlight.Do(cacheKey, func() (interface{}, error) {
+		callCtx := context.WithoutCancel(ctx)
+		checkFunc := k.permissionCheckFunc
+		if checkFunc == nil {
+			checkFunc = CheckApplicationPermissions
+		}
+		return checkFunc(callCtx, workspaceID, serviceFilter, log)
+	})
 	if err != nil {
 		return nil, err
 	}
 
-	// Store in cache
+	allowedApps, ok := result.([]string)
+	if !ok {
+		return nil, fmt.Errorf("unexpected type from singleflight application permissions lookup: %T", result)
+	}
+
+	// Log when request was deduped
+	if shared {
+		log := utils.GetLogFromContextIfAvailable(ctx)
+		if log != nil {
+			log.Debugw("Application permissions lookup deduplicated via singleflight",
+				"request_id", reqID,
+				"internal_request_id", utils.GetInternalRequestID(ctx),
+				"org_id", orgID,
+				"workspace_id", workspaceID,
+				"service_filter", serviceFilter,
+				"cache_key", cacheKey)
+		}
+	}
+
 	k.applicationCache.Set(cacheKey, allowedApps, cache.DefaultExpiration)
 
 	return allowedApps, nil
