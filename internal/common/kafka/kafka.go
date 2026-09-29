@@ -91,13 +91,20 @@ func NewConsumer(ctx context.Context, config *viper.Viper, topic string) (*kafka
 func NewConsumerEventLoop(
 	ctx context.Context,
 	consumer *kafka.Consumer,
+	groupID string, // needed for the consumer_group metric label; Consumer does not expose it
 	messagePredicate KafkaMessagePredicate,
 	validationPredicate KafkaMessagePredicate,
 	handler func(context.Context, *kafka.Message),
 	errorsChan chan<- error,
 ) (start func()) {
 
+	const lagInterval = 30 * time.Second
+	const lagTimeoutMs = 1000 // keep watermark RPCs short so scrapes cannot stall the loop long
+
 	return func() {
+		log := utils.GetLogFromContext(ctx).Named("kafka")
+		var lastLagReport time.Time
+
 		for {
 			msg, err := consumer.ReadMessage(1 * time.Second) // TODO: configurable
 
@@ -105,6 +112,13 @@ func NewConsumerEventLoop(
 			case <-ctx.Done():
 				return
 			default:
+			}
+
+			// Same goroutine as ReadMessage (Consumer is not concurrency-safe).
+			// Wall-clock cadence so lag updates under both idle and busy load.
+			if time.Since(lastLagReport) >= lagInterval {
+				reportConsumerLag(log, consumer, groupID, lagTimeoutMs)
+				lastLagReport = time.Now()
 			}
 
 			if err != nil {
