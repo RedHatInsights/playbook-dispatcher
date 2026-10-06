@@ -17,7 +17,7 @@ require (
 	github.com/labstack/echo/v4 v4.15.4
 	github.com/labstack/gommon v0.5.0
 	github.com/lzap/cloudwatchwriter2 v1.6.0
-	github.com/oapi-codegen/echo-middleware v1.0.2
+	github.com/oapi-codegen/echo-middleware v1.1.0
 	github.com/oapi-codegen/runtime v1.2.0
 	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.44.0
