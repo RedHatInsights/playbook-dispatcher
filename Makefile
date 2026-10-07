@@ -16,7 +16,7 @@ PSK ?= secret
 all: init generate build test run-lint
 
 init:
-	go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@v2.6.0
+	go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@v2.7.1
 	go install github.com/atombender/go-jsonschema@v0.17.0
 	go install github.com/kulshekhar/fungen@latest
 
