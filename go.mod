@@ -91,7 +91,7 @@ require (
 	github.com/rogpeppe/go-internal v1.14.1 // indirect
 	github.com/sagikazarmark/locafero v0.12.0 // indirect
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.3 // indirect
-	github.com/speakeasy-api/jsonpath v0.6.0 // indirect
+	github.com/speakeasy-api/jsonpath v0.6.3 // indirect
 	github.com/speakeasy-api/openapi v1.19.2 // indirect
 	github.com/spf13/afero v1.15.0 // indirect
 	github.com/spf13/cast v1.10.0 // indirect
@@ -122,5 +122,8 @@ replace gopkg.in/oleiade/lane.v1 v1.0.0 => github.com/oleiade/lane v1.0.1
 
 // See https://github.com/oapi-codegen/runtime/issues/50
 replace github.com/chenzhuoyu/iasm v0.9.0 => github.com/cloudwego/iasm v0.2.0
+
+// See https://github.com/oapi-codegen/oapi-codegen/issues/2230
+replace github.com/speakeasy-api/jsonpath v0.6.3 => github.com/speakeasy-api/jsonpath v0.6.0
 
 tool github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen
