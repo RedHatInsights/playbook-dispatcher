@@ -208,7 +208,11 @@ func checkPermissionsBulk(
 
 	response, err := globalManager.client.KesselInventoryService.CheckBulk(ctx, request, opts...)
 	if err != nil {
-		return nil, fmt.Errorf("kessel bulk check failed: %w", err)
+		// NOTE: All gRPC errors are currently classified as ErrServiceUnavailable for consistency
+		// with the individual Check() path (see checkPermissionInternal). This could be improved
+		// by inspecting gRPC status codes to distinguish authentication, authorization, invalid
+		// input, and other non-retryable failures from genuine service unavailability.
+		return nil, fmt.Errorf("%w: kessel bulk check failed: %w", ErrServiceUnavailable, err)
 	}
 
 	// Validate response structure
@@ -395,15 +399,15 @@ func GetWorkspaceID(ctx context.Context, orgID string, log *zap.SugaredLogger) (
 		return "", errors.New("RBAC client not initialized")
 	}
 
-	log.Debugw("Looking up default workspace ID", "org_id", orgID)
-
 	var workspaceID string
 	var err error
 
-	if features.IsWorkspaceCacheEnabled(ctx) {
+	// Check if workspace caching is enabled
+	if IsWorkspaceCacheEnabled() {
 		log.Debugw("Looking up default workspace ID with cache", "org_id", orgID)
 		workspaceID, err = globalManager.rbacClient.GetDefaultWorkspaceIDWithCache(ctx, orgID)
 	} else {
+		log.Debugw("Looking up default workspace ID (cache disabled)", "org_id", orgID)
 		workspaceID, err = globalManager.rbacClient.GetDefaultWorkspaceID(ctx, orgID)
 	}
 
@@ -502,53 +506,20 @@ func CheckApplicationPermissions(ctx context.Context, workspaceID string, servic
 	log.Debugw("Services to check for authorization",
 		"services", servicesToCheck)
 
-	var allowedApps []string
-
-	// Check feature flag to decide between bulk or individual checks
-	if features.IsBulkCheckEnabled(ctx) {
-		// Use bulk check API (single network call for all permissions)
-		allowedApps, err = checkPermissionsBulk(
-			ctx,
-			workspaceID,
-			servicesToCheck,
-			log,
-			xrhid,
-			principalID,
-			object,
-			subject,
-			opts,
-		)
-		if err != nil {
-			return nil, fmt.Errorf("bulk permission check failed: %w", err)
-		}
-	} else {
-		// Use individual checks (loop through servicesToCheck)
-		allowedApps = make([]string, 0, len(servicesToCheck))
-
-		// Loop through each application and check its permission
-		// NOTE: We call checkPermissionInternal directly (instead of CheckPermission) to reuse
-		// the resolved identity, principal ID, and Kessel references across all permission checks.
-		// This avoids redundant identity extraction and reference building for each application,
-		// which is important when checking multiple permissions for the same user.
-		for appName, permission := range servicesToCheck {
-			allowed, err := checkPermissionInternal(ctx, workspaceID, permission, log, xrhid, principalID, object, subject, opts, false)
-			if err != nil {
-				// Any error from checkPermissionInternal indicates a structural failure
-				// (network error, auth issues) - return immediately
-				return nil, fmt.Errorf("structural failure checking permission for %s: %w", appName, err)
-			}
-
-			if allowed {
-				allowedApps = append(allowedApps, appName)
-				log.Debugw("User has access to application",
-					"app", appName,
-					"permission", permission)
-			} else {
-				log.Debugw("User does not have access to application",
-					"app", appName,
-					"permission", permission)
-			}
-		}
+	// Use bulk check API (single network call for all permissions)
+	allowedApps, err := checkPermissionsBulk(
+		ctx,
+		workspaceID,
+		servicesToCheck,
+		log,
+		xrhid,
+		principalID,
+		object,
+		subject,
+		opts,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("bulk permission check failed: %w", err)
 	}
 
 	log.Infow("Application permission check complete",
