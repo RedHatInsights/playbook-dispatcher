@@ -19,7 +19,7 @@ import (
 // Returns the XRHID and principal ID if validation succeeds
 func validateClientAndIdentity(ctx context.Context) (identity.XRHID, string, error) {
 	if globalManager == nil || globalManager.client == nil {
-		return identity.XRHID{}, "", errors.New("Kessel client not initialized")
+		return identity.XRHID{}, "", errors.New("kessel client not initialized")
 	}
 
 	// Extract identity from context using v2 middleware
