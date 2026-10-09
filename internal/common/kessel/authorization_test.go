@@ -93,7 +93,7 @@ func TestCheckPermission_ClientNotInitialized(t *testing.T) {
 
 	assert.Error(t, err)
 	assert.False(t, allowed)
-	assert.Contains(t, err.Error(), "Kessel client not initialized")
+	assert.Contains(t, err.Error(), "kessel client not initialized")
 }
 
 func TestCheckPermission_Success_Allowed(t *testing.T) {

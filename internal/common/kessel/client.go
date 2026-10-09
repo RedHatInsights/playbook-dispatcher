@@ -15,6 +15,7 @@ import (
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 // ClientManager holds all Kessel-related clients (replaces separate global variables)
@@ -66,15 +67,25 @@ func Initialize(ctx context.Context, cfg *viper.Viper, log *zap.SugaredLogger) e
 			return fmt.Errorf("kessel authentication requires client.id, client.secret, and oidc.issuer")
 		}
 
-		// Discover OIDC token endpoint
-		discovery, err := auth.FetchOIDCDiscovery(ctx, oidcIssuer, auth.FetchOIDCDiscoveryOptions{})
+		// Resolve the OIDC token endpoint.
+		// The config value (kessel.auth.oidc.issuer) may be either an issuer URL
+		// or a direct token endpoint URL (legacy Keycloak default). Handle both.
+		tokenEndpoint, err := resolveTokenEndpoint(ctx, oidcIssuer, log)
 		if err != nil {
-			return fmt.Errorf("failed to fetch OIDC discovery: %w", err)
+			return fmt.Errorf("failed to resolve OIDC token endpoint: %w", err)
 		}
 
-		creds := auth.NewOAuth2ClientCredentials(clientID, clientSecret, discovery.TokenEndpoint)
+		creds := auth.NewOAuth2ClientCredentials(clientID, clientSecret, tokenEndpoint)
 		tokenCreds = &creds
-		builder.OAuth2ClientAuthenticated(tokenCreds, nil)
+
+		// Apply TLS configuration: kessel.insecure must also work with auth enabled.
+		// Passing insecure.NewCredentials() as channelCredentials ensures the
+		// authenticated builder path respects the insecure setting.
+		if cfg.GetBool("kessel.insecure") {
+			builder.OAuth2ClientAuthenticated(tokenCreds, insecure.NewCredentials())
+		} else {
+			builder.OAuth2ClientAuthenticated(tokenCreds, nil)
+		}
 		log.Info("Kessel authentication enabled")
 	} else if cfg.GetBool("kessel.insecure") {
 		builder.Insecure()
@@ -179,6 +190,62 @@ func IsEnabled() bool {
 	return globalManager != nil && globalManager.client != nil
 }
 
+const (
+	// oidcDiscoveryTimeout is the deadline for each OIDC discovery attempt.
+	oidcDiscoveryTimeout = 30 * time.Second
+	// oidcDiscoveryRetries is the number of retry attempts for transient discovery failures.
+	oidcDiscoveryRetries = 3
+	// keycloakTokenSuffix is the standard Keycloak token endpoint path suffix.
+	keycloakTokenSuffix = "/protocol/openid-connect/token"
+)
+
+// resolveTokenEndpoint determines the OIDC token endpoint from the configured URL.
+// If the URL is already a token endpoint (contains the Keycloak token path suffix),
+// it is used directly. Otherwise, OIDC discovery is performed with timeout and retry.
+func resolveTokenEndpoint(ctx context.Context, configuredURL string, log *zap.SugaredLogger) (string, error) {
+	// If the configured URL is already a token endpoint, use it directly.
+	// This handles the legacy default where kessel.auth.oidc.issuer is set to
+	// the full token endpoint URL rather than the issuer URL.
+	if strings.Contains(configuredURL, keycloakTokenSuffix) {
+		log.Infow("Using configured URL directly as token endpoint (detected Keycloak token path)",
+			"token_endpoint", configuredURL)
+		return configuredURL, nil
+	}
+
+	// Perform OIDC discovery with timeout and retry for transient failures.
+	var lastErr error
+	for attempt := 0; attempt <= oidcDiscoveryRetries; attempt++ {
+		if attempt > 0 {
+			backoff := time.Duration(1<<uint(attempt-1)) * time.Second
+			log.Infow("Retrying OIDC discovery",
+				"attempt", attempt+1,
+				"backoff", backoff)
+			select {
+			case <-time.After(backoff):
+			case <-ctx.Done():
+				return "", fmt.Errorf("context canceled during OIDC discovery retry: %w", ctx.Err())
+			}
+		}
+
+		discoveryCtx, cancel := context.WithTimeout(ctx, oidcDiscoveryTimeout)
+		discovery, err := auth.FetchOIDCDiscovery(discoveryCtx, configuredURL, auth.FetchOIDCDiscoveryOptions{})
+		cancel()
+
+		if err == nil {
+			log.Infow("OIDC discovery successful",
+				"token_endpoint", discovery.TokenEndpoint)
+			return discovery.TokenEndpoint, nil
+		}
+
+		lastErr = err
+		log.Warnw("OIDC discovery attempt failed",
+			"attempt", attempt+1,
+			"error", err)
+	}
+
+	return "", fmt.Errorf("OIDC discovery failed after %d attempts: %w", oidcDiscoveryRetries+1, lastErr)
+}
+
 // Close cleans up the Kessel client resources
 // This should be called during application shutdown
 func Close() error {
@@ -186,13 +253,14 @@ func Close() error {
 		return nil
 	}
 
+	var closeErr error
 	if globalManager.conn != nil {
-		globalManager.conn.Close()
+		closeErr = globalManager.conn.Close()
 	}
 
 	globalManager = nil
 
-	return nil
+	return closeErr
 }
 
 // GetAuthMode returns the current Kessel authorization mode from configuration
