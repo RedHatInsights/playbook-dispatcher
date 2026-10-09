@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/project-kessel/inventory-client-go/common"
+	"github.com/project-kessel/kessel-sdk-go/kessel/auth"
 	"go.uber.org/zap"
 )
 
@@ -19,7 +19,6 @@ import (
 // This is the new behavior enabled by feature flag
 // Returns the access token or an error - caller is responsible for cancellation decisions
 func (r *rbacClientImpl) acquireTokenWithRetry(ctx context.Context, reqID, internalReqID string, workspaceAttempt int, log *zap.SugaredLogger) (string, error) {
-	var tokenResp *common.TokenResponse
 	var tokenErr error
 
 	// Retry token acquisition with shorter timeout per attempt
@@ -51,11 +50,11 @@ func (r *rbacClientImpl) acquireTokenWithRetry(ctx context.Context, reqID, inter
 
 		// Create context with timeout just for token request
 		tokenCtx, tokenCancel := context.WithTimeout(ctx, r.tokenTimeout)
-		tokenResp, tokenErr = r.tokenClient.GetTokenWithContext(tokenCtx)
+		tokenResp, err := r.tokenClient.GetToken(tokenCtx, auth.GetTokenOptions{})
 		tokenDuration := time.Since(tokenStart)
 		tokenCancel() // Clean up immediately
 
-		if tokenErr == nil {
+		if err == nil {
 			// Success!
 			if log != nil {
 				log.Debugw("OIDC token acquisition succeeded",
@@ -68,6 +67,8 @@ func (r *rbacClientImpl) acquireTokenWithRetry(ctx context.Context, reqID, inter
 			}
 			return tokenResp.AccessToken, nil
 		}
+
+		tokenErr = err
 
 		// Token acquisition failed - distinguish error types
 		// Check if parent context was canceled during token request

@@ -8,10 +8,9 @@ import (
 	"errors"
 	"fmt"
 
-	kesselv2 "github.com/project-kessel/inventory-api/api/kessel/inventory/v1beta2"
+	kesselv2 "github.com/project-kessel/kessel-sdk-go/kessel/inventory/v1beta2"
 	"github.com/redhatinsights/platform-go-middlewares/v2/identity"
 	"go.uber.org/zap"
-	"google.golang.org/grpc"
 
 	"playbook-dispatcher/internal/common/unleash/features"
 )
@@ -20,7 +19,7 @@ import (
 // Returns the XRHID and principal ID if validation succeeds
 func validateClientAndIdentity(ctx context.Context) (identity.XRHID, string, error) {
 	if globalManager == nil || globalManager.client == nil {
-		return identity.XRHID{}, "", errors.New("Kessel client not initialized")
+		return identity.XRHID{}, "", errors.New("kessel client not initialized")
 	}
 
 	// Extract identity from context using v2 middleware
@@ -70,23 +69,11 @@ func buildKesselReferences(workspaceID, principalID string) (*kesselv2.ResourceR
 	return object, subject, nil
 }
 
-// getAuthCallOptions returns gRPC call options with authentication token if auth is enabled
-func getAuthCallOptions() ([]grpc.CallOption, error) {
-	var opts []grpc.CallOption
-	// Check tokenClient to determine if auth is enabled; the client.GetTokenCallOption()
-	// method internally manages token retrieval and caching
-	if globalManager != nil && globalManager.tokenClient != nil {
-		tokenOpts, err := globalManager.client.GetTokenCallOption()
-		if err != nil {
-			return nil, fmt.Errorf("OIDC token acquisition failed: %w", err)
-		}
-		opts = tokenOpts
-	}
-	return opts, nil
-}
-
 // checkPermissionInternal is the shared internal helper for permission checks
 // This reduces duplication between CheckPermission and CheckPermissionForUpdate
+//
+// Note: With kessel-sdk-go, authentication tokens are injected automatically via
+// gRPC PerRPCCredentials, so no explicit call options are needed.
 func checkPermissionInternal(
 	ctx context.Context,
 	workspaceID string,
@@ -96,7 +83,6 @@ func checkPermissionInternal(
 	principalID string,
 	object *kesselv2.ResourceReference,
 	subject *kesselv2.SubjectReference,
-	opts []grpc.CallOption,
 	useCheckForUpdate bool,
 ) (bool, error) {
 	var allowed bool
@@ -121,7 +107,7 @@ func checkPermissionInternal(
 			"subject_reporter", subject.Resource.Reporter.Type,
 			"relation", permission)
 
-		response, err := globalManager.client.KesselInventoryService.CheckForUpdate(ctx, request, opts...)
+		response, err := globalManager.client.CheckForUpdate(ctx, request)
 		if err != nil {
 			return false, fmt.Errorf("%w: kessel check for update failed: %v", ErrServiceUnavailable, err)
 		}
@@ -152,7 +138,7 @@ func checkPermissionInternal(
 			"subject_reporter", subject.Resource.Reporter.Type,
 			"relation", permission)
 
-		response, err := globalManager.client.KesselInventoryService.Check(ctx, request, opts...)
+		response, err := globalManager.client.Check(ctx, request)
 		if err != nil {
 			return false, fmt.Errorf("%w: kessel check failed: %v", ErrServiceUnavailable, err)
 		}
@@ -179,7 +165,6 @@ func checkPermissionsBulk(
 	principalID string,
 	object *kesselv2.ResourceReference,
 	subject *kesselv2.SubjectReference,
-	opts []grpc.CallOption,
 ) ([]string, error) {
 	// Build bulk request items and create reverse lookup map (permission -> appName)
 	// INVARIANT: Each app must have a unique permission string in V2ApplicationPermissions.
@@ -206,7 +191,7 @@ func checkPermissionsBulk(
 		"org_id", xrhid.Identity.OrgID,
 		"num_checks", len(items))
 
-	response, err := globalManager.client.KesselInventoryService.CheckBulk(ctx, request, opts...)
+	response, err := globalManager.client.CheckBulk(ctx, request)
 	if err != nil {
 		return nil, fmt.Errorf("kessel bulk check failed: %w", err)
 	}
@@ -331,14 +316,8 @@ func CheckPermission(ctx context.Context, workspaceID string, permission string,
 		return false, err
 	}
 
-	// Get authentication options
-	opts, err := getAuthCallOptions()
-	if err != nil {
-		return false, err
-	}
-
 	// Use shared helper for the actual check
-	return checkPermissionInternal(ctx, workspaceID, permission, log, xrhid, principalID, object, subject, opts, false)
+	return checkPermissionInternal(ctx, workspaceID, permission, log, xrhid, principalID, object, subject, false)
 }
 
 // CheckPermissionForUpdate performs a Kessel authorization check using CheckForUpdate
@@ -358,14 +337,8 @@ func CheckPermissionForUpdate(ctx context.Context, workspaceID string, permissio
 		return false, err
 	}
 
-	// Get authentication options
-	opts, err := getAuthCallOptions()
-	if err != nil {
-		return false, err
-	}
-
 	// Use shared helper for the actual check
-	return checkPermissionInternal(ctx, workspaceID, permission, log, xrhid, principalID, object, subject, opts, true)
+	return checkPermissionInternal(ctx, workspaceID, permission, log, xrhid, principalID, object, subject, true)
 }
 
 // extractUserID extracts the user ID from the identity
@@ -473,12 +446,6 @@ func CheckApplicationPermissions(ctx context.Context, workspaceID string, servic
 		return nil, fmt.Errorf("failed to build Kessel references: %w", err)
 	}
 
-	// Get authentication options once (shared across all permission checks)
-	opts, err := getAuthCallOptions()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get auth options: %w", err)
-	}
-
 	// Determine which services to check based on the serviceFilter (single-service optimization)
 	var servicesToCheck map[string]string
 	if features.IsSingleServiceOptimizationEnabled(ctx) && serviceFilter != "" {
@@ -516,7 +483,6 @@ func CheckApplicationPermissions(ctx context.Context, workspaceID string, servic
 			principalID,
 			object,
 			subject,
-			opts,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("bulk permission check failed: %w", err)
@@ -531,7 +497,7 @@ func CheckApplicationPermissions(ctx context.Context, workspaceID string, servic
 		// This avoids redundant identity extraction and reference building for each application,
 		// which is important when checking multiple permissions for the same user.
 		for appName, permission := range servicesToCheck {
-			allowed, err := checkPermissionInternal(ctx, workspaceID, permission, log, xrhid, principalID, object, subject, opts, false)
+			allowed, err := checkPermissionInternal(ctx, workspaceID, permission, log, xrhid, principalID, object, subject, false)
 			if err != nil {
 				// Any error from checkPermissionInternal indicates a structural failure
 				// (network error, auth issues) - return immediately

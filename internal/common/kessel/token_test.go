@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/project-kessel/inventory-client-go/common"
+	"github.com/project-kessel/kessel-sdk-go/kessel/auth"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -18,28 +18,17 @@ type mockTokenClient struct {
 	mock.Mock
 }
 
-func (m *mockTokenClient) GetToken() (*common.TokenResponse, error) {
-	args := m.Called()
-	if resp := args.Get(0); resp != nil {
-		return resp.(*common.TokenResponse), args.Error(1)
-	}
-	return nil, args.Error(1)
-}
-
-func (m *mockTokenClient) GetTokenWithContext(ctx context.Context) (*common.TokenResponse, error) {
-	args := m.Called(ctx)
-	if resp := args.Get(0); resp != nil {
-		return resp.(*common.TokenResponse), args.Error(1)
-	}
-	return nil, args.Error(1)
+func (m *mockTokenClient) GetToken(ctx context.Context, options auth.GetTokenOptions) (auth.RefreshTokenResponse, error) {
+	args := m.Called(ctx, options)
+	return args.Get(0).(auth.RefreshTokenResponse), args.Error(1)
 }
 
 // TestAcquireTokenWithRetry_Success verifies successful token acquisition on first attempt
 func TestAcquireTokenWithRetry_Success(t *testing.T) {
 	mockToken := &mockTokenClient{}
-	expectedResp := &common.TokenResponse{AccessToken: "test-token-12345"}
+	expectedResp := auth.RefreshTokenResponse{AccessToken: "test-token-12345"}
 
-	mockToken.On("GetTokenWithContext", mock.Anything).
+	mockToken.On("GetToken", mock.Anything, mock.Anything).
 		Return(expectedResp, nil).Once()
 
 	client := &rbacClientImpl{
@@ -60,12 +49,12 @@ func TestAcquireTokenWithRetry_RetryOnce(t *testing.T) {
 	mockToken := &mockTokenClient{}
 
 	// First call fails with timeout
-	mockToken.On("GetTokenWithContext", mock.Anything).
-		Return(nil, context.DeadlineExceeded).Once()
+	mockToken.On("GetToken", mock.Anything, mock.Anything).
+		Return(auth.RefreshTokenResponse{}, context.DeadlineExceeded).Once()
 
 	// Second call succeeds
-	mockToken.On("GetTokenWithContext", mock.Anything).
-		Return(&common.TokenResponse{AccessToken: "retry-token"}, nil).Once()
+	mockToken.On("GetToken", mock.Anything, mock.Anything).
+		Return(auth.RefreshTokenResponse{AccessToken: "retry-token"}, nil).Once()
 
 	client := &rbacClientImpl{
 		tokenClient:     mockToken,
@@ -87,8 +76,8 @@ func TestAcquireTokenWithRetry_MaxRetriesExceeded(t *testing.T) {
 	mockToken := &mockTokenClient{}
 
 	// All attempts fail
-	mockToken.On("GetTokenWithContext", mock.Anything).
-		Return(nil, errors.New("TLS handshake timeout")).Times(3) // maxRetries=2 means 3 total attempts
+	mockToken.On("GetToken", mock.Anything, mock.Anything).
+		Return(auth.RefreshTokenResponse{}, errors.New("TLS handshake timeout")).Times(3) // maxRetries=2 means 3 total attempts
 
 	client := &rbacClientImpl{
 		tokenClient:     mockToken,
@@ -126,7 +115,7 @@ func TestAcquireTokenWithRetry_ContextCanceled(t *testing.T) {
 	assert.Error(t, err)
 	assert.Equal(t, context.Canceled, err, "Should return raw context.Canceled error")
 	assert.Empty(t, token)
-	mockToken.AssertNotCalled(t, "GetTokenWithContext") // Verify no attempt was made
+	mockToken.AssertNotCalled(t, "GetToken") // Verify no attempt was made
 }
 
 // TestAcquireTokenWithRetry_TimeoutEnforced verifies per-attempt timeout is enforced
@@ -134,8 +123,8 @@ func TestAcquireTokenWithRetry_TimeoutEnforced(t *testing.T) {
 	mockToken := &mockTokenClient{}
 
 	// Simulate slow token service that respects context
-	mockToken.On("GetTokenWithContext", mock.Anything).
-		Return(nil, context.DeadlineExceeded).Once()
+	mockToken.On("GetToken", mock.Anything, mock.Anything).
+		Return(auth.RefreshTokenResponse{}, context.DeadlineExceeded).Once()
 
 	client := &rbacClientImpl{
 		tokenClient:     mockToken,

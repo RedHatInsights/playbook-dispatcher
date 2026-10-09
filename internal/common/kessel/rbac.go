@@ -16,7 +16,7 @@ import (
 	"playbook-dispatcher/internal/common/utils"
 
 	"github.com/patrickmn/go-cache"
-	"github.com/project-kessel/inventory-client-go/common"
+	"github.com/project-kessel/kessel-sdk-go/kessel/auth"
 	"github.com/redhatinsights/platform-go-middlewares/v2/request_id"
 	"go.uber.org/zap"
 	"golang.org/x/sync/singleflight"
@@ -63,12 +63,11 @@ type RbacClient interface {
 	GetDefaultWorkspaceIDWithCache(ctx context.Context, orgID string) (string, error)
 }
 
-// TokenClient interface wraps the Kessel token client for testability
+// TokenClient interface wraps the Kessel token client for testability.
+// Matches the signature of (*auth.OAuth2ClientCredentials).GetToken.
 type TokenClient interface {
-	// GetToken acquires an OIDC token without context (legacy behavior)
-	GetToken() (*common.TokenResponse, error)
-	// GetTokenWithContext acquires an OIDC token with context support for timeout/cancellation
-	GetTokenWithContext(ctx context.Context) (*common.TokenResponse, error)
+	// GetToken acquires an OIDC token with context support for timeout/cancellation
+	GetToken(ctx context.Context, options auth.GetTokenOptions) (auth.RefreshTokenResponse, error)
 }
 
 // rbacClientImpl implements RbacClient using the RBAC HTTP API
@@ -299,7 +298,7 @@ func (r *rbacClientImpl) doRequestWithRetry(ctx context.Context, req *http.Reque
 						"token_timeout_enabled", false)
 				}
 
-				tokenResp, tokenErr := r.tokenClient.GetToken()
+				tokenResp, tokenErr := r.tokenClient.GetToken(ctx, auth.GetTokenOptions{})
 				tokenDuration := time.Since(tokenStart)
 
 				if tokenErr != nil {
@@ -367,7 +366,7 @@ func (r *rbacClientImpl) doRequestWithRetry(ctx context.Context, req *http.Reque
 		if err == nil && resp.StatusCode >= 200 && resp.StatusCode < 300 {
 			// Read body while context is still alive
 			body, readErr := io.ReadAll(resp.Body)
-			resp.Body.Close()
+			_ = resp.Body.Close()
 			cancel() // Clean up context immediately after body is consumed
 
 			if readErr != nil {
@@ -385,7 +384,7 @@ func (r *rbacClientImpl) doRequestWithRetry(ctx context.Context, req *http.Reque
 		} else {
 			lastErr = fmt.Errorf("HTTP %d: %s", resp.StatusCode, resp.Status)
 			statusCode = resp.StatusCode
-			resp.Body.Close()
+			_ = resp.Body.Close()
 		}
 
 		// Check if we should retry

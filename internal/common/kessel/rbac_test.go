@@ -37,7 +37,7 @@ func TestGetDefaultWorkspaceID_Success(t *testing.T) {
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		fmt.Fprint(w, `{"data":[{"id":"workspace-123"}]}`)
+		_, _ = fmt.Fprint(w, `{"data":[{"id":"workspace-123"}]}`)
 	}))
 	defer server.Close()
 
@@ -53,7 +53,7 @@ func TestGetDefaultWorkspaceID_NoWorkspaceFound(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		fmt.Fprint(w, `{"data":[]}`)
+		_, _ = fmt.Fprint(w, `{"data":[]}`)
 	}))
 	defer server.Close()
 
@@ -70,7 +70,7 @@ func TestGetDefaultWorkspaceID_InvalidJSON(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		fmt.Fprint(w, `invalid json`)
+		_, _ = fmt.Fprint(w, `invalid json`)
 	}))
 	defer server.Close()
 
@@ -180,7 +180,7 @@ func TestGetDefaultWorkspaceID_RetryOn503(t *testing.T) {
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		fmt.Fprint(w, `{"data":[{"id":"workspace-456"}]}`)
+		_, _ = fmt.Fprint(w, `{"data":[{"id":"workspace-456"}]}`)
 	}))
 	defer server.Close()
 
@@ -234,7 +234,7 @@ func TestGetDefaultWorkspaceID_ContextTimeout(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		time.Sleep(100 * time.Millisecond)
 		w.WriteHeader(http.StatusOK)
-		fmt.Fprint(w, `{"data":[{"id":"workspace-789"}]}`)
+		_, _ = fmt.Fprint(w, `{"data":[{"id":"workspace-789"}]}`)
 	}))
 	defer server.Close()
 

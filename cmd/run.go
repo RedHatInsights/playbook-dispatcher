@@ -80,12 +80,16 @@ func run(cmd *cobra.Command, args []string) error {
 
 	// Initialize Kessel client (non-fatal if it fails)
 	// only two endpoints rely on kessel, so not implementing a panic here
-	if err := kessel.Initialize(cfg, log); err != nil {
+	if err := kessel.Initialize(context.Background(), cfg, log); err != nil {
 		// Log warning but continue - application will use RBAC-only mode
 		log.Warnw("Failed to initialize Kessel client, will use RBAC-only authorization mode",
 			"error", err)
 	}
-	defer kessel.Close()
+	defer func() {
+		if err := kessel.Close(); err != nil {
+			log.Warnw("Failed to close Kessel client", "error", err)
+		}
+	}()
 
 	metricsServer := echo.New()
 	metricsServer.HideBanner = true
