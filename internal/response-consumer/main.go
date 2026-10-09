@@ -53,7 +53,9 @@ func Start(
 	headerPredicate := kafka.FilterByHeaderPredicate(utils.GetLogFromContext(ctx), requestTypeHeader, runnerMessageHeaderValue, satMessageHeaderValue)
 	validationPredicate := kafka.SchemaValidationPredicate(ctx, requestTypeHeader, schemaMapper)
 
-	start := kafka.NewConsumerEventLoop(ctx, consumer, headerPredicate, validationPredicate, handler.onMessage, errors)
+	// Pass group.id explicitly: Consumer does not expose it after construction.
+	// Default is "playbook-dispatcher" (shared with validator; different topics).
+	start := kafka.NewConsumerEventLoop(ctx, consumer, cfg.GetString("kafka.group.id"), headerPredicate, validationPredicate, handler.onMessage, errors)
 
 	go func() {
 		defer wg.Done()

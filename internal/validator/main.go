@@ -53,7 +53,9 @@ func Start(
 
 	predicate := kafka.FilterByHeaderPredicate(utils.GetLogFromContext(ctx), payloadTypeHeader, playbookPayloadHeaderValue, playbookSatPayloadHeaderValue)
 
-	start := kafka.NewConsumerEventLoop(ctx, consumer, predicate, nil, handler.onMessage, errors)
+	// Pass group.id explicitly: Consumer does not expose it after construction.
+	// Default is "playbook-dispatcher" (shared with response-consumer; different topics).
+	start := kafka.NewConsumerEventLoop(ctx, consumer, cfg.GetString("kafka.group.id"), predicate, nil, handler.onMessage, errors)
 
 	go func() {
 		defer wg.Done()
