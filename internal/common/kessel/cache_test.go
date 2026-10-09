@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"github.com/patrickmn/go-cache"
-	kesselv2 "github.com/project-kessel/inventory-api/api/kessel/inventory/v1beta2"
+	kesselv2 "github.com/project-kessel/kessel-sdk-go/kessel/inventory/v1beta2"
 	"github.com/redhatinsights/platform-go-middlewares/v2/identity"
 	"github.com/redhatinsights/platform-go-middlewares/v2/request_id"
 	"github.com/stretchr/testify/assert"
