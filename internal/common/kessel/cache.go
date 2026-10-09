@@ -14,7 +14,7 @@ import (
 	"playbook-dispatcher/internal/common/utils"
 
 	"github.com/patrickmn/go-cache"
-	v1beta2 "github.com/project-kessel/inventory-client-go/v1beta2"
+	kesselv2 "github.com/project-kessel/kessel-sdk-go/kessel/inventory/v1beta2"
 	"github.com/redhatinsights/platform-go-middlewares/v2/identity"
 	"github.com/redhatinsights/platform-go-middlewares/v2/request_id"
 	"go.uber.org/zap"
@@ -23,7 +23,7 @@ import (
 
 // KesselClientWithCache wraps the Kessel inventory client with application caching
 type KesselClientWithCache struct {
-	client            *v1beta2.InventoryClient
+	client            kesselv2.KesselInventoryServiceClient
 	applicationCache  *cache.Cache
 	applicationFlight singleflight.Group
 	// permissionCheckFunc allows injecting a custom permission check function for testing
@@ -32,7 +32,7 @@ type KesselClientWithCache struct {
 }
 
 // NewKesselClientWithCache creates a new Kessel client wrapper with caching
-func NewKesselClientWithCache(client *v1beta2.InventoryClient) *KesselClientWithCache {
+func NewKesselClientWithCache(client kesselv2.KesselInventoryServiceClient) *KesselClientWithCache {
 	return &KesselClientWithCache{
 		client:              client,
 		applicationCache:    cache.New(1*time.Minute, 30*time.Second),
