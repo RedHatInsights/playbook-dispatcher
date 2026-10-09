@@ -13,58 +13,11 @@ import (
 	"time"
 
 	"github.com/patrickmn/go-cache"
-	kesselv2 "github.com/project-kessel/kessel-sdk-go/kessel/inventory/v1beta2"
 	"github.com/redhatinsights/platform-go-middlewares/v2/identity"
 	"github.com/redhatinsights/platform-go-middlewares/v2/request_id"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
-	"google.golang.org/grpc"
 )
-
-// mockKesselInventoryServiceForCache is a simple mock for cache tests
-type mockKesselInventoryServiceForCache struct {
-	allowed kesselv2.Allowed
-}
-
-func (m *mockKesselInventoryServiceForCache) Check(ctx context.Context, in *kesselv2.CheckRequest, opts ...grpc.CallOption) (*kesselv2.CheckResponse, error) {
-	return &kesselv2.CheckResponse{Allowed: m.allowed}, nil
-}
-
-func (m *mockKesselInventoryServiceForCache) CheckForUpdate(ctx context.Context, in *kesselv2.CheckForUpdateRequest, opts ...grpc.CallOption) (*kesselv2.CheckForUpdateResponse, error) {
-	return &kesselv2.CheckForUpdateResponse{Allowed: m.allowed}, nil
-}
-
-func (m *mockKesselInventoryServiceForCache) ReportResource(ctx context.Context, in *kesselv2.ReportResourceRequest, opts ...grpc.CallOption) (*kesselv2.ReportResourceResponse, error) {
-	return nil, nil
-}
-
-func (m *mockKesselInventoryServiceForCache) DeleteResource(ctx context.Context, in *kesselv2.DeleteResourceRequest, opts ...grpc.CallOption) (*kesselv2.DeleteResourceResponse, error) {
-	return nil, nil
-}
-
-func (m *mockKesselInventoryServiceForCache) StreamedListObjects(ctx context.Context, in *kesselv2.StreamedListObjectsRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[kesselv2.StreamedListObjectsResponse], error) {
-	return nil, nil
-}
-
-func (m *mockKesselInventoryServiceForCache) CheckBulk(ctx context.Context, in *kesselv2.CheckBulkRequest, opts ...grpc.CallOption) (*kesselv2.CheckBulkResponse, error) {
-	return nil, errors.New("CheckBulk not implemented in cache test mock")
-}
-
-func (m *mockKesselInventoryServiceForCache) CheckForUpdateBulk(ctx context.Context, in *kesselv2.CheckForUpdateBulkRequest, opts ...grpc.CallOption) (*kesselv2.CheckForUpdateBulkResponse, error) {
-	return nil, errors.New("CheckForUpdateBulk not implemented in cache test mock")
-}
-
-func (m *mockKesselInventoryServiceForCache) CheckSelf(ctx context.Context, in *kesselv2.CheckSelfRequest, opts ...grpc.CallOption) (*kesselv2.CheckSelfResponse, error) {
-	return nil, errors.New("CheckSelf not implemented in cache test mock")
-}
-
-func (m *mockKesselInventoryServiceForCache) CheckSelfBulk(ctx context.Context, in *kesselv2.CheckSelfBulkRequest, opts ...grpc.CallOption) (*kesselv2.CheckSelfBulkResponse, error) {
-	return nil, errors.New("CheckSelfBulk not implemented in cache test mock")
-}
-
-func (m *mockKesselInventoryServiceForCache) StreamedListSubjects(ctx context.Context, in *kesselv2.StreamedListSubjectsRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[kesselv2.StreamedListSubjectsResponse], error) {
-	return nil, errors.New("StreamedListSubjects not implemented in cache test mock")
-}
 
 func TestGetUserIDFromContext_User(t *testing.T) {
 	ctx := context.Background()

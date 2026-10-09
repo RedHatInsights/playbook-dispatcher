@@ -3,6 +3,7 @@ package kessel
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/project-kessel/kessel-sdk-go/kessel/auth"
 	kesselv2 "github.com/project-kessel/kessel-sdk-go/kessel/inventory/v1beta2"
@@ -284,4 +285,42 @@ func TestInitialize_RbacURLConstruction_HostWithPort(t *testing.T) {
 
 	err = Close()
 	assert.NoError(t, err)
+}
+
+func TestResolveTokenEndpoint_DirectTokenURL(t *testing.T) {
+	log := zap.NewNop().Sugar()
+
+	// Keycloak token endpoint URL should be used directly without discovery
+	tokenURL := "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token"
+	result, err := resolveTokenEndpoint(context.Background(), tokenURL, log)
+
+	assert.NoError(t, err)
+	assert.Equal(t, tokenURL, result, "Token endpoint URL should be returned directly")
+}
+
+func TestResolveTokenEndpoint_DiscoveryFailure(t *testing.T) {
+	log := zap.NewNop().Sugar()
+
+	// Non-token URL triggers discovery, which will fail against a non-existent server.
+	// Use a short timeout to avoid waiting through all retry attempts.
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	_, err := resolveTokenEndpoint(ctx, "https://localhost:0/invalid-issuer", log)
+
+	assert.Error(t, err)
+	// May fail with discovery error or context deadline — both are valid
+	assert.True(t, err != nil, "Should return an error when discovery fails")
+}
+
+func TestResolveTokenEndpoint_ContextCanceled(t *testing.T) {
+	log := zap.NewNop().Sugar()
+
+	// Already-canceled context should fail fast
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	_, err := resolveTokenEndpoint(ctx, "https://sso.example.com/auth/realms/test", log)
+
+	assert.Error(t, err)
 }

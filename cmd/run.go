@@ -85,7 +85,11 @@ func run(cmd *cobra.Command, args []string) error {
 		log.Warnw("Failed to initialize Kessel client, will use RBAC-only authorization mode",
 			"error", err)
 	}
-	defer kessel.Close()
+	defer func() {
+		if err := kessel.Close(); err != nil {
+			log.Warnw("Failed to close Kessel client", "error", err)
+		}
+	}()
 
 	metricsServer := echo.New()
 	metricsServer.HideBanner = true
