@@ -4,7 +4,7 @@ import (
 	"playbook-dispatcher/internal/common/config"
 	"playbook-dispatcher/internal/common/utils/test"
 
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
 
