@@ -366,7 +366,7 @@ func (r *rbacClientImpl) doRequestWithRetry(ctx context.Context, req *http.Reque
 		if err == nil && resp.StatusCode >= 200 && resp.StatusCode < 300 {
 			// Read body while context is still alive
 			body, readErr := io.ReadAll(resp.Body)
-			resp.Body.Close()
+			_ = resp.Body.Close()
 			cancel() // Clean up context immediately after body is consumed
 
 			if readErr != nil {
@@ -384,7 +384,7 @@ func (r *rbacClientImpl) doRequestWithRetry(ctx context.Context, req *http.Reque
 		} else {
 			lastErr = fmt.Errorf("HTTP %d: %s", resp.StatusCode, resp.Status)
 			statusCode = resp.StatusCode
-			resp.Body.Close()
+			_ = resp.Body.Close()
 		}
 
 		// Check if we should retry
