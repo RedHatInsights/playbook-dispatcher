@@ -4,11 +4,12 @@ import (
 	"context"
 	"testing"
 
-	"github.com/project-kessel/inventory-client-go/common"
-	v1beta2 "github.com/project-kessel/inventory-client-go/v1beta2"
+	"github.com/project-kessel/kessel-sdk-go/kessel/auth"
+	kesselv2 "github.com/project-kessel/kessel-sdk-go/kessel/inventory/v1beta2"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
+	"google.golang.org/grpc"
 )
 
 func TestInitialize_Disabled(t *testing.T) {
@@ -16,7 +17,7 @@ func TestInitialize_Disabled(t *testing.T) {
 	cfg.Set("kessel.enabled", false)
 	log := zap.NewNop().Sugar()
 
-	err := Initialize(cfg, log)
+	err := Initialize(context.Background(), cfg, log)
 
 	assert.NoError(t, err)
 	assert.Nil(t, globalManager)
@@ -29,7 +30,7 @@ func TestInitialize_MissingURL(t *testing.T) {
 	cfg.Set("kessel.url", "")
 	log := zap.NewNop().Sugar()
 
-	err := Initialize(cfg, log)
+	err := Initialize(context.Background(), cfg, log)
 
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "kessel.url is required")
@@ -43,7 +44,7 @@ func TestInitialize_MissingAuthCredentials(t *testing.T) {
 	cfg.Set("kessel.auth.client.id", "")
 	log := zap.NewNop().Sugar()
 
-	err := Initialize(cfg, log)
+	err := Initialize(context.Background(), cfg, log)
 
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "client.id")
@@ -57,12 +58,12 @@ func TestGetClient_NotInitialized(t *testing.T) {
 	assert.Nil(t, client)
 }
 
-func TestGetTokenClient_NotInitialized(t *testing.T) {
+func TestGetTokenCreds_NotInitialized(t *testing.T) {
 	globalManager = nil
 
-	tokenClient := GetTokenClient()
+	tokenCreds := GetTokenCreds()
 
-	assert.Nil(t, tokenClient)
+	assert.Nil(t, tokenCreds)
 }
 
 func TestGetRbacClient_NotInitialized(t *testing.T) {
@@ -86,18 +87,17 @@ func TestSetClientForTesting(t *testing.T) {
 	originalManager := globalManager
 	defer func() { globalManager = originalManager }()
 
-	// Create mock client
-	mockClient := &v1beta2.InventoryClient{}
-	mockTokenClient := &common.TokenClient{}
-	mockRbacClient := &mockRbacClient{}
+	// Create mock client — the mock implements KesselInventoryServiceClient
+	mockClient := &mockKesselInventoryServiceMinimal{}
+	mockRbac := &mockRbacClient{}
 
 	// Use test helper
-	cleanup := SetClientForTesting(mockClient, mockTokenClient, mockRbacClient)
+	cleanup := SetClientForTesting(mockClient, nil, mockRbac)
 
 	// Verify clients are set
-	assert.Equal(t, mockClient, GetClient())
-	assert.Equal(t, mockTokenClient, GetTokenClient())
-	assert.Equal(t, mockRbacClient, GetRbacClient())
+	assert.Equal(t, kesselv2.KesselInventoryServiceClient(mockClient), GetClient())
+	assert.Nil(t, GetTokenCreds())
+	assert.Equal(t, RbacClient(mockRbac), GetRbacClient())
 	assert.True(t, IsEnabled())
 
 	// Call cleanup
@@ -179,9 +179,9 @@ func TestClose_NotInitialized(t *testing.T) {
 func TestClose_Initialized(t *testing.T) {
 	// Set up a mock manager
 	globalManager = &ClientManager{
-		client:      &v1beta2.InventoryClient{},
-		tokenClient: &common.TokenClient{},
-		rbacClient:  &mockRbacClient{},
+		client:     &mockKesselInventoryServiceMinimal{},
+		tokenCreds: nil,
+		rbacClient: &mockRbacClient{},
 	}
 
 	err := Close()
@@ -201,6 +201,44 @@ func (m *mockRbacClient) GetDefaultWorkspaceIDWithCache(ctx context.Context, org
 	return "mock-workspace-id", nil
 }
 
+// mockKesselInventoryServiceMinimal implements the minimum interface for client_test.go
+type mockKesselInventoryServiceMinimal struct{}
+
+func (m *mockKesselInventoryServiceMinimal) Check(ctx context.Context, in *kesselv2.CheckRequest, opts ...grpc.CallOption) (*kesselv2.CheckResponse, error) {
+	return nil, nil
+}
+func (m *mockKesselInventoryServiceMinimal) CheckSelf(ctx context.Context, in *kesselv2.CheckSelfRequest, opts ...grpc.CallOption) (*kesselv2.CheckSelfResponse, error) {
+	return nil, nil
+}
+func (m *mockKesselInventoryServiceMinimal) CheckForUpdate(ctx context.Context, in *kesselv2.CheckForUpdateRequest, opts ...grpc.CallOption) (*kesselv2.CheckForUpdateResponse, error) {
+	return nil, nil
+}
+func (m *mockKesselInventoryServiceMinimal) CheckForUpdateBulk(ctx context.Context, in *kesselv2.CheckForUpdateBulkRequest, opts ...grpc.CallOption) (*kesselv2.CheckForUpdateBulkResponse, error) {
+	return nil, nil
+}
+func (m *mockKesselInventoryServiceMinimal) CheckBulk(ctx context.Context, in *kesselv2.CheckBulkRequest, opts ...grpc.CallOption) (*kesselv2.CheckBulkResponse, error) {
+	return nil, nil
+}
+func (m *mockKesselInventoryServiceMinimal) CheckSelfBulk(ctx context.Context, in *kesselv2.CheckSelfBulkRequest, opts ...grpc.CallOption) (*kesselv2.CheckSelfBulkResponse, error) {
+	return nil, nil
+}
+func (m *mockKesselInventoryServiceMinimal) ReportResource(ctx context.Context, in *kesselv2.ReportResourceRequest, opts ...grpc.CallOption) (*kesselv2.ReportResourceResponse, error) {
+	return nil, nil
+}
+func (m *mockKesselInventoryServiceMinimal) DeleteResource(ctx context.Context, in *kesselv2.DeleteResourceRequest, opts ...grpc.CallOption) (*kesselv2.DeleteResourceResponse, error) {
+	return nil, nil
+}
+func (m *mockKesselInventoryServiceMinimal) StreamedListObjects(ctx context.Context, in *kesselv2.StreamedListObjectsRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[kesselv2.StreamedListObjectsResponse], error) {
+	return nil, nil
+}
+func (m *mockKesselInventoryServiceMinimal) StreamedListSubjects(ctx context.Context, in *kesselv2.StreamedListSubjectsRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[kesselv2.StreamedListSubjectsResponse], error) {
+	return nil, nil
+}
+
+// Verify mockKesselInventoryServiceMinimal implements the interface
+var _ kesselv2.KesselInventoryServiceClient = (*mockKesselInventoryServiceMinimal)(nil)
+var _ auth.OAuth2ClientCredentials // ensure import is used
+
 func TestInitialize_RbacURLConstruction_HostWithoutPort(t *testing.T) {
 	cfg := viper.New()
 	cfg.Set("kessel.enabled", true)
@@ -213,7 +251,7 @@ func TestInitialize_RbacURLConstruction_HostWithoutPort(t *testing.T) {
 
 	log := zap.NewNop().Sugar()
 
-	err := Initialize(cfg, log)
+	err := Initialize(context.Background(), cfg, log)
 	assert.NoError(t, err)
 
 	// Verify the rbacClient was created with correct URL (scheme://host:port)
@@ -237,7 +275,7 @@ func TestInitialize_RbacURLConstruction_HostWithPort(t *testing.T) {
 
 	log := zap.NewNop().Sugar()
 
-	err := Initialize(cfg, log)
+	err := Initialize(context.Background(), cfg, log)
 	assert.NoError(t, err)
 
 	// Verify the rbacClient was created (URL should be http://localhost:8080, not http://localhost:8080:9999)
