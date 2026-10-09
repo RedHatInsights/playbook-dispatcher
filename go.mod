@@ -57,7 +57,7 @@ require (
 	github.com/dprotaso/go-yit v0.0.0-20260623150633-6f1ed93922d1 // indirect
 	github.com/fsnotify/fsnotify v1.10.1 // indirect
 	github.com/go-kratos/aegis v0.2.0 // indirect
-	github.com/go-kratos/kratos/v2 v2.9.2 // indirect
+	github.com/go-kratos/kratos/v3 v3.0.0 // indirect
 	github.com/go-openapi/jsonpointer v1.0.2 // indirect
 	github.com/go-playground/form/v4 v4.5.0 // indirect
 	github.com/go-viper/mapstructure/v2 v2.5.0 // indirect
