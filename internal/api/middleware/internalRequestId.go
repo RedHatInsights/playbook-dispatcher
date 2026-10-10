@@ -5,7 +5,7 @@ import (
 	"playbook-dispatcher/internal/common/constants"
 
 	"github.com/google/uuid"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
 // InternalRequestId generates a unique server-side request ID for each request

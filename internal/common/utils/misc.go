@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"github.com/ghodss/yaml"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/qri-io/jsonschema"
 	"github.com/redhatinsights/platform-go-middlewares/v2/request_id"
 	"github.com/spf13/viper"
