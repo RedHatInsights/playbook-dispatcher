@@ -8,7 +8,7 @@ require (
 	github.com/aws/aws-sdk-go-v2 v1.47.1
 	github.com/aws/aws-sdk-go-v2/credentials v1.20.6
 	github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs v1.89.0
-	github.com/confluentinc/confluent-kafka-go/v2 v2.15.1
+	github.com/confluentinc/confluent-kafka-go/v2 v2.16.0
 	github.com/getkin/kin-openapi v0.149.0
 	github.com/ghodss/yaml v1.0.0
 	github.com/globocom/echo-prometheus v0.1.2
