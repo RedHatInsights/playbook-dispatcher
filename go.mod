@@ -53,7 +53,7 @@ require (
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/certifi/gocertifi v0.0.0-20210507211836-431795d63e8d // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
-	github.com/docker/go-connections v0.8.1 // indirect
+	github.com/docker/go-connections v0.8.2 // indirect
 	github.com/dprotaso/go-yit v0.0.0-20260623150633-6f1ed93922d1 // indirect
 	github.com/fsnotify/fsnotify v1.10.1 // indirect
 	github.com/go-kratos/aegis v0.2.0 // indirect
