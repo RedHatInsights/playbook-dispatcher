@@ -99,7 +99,16 @@ func NewConsumerEventLoop(
 ) (start func()) {
 
 	const lagInterval = 30 * time.Second
-	const lagTimeoutMs = 1000 // keep watermark RPCs short so scrapes cannot stall the loop long
+
+	// Committed()/QueryWatermarkOffsets() run on this goroutine, so a slow broker
+	// directly stalls ReadMessage for the duration of the scrape. QueryWatermarkOffsets
+	// is called once per assigned partition (sequentially, no batched API exists), so
+	// worst case is roughly numPartitions * lagTimeoutMs. Keep this short: under a
+	// healthy broker these calls return in low single-digit ms, so a short timeout costs
+	// nothing in the common case, but bounds the stall during broker maintenance/restarts
+	// (when the broker is slower and a surviving pod may temporarily hold more partitions)
+	// instead of letting each call ride out the full RPC budget.
+	const lagTimeoutMs = 200
 
 	return func() {
 		log := utils.GetLogFromContext(ctx).Named("kafka")
