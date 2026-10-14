@@ -91,13 +91,29 @@ func NewConsumer(ctx context.Context, config *viper.Viper, topic string) (*kafka
 func NewConsumerEventLoop(
 	ctx context.Context,
 	consumer *kafka.Consumer,
+	groupID string, // needed for the consumer_group metric label; Consumer does not expose it
 	messagePredicate KafkaMessagePredicate,
 	validationPredicate KafkaMessagePredicate,
 	handler func(context.Context, *kafka.Message),
 	errorsChan chan<- error,
 ) (start func()) {
 
+	const lagInterval = 30 * time.Second
+
+	// Committed()/QueryWatermarkOffsets() run on this goroutine, so a slow broker
+	// directly stalls ReadMessage for the duration of the scrape. QueryWatermarkOffsets
+	// is called once per assigned partition (sequentially, no batched API exists), so
+	// worst case is roughly numPartitions * lagTimeoutMs. Keep this short: under a
+	// healthy broker these calls return in low single-digit ms, so a short timeout costs
+	// nothing in the common case, but bounds the stall during broker maintenance/restarts
+	// (when the broker is slower and a surviving pod may temporarily hold more partitions)
+	// instead of letting each call ride out the full RPC budget.
+	const lagTimeoutMs = 200
+
 	return func() {
+		log := utils.GetLogFromContext(ctx).Named("kafka")
+		var lastLagReport time.Time
+
 		for {
 			msg, err := consumer.ReadMessage(1 * time.Second) // TODO: configurable
 
@@ -105,6 +121,13 @@ func NewConsumerEventLoop(
 			case <-ctx.Done():
 				return
 			default:
+			}
+
+			// Same goroutine as ReadMessage (Consumer is not concurrency-safe).
+			// Wall-clock cadence so lag updates under both idle and busy load.
+			if time.Since(lastLagReport) >= lagInterval {
+				reportConsumerLag(log, consumer, groupID, lagTimeoutMs)
+				lastLagReport = time.Now()
 			}
 
 			if err != nil {
