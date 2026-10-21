@@ -1,6 +1,11 @@
 FROM registry.redhat.io/ubi9/openjdk-17 as builder
 USER root
 
+# Mitigate the eMudhra intermediate CA compromise (RHSB-2026-012) by
+# distrusting the affected root CAs - see https://access.redhat.com/solutions/7149312
+COPY scripts/disable-compromised-ca-certs.sh /tmp/disable-compromised-ca-certs.sh
+RUN /tmp/disable-compromised-ca-certs.sh
+
 ENV EXTRA_PLUGINS=/deps/plugins \
   EXTRA_LIBS=/deps/libs \
   DEBEZIUM_VERSION=3.4.0.Final \
@@ -34,6 +39,11 @@ ENV CONNECT_PLUGIN_PATH=/opt/kafka/plugins \
   BUILD_COMMIT=${BUILD_COMMIT}
 
 USER root
+
+# Mitigate the eMudhra intermediate CA compromise (RHSB-2026-012) by
+# distrusting the affected root CAs - see https://access.redhat.com/solutions/7149312
+COPY scripts/disable-compromised-ca-certs.sh /tmp/disable-compromised-ca-certs.sh
+RUN /tmp/disable-compromised-ca-certs.sh
 
 COPY event-streams/check-connectors.sh /
 COPY examples/connector-local.json /
