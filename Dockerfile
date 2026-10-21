@@ -1,6 +1,11 @@
 FROM registry.access.redhat.com/ubi9/go-toolset as builder
 USER 0
 
+# Mitigate the eMudhra intermediate CA compromise (RHSB-2026-012) by
+# distrusting the affected root CAs - see https://access.redhat.com/solutions/7149312
+COPY scripts/disable-compromised-ca-certs.sh /tmp/disable-compromised-ca-certs.sh
+RUN /tmp/disable-compromised-ca-certs.sh
+
 WORKDIR /go/src/app
 
 COPY go.mod go.sum ./
@@ -21,6 +26,11 @@ FROM registry.access.redhat.com/ubi9/ubi-minimal
 ARG BUILD_COMMIT=unknown
 
 RUN microdnf update -y
+
+# Mitigate the eMudhra intermediate CA compromise (RHSB-2026-012) by
+# distrusting the affected root CAs - see https://access.redhat.com/solutions/7149312
+COPY scripts/disable-compromised-ca-certs.sh /tmp/disable-compromised-ca-certs.sh
+RUN /tmp/disable-compromised-ca-certs.sh
 
 COPY --from=builder /go/src/app/app .
 COPY schema /schema
