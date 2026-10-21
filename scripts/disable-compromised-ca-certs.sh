@@ -21,8 +21,8 @@
 set -euo pipefail
 
 if ! command -v trust >/dev/null 2>&1; then
-    echo "disable-compromised-ca-certs: 'trust' (p11-kit-trust) not found; skipping" >&2
-    exit 0
+    echo "disable-compromised-ca-certs: 'trust' (p11-kit-trust) not found; cannot apply the eMudhra CA mitigation (RHSB-2026-012). Install p11-kit-trust or otherwise distrust the affected roots before proceeding." >&2
+    exit 1
 fi
 
 blocklist_dir=/etc/pki/ca-trust/source/blocklist
