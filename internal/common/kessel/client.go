@@ -4,22 +4,26 @@
 package kessel
 
 import (
+	"context"
 	"fmt"
 	"playbook-dispatcher/internal/common/config"
 	"strings"
 	"time"
 
-	"github.com/project-kessel/inventory-client-go/common"
-	v1beta2 "github.com/project-kessel/inventory-client-go/v1beta2"
+	"github.com/project-kessel/kessel-sdk-go/kessel/auth"
+	kesselv2 "github.com/project-kessel/kessel-sdk-go/kessel/inventory/v1beta2"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 // ClientManager holds all Kessel-related clients (replaces separate global variables)
 type ClientManager struct {
-	client                *v1beta2.InventoryClient
-	tokenClient           *common.TokenClient
-	rbacClient            RbacClient
+	client     kesselv2.KesselInventoryServiceClient
+	conn       *grpc.ClientConn
+	tokenCreds *auth.OAuth2ClientCredentials
+	rbacClient RbacClient
 	kesselClientWithCache *KesselClientWithCache
 }
 
@@ -27,7 +31,7 @@ var globalManager *ClientManager
 
 // Initialize creates and configures the Kessel inventory client
 // This should be called during application startup
-func Initialize(cfg *viper.Viper, log *zap.SugaredLogger) error {
+func Initialize(ctx context.Context, cfg *viper.Viper, log *zap.SugaredLogger) error {
 	kesselEnabled := cfg.GetBool("kessel.enabled")
 	if !kesselEnabled {
 		log.Infow("Kessel client disabled",
@@ -49,12 +53,11 @@ func Initialize(cfg *viper.Viper, log *zap.SugaredLogger) error {
 		"kessel_principal_domain", cfg.GetString("kessel.principal.domain"),
 		"kessel_auth_oidc_issuer", cfg.GetString("kessel.auth.oidc.issuer"))
 
-	options := []func(*common.Config){
-		common.WithgRPCUrl(kesselURL),
-		common.WithTLSInsecure(cfg.GetBool("kessel.insecure")),
-	}
+	builder := kesselv2.NewClientBuilder(kesselURL)
 
-	// Add authentication if enabled
+	var tokenCreds *auth.OAuth2ClientCredentials
+
+	// Configure authentication
 	if cfg.GetBool("kessel.auth.enabled") {
 		clientID := cfg.GetString("kessel.auth.client.id")
 		clientSecret := cfg.GetString("kessel.auth.client.secret")
@@ -64,26 +67,39 @@ func Initialize(cfg *viper.Viper, log *zap.SugaredLogger) error {
 			return fmt.Errorf("kessel authentication requires client.id, client.secret, and oidc.issuer")
 		}
 
-		options = append(options, common.WithAuthEnabled(clientID, clientSecret, oidcIssuer))
+		// Resolve the OIDC token endpoint.
+		// The config value (kessel.auth.oidc.issuer) may be either an issuer URL
+		// or a direct token endpoint URL (legacy Keycloak default). Handle both.
+		tokenEndpoint, err := resolveTokenEndpoint(ctx, oidcIssuer, log)
+		if err != nil {
+			return fmt.Errorf("failed to resolve OIDC token endpoint: %w", err)
+		}
+
+		creds := auth.NewOAuth2ClientCredentials(clientID, clientSecret, tokenEndpoint)
+		tokenCreds = &creds
+
+		// Apply TLS configuration: kessel.insecure must also work with auth enabled.
+		// Passing insecure.NewCredentials() as channelCredentials ensures the
+		// authenticated builder path respects the insecure setting.
+		if cfg.GetBool("kessel.insecure") {
+			builder.OAuth2ClientAuthenticated(tokenCreds, insecure.NewCredentials())
+		} else {
+			builder.OAuth2ClientAuthenticated(tokenCreds, nil)
+		}
+		log.Info("Kessel authentication enabled")
+	} else if cfg.GetBool("kessel.insecure") {
+		builder.Insecure()
+	} else {
+		builder.Unauthenticated(nil)
 	}
 
-	kesselConfig := common.NewConfig(options...)
-
-	var err error
-	client, err := v1beta2.New(kesselConfig)
+	client, conn, err := builder.Build()
 	if err != nil {
 		return fmt.Errorf("failed to create Kessel client: %w", err)
 	}
 
 	// Create Kessel client with caching
 	kesselClientWithCache := NewKesselClientWithCache(client)
-
-	// Create token client for authentication if enabled
-	var tokenClient *common.TokenClient
-	if cfg.GetBool("kessel.auth.enabled") {
-		tokenClient = common.NewTokenClient(kesselConfig)
-		log.Info("Kessel authentication enabled")
-	}
 
 	// Create RBAC client for workspace lookups
 	// Build RBAC URL properly, handling cases where host might already contain a port
@@ -110,20 +126,21 @@ func Initialize(cfg *viper.Viper, log *zap.SugaredLogger) error {
 	}
 
 	// Avoid nil pointer wrapped in interface gotcha:
-	// When kessel.auth.enabled=false, tokenClient is a nil *common.TokenClient pointer.
+	// When kessel.auth.enabled=false, tokenCreds is nil.
 	// Passing it directly to NewRbacClient creates a non-nil TokenClient interface
 	// (type descriptor exists but value is nil), which passes != nil checks but panics
 	// when methods are called. Instead, pass an explicit nil interface.
 	var tokenClientInterface TokenClient
-	if tokenClient != nil {
-		tokenClientInterface = tokenClient
+	if tokenCreds != nil {
+		tokenClientInterface = tokenCreds
 	}
 	rbacClient := NewRbacClient(rbacURL, tokenClientInterface, rbacTimeout, rbacClientConfig, log)
 
 	// Store all clients in manager
 	globalManager = &ClientManager{
 		client:                client,
-		tokenClient:           tokenClient,
+		conn:                  conn,
+		tokenCreds:            tokenCreds,
 		rbacClient:            rbacClient,
 		kesselClientWithCache: kesselClientWithCache,
 	}
@@ -132,22 +149,22 @@ func Initialize(cfg *viper.Viper, log *zap.SugaredLogger) error {
 	return nil
 }
 
-// GetClient returns the initialized Kessel inventory client
+// GetClient returns the initialized Kessel inventory service client
 // Returns nil if Kessel is not enabled or not initialized
-func GetClient() *v1beta2.InventoryClient {
+func GetClient() kesselv2.KesselInventoryServiceClient {
 	if globalManager == nil {
 		return nil
 	}
 	return globalManager.client
 }
 
-// GetTokenClient returns the token client for authentication
+// GetTokenCreds returns the OAuth2 credentials for authentication
 // Returns nil if authentication is not enabled
-func GetTokenClient() *common.TokenClient {
+func GetTokenCreds() *auth.OAuth2ClientCredentials {
 	if globalManager == nil {
 		return nil
 	}
-	return globalManager.tokenClient
+	return globalManager.tokenCreds
 }
 
 // GetRbacClient returns the RBAC client for workspace lookups
@@ -173,6 +190,62 @@ func IsEnabled() bool {
 	return globalManager != nil && globalManager.client != nil
 }
 
+const (
+	// oidcDiscoveryTimeout is the deadline for each OIDC discovery attempt.
+	oidcDiscoveryTimeout = 30 * time.Second
+	// oidcDiscoveryRetries is the number of retry attempts for transient discovery failures.
+	oidcDiscoveryRetries = 3
+	// keycloakTokenSuffix is the standard Keycloak token endpoint path suffix.
+	keycloakTokenSuffix = "/protocol/openid-connect/token"
+)
+
+// resolveTokenEndpoint determines the OIDC token endpoint from the configured URL.
+// If the URL is already a token endpoint (contains the Keycloak token path suffix),
+// it is used directly. Otherwise, OIDC discovery is performed with timeout and retry.
+func resolveTokenEndpoint(ctx context.Context, configuredURL string, log *zap.SugaredLogger) (string, error) {
+	// If the configured URL is already a token endpoint, use it directly.
+	// This handles the legacy default where kessel.auth.oidc.issuer is set to
+	// the full token endpoint URL rather than the issuer URL.
+	if strings.Contains(configuredURL, keycloakTokenSuffix) {
+		log.Infow("Using configured URL directly as token endpoint (detected Keycloak token path)",
+			"token_endpoint", configuredURL)
+		return configuredURL, nil
+	}
+
+	// Perform OIDC discovery with timeout and retry for transient failures.
+	var lastErr error
+	for attempt := 0; attempt <= oidcDiscoveryRetries; attempt++ {
+		if attempt > 0 {
+			backoff := time.Duration(1<<uint(attempt-1)) * time.Second
+			log.Infow("Retrying OIDC discovery",
+				"attempt", attempt+1,
+				"backoff", backoff)
+			select {
+			case <-time.After(backoff):
+			case <-ctx.Done():
+				return "", fmt.Errorf("context canceled during OIDC discovery retry: %w", ctx.Err())
+			}
+		}
+
+		discoveryCtx, cancel := context.WithTimeout(ctx, oidcDiscoveryTimeout)
+		discovery, err := auth.FetchOIDCDiscovery(discoveryCtx, configuredURL, auth.FetchOIDCDiscoveryOptions{})
+		cancel()
+
+		if err == nil {
+			log.Infow("OIDC discovery successful",
+				"token_endpoint", discovery.TokenEndpoint)
+			return discovery.TokenEndpoint, nil
+		}
+
+		lastErr = err
+		log.Warnw("OIDC discovery attempt failed",
+			"attempt", attempt+1,
+			"error", err)
+	}
+
+	return "", fmt.Errorf("OIDC discovery failed after %d attempts: %w", oidcDiscoveryRetries+1, lastErr)
+}
+
 // Close cleans up the Kessel client resources
 // This should be called during application shutdown
 func Close() error {
@@ -180,11 +253,14 @@ func Close() error {
 		return nil
 	}
 
-	// The inventory client doesn't have an explicit Close method
-	// but we can clear the references
+	var closeErr error
+	if globalManager.conn != nil {
+		closeErr = globalManager.conn.Close()
+	}
+
 	globalManager = nil
 
-	return nil
+	return closeErr
 }
 
 // GetAuthMode returns the current Kessel authorization mode from configuration
@@ -208,11 +284,11 @@ func GetAuthMode(cfg *viper.Viper) string {
 
 // SetClientForTesting allows tests to inject mock clients
 // Returns a cleanup function that restores the original manager
-func SetClientForTesting(client *v1beta2.InventoryClient, tokenClient *common.TokenClient, rbacClient RbacClient) func() {
+func SetClientForTesting(client kesselv2.KesselInventoryServiceClient, tokenCreds *auth.OAuth2ClientCredentials, rbacClient RbacClient) func() {
 	oldManager := globalManager
 	globalManager = &ClientManager{
 		client:                client,
-		tokenClient:           tokenClient,
+		tokenCreds:            tokenCreds,
 		rbacClient:            rbacClient,
 		kesselClientWithCache: NewKesselClientWithCache(client),
 	}
