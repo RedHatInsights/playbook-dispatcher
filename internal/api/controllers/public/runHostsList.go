@@ -51,6 +51,24 @@ func (this *controllers) ApiRunHostsList(ctx echo.Context, params ApiRunHostsLis
 			}
 		}
 
+		if runFilters := middleware.GetDeepObject(ctx, "filter", "run"); len(runFilters) > 0 {
+			if id, ok := runFilters["id"]; ok {
+				queryBuilder.Where("run_hosts.run_id = ?", id)
+			}
+
+			if service, ok := runFilters["service"]; ok {
+				queryBuilder.Where("runs.service = ?", service)
+			}
+		}
+
+		if labelFilters := middleware.GetDeepObject(ctx, "filter", "run", "labels"); len(labelFilters) > 0 {
+			queryBuilder, err = addLabelFilterToQueryAsWhereClause(queryBuilder, labelFilters)
+			if err != nil {
+				instrumentation.PlaybookApiRequestError(ctx, err)
+				return echo.NewHTTPError(http.StatusInternalServerError, "Unable to handle labels query!")
+			}
+		}
+
 		if params.Filter.InventoryId != nil && *params.Filter.InventoryId != "" {
 			inventoryId, err := uuid.Parse(*params.Filter.InventoryId)
 			if err != nil {
@@ -59,24 +77,6 @@ func (this *controllers) ApiRunHostsList(ctx echo.Context, params ApiRunHostsLis
 			}
 
 			queryBuilder.Where("run_hosts.inventory_id = ?", inventoryId)
-		}
-	}
-
-	if runFilters := middleware.GetDeepObject(ctx, "filter", "run"); len(runFilters) > 0 {
-		if id, ok := runFilters["id"]; ok {
-			queryBuilder.Where("run_hosts.run_id = ?", id)
-		}
-
-		if service, ok := runFilters["service"]; ok {
-			queryBuilder.Where("runs.service = ?", service)
-		}
-	}
-
-	if labelFilters := middleware.GetDeepObject(ctx, "filter", "run", "labels"); len(labelFilters) > 0 {
-		queryBuilder, err = addLabelFilterToQueryAsWhereClause(queryBuilder, labelFilters)
-		if err != nil {
-			instrumentation.PlaybookApiRequestError(ctx, err)
-			return echo.NewHTTPError(http.StatusInternalServerError, "Unable to handle labels query!")
 		}
 	}
 
