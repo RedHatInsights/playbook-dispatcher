@@ -21,6 +21,7 @@ type ClientManager struct {
 	tokenClient           *common.TokenClient
 	rbacClient            RbacClient
 	kesselClientWithCache *KesselClientWithCache
+	cfg                   *viper.Viper
 }
 
 var globalManager *ClientManager
@@ -126,6 +127,7 @@ func Initialize(cfg *viper.Viper, log *zap.SugaredLogger) error {
 		tokenClient:           tokenClient,
 		rbacClient:            rbacClient,
 		kesselClientWithCache: kesselClientWithCache,
+		cfg:                   cfg,
 	}
 
 	log.Info("Kessel client initialized successfully")
@@ -171,6 +173,24 @@ func GetKesselClientWithCache() *KesselClientWithCache {
 // IsEnabled returns true if the Kessel client is initialized and ready to use
 func IsEnabled() bool {
 	return globalManager != nil && globalManager.client != nil
+}
+
+// IsWorkspaceCacheEnabled returns true if workspace caching is enabled via config
+// Defaults to true if config is unavailable
+func IsWorkspaceCacheEnabled() bool {
+	if globalManager == nil || globalManager.cfg == nil {
+		return true
+	}
+	return globalManager.cfg.GetBool("kessel.cache.workspace.enabled")
+}
+
+// IsApplicationCacheEnabled returns true if application permissions caching is enabled via config
+// Defaults to true if config is unavailable
+func IsApplicationCacheEnabled() bool {
+	if globalManager == nil || globalManager.cfg == nil {
+		return true
+	}
+	return globalManager.cfg.GetBool("kessel.cache.application.enabled")
 }
 
 // Close cleans up the Kessel client resources
