@@ -2,6 +2,7 @@ package validator
 
 import (
 	"bytes"
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"os"
@@ -9,6 +10,8 @@ import (
 	kafkaUtils "playbook-dispatcher/internal/common/kafka"
 	messageModel "playbook-dispatcher/internal/common/model/message"
 	"playbook-dispatcher/internal/common/utils/test"
+	"sync"
+	"time"
 
 	k "github.com/confluentinc/confluent-kafka-go/v2/kafka"
 
@@ -205,6 +208,240 @@ fdqPl7IwpOzJmfqrZ1duqTJ62NbTeDDPjOvQ6F70PsJi4KXiLSqngthpIkJLtF3l
 	})
 
 	// TODO: test parsing (timestamps, etc.)
+
+	Describe("Producer error handling", func() {
+		var (
+			h           *handler
+			errorsChan  chan error
+			mockContext context.Context
+			cancel      context.CancelFunc
+		)
+
+		BeforeEach(func() {
+			errorsChan = make(chan error, 1)
+			mockContext, cancel = context.WithCancel(test.TestContext())
+
+			h = &handler{
+				producer:                     nil,
+				schemas:                      nil,
+				errors:                       errorsChan,
+				maxConsecutiveProducerErrors: 3,
+				producerErrorBackoff:         10 * time.Millisecond,
+			}
+		})
+
+		AfterEach(func() {
+			cancel()
+		})
+
+		Describe("ErrMsgSizeTooLarge handling", func() {
+			It("Does not increment error counter for size errors", func() {
+				err := k.NewError(k.ErrMsgSizeTooLarge, "message too large", false)
+
+				Expect(ignoreKafkaProduceError(err)).To(BeTrue())
+			})
+		})
+
+		Describe("Consecutive error tracking", func() {
+			It("Increments counter on producer errors", func() {
+				testErr := k.NewError(k.ErrBrokerNotAvailable, "broker unavailable", false)
+
+				// First error
+				h.handleProducerResult(mockContext, "test-topic", testErr)
+				h.producerErrorMutex.Lock()
+				count := h.consecutiveProducerErrors
+				h.producerErrorMutex.Unlock()
+				Expect(count).To(Equal(1))
+
+				// Second error
+				h.handleProducerResult(mockContext, "test-topic", testErr)
+				h.producerErrorMutex.Lock()
+				count = h.consecutiveProducerErrors
+				h.producerErrorMutex.Unlock()
+				Expect(count).To(Equal(2))
+			})
+
+			It("Resets counter on successful write", func() {
+				testErr := k.NewError(k.ErrBrokerNotAvailable, "broker unavailable", false)
+
+				// Accumulate errors
+				h.handleProducerResult(mockContext, "test-topic", testErr)
+				h.handleProducerResult(mockContext, "test-topic", testErr)
+
+				h.producerErrorMutex.Lock()
+				count := h.consecutiveProducerErrors
+				h.producerErrorMutex.Unlock()
+				Expect(count).To(Equal(2))
+
+				// Successful write (nil error) resets counter
+				h.handleProducerResult(mockContext, "test-topic", nil)
+
+				h.producerErrorMutex.Lock()
+				count = h.consecutiveProducerErrors
+				h.producerErrorMutex.Unlock()
+				Expect(count).To(Equal(0))
+			})
+
+			It("Does not increment counter for size errors", func() {
+				sizeErr := k.NewError(k.ErrMsgSizeTooLarge, "message too large", false)
+
+				h.handleProducerResult(mockContext, "test-topic", sizeErr)
+
+				h.producerErrorMutex.Lock()
+				count := h.consecutiveProducerErrors
+				h.producerErrorMutex.Unlock()
+				Expect(count).To(Equal(0))
+			})
+		})
+
+		Describe("Threshold enforcement", func() {
+			It("Sends shutdown error when threshold is reached", func() {
+				testErr := k.NewError(k.ErrBrokerNotAvailable, "broker unavailable", false)
+
+				// Trigger errors up to threshold (3)
+				h.handleProducerResult(mockContext, "test-topic", testErr)
+				h.handleProducerResult(mockContext, "test-topic", testErr)
+
+				// Verify no shutdown error yet
+				Expect(errorsChan).ToNot(Receive())
+
+				// Third error should trigger shutdown
+				h.handleProducerResult(mockContext, "test-topic", testErr)
+
+				// Verify shutdown error was sent
+				var shutdownErr error
+				Eventually(errorsChan, 100*time.Millisecond).Should(Receive(&shutdownErr))
+				Expect(shutdownErr).To(HaveOccurred())
+				Expect(shutdownErr.Error()).To(ContainSubstring("shutting down after 3 consecutive producer errors"))
+			})
+
+			It("Does not send shutdown if success resets counter before threshold", func() {
+				testErr := k.NewError(k.ErrBrokerNotAvailable, "broker unavailable", false)
+
+				// Two errors
+				h.handleProducerResult(mockContext, "test-topic", testErr)
+				h.handleProducerResult(mockContext, "test-topic", testErr)
+
+				// Success resets
+				h.handleProducerResult(mockContext, "test-topic", nil)
+
+				// Two more errors (total consecutive = 2, not 3)
+				h.handleProducerResult(mockContext, "test-topic", testErr)
+				h.handleProducerResult(mockContext, "test-topic", testErr)
+
+				// No shutdown should occur
+				Consistently(errorsChan, 50*time.Millisecond).ShouldNot(Receive())
+			})
+		})
+
+		Describe("Context-aware backoff", func() {
+			It("Respects context cancellation during backoff", func() {
+				// Set long backoff to make cancellation observable
+				h.producerErrorBackoff = 500 * time.Millisecond
+				h.maxConsecutiveProducerErrors = 100 // High threshold to avoid shutdown
+
+				testErr := k.NewError(k.ErrBrokerNotAvailable, "broker unavailable", false)
+				done := make(chan bool, 1)
+
+				go func() {
+					start := time.Now()
+					h.handleProducerResult(mockContext, "test-topic", testErr)
+					elapsed := time.Since(start)
+					// Should return quickly (context canceled), not after full backoff
+					done <- elapsed < 100*time.Millisecond
+				}()
+
+				// Cancel context immediately to interrupt backoff
+				time.Sleep(10 * time.Millisecond)
+				cancel()
+
+				// Should exit quickly due to context cancellation (not wait 500ms)
+				Eventually(done, 150*time.Millisecond).Should(Receive(BeTrue()))
+			})
+
+			It("Completes backoff when context is not canceled", func() {
+				// Create fresh context that won't be canceled
+				freshCtx := test.TestContext()
+
+				h.producerErrorBackoff = 50 * time.Millisecond
+				h.maxConsecutiveProducerErrors = 100
+
+				testErr := k.NewError(k.ErrBrokerNotAvailable, "broker unavailable", false)
+				done := make(chan bool, 1)
+
+				go func() {
+					start := time.Now()
+					h.handleProducerResult(freshCtx, "test-topic", testErr)
+					elapsed := time.Since(start)
+					// Should complete full backoff (~50ms), not exit early
+					done <- elapsed >= 40*time.Millisecond
+				}()
+
+				// Should complete after backoff duration
+				Eventually(done, 100*time.Millisecond).Should(Receive(BeTrue()))
+			})
+		})
+
+		Describe("Mutex protection", func() {
+			It("Protects concurrent counter access", func() {
+				// Use high threshold to avoid shutdown during test
+				h.maxConsecutiveProducerErrors = 100
+				h.producerErrorBackoff = 1 * time.Millisecond
+
+				testErr := k.NewError(k.ErrBrokerNotAvailable, "broker unavailable", false)
+
+				// Simulate 50 concurrent workers hitting errors
+				var wg sync.WaitGroup
+				for i := 0; i < 50; i++ {
+					wg.Add(1)
+					go func() {
+						defer wg.Done()
+						h.handleProducerResult(mockContext, "test-topic", testErr)
+					}()
+				}
+				wg.Wait()
+
+				// Verify all 50 errors were counted (no race condition)
+				h.producerErrorMutex.Lock()
+				count := h.consecutiveProducerErrors
+				h.producerErrorMutex.Unlock()
+				Expect(count).To(Equal(50))
+
+				// Verify no shutdown signal (threshold not reached)
+				Consistently(errorsChan, 50*time.Millisecond).ShouldNot(Receive())
+			})
+		})
+
+		Describe("Shutdown signal deduplication", func() {
+			It("Sends shutdown signal only once when multiple workers hit threshold", func() {
+				testErr := k.NewError(k.ErrBrokerNotAvailable, "broker unavailable", false)
+
+				// Set counter just below threshold
+				h.producerErrorMutex.Lock()
+				h.consecutiveProducerErrors = h.maxConsecutiveProducerErrors - 1
+				h.producerErrorMutex.Unlock()
+
+				// Simulate multiple workers all hitting errors simultaneously
+				var wg sync.WaitGroup
+				for i := 0; i < 5; i++ {
+					wg.Add(1)
+					go func() {
+						defer wg.Done()
+						h.handleProducerResult(mockContext, "test-topic", testErr)
+					}()
+				}
+				wg.Wait()
+
+				// Verify exactly one shutdown error was sent (sync.Once prevents duplicates)
+				var shutdownErr error
+				Eventually(errorsChan, 100*time.Millisecond).Should(Receive(&shutdownErr))
+				Expect(shutdownErr).To(HaveOccurred())
+
+				// No additional shutdown errors
+				Consistently(errorsChan, 50*time.Millisecond).ShouldNot(Receive())
+			})
+		})
+	})
 })
 
 func newKafkaMessage(value interface{}, requestType string) *k.Message {

@@ -6,6 +6,7 @@ import (
 	"playbook-dispatcher/internal/common/utils"
 	"playbook-dispatcher/internal/validator/instrumentation"
 	"sync"
+	"time"
 
 	"github.com/spf13/viper"
 )
@@ -36,12 +37,23 @@ func Start(
 
 	instrumentation.Start(cfg)
 
+	maxConsecutiveProducerErrors := cfg.GetInt("kafka.producer.max.consecutive.write.errors")
+	if maxConsecutiveProducerErrors < 1 {
+		maxConsecutiveProducerErrors = 10
+	}
+	producerErrorBackoff := time.Duration(cfg.GetInt("kafka.producer.write.error.backoff.seconds")) * time.Second
+	if producerErrorBackoff < 1*time.Second {
+		producerErrorBackoff = 2 * time.Second
+	}
+
 	handler := &handler{
-		producer:     producer,
-		schemas:      schemas,
-		errors:       errors,
-		requestsChan: make(chan messageContext),
-		validateChan: make(chan enrichedMessageContext),
+		producer:                     producer,
+		schemas:                      schemas,
+		errors:                       errors,
+		requestsChan:                 make(chan messageContext),
+		validateChan:                 make(chan enrichedMessageContext),
+		maxConsecutiveProducerErrors: maxConsecutiveProducerErrors,
+		producerErrorBackoff:         producerErrorBackoff,
 	}
 
 	storageConnector := newStorageConnector(cfg)

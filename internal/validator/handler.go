@@ -12,6 +12,7 @@ import (
 	"playbook-dispatcher/internal/validator/instrumentation"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	"github.com/google/uuid"
@@ -30,11 +31,16 @@ const (
 )
 
 type handler struct {
-	producer     *kafka.Producer
-	schemas      []*jsonschema.Schema
-	errors       chan<- error
-	requestsChan chan messageContext
-	validateChan chan enrichedMessageContext
+	producer                     *kafka.Producer
+	schemas                      []*jsonschema.Schema
+	errors                       chan<- error
+	requestsChan                 chan messageContext
+	validateChan                 chan enrichedMessageContext
+	consecutiveProducerErrors    int
+	maxConsecutiveProducerErrors int
+	producerErrorBackoff         time.Duration
+	producerErrorMutex           sync.Mutex
+	shutdownOnce                 sync.Once
 }
 
 type messageContext struct {
@@ -48,7 +54,7 @@ type enrichedMessageContext struct {
 	messageContext
 }
 
-func (this *handler) onMessage(ctx context.Context, msg *kafka.Message) {
+func (h *handler) onMessage(ctx context.Context, msg *kafka.Message) {
 	request := messageModel.IngressValidationRequest{}
 	requestType, _ := kafkaUtils.GetHeader(msg, payloadTypeHeader)
 
@@ -80,44 +86,44 @@ func (this *handler) onMessage(ctx context.Context, msg *kafka.Message) {
 		return
 	}
 
-	if err := this.validateRequest(&request); err != nil {
-		this.validationFailed(ctx, err, requestType, &request)
+	if err := h.validateRequest(&request); err != nil {
+		h.validationFailed(ctx, err, requestType, &request)
 		return
 	}
 
-	this.requestsChan <- messageContext{requestType: requestType, request: request, ctx: ctx}
+	h.requestsChan <- messageContext{requestType: requestType, request: request, ctx: ctx}
 }
 
-func (this *handler) initiateValidationWorker(
+func (h *handler) initiateValidationWorker(
 	validateWg *sync.WaitGroup,
 ) {
 	defer validateWg.Done()
 
 	for {
-		msg, open := <-this.validateChan
+		msg, open := <-h.validateChan
 
 		if !open {
 			return
 		}
-		this.validationSteps(msg)
+		h.validationSteps(msg)
 	}
 }
 
-func (this *handler) validationSteps(
+func (h *handler) validationSteps(
 	msg enrichedMessageContext,
 ) {
 	request, requestType, ctx, data := &msg.request, msg.requestType, msg.ctx, msg.data
 
-	events, err := this.validateContent(ctx, requestType, data)
+	events, err := h.validateContent(ctx, requestType, data)
 	if err != nil {
-		this.validationFailed(ctx, err, requestType, request)
+		h.validationFailed(ctx, err, requestType, request)
 		utils.GetLogFromContext(ctx).Debugw("Invalid payload details", "data", string(data))
 		return
 	}
 
 	correlationId, err := messageModel.GetCorrelationId(*events, playbookSatPayloadHeaderValue)
 	if err != nil {
-		this.validationFailed(ctx, err, requestType, request)
+		h.validationFailed(ctx, err, requestType, request)
 		return
 	}
 
@@ -129,7 +135,7 @@ func (this *handler) validationSteps(
 	}
 
 	instrumentation.ValidationSuccess(ctx, requestType)
-	this.produceMessage(ctx, ingressResponseTopic, ingressResponse, request.Account)
+	h.produceMessage(ctx, ingressResponseTopic, ingressResponse, request.Account)
 
 	headers := kafkaUtils.Headers(constants.HeaderRequestId, request.RequestID, constants.HeaderCorrelationId, correlationId.String(), payloadTypeHeader, requestType)
 
@@ -141,7 +147,7 @@ func (this *handler) validationSteps(
 			UploadTimestamp: request.Timestamp,
 			Events:          events.PlaybookSat,
 		}
-		this.produceMessage(ctx, dispatcherResponseTopic, dispatcherResponse, correlationId.String(), headers...)
+		h.produceMessage(ctx, dispatcherResponseTopic, dispatcherResponse, correlationId.String(), headers...)
 		return
 	}
 
@@ -153,10 +159,10 @@ func (this *handler) validationSteps(
 		Events:          events.Playbook,
 	}
 
-	this.produceMessage(ctx, dispatcherResponseTopic, dispatcherResponse, correlationId.String(), headers...)
+	h.produceMessage(ctx, dispatcherResponseTopic, dispatcherResponse, correlationId.String(), headers...)
 }
 
-func (this *handler) validateRequest(request *messageModel.IngressValidationRequest) (err error) {
+func (h *handler) validateRequest(request *messageModel.IngressValidationRequest) (err error) {
 	if request.Size == 0 || request.Size > cfg.GetInt64("artifact.max.size") {
 		return fmt.Errorf("Rejecting payload due to file size: %d", request.Size)
 	}
@@ -164,7 +170,7 @@ func (this *handler) validateRequest(request *messageModel.IngressValidationRequ
 	return
 }
 
-func (this *handler) validateContent(ctx context.Context, requestType string, data []byte) (events *messageModel.ValidatedMessages, err error) {
+func (h *handler) validateContent(ctx context.Context, requestType string, data []byte) (events *messageModel.ValidatedMessages, err error) {
 	events = &messageModel.ValidatedMessages{}
 	events.PlaybookType = requestType
 
@@ -189,7 +195,7 @@ func (this *handler) validateContent(ctx context.Context, requestType string, da
 		}
 
 		if requestType == playbookSatPayloadHeaderValue {
-			validatedEvent, err := validateSatRunResponseWithSchema(ctx, this.schemas[1], line)
+			validatedEvent, err := validateSatRunResponseWithSchema(ctx, h.schemas[1], line)
 
 			if err == nil {
 				err = validateSatHostUUID(validatedEvent)
@@ -217,7 +223,7 @@ func (this *handler) validateContent(ctx context.Context, requestType string, da
 			events.PlaybookSat = append(events.PlaybookSat, *validatedEvent)
 
 		} else {
-			validatedEvent, err := validateRunResponseWithSchema(ctx, this.schemas[0], line)
+			validatedEvent, err := validateRunResponseWithSchema(ctx, h.schemas[0], line)
 			if err != nil {
 				return nil, err
 			}
@@ -293,28 +299,84 @@ func validateSatRunResponseWithSchema(ctx context.Context, schema *jsonschema.Sc
 	return event, nil
 }
 
-func (this *handler) validationFailed(ctx context.Context, err error, requestType string, request *messageModel.IngressValidationRequest) {
+func (h *handler) validationFailed(ctx context.Context, err error, requestType string, request *messageModel.IngressValidationRequest) {
 	response := &messageModel.IngressValidationResponse{
 		IngressValidationRequest: *request,
 		Validation:               validationFailure,
 	}
 
 	instrumentation.ValidationFailed(ctx, err, requestType)
-	this.produceMessage(ctx, ingressResponseTopic, response, response.Account)
+	h.produceMessage(ctx, ingressResponseTopic, response, response.Account)
 }
 
-func (this *handler) produceMessage(ctx context.Context, topic string, value interface{}, key string, headers ...kafka.Header) {
-	if value != nil {
-		if err := kafkaUtils.Produce(this.producer, topic, value, key, headers...); err != nil {
-			instrumentation.ProducerError(ctx, err, topic)
-
-			if ignoreKafkaProduceError(err) {
-				return
-			}
-
-			this.errors <- err // TODO: is "shutdown-on-error" a good strategy?
-		}
+func (h *handler) produceMessage(ctx context.Context, topic string, value interface{}, key string, headers ...kafka.Header) {
+	if value == nil {
+		return
 	}
+
+	err := kafkaUtils.Produce(h.producer, topic, value, key, headers...)
+	h.handleProducerResult(ctx, topic, err)
+}
+
+func (h *handler) handleProducerResult(ctx context.Context, topic string, err error) {
+	if err != nil {
+		instrumentation.ProducerError(ctx, err, topic)
+
+		// Skip retry for message size errors - these won't succeed on retry
+		if ignoreKafkaProduceError(err) {
+			return
+		}
+
+		// Track consecutive producer errors to distinguish transient failures
+		// from persistent issues (protected by mutex for concurrent access)
+		// Note: Failed messages are dropped after Kafka's internal retries (15) are exhausted.
+		// This uses at-most-once semantics to avoid blocking the validation pipeline.
+		h.producerErrorMutex.Lock()
+		h.consecutiveProducerErrors++
+		consecutiveErrors := h.consecutiveProducerErrors
+		h.producerErrorMutex.Unlock()
+
+		log := utils.GetLogFromContext(ctx)
+		log.Errorw("Kafka producer error",
+			"err", err,
+			"topic", topic,
+			"consecutive_errors", consecutiveErrors,
+			"max_errors", h.maxConsecutiveProducerErrors,
+		)
+
+		if consecutiveErrors >= h.maxConsecutiveProducerErrors {
+			h.shutdownOnce.Do(func() {
+				log.Errorw("Reached max consecutive kafka producer errors, shutting down",
+					"consecutive_errors", consecutiveErrors,
+					"max_errors", h.maxConsecutiveProducerErrors,
+				)
+				shutdownErr := fmt.Errorf("shutting down after %d consecutive producer errors, most recent: %w", h.maxConsecutiveProducerErrors, err)
+				select {
+				case h.errors <- shutdownErr:
+					// Shutdown signal sent
+				case <-time.After(1 * time.Second):
+					log.Errorw("Failed to send shutdown signal, error channel blocked")
+				}
+			})
+			return
+		}
+
+		// Context-aware backoff to allow prompt shutdown
+		backoffTimer := time.NewTimer(h.producerErrorBackoff)
+		select {
+		case <-backoffTimer.C:
+			// Backoff complete
+		case <-ctx.Done():
+			backoffTimer.Stop()
+			// Context canceled, return immediately
+		}
+		return
+	}
+
+	// Reset error counter on successful write (protected by mutex)
+	h.producerErrorMutex.Lock()
+	h.consecutiveProducerErrors = 0
+	h.producerErrorMutex.Unlock()
 }
 
 func ignoreKafkaProduceError(err error) bool {
