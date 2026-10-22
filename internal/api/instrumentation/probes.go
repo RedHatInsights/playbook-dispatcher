@@ -139,7 +139,8 @@ func PlaybookRunCancelRunTypeError(ctx context.Context, runId uuid.UUID) {
 }
 
 func PlaybookRunReadError(ctx echo.Context, err error) {
-	utils.GetLogFromEcho(ctx).Errorw("Error reading playbook runs from database", "error", err)
+	contextCause := context.Cause(ctx.Request().Context())
+	utils.GetLogFromEcho(ctx).Errorw("Error reading playbook runs from database", "error", err, "contextCause", contextCause)
 	errorTotal.WithLabelValues(labelDb, labelPlaybookRunRead).Inc()
 }
 
