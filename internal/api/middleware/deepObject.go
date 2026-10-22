@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
 func Hack(param string, fields ...string) echo.MiddlewareFunc {

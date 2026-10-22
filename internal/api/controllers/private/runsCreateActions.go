@@ -11,7 +11,7 @@ import (
 
 	"github.com/RedHatInsights/tenant-utils/pkg/tenantid"
 	"github.com/google/uuid"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/spf13/viper"
 )
 

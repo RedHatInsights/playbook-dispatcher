@@ -11,7 +11,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	cww "github.com/lzap/cloudwatchwriter2"
 	"github.com/spf13/viper"
 )

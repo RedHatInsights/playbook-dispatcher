@@ -15,7 +15,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/redhatinsights/platform-go-middlewares/v2/identity"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
@@ -313,7 +313,6 @@ func getKesselAllowedServices(ctx echo.Context, log *zap.SugaredLogger) ([]strin
 	} else {
 		allowedServices, err = kessel.CheckApplicationPermissions(ctx.Request().Context(), workspaceID, serviceFilter, log)
 	}
-
 
 	if err != nil {
 		log.Errorw("Kessel authorization error",
