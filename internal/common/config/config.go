@@ -133,6 +133,10 @@ func Get() *viper.Viper {
 	options.SetDefault("kessel.auth.oidc.issuer", "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token")
 	options.SetDefault("kessel.insecure", true)
 
+	// Kessel cache configuration (defaults enabled, can be disabled via config/env for debugging)
+	options.SetDefault("kessel.cache.workspace.enabled", true)
+	options.SetDefault("kessel.cache.application.enabled", true)
+
 	// Unleash feature flag configuration (defaults for non-Clowder environments)
 	options.SetDefault("unleash.enabled", false)
 	options.SetDefault("unleash.url", "")
