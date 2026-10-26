@@ -1,0 +1,1 @@
+DROP INDEX CONCURRENTLY IF EXISTS run_hosts_run_id_host_status_inventory_id_index;
