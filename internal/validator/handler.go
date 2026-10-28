@@ -159,11 +159,11 @@ func (this *handler) validationSteps(
 
 func (this *handler) validateRequest(request *messageModel.IngressValidationRequest) (err error) {
 	if request.Size == 0 {
-		return classify(instrumentation.ReasonSizeEmpty, fmt.Errorf("Rejecting payload due to file size: %d", request.Size))
+		return classify(instrumentation.ReasonSizeEmpty, fmt.Errorf("rejecting payload due to file size: %d", request.Size))
 	}
 
 	if request.Size > cfg.GetInt64("artifact.max.size") {
-		return classify(instrumentation.ReasonSizeExceeded, fmt.Errorf("Rejecting payload due to file size: %d", request.Size))
+		return classify(instrumentation.ReasonSizeExceeded, fmt.Errorf("rejecting payload due to file size: %d", request.Size))
 	}
 
 	return

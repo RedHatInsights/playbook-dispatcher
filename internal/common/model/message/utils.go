@@ -8,7 +8,7 @@ import (
 
 // ErrCorrelationIDNotFound is returned when a validated payload has no
 // dispatcher correlation id. Invalid id strings return the uuid.Parse error.
-var ErrCorrelationIDNotFound = errors.New("Correlation id not found")
+var ErrCorrelationIDNotFound = errors.New("correlation id not found")
 
 const EventExecutorOnStart = "executor_on_start"
 
