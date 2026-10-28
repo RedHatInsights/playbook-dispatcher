@@ -14,7 +14,30 @@ const (
 	errorS3         = "s3fetch"
 	playbook        = "playbook"
 	playbookSat     = "playbook-sat"
+
+	// Failure reasons are a fixed set so validator_failure_total can be
+	// compared over time. The raw error stays in the log. ReasonUnknown is
+	// the unclassified fallback; handler.failureReason says what to do when it climbs.
+	ReasonSizeEmpty            = "size_empty"
+	ReasonSizeExceeded         = "size_exceeded"
+	ReasonSchema               = "schema"
+	ReasonHostUUID             = "host_uuid"
+	ReasonNoEvents             = "no_events"
+	ReasonCorrelationIDMissing = "correlation_id_missing"
+	ReasonCorrelationIDInvalid = "correlation_id_invalid"
+	ReasonUnknown              = "unknown"
 )
+
+var failureReasons = []string{
+	ReasonSizeEmpty,
+	ReasonSizeExceeded,
+	ReasonSchema,
+	ReasonHostUUID,
+	ReasonNoEvents,
+	ReasonCorrelationIDMissing,
+	ReasonCorrelationIDInvalid,
+	ReasonUnknown,
+}
 
 var (
 	validationSuccessTotal = promauto.NewCounterVec(prometheus.CounterOpts{
@@ -25,7 +48,7 @@ var (
 	validationFailureTotal = promauto.NewCounterVec(prometheus.CounterOpts{
 		Name: "validator_failure_total",
 		Help: "The total number of payloads that did not pass validation",
-	}, []string{"request_type"})
+	}, []string{"request_type", "reason"})
 
 	errorTotal = promauto.NewCounterVec(prometheus.CounterOpts{
 		Name: "validator_error_total",
@@ -41,14 +64,14 @@ var (
 func Start(cfg *viper.Viper) {
 	// initialize label values
 	// https://www.robustperception.io/existential-issues-with-metrics
-	validationSuccessTotal.WithLabelValues(playbook)
-	validationSuccessTotal.WithLabelValues(playbookSat)
-	validationFailureTotal.WithLabelValues(playbook)
-	validationFailureTotal.WithLabelValues(playbookSat)
-	errorTotal.WithLabelValues(errorUnmarshall, playbook)
-	errorTotal.WithLabelValues(errorUnmarshall, playbookSat)
-	errorTotal.WithLabelValues(errorS3, playbook)
-	errorTotal.WithLabelValues(errorS3, playbookSat)
+	for _, requestType := range []string{playbook, playbookSat} {
+		validationSuccessTotal.WithLabelValues(requestType)
+		for _, reason := range failureReasons {
+			validationFailureTotal.WithLabelValues(requestType, reason)
+		}
+		errorTotal.WithLabelValues(errorUnmarshall, requestType)
+		errorTotal.WithLabelValues(errorS3, requestType)
+	}
 	producerError.WithLabelValues(cfg.GetString("topic.updates"))
 	producerError.WithLabelValues(cfg.GetString("topic.validation.response"))
 }
@@ -58,9 +81,9 @@ func ValidationSuccess(ctx context.Context, requestType string) {
 	utils.GetLogFromContext(ctx).Infow("Payload valid")
 }
 
-func ValidationFailed(ctx context.Context, cause error, requestType string) {
-	validationFailureTotal.WithLabelValues(requestType).Inc()
-	utils.GetLogFromContext(ctx).Warnw("Rejecting payload due to validation failure", "cause", cause)
+func ValidationFailed(ctx context.Context, cause error, requestType string, reason string) {
+	validationFailureTotal.WithLabelValues(requestType, reason).Inc()
+	utils.GetLogFromContext(ctx).Warnw("Rejecting payload due to validation failure", "reason", reason, "cause", cause)
 }
 
 func UnmarshallingError(ctx context.Context, err error, requestType string) {
