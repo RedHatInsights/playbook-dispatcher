@@ -9,7 +9,6 @@ import (
 	kafkaUtils "playbook-dispatcher/internal/common/kafka"
 	messageModel "playbook-dispatcher/internal/common/model/message"
 	"playbook-dispatcher/internal/common/utils/test"
-	"playbook-dispatcher/internal/validator/instrumentation"
 
 	k "github.com/confluentinc/confluent-kafka-go/v2/kafka"
 
@@ -50,7 +49,7 @@ var _ = Describe("Handler", func() {
 
 			err := instance.validateRequest(req)
 			Expect(err).To(HaveOccurred())
-			Expect(failureReason(err)).To(Equal(instrumentation.ReasonSizeExceeded))
+			Expect(failureReason(err)).To(Equal("size_exceeded"))
 		})
 
 		It("Rejects empty archives", func() {
@@ -60,7 +59,7 @@ var _ = Describe("Handler", func() {
 
 			err := instance.validateRequest(req)
 			Expect(err).To(HaveOccurred())
-			Expect(failureReason(err)).To(Equal(instrumentation.ReasonSizeEmpty))
+			Expect(failureReason(err)).To(Equal("size_empty"))
 		})
 	})
 
@@ -88,17 +87,17 @@ var _ = Describe("Handler", func() {
 				Expect(err).To(HaveOccurred())
 				Expect(failureReason(err)).To(Equal(reason))
 			},
-			Entry("empty file", "playbook", "", instrumentation.ReasonNoEvents),
-			Entry("whitespace-only file", "playbook", "         ", instrumentation.ReasonNoEvents),
-			Entry("newline-only file", "playbook", "\n\n\n\n", instrumentation.ReasonNoEvents),
-			Entry("invalid JSON (trailing braces)", "playbook", `{"event": "playbook_on_start", "uuid": "60049c81-4f4b-41a0-bcf4-84399bf1b693", "counter": 0, "stdout": "", "start_line": 0, "end_line": 0}}`, instrumentation.ReasonSchema),
-			Entry("missing uuid", "playbook", `{"event": "playbook_on_start", "counter": 0, "stdout": "", "start_line": 0, "end_line": 0}`, instrumentation.ReasonSchema),
+			Entry("empty file", "playbook", "", "no_events"),
+			Entry("whitespace-only file", "playbook", "         ", "no_events"),
+			Entry("newline-only file", "playbook", "\n\n\n\n", "no_events"),
+			Entry("invalid JSON (trailing braces)", "playbook", `{"event": "playbook_on_start", "uuid": "60049c81-4f4b-41a0-bcf4-84399bf1b693", "counter": 0, "stdout": "", "start_line": 0, "end_line": 0}}`, "schema"),
+			Entry("missing uuid", "playbook", `{"event": "playbook_on_start", "counter": 0, "stdout": "", "start_line": 0, "end_line": 0}`, "schema"),
 
-			Entry("rhc-sat newline-only file", "playbook-sat", "\n\n\n\n", instrumentation.ReasonNoEvents),
-			Entry("missing rhc-sat uuid", "playbook-sat", `{"type" : "playbook_run_update", "version": 3}`, instrumentation.ReasonSchema),
-			Entry("rhc-sat invalid JSON", "playbook-sat", `{"type" : "playbook_run_update", "version": 3, "correlation_id": "0465783c-2e36-4e57-8514-c2cb962d323a"}}`, instrumentation.ReasonSchema),
-			Entry("rhc-sat invalid type", "playbook-sat", `{"type" : "invalid_type", "version": 3, "correlation_id": "0465783c-2e36-4e57-8514-c2cb962d323a"}`, instrumentation.ReasonSchema),
-			Entry("rhc-sat invalid host uuid", "playbook-sat", `{"type": "playbook_run_update", "version": 3, "correlation_id": "0465783c-2e36-4e57-8514-c2cb962d323a", "host": "invalid.uuid", "status": "success", "connection_code": 0, "execution_code": 0}`, instrumentation.ReasonHostUUID),
+			Entry("rhc-sat newline-only file", "playbook-sat", "\n\n\n\n", "no_events"),
+			Entry("missing rhc-sat uuid", "playbook-sat", `{"type" : "playbook_run_update", "version": 3}`, "schema"),
+			Entry("rhc-sat invalid JSON", "playbook-sat", `{"type" : "playbook_run_update", "version": 3, "correlation_id": "0465783c-2e36-4e57-8514-c2cb962d323a"}}`, "schema"),
+			Entry("rhc-sat invalid type", "playbook-sat", `{"type" : "invalid_type", "version": 3, "correlation_id": "0465783c-2e36-4e57-8514-c2cb962d323a"}`, "schema"),
+			Entry("rhc-sat invalid host uuid", "playbook-sat", `{"type": "playbook_run_update", "version": 3, "correlation_id": "0465783c-2e36-4e57-8514-c2cb962d323a", "host": "invalid.uuid", "status": "success", "connection_code": 0, "execution_code": 0}`, "host_uuid"),
 		)
 
 		DescribeTable("Accepts valid runner files",
@@ -155,7 +154,7 @@ var _ = Describe("Handler", func() {
 
 				_, err := messageModel.GetCorrelationId(events, playbookSatPayloadHeaderValue)
 				Expect(err).To(HaveOccurred())
-				Expect(failureReason(classifyCorrelationError(err))).To(Equal(instrumentation.ReasonCorrelationIDMissing))
+				Expect(failureReason(classifyCorrelationError(err))).To(Equal("correlation_id_missing"))
 			})
 
 			It("classifies a correlation id that does not parse", func() {
@@ -171,7 +170,7 @@ var _ = Describe("Handler", func() {
 
 				_, err := messageModel.GetCorrelationId(events, playbookSatPayloadHeaderValue)
 				Expect(err).To(HaveOccurred())
-				Expect(failureReason(classifyCorrelationError(err))).To(Equal(instrumentation.ReasonCorrelationIDInvalid))
+				Expect(failureReason(classifyCorrelationError(err))).To(Equal("correlation_id_invalid"))
 			})
 		})
 	})
