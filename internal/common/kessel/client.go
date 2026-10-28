@@ -19,10 +19,10 @@ import (
 
 // ClientManager holds all Kessel-related clients (replaces separate global variables)
 type ClientManager struct {
-	client     kesselv2.KesselInventoryServiceClient
-	conn       *grpc.ClientConn
-	tokenCreds *auth.OAuth2ClientCredentials
-	rbacClient RbacClient
+	client                kesselv2.KesselInventoryServiceClient
+	conn                  *grpc.ClientConn
+	tokenCreds            *auth.OAuth2ClientCredentials
+	rbacClient            RbacClient
 	kesselClientWithCache *KesselClientWithCache
 }
 
