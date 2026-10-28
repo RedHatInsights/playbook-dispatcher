@@ -76,7 +76,7 @@ func Initialize(ctx context.Context, cfg *viper.Viper, log *zap.SugaredLogger) e
 
 		creds := auth.NewOAuth2ClientCredentials(clientID, clientSecret, tokenEndpoint)
 		tokenCreds = &creds
-		log.Info("Kessel authentication enabled")
+		log.Info("Kessel OAuth2 credentials initialized")
 	}
 
 	// an insecure channel runs unauthenticated, because kessel-sdk-go cannot
@@ -86,10 +86,13 @@ func Initialize(ctx context.Context, cfg *viper.Viper, log *zap.SugaredLogger) e
 	// auth is enabled, regardless of the channel mode.
 	if cfg.GetBool("kessel.insecure") {
 		builder.Insecure()
+		log.Info("Kessel gRPC channel: insecure, unauthenticated")
 	} else if tokenCreds != nil {
 		builder.OAuth2ClientAuthenticated(tokenCreds, nil)
+		log.Info("Kessel gRPC channel: TLS, OAuth2 authenticated")
 	} else {
 		builder.Unauthenticated(nil)
+		log.Info("Kessel gRPC channel: TLS, unauthenticated")
 	}
 
 	client, conn, err := builder.Build()
