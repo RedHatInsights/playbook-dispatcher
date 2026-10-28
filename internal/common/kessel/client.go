@@ -15,15 +15,14 @@ import (
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 )
 
 // ClientManager holds all Kessel-related clients (replaces separate global variables)
 type ClientManager struct {
-	client     kesselv2.KesselInventoryServiceClient
-	conn       *grpc.ClientConn
-	tokenCreds *auth.OAuth2ClientCredentials
-	rbacClient RbacClient
+	client                kesselv2.KesselInventoryServiceClient
+	conn                  *grpc.ClientConn
+	tokenCreds            *auth.OAuth2ClientCredentials
+	rbacClient            RbacClient
 	kesselClientWithCache *KesselClientWithCache
 }
 
@@ -77,20 +76,23 @@ func Initialize(ctx context.Context, cfg *viper.Viper, log *zap.SugaredLogger) e
 
 		creds := auth.NewOAuth2ClientCredentials(clientID, clientSecret, tokenEndpoint)
 		tokenCreds = &creds
+		log.Info("Kessel OAuth2 credentials initialized")
+	}
 
-		// Apply TLS configuration: kessel.insecure must also work with auth enabled.
-		// Passing insecure.NewCredentials() as channelCredentials ensures the
-		// authenticated builder path respects the insecure setting.
-		if cfg.GetBool("kessel.insecure") {
-			builder.OAuth2ClientAuthenticated(tokenCreds, insecure.NewCredentials())
-		} else {
-			builder.OAuth2ClientAuthenticated(tokenCreds, nil)
-		}
-		log.Info("Kessel authentication enabled")
-	} else if cfg.GetBool("kessel.insecure") {
+	// an insecure channel runs unauthenticated, because kessel-sdk-go cannot
+	// send OAuth2 per-RPC credentials over plaintext and the plaintext stage
+	// endpoint does not support auth. Auth is applied to the channel only
+	// over TLS. tokenCreds is still used by the client below whenever
+	// auth is enabled, regardless of the channel mode.
+	if cfg.GetBool("kessel.insecure") {
 		builder.Insecure()
+		log.Info("Kessel gRPC channel: insecure, unauthenticated")
+	} else if tokenCreds != nil {
+		builder.OAuth2ClientAuthenticated(tokenCreds, nil)
+		log.Info("Kessel gRPC channel: TLS, OAuth2 authenticated")
 	} else {
 		builder.Unauthenticated(nil)
+		log.Info("Kessel gRPC channel: TLS, unauthenticated")
 	}
 
 	client, conn, err := builder.Build()
