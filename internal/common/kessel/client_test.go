@@ -287,6 +287,57 @@ func TestInitialize_RbacURLConstruction_HostWithPort(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+func TestInitialize_ChannelModes(t *testing.T) {
+	// Token endpoint URL (not a bare issuer) so no OIDC discovery is attempted.
+	tokenEndpoint := "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token"
+
+	tests := []struct {
+		name        string
+		insecure    bool
+		authEnabled bool
+	}{
+		// Stage combination: insecure channel, auth enabled for the RBAC client.
+		// The gRPC channel itself is unauthenticated (insights-remediations pattern).
+		{"insecure channel with auth enabled", true, true},
+		// Production combination after KESSEL_INSECURE is flipped to false.
+		{"TLS channel with auth enabled", false, true},
+		{"TLS channel without auth", false, false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := viper.New()
+			cfg.Set("kessel.enabled", true)
+			cfg.Set("kessel.url", "localhost:9091")
+			cfg.Set("kessel.insecure", tt.insecure)
+			cfg.Set("kessel.auth.enabled", tt.authEnabled)
+			cfg.Set("kessel.auth.client.id", "test-client")
+			cfg.Set("kessel.auth.client.secret", "test-secret")
+			cfg.Set("kessel.auth.oidc.issuer", tokenEndpoint)
+			cfg.Set("rbac.scheme", "http")
+			cfg.Set("rbac.host", "localhost")
+			cfg.Set("rbac.port", 8080)
+
+			log := zap.NewNop().Sugar()
+
+			err := Initialize(context.Background(), cfg, log)
+			assert.NoError(t, err)
+			assert.NotNil(t, globalManager)
+
+			// tokenCreds must exist whenever auth is enabled (RBAC client needs it),
+			// regardless of channel mode.
+			if tt.authEnabled {
+				assert.NotNil(t, globalManager.tokenCreds)
+			} else {
+				assert.Nil(t, globalManager.tokenCreds)
+			}
+
+			err = Close()
+			assert.NoError(t, err)
+		})
+	}
+}
+
 func TestResolveTokenEndpoint_DirectTokenURL(t *testing.T) {
 	log := zap.NewNop().Sugar()
 
