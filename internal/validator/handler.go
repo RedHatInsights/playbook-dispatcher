@@ -245,7 +245,7 @@ func (this *handler) validateContent(ctx context.Context, requestType string, da
 	}
 
 	if len(events.PlaybookSat) == 0 && len(events.Playbook) == 0 {
-		return nil, classify(instrumentation.ReasonNoEvents, fmt.Errorf("No events found"))
+		return nil, classify(instrumentation.ReasonNoEvents, fmt.Errorf("no events found"))
 	}
 
 	return events, nil
