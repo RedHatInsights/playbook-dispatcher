@@ -598,9 +598,9 @@ data:
               "datasource": {
                 "uid": "$datasource"
               },
-              "expr": "sum(increase(validator_failure_total{service=\"playbook-dispatcher-validator\"}[1m]))",
+              "expr": "sum(increase(validator_failure_total{service=\"playbook-dispatcher-validator\"}[1m])) by (reason)",
               "interval": "",
-              "legendFormat": "validator failure",
+              "legendFormat": "validator failure: {{reason}}",
               "refId": "C"
             },
             {

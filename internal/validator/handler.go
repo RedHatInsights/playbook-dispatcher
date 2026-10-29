@@ -3,6 +3,7 @@ package validator
 import (
 	"context"
 	"encoding/json"
+	stderrors "errors"
 	"fmt"
 	"playbook-dispatcher/internal/common/config"
 	"playbook-dispatcher/internal/common/constants"
@@ -117,7 +118,7 @@ func (this *handler) validationSteps(
 
 	correlationId, err := messageModel.GetCorrelationId(*events, playbookSatPayloadHeaderValue)
 	if err != nil {
-		this.validationFailed(ctx, err, requestType, request)
+		this.validationFailed(ctx, classifyCorrelationError(err), requestType, request)
 		return
 	}
 
@@ -157,8 +158,12 @@ func (this *handler) validationSteps(
 }
 
 func (this *handler) validateRequest(request *messageModel.IngressValidationRequest) (err error) {
-	if request.Size == 0 || request.Size > cfg.GetInt64("artifact.max.size") {
-		return fmt.Errorf("Rejecting payload due to file size: %d", request.Size)
+	if request.Size == 0 {
+		return classify(instrumentation.ReasonSizeEmpty, fmt.Errorf("rejecting payload due to file size: %d", request.Size))
+	}
+
+	if request.Size > cfg.GetInt64("artifact.max.size") {
+		return classify(instrumentation.ReasonSizeExceeded, fmt.Errorf("rejecting payload due to file size: %d", request.Size))
 	}
 
 	return
@@ -190,13 +195,12 @@ func (this *handler) validateContent(ctx context.Context, requestType string, da
 
 		if requestType == playbookSatPayloadHeaderValue {
 			validatedEvent, err := validateSatRunResponseWithSchema(ctx, this.schemas[1], line)
-
-			if err == nil {
-				err = validateSatHostUUID(validatedEvent)
+			if err != nil {
+				return nil, classify(instrumentation.ReasonSchema, err)
 			}
 
-			if err != nil {
-				return nil, err
+			if err = validateSatHostUUID(validatedEvent); err != nil {
+				return nil, classify(instrumentation.ReasonHostUUID, err)
 			}
 
 			if truncateData {
@@ -219,7 +223,7 @@ func (this *handler) validateContent(ctx context.Context, requestType string, da
 		} else {
 			validatedEvent, err := validateRunResponseWithSchema(ctx, this.schemas[0], line)
 			if err != nil {
-				return nil, err
+				return nil, classify(instrumentation.ReasonSchema, err)
 			}
 
 			if truncateData {
@@ -241,7 +245,7 @@ func (this *handler) validateContent(ctx context.Context, requestType string, da
 	}
 
 	if len(events.PlaybookSat) == 0 && len(events.Playbook) == 0 {
-		return nil, fmt.Errorf("No events found")
+		return nil, classify(instrumentation.ReasonNoEvents, fmt.Errorf("no events found"))
 	}
 
 	return events, nil
@@ -259,11 +263,11 @@ func validateSatHostUUID(event *messageModel.PlaybookSatRunResponseMessageYamlEv
 
 func validateRunResponseWithSchema(ctx context.Context, schema *jsonschema.Schema, line string) (validatedEvent *messageModel.PlaybookRunResponseMessageYamlEventsElem, err error) {
 
-	errors, parserError := schema.ValidateBytes(ctx, []byte(line))
+	schemaErrors, parserError := schema.ValidateBytes(ctx, []byte(line))
 	if parserError != nil {
 		return nil, parserError
-	} else if len(errors) > 0 {
-		return nil, errors[0]
+	} else if len(schemaErrors) > 0 {
+		return nil, schemaErrors[0]
 	}
 
 	event := &messageModel.PlaybookRunResponseMessageYamlEventsElem{}
@@ -277,11 +281,11 @@ func validateRunResponseWithSchema(ctx context.Context, schema *jsonschema.Schem
 
 func validateSatRunResponseWithSchema(ctx context.Context, schema *jsonschema.Schema, line string) (validatedEvent *messageModel.PlaybookSatRunResponseMessageYamlEventsElem, err error) {
 
-	errors, parserError := schema.ValidateBytes(ctx, []byte(line))
+	schemaErrors, parserError := schema.ValidateBytes(ctx, []byte(line))
 	if parserError != nil {
 		return nil, parserError
-	} else if len(errors) > 0 {
-		return nil, errors[0]
+	} else if len(schemaErrors) > 0 {
+		return nil, schemaErrors[0]
 	}
 
 	event := &messageModel.PlaybookSatRunResponseMessageYamlEventsElem{}
@@ -299,8 +303,46 @@ func (this *handler) validationFailed(ctx context.Context, err error, requestTyp
 		Validation:               validationFailure,
 	}
 
-	instrumentation.ValidationFailed(ctx, err, requestType)
+	instrumentation.ValidationFailed(ctx, err, requestType, failureReason(err))
 	this.produceMessage(ctx, ingressResponseTopic, response, response.Account)
+}
+
+// classifiedFailure carries a stable reason alongside the original cause.
+// The reason is a metric label. The cause remains the log detail.
+type classifiedFailure struct {
+	reason string
+	err    error
+}
+
+func (e classifiedFailure) Error() string {
+	return e.err.Error()
+}
+
+func (e classifiedFailure) Unwrap() error {
+	return e.err
+}
+
+func classify(reason string, err error) error {
+	return classifiedFailure{reason: reason, err: err}
+}
+
+func classifyCorrelationError(err error) error {
+	if stderrors.Is(err, messageModel.ErrCorrelationIDNotFound) {
+		return classify(instrumentation.ReasonCorrelationIDMissing, err)
+	}
+	return classify(instrumentation.ReasonCorrelationIDInvalid, err)
+}
+
+// failureReason returns ReasonUnknown when err was not wrapped with classify.
+// If reason="unknown" is climbing, a check is rejecting payloads with a plain
+// error. Find that return from the log cause, wrap it with classify, and add
+// a Reason* constant in the instrumentation package.
+func failureReason(err error) string {
+	var classified classifiedFailure
+	if stderrors.As(err, &classified) {
+		return classified.reason
+	}
+	return instrumentation.ReasonUnknown
 }
 
 func (this *handler) produceMessage(ctx context.Context, topic string, value interface{}, key string, headers ...kafka.Header) {
