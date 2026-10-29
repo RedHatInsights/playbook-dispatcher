@@ -9,7 +9,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/credentials v1.20.9
 	github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs v1.89.3
 	github.com/confluentinc/confluent-kafka-go/v2 v2.16.0
-	github.com/getkin/kin-openapi v0.151.0
+	github.com/getkin/kin-openapi v0.152.0
 	github.com/ghodss/yaml v1.0.0
 	github.com/globocom/echo-prometheus v0.1.2
 	github.com/golang-migrate/migrate/v4 v4.20.1
@@ -17,7 +17,7 @@ require (
 	github.com/labstack/echo/v4 v4.16.0
 	github.com/labstack/gommon v0.5.0
 	github.com/lzap/cloudwatchwriter2 v1.6.0
-	github.com/oapi-codegen/echo-middleware v1.1.0
+	github.com/oapi-codegen/echo-middleware v1.2.1
 	github.com/oapi-codegen/runtime v1.2.0
 	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.44.0
