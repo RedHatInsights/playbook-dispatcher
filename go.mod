@@ -1,6 +1,6 @@
 module playbook-dispatcher
 
-go 1.26.4
+go 1.26.10
 
 require (
 	github.com/RedHatInsights/tenant-utils v1.0.0
@@ -8,7 +8,7 @@ require (
 	github.com/aws/aws-sdk-go-v2 v1.47.3
 	github.com/aws/aws-sdk-go-v2/credentials v1.20.9
 	github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs v1.89.3
-	github.com/confluentinc/confluent-kafka-go/v2 v2.16.0
+	github.com/confluentinc/confluent-kafka-go/v2 v2.16.1
 	github.com/getkin/kin-openapi v0.151.0
 	github.com/ghodss/yaml v1.0.0
 	github.com/globocom/echo-prometheus v0.1.2
