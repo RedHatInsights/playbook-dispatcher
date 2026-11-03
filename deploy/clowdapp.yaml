@@ -267,6 +267,8 @@ objects:
             value: ${LOG_LEVEL}
           - name: DB_SSLMODE
             value: ${DB_SSLMODE}
+          - name: KAFKA_MAX_POLL_INTERVAL_MS
+            value: ${KAFKA_MAX_POLL_INTERVAL_MS}
         resources:
           limits:
             cpu: ${RESPONSE_CONSUMER_CPU_LIMIT}
@@ -445,6 +447,9 @@ parameters:
 
 - name: DB_SSLMODE
   value: verify-full
+
+- name: KAFKA_MAX_POLL_INTERVAL_MS
+  value: '300000'
 
 - name: CLOUD_CONNECTOR_IMPL
   value: impl
