@@ -47,9 +47,9 @@ var _ = Describe("Handler", func() {
 				Size: 128 * 1024 * 1024,
 			}
 
-			err := instance.validateRequest(req)
-			Expect(err).To(HaveOccurred())
-			Expect(failureReason(err)).To(Equal("size_exceeded"))
+			failure := instance.validateRequest(req)
+			Expect(failure).NotTo(BeNil())
+			Expect(failure.reason).To(Equal("size_exceeded"))
 		})
 
 		It("Rejects empty archives", func() {
@@ -57,9 +57,9 @@ var _ = Describe("Handler", func() {
 				Size: 0,
 			}
 
-			err := instance.validateRequest(req)
-			Expect(err).To(HaveOccurred())
-			Expect(failureReason(err)).To(Equal("size_empty"))
+			failure := instance.validateRequest(req)
+			Expect(failure).NotTo(BeNil())
+			Expect(failure.reason).To(Equal("size_empty"))
 		})
 	})
 
@@ -83,9 +83,9 @@ var _ = Describe("Handler", func() {
 
 		DescribeTable("Rejects invalid files",
 			func(requestType string, file string, reason string) {
-				_, err := instance.validateContent(test.TestContext(), requestType, []byte(file))
-				Expect(err).To(HaveOccurred())
-				Expect(failureReason(err)).To(Equal(reason))
+				_, failure := instance.validateContent(test.TestContext(), requestType, []byte(file))
+				Expect(failure).NotTo(BeNil())
+				Expect(failure.reason).To(Equal(reason))
 			},
 			Entry("empty file", "playbook", "", "no_events"),
 			Entry("whitespace-only file", "playbook", "         ", "no_events"),
@@ -102,8 +102,8 @@ var _ = Describe("Handler", func() {
 
 		DescribeTable("Accepts valid runner files",
 			func(requestType string, file string) {
-				events, err := instance.validateContent(test.TestContext(), requestType, []byte(file))
-				Expect(err).ToNot(HaveOccurred())
+				events, failure := instance.validateContent(test.TestContext(), requestType, []byte(file))
+				Expect(failure).To(BeNil())
 				Expect(events.Playbook).ToNot(BeEmpty())
 			},
 
@@ -117,8 +117,8 @@ var _ = Describe("Handler", func() {
 
 		DescribeTable("Accepts valid rhc-sat files",
 			func(requestType string, file string) {
-				events, err := instance.validateContent(test.TestContext(), requestType, []byte(file))
-				Expect(err).ToNot(HaveOccurred())
+				events, failure := instance.validateContent(test.TestContext(), requestType, []byte(file))
+				Expect(failure).To(BeNil())
 				Expect(events.PlaybookSat).To(HaveLen(3))
 				Expect(events.Playbook).To(BeEmpty())
 			},
@@ -140,8 +140,8 @@ var _ = Describe("Handler", func() {
 			{"uuid": "c8347ac2-61d3-4a36-9cbb-c51e14984eee", "counter": 6, "stdout": "\r\nPLAY RECAP *********************************************************************\r\n\u001b[0;32mlocalhost\u001b[0m                  : \u001b[0;32mok=1   \u001b[0m changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   \r\n", "start_line": 5, "end_line": 9, "runner_ident": "test05", "event": "playbook_on_stats", "pid": 1149259, "created": "2021-01-22T14:42:00.009228", "parent_uuid": "d4ae95cf-71fd-4386-8dbf-2bce933ce713", "event_data": {"playbook": "minimal.yml", "playbook_uuid": "d4ae95cf-71fd-4386-8dbf-2bce933ce713", "changed": {}, "dark": {}, "failures": {}, "ignored": {}, "ok": {"localhost": 1}, "processed": {"localhost": 1}, "rescued": {}, "skipped": {}, "artifact_data": {}, "uuid": "c8347ac2-61d3-4a36-9cbb-c51e14984eee"}}
 			`
 
-			events, err := instance.validateContent(test.TestContext(), "playbook", []byte(data))
-			Expect(err).ToNot(HaveOccurred())
+			events, failure := instance.validateContent(test.TestContext(), "playbook", []byte(data))
+			Expect(failure).To(BeNil())
 			Expect(events.Playbook).To(HaveLen(6))
 		})
 
@@ -154,7 +154,7 @@ var _ = Describe("Handler", func() {
 
 				_, err := messageModel.GetCorrelationId(events, playbookSatPayloadHeaderValue)
 				Expect(err).To(HaveOccurred())
-				Expect(failureReason(classifyCorrelationError(err))).To(Equal("correlation_id_missing"))
+				Expect(correlationFailure(err).reason).To(Equal("correlation_id_missing"))
 			})
 
 			It("classifies a correlation id that does not parse", func() {
@@ -170,7 +170,7 @@ var _ = Describe("Handler", func() {
 
 				_, err := messageModel.GetCorrelationId(events, playbookSatPayloadHeaderValue)
 				Expect(err).To(HaveOccurred())
-				Expect(failureReason(classifyCorrelationError(err))).To(Equal("correlation_id_invalid"))
+				Expect(correlationFailure(err).reason).To(Equal("correlation_id_invalid"))
 			})
 		})
 	})
@@ -199,8 +199,8 @@ N/Kl0lVn2BIPxggdj5H4qC/Fpj5qlsQYR2/78+KeyhtLY8GqVf/f9r/t1GTtrtO96erY7OnSdMb6
 
 			content, err := readFile(bytes.NewReader(decoded[0:len]), 10*1024*1024)
 			Expect(err).ToNot(HaveOccurred())
-			events, err := instance.validateContent(test.TestContext(), "playbook", content)
-			Expect(err).ToNot(HaveOccurred())
+			events, failure := instance.validateContent(test.TestContext(), "playbook", content)
+			Expect(failure).To(BeNil())
 			Expect(events.Playbook).To(HaveLen(6))
 		})
 
@@ -230,8 +230,8 @@ fdqPl7IwpOzJmfqrZ1duqTJ62NbTeDDPjOvQ6F70PsJi4KXiLSqngthpIkJLtF3l
 
 			content, err := readFile(bytes.NewReader(decoded[0:len]), 10*1024*1024)
 			Expect(err).ToNot(HaveOccurred())
-			events, err := instance.validateContent(test.TestContext(), "playbook", content)
-			Expect(err).ToNot(HaveOccurred())
+			events, failure := instance.validateContent(test.TestContext(), "playbook", content)
+			Expect(failure).To(BeNil())
 			Expect(events.Playbook).To(HaveLen(6))
 		})
 	})

@@ -16,8 +16,8 @@ const (
 	playbookSat     = "playbook-sat"
 
 	// Failure reasons are a fixed set so validator_failure_total can be
-	// compared over time. The raw error stays in the log. ReasonUnknown is
-	// the unclassified fallback; handler.failureReason says what to do when it climbs.
+	// compared over time. The raw error stays in the log. Add a new reason
+	// here and return it from the check in the validator handler.
 	ReasonSizeEmpty            = "size_empty"
 	ReasonSizeExceeded         = "size_exceeded"
 	ReasonSchema               = "schema"
@@ -25,7 +25,6 @@ const (
 	ReasonNoEvents             = "no_events"
 	ReasonCorrelationIDMissing = "correlation_id_missing"
 	ReasonCorrelationIDInvalid = "correlation_id_invalid"
-	ReasonUnknown              = "unknown"
 )
 
 var failureReasons = []string{
@@ -36,7 +35,6 @@ var failureReasons = []string{
 	ReasonNoEvents,
 	ReasonCorrelationIDMissing,
 	ReasonCorrelationIDInvalid,
-	ReasonUnknown,
 }
 
 var (
