@@ -48,6 +48,7 @@ func NewConsumer(ctx context.Context, config *viper.Viper, topic string) (*kafka
 		"group.id":                 config.GetString("kafka.group.id"),
 		"auto.offset.reset":        config.GetString("kafka.auto.offset.reset"),
 		"auto.commit.interval.ms":  config.GetInt("kafka.auto.commit.interval.ms"),
+		"max.poll.interval.ms":     config.GetInt("kafka.max.poll.interval.ms"),
 		"go.logs.channel.enable":   true,
 		"allow.auto.create.topics": true,
 	}

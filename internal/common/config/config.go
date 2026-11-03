@@ -52,6 +52,7 @@ func Get() *viper.Viper {
 	options.SetDefault("kafka.auto.offset.reset", "latest")
 	options.SetDefault("kafka.auto.commit.interval.ms", 5000)
 	options.SetDefault("kafka.request.required.acks", -1) // -1 == "all"
+	options.SetDefault("kafka.max.poll.interval.ms", 300000)
 	options.SetDefault("kafka.message.send.max.retries", 15)
 	options.SetDefault("kafka.retry.backoff.ms", 100)
 
