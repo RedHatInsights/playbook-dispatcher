@@ -5,13 +5,14 @@ import (
 	"errors"
 	"testing"
 
+	"playbook-dispatcher/internal/common/unleash/features"
+
 	kesselv2 "github.com/project-kessel/kessel-sdk-go/kessel/inventory/v1beta2"
 	"github.com/redhatinsights/platform-go-middlewares/v2/identity"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 	"google.golang.org/genproto/googleapis/rpc/status"
 	"google.golang.org/grpc"
-	"playbook-dispatcher/internal/common/unleash/features"
 )
 
 // mockKesselInventoryService is a mock implementation of the Kessel inventory service
@@ -73,6 +74,14 @@ func (m *mockKesselInventoryService) CheckSelfBulk(ctx context.Context, in *kess
 }
 
 func (m *mockKesselInventoryService) StreamedListSubjects(ctx context.Context, in *kesselv2.StreamedListSubjectsRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[kesselv2.StreamedListSubjectsResponse], error) {
+	return nil, errors.New("not implemented")
+}
+
+func (m *mockKesselInventoryService) AddResourceRelationships(ctx context.Context, in *kesselv2.AddResourceRelationshipsRequest, opts ...grpc.CallOption) (*kesselv2.AddResourceRelationshipsResponse, error) {
+	return nil, errors.New("not implemented")
+}
+
+func (m *mockKesselInventoryService) RemoveResourceRelationships(ctx context.Context, in *kesselv2.RemoveResourceRelationshipsRequest, opts ...grpc.CallOption) (*kesselv2.RemoveResourceRelationshipsResponse, error) {
 	return nil, errors.New("not implemented")
 }
 
