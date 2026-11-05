@@ -1,6 +1,6 @@
 module playbook-dispatcher
 
-go 1.26.4
+go 1.26.10
 
 require (
 	github.com/RedHatInsights/tenant-utils v1.0.0
@@ -22,7 +22,7 @@ require (
 	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.44.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
-	github.com/project-kessel/kessel-sdk-go v1.13.0
+	github.com/project-kessel/kessel-sdk-go v1.13.2
 	github.com/prometheus/client_golang v1.25.0
 	github.com/qri-io/jsonschema v0.2.1
 	github.com/redhatinsights/app-common-go v1.7.0

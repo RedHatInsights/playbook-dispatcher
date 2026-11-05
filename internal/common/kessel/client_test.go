@@ -235,6 +235,12 @@ func (m *mockKesselInventoryServiceMinimal) StreamedListObjects(ctx context.Cont
 func (m *mockKesselInventoryServiceMinimal) StreamedListSubjects(ctx context.Context, in *kesselv2.StreamedListSubjectsRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[kesselv2.StreamedListSubjectsResponse], error) {
 	return nil, nil
 }
+func (m *mockKesselInventoryServiceMinimal) AddResourceRelationships(ctx context.Context, in *kesselv2.AddResourceRelationshipsRequest, opts ...grpc.CallOption) (*kesselv2.AddResourceRelationshipsResponse, error) {
+	return nil, nil
+}
+func (m *mockKesselInventoryServiceMinimal) RemoveResourceRelationships(ctx context.Context, in *kesselv2.RemoveResourceRelationshipsRequest, opts ...grpc.CallOption) (*kesselv2.RemoveResourceRelationshipsResponse, error) {
+	return nil, nil
+}
 
 // Verify mockKesselInventoryServiceMinimal implements the interface
 var _ kesselv2.KesselInventoryServiceClient = (*mockKesselInventoryServiceMinimal)(nil)
