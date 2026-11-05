@@ -157,7 +157,7 @@ func (this *handler) validationSteps(
 	this.produceMessage(ctx, dispatcherResponseTopic, dispatcherResponse, correlationId.String(), headers...)
 }
 
-func (this *handler) validateRequest(request *messageModel.IngressValidationRequest) *rejection {
+func (h *handler) validateRequest(request *messageModel.IngressValidationRequest) *rejection {
 	if request.Size == 0 {
 		return rejected(instrumentation.ReasonSizeEmpty, fmt.Errorf("rejecting payload due to file size: %d", request.Size))
 	}
@@ -169,7 +169,7 @@ func (this *handler) validateRequest(request *messageModel.IngressValidationRequ
 	return nil
 }
 
-func (this *handler) validateContent(ctx context.Context, requestType string, data []byte) (events *messageModel.ValidatedMessages, failure *rejection) {
+func (h *handler) validateContent(ctx context.Context, requestType string, data []byte) (events *messageModel.ValidatedMessages, failure *rejection) {
 	events = &messageModel.ValidatedMessages{}
 	events.PlaybookType = requestType
 
@@ -194,7 +194,7 @@ func (this *handler) validateContent(ctx context.Context, requestType string, da
 		}
 
 		if requestType == playbookSatPayloadHeaderValue {
-			validatedEvent, err := validateSatRunResponseWithSchema(ctx, this.schemas[1], line)
+			validatedEvent, err := validateSatRunResponseWithSchema(ctx, h.schemas[1], line)
 			if err != nil {
 				return nil, rejected(instrumentation.ReasonSchema, err)
 			}
@@ -221,7 +221,7 @@ func (this *handler) validateContent(ctx context.Context, requestType string, da
 			events.PlaybookSat = append(events.PlaybookSat, *validatedEvent)
 
 		} else {
-			validatedEvent, err := validateRunResponseWithSchema(ctx, this.schemas[0], line)
+			validatedEvent, err := validateRunResponseWithSchema(ctx, h.schemas[0], line)
 			if err != nil {
 				return nil, rejected(instrumentation.ReasonSchema, err)
 			}
@@ -297,14 +297,14 @@ func validateSatRunResponseWithSchema(ctx context.Context, schema *jsonschema.Sc
 	return event, nil
 }
 
-func (this *handler) validationFailed(ctx context.Context, failure *rejection, requestType string, request *messageModel.IngressValidationRequest) {
+func (h *handler) validationFailed(ctx context.Context, failure *rejection, requestType string, request *messageModel.IngressValidationRequest) {
 	response := &messageModel.IngressValidationResponse{
 		IngressValidationRequest: *request,
 		Validation:               validationFailure,
 	}
 
 	instrumentation.ValidationFailed(ctx, failure, requestType, failure.reason)
-	this.produceMessage(ctx, ingressResponseTopic, response, response.Account)
+	h.produceMessage(ctx, ingressResponseTopic, response, response.Account)
 }
 
 // rejection is returned by the check that already knows why a payload was rejected.
