@@ -3,6 +3,7 @@ package validator
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"playbook-dispatcher/internal/common/config"
 	"playbook-dispatcher/internal/common/constants"
@@ -80,8 +81,8 @@ func (this *handler) onMessage(ctx context.Context, msg *kafka.Message) {
 		return
 	}
 
-	if err := this.validateRequest(&request); err != nil {
-		this.validationFailed(ctx, err, requestType, &request)
+	if failure := this.validateRequest(&request); failure != nil {
+		this.validationFailed(ctx, failure, requestType, &request)
 		return
 	}
 
@@ -108,16 +109,16 @@ func (this *handler) validationSteps(
 ) {
 	request, requestType, ctx, data := &msg.request, msg.requestType, msg.ctx, msg.data
 
-	events, err := this.validateContent(ctx, requestType, data)
-	if err != nil {
-		this.validationFailed(ctx, err, requestType, request)
+	events, failure := this.validateContent(ctx, requestType, data)
+	if failure != nil {
+		this.validationFailed(ctx, failure, requestType, request)
 		utils.GetLogFromContext(ctx).Debugw("Invalid payload details", "data", string(data))
 		return
 	}
 
 	correlationId, err := messageModel.GetCorrelationId(*events, playbookSatPayloadHeaderValue)
 	if err != nil {
-		this.validationFailed(ctx, err, requestType, request)
+		this.validationFailed(ctx, correlationFailure(err), requestType, request)
 		return
 	}
 
@@ -156,15 +157,19 @@ func (this *handler) validationSteps(
 	this.produceMessage(ctx, dispatcherResponseTopic, dispatcherResponse, correlationId.String(), headers...)
 }
 
-func (this *handler) validateRequest(request *messageModel.IngressValidationRequest) (err error) {
-	if request.Size == 0 || request.Size > cfg.GetInt64("artifact.max.size") {
-		return fmt.Errorf("Rejecting payload due to file size: %d", request.Size)
+func (h *handler) validateRequest(request *messageModel.IngressValidationRequest) *rejection {
+	if request.Size == 0 {
+		return rejected(instrumentation.ReasonSizeEmpty, fmt.Errorf("rejecting payload due to file size: %d", request.Size))
 	}
 
-	return
+	if request.Size > cfg.GetInt64("artifact.max.size") {
+		return rejected(instrumentation.ReasonSizeExceeded, fmt.Errorf("rejecting payload due to file size: %d", request.Size))
+	}
+
+	return nil
 }
 
-func (this *handler) validateContent(ctx context.Context, requestType string, data []byte) (events *messageModel.ValidatedMessages, err error) {
+func (h *handler) validateContent(ctx context.Context, requestType string, data []byte) (events *messageModel.ValidatedMessages, failure *rejection) {
 	events = &messageModel.ValidatedMessages{}
 	events.PlaybookType = requestType
 
@@ -189,14 +194,13 @@ func (this *handler) validateContent(ctx context.Context, requestType string, da
 		}
 
 		if requestType == playbookSatPayloadHeaderValue {
-			validatedEvent, err := validateSatRunResponseWithSchema(ctx, this.schemas[1], line)
-
-			if err == nil {
-				err = validateSatHostUUID(validatedEvent)
+			validatedEvent, err := validateSatRunResponseWithSchema(ctx, h.schemas[1], line)
+			if err != nil {
+				return nil, rejected(instrumentation.ReasonSchema, err)
 			}
 
-			if err != nil {
-				return nil, err
+			if err = validateSatHostUUID(validatedEvent); err != nil {
+				return nil, rejected(instrumentation.ReasonHostUUID, err)
 			}
 
 			if truncateData {
@@ -217,9 +221,9 @@ func (this *handler) validateContent(ctx context.Context, requestType string, da
 			events.PlaybookSat = append(events.PlaybookSat, *validatedEvent)
 
 		} else {
-			validatedEvent, err := validateRunResponseWithSchema(ctx, this.schemas[0], line)
+			validatedEvent, err := validateRunResponseWithSchema(ctx, h.schemas[0], line)
 			if err != nil {
-				return nil, err
+				return nil, rejected(instrumentation.ReasonSchema, err)
 			}
 
 			if truncateData {
@@ -241,7 +245,7 @@ func (this *handler) validateContent(ctx context.Context, requestType string, da
 	}
 
 	if len(events.PlaybookSat) == 0 && len(events.Playbook) == 0 {
-		return nil, fmt.Errorf("No events found")
+		return nil, rejected(instrumentation.ReasonNoEvents, fmt.Errorf("no events found"))
 	}
 
 	return events, nil
@@ -259,11 +263,11 @@ func validateSatHostUUID(event *messageModel.PlaybookSatRunResponseMessageYamlEv
 
 func validateRunResponseWithSchema(ctx context.Context, schema *jsonschema.Schema, line string) (validatedEvent *messageModel.PlaybookRunResponseMessageYamlEventsElem, err error) {
 
-	errors, parserError := schema.ValidateBytes(ctx, []byte(line))
+	schemaErrors, parserError := schema.ValidateBytes(ctx, []byte(line))
 	if parserError != nil {
 		return nil, parserError
-	} else if len(errors) > 0 {
-		return nil, errors[0]
+	} else if len(schemaErrors) > 0 {
+		return nil, schemaErrors[0]
 	}
 
 	event := &messageModel.PlaybookRunResponseMessageYamlEventsElem{}
@@ -277,11 +281,11 @@ func validateRunResponseWithSchema(ctx context.Context, schema *jsonschema.Schem
 
 func validateSatRunResponseWithSchema(ctx context.Context, schema *jsonschema.Schema, line string) (validatedEvent *messageModel.PlaybookSatRunResponseMessageYamlEventsElem, err error) {
 
-	errors, parserError := schema.ValidateBytes(ctx, []byte(line))
+	schemaErrors, parserError := schema.ValidateBytes(ctx, []byte(line))
 	if parserError != nil {
 		return nil, parserError
-	} else if len(errors) > 0 {
-		return nil, errors[0]
+	} else if len(schemaErrors) > 0 {
+		return nil, schemaErrors[0]
 	}
 
 	event := &messageModel.PlaybookSatRunResponseMessageYamlEventsElem{}
@@ -293,14 +297,42 @@ func validateSatRunResponseWithSchema(ctx context.Context, schema *jsonschema.Sc
 	return event, nil
 }
 
-func (this *handler) validationFailed(ctx context.Context, err error, requestType string, request *messageModel.IngressValidationRequest) {
+func (h *handler) validationFailed(ctx context.Context, failure *rejection, requestType string, request *messageModel.IngressValidationRequest) {
 	response := &messageModel.IngressValidationResponse{
 		IngressValidationRequest: *request,
 		Validation:               validationFailure,
 	}
 
-	instrumentation.ValidationFailed(ctx, err, requestType)
-	this.produceMessage(ctx, ingressResponseTopic, response, response.Account)
+	instrumentation.ValidationFailed(ctx, failure, requestType, failure.reason)
+	h.produceMessage(ctx, ingressResponseTopic, response, response.Account)
+}
+
+// rejection is returned by the check that already knows why a payload was rejected.
+// The reason is the metric label. The cause stays in the log.
+type rejection struct {
+	reason string
+	cause  error
+}
+
+func (e *rejection) Error() string {
+	return e.cause.Error()
+}
+
+func (e *rejection) Unwrap() error {
+	return e.cause
+}
+
+func rejected(reason string, cause error) *rejection {
+	return &rejection{reason: reason, cause: cause}
+}
+
+// correlationFailure maps GetCorrelationId's plain error onto a rejection.
+// That helper does not know about metric labels.
+func correlationFailure(err error) *rejection {
+	if errors.Is(err, messageModel.ErrCorrelationIDNotFound) {
+		return rejected(instrumentation.ReasonCorrelationIDMissing, err)
+	}
+	return rejected(instrumentation.ReasonCorrelationIDInvalid, err)
 }
 
 func (this *handler) produceMessage(ctx context.Context, topic string, value interface{}, key string, headers ...kafka.Header) {

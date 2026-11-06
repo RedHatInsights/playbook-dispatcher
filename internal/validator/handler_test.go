@@ -47,8 +47,9 @@ var _ = Describe("Handler", func() {
 				Size: 128 * 1024 * 1024,
 			}
 
-			err := instance.validateRequest(req)
-			Expect(err).To(HaveOccurred())
+			failure := instance.validateRequest(req)
+			Expect(failure).NotTo(BeNil())
+			Expect(failure.reason).To(Equal("size_exceeded"))
 		})
 
 		It("Rejects empty archives", func() {
@@ -56,8 +57,9 @@ var _ = Describe("Handler", func() {
 				Size: 0,
 			}
 
-			err := instance.validateRequest(req)
-			Expect(err).To(HaveOccurred())
+			failure := instance.validateRequest(req)
+			Expect(failure).NotTo(BeNil())
+			Expect(failure.reason).To(Equal("size_empty"))
 		})
 	})
 
@@ -80,27 +82,28 @@ var _ = Describe("Handler", func() {
 	Describe("Validation", func() {
 
 		DescribeTable("Rejects invalid files",
-			func(requestType string, file string) {
-				_, err := instance.validateContent(test.TestContext(), requestType, []byte(file))
-				Expect(err).To(HaveOccurred())
+			func(requestType string, file string, reason string) {
+				_, failure := instance.validateContent(test.TestContext(), requestType, []byte(file))
+				Expect(failure).NotTo(BeNil())
+				Expect(failure.reason).To(Equal(reason))
 			},
-			Entry("empty file", "playbook", ""),
-			Entry("whitespace-only file", "playbook", "         "),
-			Entry("newline-only file", "playbook", "\n\n\n\n"),
-			Entry("invalid JSON (trailing braces)", "playbook", `{"event": "playbook_on_start", "uuid": "60049c81-4f4b-41a0-bcf4-84399bf1b693", "counter": 0, "stdout": "", "start_line": 0, "end_line": 0}}`),
-			Entry("missing uuid", "playbook", `{"event": "playbook_on_start", "counter": 0, "stdout": "", "start_line": 0, "end_line": 0}`),
+			Entry("empty file", "playbook", "", "no_events"),
+			Entry("whitespace-only file", "playbook", "         ", "no_events"),
+			Entry("newline-only file", "playbook", "\n\n\n\n", "no_events"),
+			Entry("invalid JSON (trailing braces)", "playbook", `{"event": "playbook_on_start", "uuid": "60049c81-4f4b-41a0-bcf4-84399bf1b693", "counter": 0, "stdout": "", "start_line": 0, "end_line": 0}}`, "schema"),
+			Entry("missing uuid", "playbook", `{"event": "playbook_on_start", "counter": 0, "stdout": "", "start_line": 0, "end_line": 0}`, "schema"),
 
-			Entry("rhc-sat newline-only file", "playbook-sat", "\n\n\n\n"),
-			Entry("missing rhc-sat uuid", "playbook-sat", `{"type" : "playbook_run_update", "version": 3}`),
-			Entry("rhc-sat invalid JSON", "playbook-sat", `{"type" : "playbook_run_update", "version": 3, "correlation_id": "0465783c-2e36-4e57-8514-c2cb962d323a"}}`),
-			Entry("rhc-sat invalid type", "playbook-sat", `{"type" : "invalid_type", "version": 3, "correlation_id": "0465783c-2e36-4e57-8514-c2cb962d323a"}`),
-			Entry("rhc-sat invalid host uuid", "playbook-sat", `{"type": "playbook_run_update", "version": 3, "correlation_id": "0465783c-2e36-4e57-8514-c2cb962d323a", "host": "invalid.uuid", "status": "success", "connection_code": 0, "execution_code": 0}`),
+			Entry("rhc-sat newline-only file", "playbook-sat", "\n\n\n\n", "no_events"),
+			Entry("missing rhc-sat uuid", "playbook-sat", `{"type" : "playbook_run_update", "version": 3}`, "schema"),
+			Entry("rhc-sat invalid JSON", "playbook-sat", `{"type" : "playbook_run_update", "version": 3, "correlation_id": "0465783c-2e36-4e57-8514-c2cb962d323a"}}`, "schema"),
+			Entry("rhc-sat invalid type", "playbook-sat", `{"type" : "invalid_type", "version": 3, "correlation_id": "0465783c-2e36-4e57-8514-c2cb962d323a"}`, "schema"),
+			Entry("rhc-sat invalid host uuid", "playbook-sat", `{"type": "playbook_run_update", "version": 3, "correlation_id": "0465783c-2e36-4e57-8514-c2cb962d323a", "host": "invalid.uuid", "status": "success", "connection_code": 0, "execution_code": 0}`, "host_uuid"),
 		)
 
 		DescribeTable("Accepts valid runner files",
 			func(requestType string, file string) {
-				events, err := instance.validateContent(test.TestContext(), requestType, []byte(file))
-				Expect(err).ToNot(HaveOccurred())
+				events, failure := instance.validateContent(test.TestContext(), requestType, []byte(file))
+				Expect(failure).To(BeNil())
 				Expect(events.Playbook).ToNot(BeEmpty())
 			},
 
@@ -114,8 +117,8 @@ var _ = Describe("Handler", func() {
 
 		DescribeTable("Accepts valid rhc-sat files",
 			func(requestType string, file string) {
-				events, err := instance.validateContent(test.TestContext(), requestType, []byte(file))
-				Expect(err).ToNot(HaveOccurred())
+				events, failure := instance.validateContent(test.TestContext(), requestType, []byte(file))
+				Expect(failure).To(BeNil())
 				Expect(events.PlaybookSat).To(HaveLen(3))
 				Expect(events.Playbook).To(BeEmpty())
 			},
@@ -137,9 +140,38 @@ var _ = Describe("Handler", func() {
 			{"uuid": "c8347ac2-61d3-4a36-9cbb-c51e14984eee", "counter": 6, "stdout": "\r\nPLAY RECAP *********************************************************************\r\n\u001b[0;32mlocalhost\u001b[0m                  : \u001b[0;32mok=1   \u001b[0m changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   \r\n", "start_line": 5, "end_line": 9, "runner_ident": "test05", "event": "playbook_on_stats", "pid": 1149259, "created": "2021-01-22T14:42:00.009228", "parent_uuid": "d4ae95cf-71fd-4386-8dbf-2bce933ce713", "event_data": {"playbook": "minimal.yml", "playbook_uuid": "d4ae95cf-71fd-4386-8dbf-2bce933ce713", "changed": {}, "dark": {}, "failures": {}, "ignored": {}, "ok": {"localhost": 1}, "processed": {"localhost": 1}, "rescued": {}, "skipped": {}, "artifact_data": {}, "uuid": "c8347ac2-61d3-4a36-9cbb-c51e14984eee"}}
 			`
 
-			events, err := instance.validateContent(test.TestContext(), "playbook", []byte(data))
-			Expect(err).ToNot(HaveOccurred())
+			events, failure := instance.validateContent(test.TestContext(), "playbook", []byte(data))
+			Expect(failure).To(BeNil())
 			Expect(events.Playbook).To(HaveLen(6))
+		})
+
+		Describe("Correlation id", func() {
+			It("classifies a payload with no dispatcher correlation id", func() {
+				events := messageModel.ValidatedMessages{
+					PlaybookType: playbookPayloadHeaderValue,
+					Playbook:     []messageModel.PlaybookRunResponseMessageYamlEventsElem{{}},
+				}
+
+				_, err := messageModel.GetCorrelationId(events, playbookSatPayloadHeaderValue)
+				Expect(err).To(HaveOccurred())
+				Expect(correlationFailure(err).reason).To(Equal("correlation_id_missing"))
+			})
+
+			It("classifies a correlation id that does not parse", func() {
+				id := "not-a-uuid"
+				events := messageModel.ValidatedMessages{
+					PlaybookType: playbookPayloadHeaderValue,
+					Playbook: []messageModel.PlaybookRunResponseMessageYamlEventsElem{{
+						EventData: &messageModel.PlaybookRunResponseMessageYamlEventsElemEventData{
+							CrcDispatcherCorrelationId: &id,
+						},
+					}},
+				}
+
+				_, err := messageModel.GetCorrelationId(events, playbookSatPayloadHeaderValue)
+				Expect(err).To(HaveOccurred())
+				Expect(correlationFailure(err).reason).To(Equal("correlation_id_invalid"))
+			})
 		})
 	})
 
@@ -167,8 +199,8 @@ N/Kl0lVn2BIPxggdj5H4qC/Fpj5qlsQYR2/78+KeyhtLY8GqVf/f9r/t1GTtrtO96erY7OnSdMb6
 
 			content, err := readFile(bytes.NewReader(decoded[0:len]), 10*1024*1024)
 			Expect(err).ToNot(HaveOccurred())
-			events, err := instance.validateContent(test.TestContext(), "playbook", content)
-			Expect(err).ToNot(HaveOccurred())
+			events, failure := instance.validateContent(test.TestContext(), "playbook", content)
+			Expect(failure).To(BeNil())
 			Expect(events.Playbook).To(HaveLen(6))
 		})
 
@@ -198,8 +230,8 @@ fdqPl7IwpOzJmfqrZ1duqTJ62NbTeDDPjOvQ6F70PsJi4KXiLSqngthpIkJLtF3l
 
 			content, err := readFile(bytes.NewReader(decoded[0:len]), 10*1024*1024)
 			Expect(err).ToNot(HaveOccurred())
-			events, err := instance.validateContent(test.TestContext(), "playbook", content)
-			Expect(err).ToNot(HaveOccurred())
+			events, failure := instance.validateContent(test.TestContext(), "playbook", content)
+			Expect(failure).To(BeNil())
 			Expect(events.Playbook).To(HaveLen(6))
 		})
 	})
