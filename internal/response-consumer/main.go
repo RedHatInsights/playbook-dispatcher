@@ -53,7 +53,7 @@ func Start(
 	headerPredicate := kafka.FilterByHeaderPredicate(utils.GetLogFromContext(ctx), requestTypeHeader, runnerMessageHeaderValue, satMessageHeaderValue)
 	validationPredicate := kafka.SchemaValidationPredicate(ctx, requestTypeHeader, schemaMapper)
 
-	start := kafka.NewConsumerEventLoop(ctx, consumer, headerPredicate, validationPredicate, handler.onMessage, errors)
+	start := kafka.NewConsumerEventLoop(ctx, consumer, headerPredicate, validationPredicate, handler.onMessage, errors, cfg)
 
 	go func() {
 		defer wg.Done()
