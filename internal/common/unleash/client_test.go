@@ -3,7 +3,7 @@ package unleash
 import (
 	"testing"
 
-	ucontext "github.com/Unleash/unleash-go-sdk/v5/context"
+	ucontext "github.com/Unleash/unleash-go-sdk/v6/context"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
