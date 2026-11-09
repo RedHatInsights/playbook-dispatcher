@@ -3,20 +3,196 @@
   "extends": [
     "github>RedHatInsights/konflux-pipelines//renovate/foreman_satellite/renovate.json"
   ],
+  "updateNotScheduled": false,
+  "prConcurrentLimit": 10,
   "tekton": {
-    "schedule": ["at any time"]
+    "schedule": [
+      "at any time"
+    ]
+  },
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": [
+      "* * 1 * *"
+    ]
   },
   "vulnerabilityAlerts": {
-    "enabled": true
+    "enabled": true,
+    "labels": [
+      "SECURITY"
+    ]
   },
   "osvVulnerabilityAlerts": true,
   "packageRules": [
     {
-      "description": "Automerge Tekton pipeline updates on master",
-      "matchBaseBranches": ["master"],
-      "matchManagers": ["tekton"],
+      "description": "Automerge Tekton pipeline updates on master as soon as they publish.",
+      "matchBaseBranches": [
+        "master"
+      ],
+      "matchManagers": [
+        "tekton"
+      ],
+      "schedule": [
+        "at any time"
+      ],
       "automerge": true,
       "autoApprove": true
+    },
+    {
+      "description": "oapi-codegen and speakeasy fight the replace pins in go.mod. Routine bumps stay closed; the security rule below re-opens CVEs.",
+      "matchBaseBranches": [
+        "master",
+        "main"
+      ],
+      "matchPackageNames": [
+        "github.com/oapi-codegen/**",
+        "github.com/speakeasy-api/**"
+      ],
+      "matchJsonata": [
+        "$not($exists(isVulnerabilityAlert)) or isVulnerabilityAlert = false"
+      ],
+      "enabled": false
+    },
+    {
+      "description": "One non-major maintenance pull request on the 1st (UTC). Tekton, release tags, Kessel, and the pinned modules are excluded.",
+      "matchBaseBranches": [
+        "master",
+        "main"
+      ],
+      "matchManagers": [
+        "!tekton"
+      ],
+      "matchUpdateTypes": [
+        "minor",
+        "patch",
+        "pin",
+        "digest"
+      ],
+      "matchPackageNames": [
+        "*",
+        "!registry.redhat.io/amq-streams/**",
+        "!version.kafka",
+        "!github.com/project-kessel/**",
+        "!github.com/oapi-codegen/**",
+        "!github.com/speakeasy-api/**"
+      ],
+      "matchJsonata": [
+        "$not($exists(isVulnerabilityAlert)) or isVulnerabilityAlert = false"
+      ],
+      "groupName": "monthly maintenance",
+      "groupSlug": "monthly-maintenance",
+      "schedule": [
+        "* * 1 * *"
+      ],
+      "addLabels": [
+        "dependencies"
+      ]
+    },
+    {
+      "description": "Majors stay one pull request each, and only refresh on the 1st, so a breaking Actions or Go bump cannot take the monthly rollup down.",
+      "matchBaseBranches": [
+        "master",
+        "main"
+      ],
+      "matchManagers": [
+        "!tekton"
+      ],
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "matchPackageNames": [
+        "*",
+        "!registry.redhat.io/amq-streams/**",
+        "!version.kafka",
+        "!github.com/project-kessel/**",
+        "!github.com/oapi-codegen/**",
+        "!github.com/speakeasy-api/**"
+      ],
+      "matchJsonata": [
+        "$not($exists(isVulnerabilityAlert)) or isVulnerabilityAlert = false"
+      ],
+      "schedule": [
+        "* * 1 * *"
+      ],
+      "addLabels": [
+        "dependencies"
+      ]
+    },
+    {
+      "description": "AMQ Streams image tags and the Kafka property they track. They publish on their own calendar and have been about one pull request a month.",
+      "matchBaseBranches": [
+        "master",
+        "main"
+      ],
+      "matchPackageNames": [
+        "registry.redhat.io/amq-streams/**",
+        "version.kafka"
+      ],
+      "matchJsonata": [
+        "$not($exists(isVulnerabilityAlert)) or isVulnerabilityAlert = false"
+      ],
+      "schedule": [
+        "at any time"
+      ],
+      "addLabels": [
+        "dependencies"
+      ],
+      "prPriority": 5
+    },
+    {
+      "description": "Kessel SDK releases are real tags. Open them when they exist.",
+      "matchBaseBranches": [
+        "master",
+        "main"
+      ],
+      "matchPackageNames": [
+        "github.com/project-kessel/kessel-sdk-go"
+      ],
+      "matchJsonata": [
+        "$not($exists(isVulnerabilityAlert)) or isVulnerabilityAlert = false"
+      ],
+      "schedule": [
+        "at any time"
+      ],
+      "addLabels": [
+        "dependencies"
+      ],
+      "prPriority": 5
+    },
+    {
+      "description": "inventory-api and inventory-client-go track git commits, not releases. April 2026 opened eight digest pull requests. Weekly keeps that inside seven days.",
+      "matchBaseBranches": [
+        "master",
+        "main"
+      ],
+      "matchPackageNames": [
+        "github.com/project-kessel/inventory-api",
+        "github.com/project-kessel/inventory-client-go"
+      ],
+      "matchJsonata": [
+        "$not($exists(isVulnerabilityAlert)) or isVulnerabilityAlert = false"
+      ],
+      "schedule": [
+        "* * * * 1"
+      ],
+      "addLabels": [
+        "dependencies"
+      ],
+      "prPriority": 5
+    },
+    {
+      "description": "CVE and OSV fixes stay immediate, ungrouped, labeled, and allowed even for the pinned modules. Vulnerability alerts already skip schedule and minimumReleaseAge.",
+      "matchJsonata": [
+        "$exists(isVulnerabilityAlert) and isVulnerabilityAlert = true"
+      ],
+      "enabled": true,
+      "schedule": [
+        "at any time"
+      ],
+      "addLabels": [
+        "SECURITY"
+      ],
+      "prPriority": 10
     }
   ]
 }
