@@ -169,6 +169,9 @@ parameters:
     value: '1'
   - name: IQE_NETLOG
     value: '1'
+  - name: NAME_STUB
+    value: ''
+    required: true
   - name: IQE_LIMITS_CPU
     value: '1.5'
   - name: IQE_LIMITS_MEMORY
