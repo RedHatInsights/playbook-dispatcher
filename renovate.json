@@ -39,14 +39,15 @@
       "autoApprove": true
     },
     {
-      "description": "oapi-codegen and speakeasy fight the replace pins in go.mod. Routine bumps stay closed; the security rule below re-opens CVEs.",
+      "description": "oapi-codegen, speakeasy, and getkin. Routine bumps stay closed; the security rule below re-opens CVEs. oapi-codegen and speakeasy fight the replace pins in go.mod, and getkin/kin-openapi bumps have been breaking.",
       "matchBaseBranches": [
         "master",
         "main"
       ],
       "matchPackageNames": [
         "github.com/oapi-codegen/**",
-        "github.com/speakeasy-api/**"
+        "github.com/speakeasy-api/**",
+        "github.com/getkin/**"
       ],
       "matchJsonata": [
         "$not($exists(isVulnerabilityAlert)) or isVulnerabilityAlert = false"
@@ -74,7 +75,8 @@
         "!version.kafka",
         "!github.com/project-kessel/**",
         "!github.com/oapi-codegen/**",
-        "!github.com/speakeasy-api/**"
+        "!github.com/speakeasy-api/**",
+        "!github.com/getkin/**"
       ],
       "matchJsonata": [
         "$not($exists(isVulnerabilityAlert)) or isVulnerabilityAlert = false"
@@ -83,9 +85,6 @@
       "groupSlug": "monthly-maintenance",
       "schedule": [
         "* * 1 * *"
-      ],
-      "addLabels": [
-        "dependencies"
       ]
     },
     {
@@ -106,16 +105,14 @@
         "!version.kafka",
         "!github.com/project-kessel/**",
         "!github.com/oapi-codegen/**",
-        "!github.com/speakeasy-api/**"
+        "!github.com/speakeasy-api/**",
+        "!github.com/getkin/**"
       ],
       "matchJsonata": [
         "$not($exists(isVulnerabilityAlert)) or isVulnerabilityAlert = false"
       ],
       "schedule": [
         "* * 1 * *"
-      ],
-      "addLabels": [
-        "dependencies"
       ]
     },
     {
@@ -134,9 +131,6 @@
       "schedule": [
         "at any time"
       ],
-      "addLabels": [
-        "dependencies"
-      ],
       "prPriority": 5
     },
     {
@@ -153,9 +147,6 @@
       ],
       "schedule": [
         "at any time"
-      ],
-      "addLabels": [
-        "dependencies"
       ],
       "prPriority": 5
     },
@@ -175,10 +166,16 @@
       "schedule": [
         "* * * * 1"
       ],
+      "prPriority": 5
+    },
+    {
+      "description": "Label every non-security update, including Tekton, lockfile maintenance, the monthly rollup, and the faster package rules.",
+      "matchJsonata": [
+        "$not($exists(isVulnerabilityAlert)) or isVulnerabilityAlert = false"
+      ],
       "addLabels": [
         "dependencies"
-      ],
-      "prPriority": 5
+      ]
     },
     {
       "description": "CVE and OSV fixes stay immediate, ungrouped, labeled, and allowed even for the pinned modules. Vulnerability alerts already skip schedule and minimumReleaseAge.",
