@@ -1,12 +1,12 @@
 apiVersion: template.openshift.io/v1
 kind: Template
 metadata:
-  name: 'playbook-dispatcher-e2e-tests-schedule'
+  name: playbook-dispatcher-test-cronjob
 objects:
   - apiVersion: batch/v1
     kind: CronJob
     metadata:
-      name: 'playbook-dispatcher-e2e-tests-schedule'
+      name: '${NAME_STUB}'
       annotations:
         ignore-check.kube-linter.io/no-liveness-probe: probes not required on Job pods
         ignore-check.kube-linter.io/no-readiness-probe: probes not required on Job pods
@@ -171,6 +171,7 @@ parameters:
     value: '1'
   - name: NAME_STUB
     value: ''
+    required: true
   - name: IQE_LIMITS_CPU
     value: '1.5'
   - name: IQE_LIMITS_MEMORY
