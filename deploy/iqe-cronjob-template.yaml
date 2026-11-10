@@ -1,7 +1,7 @@
 apiVersion: template.openshift.io/v1
 kind: Template
 metadata:
-  name: '${NAME_STUB}'
+  name: playbook-dispatcher-test-cronjob
 objects:
   - apiVersion: batch/v1
     kind: CronJob
