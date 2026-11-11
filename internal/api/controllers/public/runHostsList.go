@@ -37,6 +37,11 @@ func (this *controllers) ApiRunHostsList(ctx echo.Context, params ApiRunHostsLis
 		queryBuilder.Where("runs.service IN ?", allowedServices)
 	}
 
+	// runtime v1.8 leaves Filter nil after Hack removes the deep-object query keys.
+	if params.Filter == nil {
+		params.Filter = &RunHostFilter{}
+	}
+
 	if params.Filter != nil {
 		if params.Filter.Status != nil && *params.Filter.Status != "" {
 			status := *params.Filter.Status

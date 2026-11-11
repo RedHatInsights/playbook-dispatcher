@@ -43,6 +43,11 @@ func (apii *controllers) ApiInternalV2RunHostsList(ctx echo.Context, params ApiI
 
 	// NOTE: Removed GetAllowedServices() check - internal endpoint does not filter by service
 
+	// runtime v1.8 leaves Filter nil after Hack removes the deep-object query keys.
+	if params.Filter == nil {
+		params.Filter = &public.RunHostFilter{}
+	}
+
 	if params.Filter != nil {
 		if params.Filter.Status != nil {
 			status := *params.Filter.Status
